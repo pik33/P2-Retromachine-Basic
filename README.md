@@ -9,13 +9,9 @@ The current versions, although still very limited and buggy, allows to write sim
 There are several of them in the Example directory:
 
 if_circles.bas : fills the screen with circles 
-
 mandelbrot.bas : slowly draws a Mandelbrot fractal
-
 breakout.bas : destroy bricks using a ball
-
 pentabeepbas : beeps random sounds using a pentatonic scale, while writing their frequencies
-
 mousedraw.bas : draw with a mouse.
 
 To run the precompiled binary you need P2-EC32 with a Digital Video accessory board on P0, AV board on P8 and Serial Host board at P16.
