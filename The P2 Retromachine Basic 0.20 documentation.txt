@@ -67,7 +67,7 @@ Arrays are not yet implemented.
 Operators:
 ----------
 
-Supported operators in 0.19 are:
+Supported operators are:
 
 - assign: =
 
