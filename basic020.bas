@@ -176,10 +176,27 @@ const result_string=fun_pushs
 const result_array=token_dim
 const result_error=token_error
 
+' --------------------------- Arrays
+
+const array_no_type=0+256
+const array_byte=1+256
+const array_ubyte=2+256
+const array_short=3+256
+const array_ushort=4+256
+const array_long=5+256
+const array_ulong=6+256
+const array_int64=7+256
+const array_uint64=8+256
+const array_float=9+256
+const array_double=10+256
+const array_string=11+256
+
 ' -----------------------------max number of variables and stack depth
 const maxvars=1023       
 const maxstack=512
 const maxfor=128
+
+
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
@@ -963,7 +980,7 @@ if linetype=2 orelse linetype=3 then cmd=lparts(0).token : ct=1 ' don't set line
 if linetype=4 orelse linetype=1 then cmd=lparts(1).token : ct=2 : lineptr=2
 if linetype=5 then cmd=lparts(ct).token : ct+=1 ' continued after if/else
 vars=0
-'print cmd
+print  "In compile_immediate cmd=:", cmd
 451 select case cmd
   case token_cls      : compile_nothing()   'no params, do nothing, only add a command to the line, but case needs something to do after 
   case token_new      : compile_nothing()   
@@ -1004,6 +1021,7 @@ vars=0
   case token_defsprite	:compile_fun_5p
   case token_fill	:compile_fun_4p
   case token_dim	:compile_dim: goto 450
+  case token_name       :compile_array_assign : goto 450
   case else	      : compile_unknown() : goto 450
 
 end select
@@ -1011,15 +1029,52 @@ end select
 t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr+=1
 450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 
-' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult : next i
+ print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
+
+sub compile_array_assign
+
+dim numpar, i, j as ulong
+dim varname$ as string
+dim t1 as expr_result
+numpar=0
+print "In array_assign, lparts(ct).token=",lparts(ct).token,lparts(ct).part$
+' todo here: recognize params and t1.result.twowords=numpar
+varname$=lparts(ct-1).part$ : print "In array_assign, varname$=";varname$
+if lparts(ct).token=token_lpar then
+  ct+=1 											' omit this lpar, this is for expr list
+  do
+    expr()
+    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
+    numpar+=1
+   ' here recognize the comma!
+  loop until lparts(ct-1).token=token_rpar    orelse lparts(ct).token=token_end  ' generate error if end
+   print "in array_assign, rpar found, numpar=",numpar
+ 'if lparts(ct).token=token_end then print "in getfun, end found, numpar=",numpar
+if lparts(ct).token<>token_eq then print "in array_assign,= expected" else print "in array_assign,= found"
+ct+=1 : expr()
+' now find the vae
+
+j=-1 : i=0 : do : 
+  if variables(i).name=varname$ then j=i: exit loop
+  i+=1
+  loop until i>varnum
+if j>-1 then print   "in array_assign, variable found, id=";j else print ("in array_assign, var has to be dimmed")
+
+t1.result.twowords(0)=j: t1.result.twowords(1)=numpar : t1.result_type=fun_assign : compiledline(lineptr)=t1: lineptr +=1 
+print "in array_assign,t1.result.twowords(1)=";t1.result.twowords(1),"numpar=",numpar
+endif  
+
+
+'t1.result.twowords(1)=numpar
+end sub
 
 
 sub compile_immediate_assign(linetype as ulong)
 
 dim t1 as expr_result
-dim i,j as integer
+dim i,j,numpar as integer
 dim  suffix2$ as string
 dim varname2$ as string
 
@@ -1048,6 +1103,10 @@ if  j=-1 andalso varnum<maxvars then
   varnum+=1
 endif
 t1.result.uresult=j: t1.result_type=fun_assign  
+
+
+
+
 
 
 compiledline(lineptr)=t1:  lineptr+=1 
@@ -1295,10 +1354,11 @@ function compile_dim() as ulong
 
  
 dim t1 as expr_result
-dim cmd as ulong
+dim cmd, esize as ulong
 dim dims(2) as ulong
 dim i,j,l,m as integer
 dim varname2$ as string
+dim arraytype,arraysize,arrayptr as ulong
 
 dims(0)=1: dims(1)=1: dims(2)=1
 
@@ -1313,7 +1373,8 @@ if isname(lparts(ct).part$) then
 
   endif 
   if j<>-1 then printerror (42) : return 42
-  if lparts(ct+1).part$ <>"(" then printerror(43) : return 43
+  if lparts(ct+1).part$ <>"(" andalso lparts(ct+1).part$<>"as" then printerror(43) : return 43
+  if lparts(ct+1).part$ = "as" then l=ct+1: goto 1350
   l=ct+2 : m=0 : do
     print lparts(l).part$, isdec(lparts(l).part$)
     if isdec(lparts(l).part$) then 
@@ -1325,53 +1386,45 @@ if isname(lparts(ct).part$) then
   l+=2
   loop until lparts(l-1).part$=")" orelse m>2
   if m>3 then printerror(45): return(45)
+  print lparts(l-1).part$,lparts(l).part$, lparts(l+1).part$
+  arraytype=array_no_type : esize=12
+1350 
+  if lparts(l).part$="as" then
+    select case lparts(l+1).part$
+      case "byte" 	: arraytype=array_byte		: esize=1
+      case "ubyte" 	: arraytype=array_ubyte		: esize=1
+      case "short" 	: arraytype=array_short		: esize=2
+      case "ushort" 	: arraytype=array_ushort	: esize=2
+      case "long" 	: arraytype=array_long		: esize=4
+      case "ulong" 	: arraytype=array_ulong		: esize=4
+      case "int64" 	: arraytype=array_int64		: esize=8
+      case "uint64" 	: arraytype=array_uint64	: esize=8
+      case "single" 	: arraytype=array_float		: esize=4
+      case "double" 	: arraytype=array_double	: esize=8
+      case "string" 	: arraytype=array_string	: esize=4
+      case else		: printerror(47) : return 47
+    end select
+  endif  
 else
   printerror(46): return 46
 endif
-print dims(0),dims(1),dims(2)
+print dims(0),dims(1),dims(2),arraytype
 
-' to do
+arraysize=esize*dims(0)*dims(1)*dims(2)
+arrayptr=memtop-arraysize-16
+memtop=arrayptr
 
-'- allocate a new variable
-'- type: result_arraay
-'- compute size: dim*dim*dim*12 (sizeof expr_result) + header ( size,size, size)
-' - lower memtop, var uresult=memtop - pointer to an array
+pslpoke arrayptr,arraytype
+pspoke arrayptr+2,esize
+pslpoke arrayptr+4,dims(0)
+pslpoke arrayptr+8,dims(1)
+pslpoke arrayptr+12,dims(2)
 
-' getvar - ??? 
+variables(varnum).name=varname2$
+variables(varnum).value.uresult=arrayptr
+variables(varnum).vartype=arraytype
+varnum+=1
 
-
-
-
- ' if  j=-1 andalso varnum<maxvars then   
-  '  variables(varnum).name=varname2$
-  '  variables(varnum).type=result_array
-' allocate space on memtop. Todo: check if the space exists
-    
-  '  j=varnum
- '   varnum+=1
-'endif
-
-'
- '  j=-1 
- '  do: j=j+1 : loop until variables(j).name=lparts(ct).part$ orelse j>=varnum
-   
-
-
-'compile_immediate_assign(5) else compile_error(32) : return 32
-'' after this we should have fun_assign_i or fun_assign_u with var# as uresult.
-'t1=compiledline(lineptr-1): if t1.result_type<>fun_assign  then compile_error(34) : return 34
-'varnum=t1.result.uresult
-'if lparts(ct).part$<>"to" then  compile_error(33) : return 33
-'ct+=1
-'expr()  ' there is "to" value pushed on the stack
-'if lparts(ct).part$="step" then 
-'ct+=1
-'expr()
-'else
-'compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=1 : lineptr+=1
-'endif
-'compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=varnum :lineptr+=1
-'compiledline(lineptr).result_type=token_for : compiledline(lineptr).result.iresult=0 :lineptr+=1
 return 0
 end function
 
@@ -1659,7 +1712,7 @@ if m=-1 then t2.result_type=fun_negative: compiledline(lineptr)=t2: lineptr+=1
   
 sub getvar(m as integer) 
 
-dim i,j as integer
+dim i,j, numpar as integer
 dim t2 as expr_result
 dim varname$,suffix$  as string
 
@@ -1677,69 +1730,31 @@ if  j=-1 andalso varnum<maxvars then
   j=varnum
   varnum+=1 
 endif     
-t2.result_type=fun_getvar:t2.result.uresult=j
+numpar=0
+' check if it is an array
 
-/'
-
-
-if suffix$="$" then
-  for i=0 to svarnum-1
-      if svariables(i).name=varname$ then j=i : exit
-    next i
-  if  j=-1 andalso svarnum<maxvars then   
-    svariables(svarnum).name=varname$
-    svariables(svarnum).value=""
-    j=svarnum
-    svarnum+=1 
-  endif     
-  t2.result_type=fun_getsvar:t2.result.uresult=j
-  goto 701
-endif  
+if lparts(ct+1).token=token_lpar then
+  ct+=1 											' omit this lpar, this is for expr list
+  do
+    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
+    if lparts(ct).token=token_lpar then ct+=1 : expr() : ct+=1 else expr()
+    numpar+=1
+   '' if lparts(ct).token=token_comma then print "in getfun, comma found"
+  loop until lparts(ct).token=token_rpar    orelse lparts(ct).token=token_end  ' generate error if end
   
-if suffix$="%" then
-  for i=0 to uvarnum-1
-      if uvariables(i).name=varname$ then j=i : exit
-    next i
-   if  j=-1 andalso uvarnum<maxvars then   
-    uvariables(uvarnum).name=varname$
-    uvariables(uvarnum).value=0
-    j=uvarnum
-    uvarnum+=1
-  endif   
-    
-  t2.result_type=fun_getuvar:t2.result.uresult=j
-  goto 701
-endif 
+ 'if lparts(ct).token=token_rpar then print "in getfun, rpar found, numpar=",numpar
+ 'if lparts(ct).token=token_end then print "in getfun, end found, numpar=",numpar
+endif  
 
-if suffix$="!" then
-  for i=0 to fvarnum-1
-      if fvariables(i).name=varname$ then j=i : exit
-    next i
-     if  j=-1 andalso fvarnum<maxvars then   
-    fvariables(fvarnum).name=varname$
-    fvariables(fvarnum).value=0.0
-    j=fvarnum
-    uvarnum+=1
-  endif     
-    
-  t2.result_type=fun_getfvar:t2.result.uresult=j
-  goto 701
-endif 
+t2.result.twowords(1)=numpar
+
+
+
+t2.result_type=fun_getvar:t2.result.twowords(0)=j
+
 
  
-for i=0 to ivarnum-1
-  if ivariables(i).name=varname$ then j=i : exit
-next i
- 
-   if  j=-1 andalso ivarnum<maxvars then   
-    ivariables(ivarnum).name=varname$
-    ivariables(ivarnum).value=0
-    j=ivarnum
-    ivarnum+=1
-  endif   
- 
-t2.result_type=fun_getivar:t2.result.uresult=j
-'/
+
 701 
 compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate error
 if m=-1 then t2.result_type=fun_negative: compiledline(lineptr)=t2: lineptr+=1
@@ -1907,6 +1922,7 @@ dim i as integer
 dim fileheader,savestart, saveptr as ulong
 dim header(5) as ulong
 dim linebuf(125) as ubyte
+dim saveline$ as string
 
 fileheader=$0D616272' rba+ver'
 
@@ -1915,14 +1931,16 @@ if pslpeek(programstart)=$FFFFFFFF then printerror(27): return
 if t1.result_type=result_string then
   if t1.result.sresult="" then t1.result.sresult="noname.bas"
   close #9: open currentdir$+"/"+t1.result.sresult for output as #9
-  put #9,1,fileheader,1
+'  put #9,1,fileheader,1
   i=5
   saveptr=programstart
   do
     psram.read1(varptr(header(0)),saveptr,24)
-    psram.read1(varptr(linebuf(0)),header(2),header(3))  
-    put #9,i,header(3),1 : i+=4
-    put #9,i,linebuf(0),header(3) : i+=header(3)
+    psram.read1(varptr(linebuf(0)),header(2),header(3)) 
+    saveline$="" : for i=1 to header(3) : saveline$=saveline$+chr$(linebuf(i-1)) : next i 
+ '   put #9,i,header(3),1 : i+=4
+ '   put #9,i,linebuf(0),header(3) : i+=header(3)
+     print #9, saveline$
     saveptr=header(5)
   loop until header(5)=$7FFFFFFF
   close #9  
@@ -1943,20 +1961,29 @@ t1=pop()
 if t1.result_type=result_string then
   do_new
   if t1.result.sresult="" then t1.result.sresult="noname.bas" 
-'   print currentdir$+"/"+t1.result.sresult
   close #9: open currentdir$+"/"+t1.result.sresult for input as #9
-    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
+  r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
   i=5
   get #9,1,header,1
-  if header<>$0D616272 then printerror(26) : close #9 : return
-  do
-    get #9,i,linelength,1,amount : i+=4 : line2(linelength)=0
-   if amount=1 then  
-      get #9,i,line2(0),linelength : i+=linelength
-      line$=line2$: interpret 
-  endif 
-  loop until amount<1
-  close #9  
+  
+  if header<>$0D616272 then 
+    close #9: open currentdir$+"/"+t1.result.sresult for input as #9
+    do
+      line input #9,line$
+      if left$(line$,1) >="0" andalso left$(line$,1)<="9" then interpret
+    loop until line$=""
+    close #9
+  else     
+  'printerror(26) : close #9 : return
+    do
+      get #9,i,linelength,1,amount : i+=4 : line2(linelength)=0
+      if amount=1 then  
+        get #9,i,line2(0),linelength : i+=linelength
+        line$=line2$: interpret 
+      endif 
+    loop until amount<1
+    close #9 
+  endif   
 else
   printerror(30)  ' line$="": for j=0 to header(3)-1: line$+=chr$(linebuf(j)): next j
 endif
@@ -2110,19 +2137,59 @@ sub do_assign
 dim t1 as expr_result
 dim varnum as ulong
 
-varnum=compiledline(lineptr_e).result.uresult
+varnum=compiledline(lineptr_e).result.uresult ' numpar is in twowords(1), pop numpar 
+
 t1=pop() 
+
+' here check if array, i
 variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type
 end sub
 
 
 ' --------------------- Read a variable and push to the stack
 
+' getvar : fun_getvar, var#, numpar. Var, if array, has array type and a pointer
+
 sub do_getvar
+
 dim t1 as expr_result
-t1.result=variables(compiledline(lineptr_e).result.uresult).value
-t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
-push t1
+dim arrptr,vartype,numpar,esize,dim1,dim2,dim3,i1,i2,i3,varidx as ulong
+
+if compiledline(lineptr_e).result.twowords(1)=0 then
+  t1.result=variables(compiledline(lineptr_e).result.uresult).value
+  t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
+  if t1.result_type<array_no_type then push t1 : return else goto 2100
+endif  
+' if we are here, this is the array
+2100
+arrptr=variables(compiledline(lineptr_e).result.uresult).value.uresult
+vartype=pslpeek(arrptr) and 65535
+numpar=compiledline(lineptr_e).result.twowords(1) 
+esize=pspeek(arrptr+2)
+dim1=pslpeek(arrptr+4) ' todo :do one read from psram for speed
+dim2=pslpeek(arrptr+8) ' todo :do one read from psram for speed
+dim3=pslpeek(arrptr+12) ' todo :do one read from psram for speed
+if numpar=3 then t1=pop() : i3=t1.result.uresult else i3=0
+if numpar=2 then t1=pop() : i2=t1.result.uresult else i2=0
+if numpar=1 then t1=pop() : i1=t1.result.uresult else i1=0
+print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
+varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize : print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
+
+select case vartype
+  case array_no_type 	:  psram.read1(varptr(t1),varidx,12)
+  case array_byte	:  t1.result_type=result_int: t1.result.iresult=pspeek(varidx) : if t1.result.uresult>=128 then t1.result.uresult=$FFFFFF00 or t1.result.uresult
+  case array_ubyte	:  t1.result_type=result_uint : t1.result.uresult=pspeek(varidx) 
+  case array_short	:  t1.result_type=result_int : t1.result.uresult=pslpeek(varidx) and 65535 : if t1.result.uresult>=32768 then t1.result.uresult=$FFFF00 or t1.result.uresult
+  case array_ushort	:  t1.result_type=result_uint : t1.result.uresult=pslpeek(varidx) and 65535  
+  case array_long	:  t1.result_type=result_int : t1.result.uresult=pslpeek(varidx)
+  case array_ulong	:  t1.result_type=result_uint : t1.result.uresult=pslpeek(varidx)
+  case array_int64	:  t1.result_type=result_error : t1.result.uresult=48	
+  case array_uint64	:  t1.result_type=result_error : t1.result.uresult=48	
+  case array_float	:  t1.result_type=result_float : t1.result.uresult=pslpeek(varidx)
+  case array_double	:  t1.result_type=result_error : t1.result.uresult=48	
+  case array_string	:  t1.result_type=result_string : t1.result.uresult=pslpeek(varidx)
+end select
+push t1    
 end sub
 
 '------------------------ Operators 
@@ -3275,6 +3342,8 @@ errors$(43)="Expected '('."
 errors$(44)="Expected ')' or ','."
 errors$(45)="No more than 3 dimensions supported"
 errors$(46)="Variable name expected"
+errors$(47)="Type name expected"
+errors$(48)="Type not supported yet"
 
 end sub
         
