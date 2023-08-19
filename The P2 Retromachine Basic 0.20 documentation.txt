@@ -9,7 +9,7 @@ The Eval board with 4-bit PSRAM attached, that was supported up to 0.17, is not 
 The goal is to make the Propeller2 platform a fully independent computer that can be programmed and used without any external PC, with a nostalgic feeling added
 The power of a retro style Basic interpreter is that you can make a powerful program in a very short code, in a short time. 
 
-Version 0.19 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
+Version 0.20 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
 
 The current version of the interpreter needs a digital video accessory board at P0, AV accessory board at P8 and a serial host accessory board at P16.
 
@@ -67,7 +67,7 @@ Arrays are not yet implemented.
 Operators:
 ----------
 
-Supported operators in 0.19 are:
+Supported operators are:
 
 - assign: =
 
