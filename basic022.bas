@@ -23,8 +23,8 @@ dim paula as class using "audio093b-8-sc.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.20"
-const ver=20
+const ver$="P2 Retromachine BASIC version 0.22"
+const ver=22
 '' ------------------------------- Keyboard constants
 
 const   key_enter=141    
@@ -104,7 +104,7 @@ const token_ge=39
 const token_inc=40
 const token_dec=41
 const token_ne=42
-
+const fun_pushs2=43
 const token_cls=64
 const token_new=65
 const token_plot=66
@@ -173,6 +173,7 @@ const result_int=fun_pushi      ' variable type encodes its own push function in
 const result_uint=fun_pushu
 const result_float=fun_pushf
 const result_string=fun_pushs
+const result_string2=fun_pushs2
 const result_array=token_dim
 const result_error=token_error
 
@@ -1029,7 +1030,7 @@ end select
 t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr+=1
 450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 
-' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1112,7 +1113,7 @@ t1.result.uresult=j: t1.result_type=fun_assign
 compiledline(lineptr)=t1:  lineptr+=1 
  if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end
 
-'for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult : next i
+'print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
 'print "at exit lineptr=",lineptr
 end sub
 
@@ -1386,7 +1387,7 @@ if isname(lparts(ct).part$) then
   l+=2
   loop until lparts(l-1).part$=")" orelse m>2
   if m>3 then printerror(45): return(45)
-  print lparts(l-1).part$,lparts(l).part$, lparts(l+1).part$
+ ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' print lparts(l-1).part$,lparts(l).part$, lparts(l+1).part$
   arraytype=array_no_type : esize=12
 1350 
   if lparts(l).part$="as" then
@@ -1396,6 +1397,7 @@ if isname(lparts(ct).part$) then
       case "short" 	: arraytype=array_short		: esize=2
       case "ushort" 	: arraytype=array_ushort	: esize=2
       case "long" 	: arraytype=array_long		: esize=4
+      case "integer" 	: arraytype=array_long		: esize=4
       case "ulong" 	: arraytype=array_ulong		: esize=4
       case "int64" 	: arraytype=array_int64		: esize=8
       case "uint64" 	: arraytype=array_uint64	: esize=8
@@ -1665,8 +1667,17 @@ select case op
     if m=-1 then t1.result.fresult=-1.0*val(lparts(ct).part$): t1.result_type=result_float
     compiledline(lineptr)=t1: lineptr+=1 :ct+=1
  case token_string
-    t1.result.sresult=lparts(ct).part$: t1.result_type=result_string  
+    t1.result_type=result_string  
+    ' place the literal in the psram
+    l=len(lparts(ct).part$)
+    memtop=(memtop-l-4) and $FFFFFFFC
+    pslpoke memtop,l
+    for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part$,i,1)) : next i
+    t1.result.uresult=memtop
+'    t1.result.sresult=lparts(ct).part$
+    t1.result_type=result_string2  
     compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+ 
   case token_name  '' we may got token with var or fun # after evaluation (?) 
     getvar(m) : ct+=1
   case token_lpar
@@ -1928,6 +1939,7 @@ fileheader=$0D616272' rba+ver'
 
 t1=pop() 
 if pslpeek(programstart)=$FFFFFFFF then printerror(27): return
+if t1.result_type=result_string2 then t1.result.sresult=do_convertstring(t1.result.uresult): t1.result_type=result_string
 if t1.result_type=result_string then
   if t1.result.sresult="" then t1.result.sresult="noname.bas"
   close #9: open currentdir$+"/"+t1.result.sresult for output as #9
@@ -1958,6 +1970,8 @@ dim line2$ as string
 
 lpoke varptr(line2$),varptr(line2)
 t1=pop() 
+'print "popped "; t1.result.uresult, t1.result_type
+if t1.result_type=result_string2 then t1.result.sresult=do_convertstring(t1.result.uresult): t1.result_type=result_string ': print t1.result.sresult
 if t1.result_type=result_string then
   do_new
   if t1.result.sresult="" then t1.result.sresult="noname.bas" 
@@ -2131,6 +2145,19 @@ end sub
 
 '------------------ Assigning to a variable  
 
+function  do_convertstring(psaddr as ulong) as string
+dim i as integer
+
+dim s as string
+dim l as ulong
+'print "in do_convertstring: psaddr=";psaddr
+l=pslpeek(psaddr)
+'print "in do_convertstring: len=";l
+s="" 
+for i=1 to l : s+=chr$(pspeek(psaddr+3+i)) :next i
+'print "in do_convertstring: str=";s
+return s
+end function
 
 sub do_assign
 
@@ -2140,8 +2167,13 @@ dim arrid as ulong(2)
 
 varnum=compiledline(lineptr_e).result.uresult ' numpar is in twowords(1), pop numpar 
 
-if variables(varnum).vartype<array_no_type then t1=pop() : variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type : return
-
+if variables(varnum).vartype<array_no_type then 
+  t1=pop() : variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type 
+  if variables(varnum).vartype<>result_string2 then return
+  variables(varnum).value.sresult=do_convertstring(variables(varnum).value.uresult)
+  variables(varnum).vartype=result_string
+  return
+endif
 for i=0 to 2 : arrid(i)=0 : next i
 numpar=compiledline(lineptr_e).result.twowords(1) 
 t1=pop() ' var value
@@ -2188,7 +2220,7 @@ sub do_getvar
 
 dim t1 as expr_result
 dim arrptr,vartype,numpar,esize,dim1,dim2,dim3,i1,i2,i3,varidx as ulong
-
+'print "in do_getvar, compiledline(lineptr_e) rt,ttw0,tw1="; compiledline(lineptr_e).result_type, compiledline(lineptr_e).result.twowords(0),compiledline(lineptr_e).result.twowords(1)
 if compiledline(lineptr_e).result.twowords(1)=0 then
   t1.result=variables(compiledline(lineptr_e).result.uresult).value
   t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
@@ -2198,19 +2230,19 @@ endif
 2100
 arrptr=variables(compiledline(lineptr_e).result.uresult).value.uresult
 vartype=pslpeek(arrptr) and 65535
-numpar=compiledline(lineptr_e).result.twowords(1) :print "in do_getvar numpar=",numpar
+numpar=compiledline(lineptr_e).result.twowords(1) ':print "in do_getvar numpar=",numpar
 esize=pspeek(arrptr+2)
 dim1=pslpeek(arrptr+4) ' todo :do one read from psram for speed
 dim2=pslpeek(arrptr+8) ' todo :do one read from psram for speed
 dim3=pslpeek(arrptr+12) ' todo :do one read from psram for speed
-if numpar>2 then t1=pop() : i3=t1.result.uresult :print "in do_getvar popped i3=",i3 else i3=0 : print "in do_getvar no i3 popped"
-if numpar>1 then t1=pop() : i2=t1.result.uresult :print "in do_getvar popped i2=",i2 else i2=0 : print "in do_getvar no i2 popped"
-if numpar>0 then t1=pop() : i1=t1.result.uresult :print "in do_getvar popped i1=",i1 else i1=0 : print "in do_getvar no i1 popped"
-print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
-varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize : print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
+if numpar>2 then t1=pop() : i3=t1.result.uresult   else i3=0 
+if numpar>1 then t1=pop() : i2=t1.result.uresult   else i2=0 
+if numpar>0 then t1=pop() : i1=t1.result.uresult   else i1=0 
+'print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
+varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize ': print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
 
 select case vartype
-  case array_no_type 	:  psram.read1(varptr(t1),varidx,12) :print "in do_getvar notype array=",t1.result_type,t1.result.twowords(0),t1.result.twowords(1),pslpeek(varidx),pslpeek(varidx+4),pslpeek(varidx+8) 
+  case array_no_type 	:  psram.read1(varptr(t1),varidx,12) ':print "in do_getvar notype array=",t1.result_type,t1.result.twowords(0),t1.result.twowords(1),pslpeek(varidx),pslpeek(varidx+4),pslpeek(varidx+8) 
   case array_byte	:  t1.result_type=result_int: t1.result.iresult=pspeek(varidx) : if t1.result.uresult>=128 then t1.result.uresult=$FFFFFF00 or t1.result.uresult
   case array_ubyte	:  t1.result_type=result_uint : t1.result.uresult=pspeek(varidx) 
   case array_short	:  t1.result_type=result_int : t1.result.uresult=pslpeek(varidx) and 65535 : if t1.result.uresult>=32768 then t1.result.uresult=$FFFF00 or t1.result.uresult
@@ -2223,7 +2255,8 @@ select case vartype
   case array_double	:  t1.result_type=result_error : t1.result.uresult=48	
   case array_string	:  t1.result_type=result_string : t1.result.uresult=pslpeek(varidx)
 end select
-push t1    
+push t1   
+'print "In do_getvar, got result_type=";t1.result_type; " uresult=";t1.result.uresult; " twowords(1)=";t1.result.twowords(1) 
 end sub
 
 '------------------------ Operators 
@@ -3116,6 +3149,7 @@ dim pos,r,psramptr as integer
 dim filename, fullfilename as string
 
 t1=pop() 
+if t1.result_type=result_string2 then t1.result.sresult=do_convertstring(t1.result.uresult): t1.result_type=result_string
 if t1.result_type=result_string then
   filename=t1.result.sresult
   if left$(filename,1)="/" then 
@@ -3255,6 +3289,7 @@ commands(fun_pushu)=@do_push
 commands(fun_pushi)=@do_push  
 commands(fun_pushf)=@do_push  
 commands(fun_pushs)=@do_push  
+commands(fun_pushs2)=@do_push  
 commands(fun_assign)=@do_assign
 '.commands(fun_assign_i)=@do_assign_i
 '.commands(fun_assign_f)=@do_assign_f

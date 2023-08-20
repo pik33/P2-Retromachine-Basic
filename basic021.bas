@@ -23,8 +23,8 @@ dim paula as class using "audio093b-8-sc.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.20"
-const ver=20
+const ver$="P2 Retromachine BASIC version 0.21"
+const ver=21
 '' ------------------------------- Keyboard constants
 
 const   key_enter=141    
@@ -1386,7 +1386,7 @@ if isname(lparts(ct).part$) then
   l+=2
   loop until lparts(l-1).part$=")" orelse m>2
   if m>3 then printerror(45): return(45)
-  print lparts(l-1).part$,lparts(l).part$, lparts(l+1).part$
+ ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' print lparts(l-1).part$,lparts(l).part$, lparts(l+1).part$
   arraytype=array_no_type : esize=12
 1350 
   if lparts(l).part$="as" then
@@ -1396,6 +1396,7 @@ if isname(lparts(ct).part$) then
       case "short" 	: arraytype=array_short		: esize=2
       case "ushort" 	: arraytype=array_ushort	: esize=2
       case "long" 	: arraytype=array_long		: esize=4
+      case "integer" 	: arraytype=array_long		: esize=4
       case "ulong" 	: arraytype=array_ulong		: esize=4
       case "int64" 	: arraytype=array_int64		: esize=8
       case "uint64" 	: arraytype=array_uint64	: esize=8
@@ -2198,19 +2199,19 @@ endif
 2100
 arrptr=variables(compiledline(lineptr_e).result.uresult).value.uresult
 vartype=pslpeek(arrptr) and 65535
-numpar=compiledline(lineptr_e).result.twowords(1) :print "in do_getvar numpar=",numpar
+numpar=compiledline(lineptr_e).result.twowords(1) ':print "in do_getvar numpar=",numpar
 esize=pspeek(arrptr+2)
 dim1=pslpeek(arrptr+4) ' todo :do one read from psram for speed
 dim2=pslpeek(arrptr+8) ' todo :do one read from psram for speed
 dim3=pslpeek(arrptr+12) ' todo :do one read from psram for speed
-if numpar>2 then t1=pop() : i3=t1.result.uresult :print "in do_getvar popped i3=",i3 else i3=0 : print "in do_getvar no i3 popped"
-if numpar>1 then t1=pop() : i2=t1.result.uresult :print "in do_getvar popped i2=",i2 else i2=0 : print "in do_getvar no i2 popped"
-if numpar>0 then t1=pop() : i1=t1.result.uresult :print "in do_getvar popped i1=",i1 else i1=0 : print "in do_getvar no i1 popped"
-print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
-varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize : print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
+if numpar>2 then t1=pop() : i3=t1.result.uresult' :print "in do_getvar popped i3=",i3 else i3=0 : print "in do_getvar no i3 popped"
+if numpar>1 then t1=pop() : i2=t1.result.uresult' :print "in do_getvar popped i2=",i2 else i2=0 : print "in do_getvar no i2 popped"
+if numpar>0 then t1=pop() : i1=t1.result.uresult ':print "in do_getvar popped i1=",i1 else i1=0 : print "in do_getvar no i1 popped"
+'print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
+varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize ': print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
 
 select case vartype
-  case array_no_type 	:  psram.read1(varptr(t1),varidx,12) :print "in do_getvar notype array=",t1.result_type,t1.result.twowords(0),t1.result.twowords(1),pslpeek(varidx),pslpeek(varidx+4),pslpeek(varidx+8) 
+  case array_no_type 	:  psram.read1(varptr(t1),varidx,12) ':print "in do_getvar notype array=",t1.result_type,t1.result.twowords(0),t1.result.twowords(1),pslpeek(varidx),pslpeek(varidx+4),pslpeek(varidx+8) 
   case array_byte	:  t1.result_type=result_int: t1.result.iresult=pspeek(varidx) : if t1.result.uresult>=128 then t1.result.uresult=$FFFFFF00 or t1.result.uresult
   case array_ubyte	:  t1.result_type=result_uint : t1.result.uresult=pspeek(varidx) 
   case array_short	:  t1.result_type=result_int : t1.result.uresult=pslpeek(varidx) and 65535 : if t1.result.uresult>=32768 then t1.result.uresult=$FFFF00 or t1.result.uresult
