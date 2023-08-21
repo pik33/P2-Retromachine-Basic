@@ -1522,7 +1522,7 @@ dim varnum as integer
 t1=pop() :varnum=t1.result.uresult
 if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
 variables(varnum).value.iresult+=fortable(fortop).stepval 
-if fortable(fortop).stepval>0 then
+if fortable(fortop).stepval>=0 then
   if variables(varnum).value.iresult>fortable(fortop).endval then fortop-=1 : return ' do nothing 
 else
   if variables(varnum).value.iresult<fortable(fortop).endval then fortop -=1 : return ' do nothing 
@@ -3110,10 +3110,11 @@ t1=pop()
 if t1.result_type=result_float then t1.result.iresult=t1.result.fresult
 if t1.result_type=result_string then t1.result.iresult=val(t1.result.sresult)
 select case t1.result.iresult
-   case 0: font=1 :ink=154 : paper=147 : v.setfontfamily(4) : v.setwritecolors(ink,paper)
-   case 1: font=0 :ink=23 :  paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 2: font=0 :ink=181 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 3: font=0 :ink=15 :  paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
+   case 0: font=1 :ink=154 : keyclick=1 : paper=147 : v.setfontfamily(4) : v.setwritecolors(ink,paper)
+   case 1: font=0 :ink=23 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
+   case 2: font=0 :ink=181 : keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
+   case 3: font=0 :ink=15 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
+   case 4: font=1 :ink=0 :  keyclick=1  : paper=15 : v.setfontfamily(4) : v.setwritecolors(ink,paper)
 end select
 v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
 end sub
@@ -3774,7 +3775,7 @@ dim shared as ubyte keys(511)={
 asm shared
 atari_spl file "atari.spl"
 atari2_spl file "atari2.spl" '1758
-mouse  file "mouse.def"
+mouse  file "mouse2.def"
 end asm
 
 '' ------------------------------- the loader cog for BRUN

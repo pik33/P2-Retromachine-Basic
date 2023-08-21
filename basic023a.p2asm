@@ -2215,7 +2215,7 @@ LR__0113
  if_e	cmp	local06, #20 wz
  if_ne	jmp	#LR__0114
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4143
@@ -2227,7 +2227,7 @@ LR__0113
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	jmp	#LR__0119
 LR__0114
@@ -7052,7 +7052,7 @@ LR__0590
 	add	arg01, #4
 	wrlong	result3, arg01
 ' variables(varnum).value.iresult+=fortable(fortop).stepval 
-' if fortable(fortop).stepval>0 then
+' if fortable(fortop).stepval>=0 then
 	add	objptr, ##35280
 	rdlong	arg01, objptr
 	mov	local04, arg01
@@ -7063,7 +7063,7 @@ LR__0590
 	add	local04, objptr
 	add	local04, #12
 	rdlong	local04, local04
-	cmps	local04, #1 wc
+	cmps	local04, #0 wc
 	sub	objptr, ##37468
  if_b	jmp	#LR__0591
 '   if variables(varnum).value.iresult>fortable(fortop).endval then fortop-=1 : return ' do nothing 
@@ -7458,7 +7458,7 @@ LR__0614
 LR__0615
 '    print "We have a slow goto, todo  "
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4316
@@ -7470,7 +7470,7 @@ LR__0615
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__0616
 ' ' if not, there is a slow goto. Call converttoint to get an int value from expression, then do_slow_goto
@@ -9634,7 +9634,7 @@ LR__0794
 '  '   put #9,i,linebuf(0),header(3) : i+=header(3)
 '      print #9, saveline$
 	mov	arg01, #9
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, ##692
@@ -9648,7 +9648,7 @@ LR__0794
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #9
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	add	fp, ##560
 	rdlong	local01, fp
@@ -9745,7 +9745,7 @@ LR__0800
 	sub	fp, #16
  if_e	jmp	#LR__0801
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4325
@@ -9776,7 +9776,7 @@ LR__0800
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -10081,7 +10081,7 @@ LR__0813
 LR__0814
 '   print "Stopped at line ";runheader(0)
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4331
@@ -10100,7 +10100,7 @@ LR__0814
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__0815
 	add	objptr, ##41344
@@ -10198,7 +10198,7 @@ LR__0821
 ' 
 ' print
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -10206,7 +10206,7 @@ LR__0821
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	add	objptr, ##33352
 	rdlong	local02, objptr
@@ -10616,7 +10616,7 @@ _do_error
 ' print "Error ";r;": ";errors$(r)
 	mov	arg01, #0
 	sub	objptr, ##31808
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4332
@@ -10645,7 +10645,7 @@ _do_error
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	ptra, fp
 	call	#popregs_
@@ -15035,7 +15035,7 @@ _do_rnd
 	sub	objptr, ##31808
  if_b	jmp	#LR__1200
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4335
@@ -15043,7 +15043,7 @@ _do_rnd
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -15115,7 +15115,7 @@ LR__1202
 LR__1203
 '     print "rnd: "; : printerror(40) 
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4336
@@ -15123,7 +15123,7 @@ LR__1203
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #40
 	call	#_printerror
@@ -15166,7 +15166,7 @@ _do_sin
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1210
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4337
@@ -15174,7 +15174,7 @@ _do_sin
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -15246,7 +15246,7 @@ LR__1211
 LR__1212
 '   print "sin: "; : printerror(40) 
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4338
@@ -15254,7 +15254,7 @@ LR__1212
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #40
 	call	#_printerror
@@ -15293,7 +15293,7 @@ _do_stick
 	sub	objptr, ##31808
  if_b	jmp	#LR__1220
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4339
@@ -15301,7 +15301,7 @@ _do_stick
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -15402,7 +15402,7 @@ _do_strig
 	sub	objptr, ##31808
  if_b	jmp	#LR__1230
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4340
@@ -15410,7 +15410,7 @@ _do_strig
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -15511,7 +15511,7 @@ _do_getpixel
 	sub	objptr, ##31808
  if_e	jmp	#LR__1240
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4341
@@ -15519,7 +15519,7 @@ _do_getpixel
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -16113,7 +16113,7 @@ _do_cls
 	sub	objptr, ##23532
 ' cls(ink,paper): plot_color=ink: print
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -16121,7 +16121,7 @@ _do_cls
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 _do_cls_ret
 	ret
@@ -17002,7 +17002,7 @@ LR__1331
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1332
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17022,7 +17022,7 @@ LR__1331
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -17031,7 +17031,7 @@ LR__1332
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1333
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17051,7 +17051,7 @@ LR__1332
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -17060,7 +17060,7 @@ LR__1333
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1334
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17080,7 +17080,7 @@ LR__1333
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -17089,7 +17089,7 @@ LR__1334
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1335
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17108,7 +17108,7 @@ LR__1334
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -17121,7 +17121,7 @@ LR__1336
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1337
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17136,7 +17136,7 @@ LR__1336
 	mov	local05, local06
 	add	local05, local07
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local09, #0
@@ -17145,7 +17145,7 @@ LR__1337
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1338
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -17160,7 +17160,7 @@ LR__1337
 	mov	local05, local06
 	add	local05, local07
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local09, #0
@@ -17169,7 +17169,7 @@ LR__1338
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1339
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17178,14 +17178,14 @@ LR__1338
 	mov	arg04, #35
 	call	#__system___basic_print_float
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1339
 '   if t1.result_type=result_string then print t1.result.sresult;
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1340
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17193,7 +17193,7 @@ LR__1339
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1340
 LR__1341
@@ -17204,7 +17204,7 @@ LR__1341
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1342
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17217,14 +17217,14 @@ LR__1341
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1342
 '   if t1.result_type=result_uint then print t1.result.uresult
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1343
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17237,14 +17237,14 @@ LR__1342
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1343
 '   if t1.result_type=result_float then print t1.result.fresult
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1344
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17257,14 +17257,14 @@ LR__1343
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1344
 '   if t1.result_type=result_string then print t1.result.sresult
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1345
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17276,7 +17276,7 @@ LR__1344
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1345
 LR__1346
@@ -17284,7 +17284,7 @@ LR__1346
 	cmp	local04, #32 wz
  if_ne	jmp	#LR__1347
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -17292,7 +17292,7 @@ LR__1346
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 LR__1347
 LR__1348
@@ -17465,7 +17465,7 @@ LR__1380
 LR__1381
 ' select case t1.result.iresult
 	mov	local04, local01
-	fle	local04, #4
+	fle	local04, #5
 	jmprel	local04
 LR__1382
 	jmp	#LR__1383
@@ -17473,12 +17473,15 @@ LR__1382
 	jmp	#LR__1385
 	jmp	#LR__1386
 	jmp	#LR__1387
+	jmp	#LR__1388
 LR__1383
 	add	objptr, ##23556
 	wrlong	#1, objptr
 	sub	objptr, #4
 	wrlong	#154, objptr
-	sub	objptr, #4
+	add	objptr, ##17828
+	wrlong	#1, objptr
+	sub	objptr, ##17832
 	wrlong	#147, objptr
 	sub	objptr, ##23548
 	mov	arg01, #4
@@ -17495,16 +17498,18 @@ LR__1383
 	add	objptr, #4
 	wrlong	arg02, objptr
 	sub	objptr, #65
-	jmp	#LR__1387
+	jmp	#LR__1388
 LR__1384
 	add	objptr, ##23556
 	wrlong	#0, objptr
 	sub	objptr, #4
 	wrlong	#23, objptr
-	mov	arg01, #0
-	sub	objptr, #4
+	add	objptr, ##17828
+	wrlong	#0, objptr
+	sub	objptr, ##17832
 	wrlong	#0, objptr
 	sub	objptr, ##23548
+	mov	arg01, #0
 	call	#_hg010b_spin2_setfontfamily
 	add	objptr, ##23552
 	rdlong	arg01, objptr
@@ -17518,16 +17523,18 @@ LR__1384
 	add	objptr, #4
 	wrlong	arg02, objptr
 	sub	objptr, #65
-	jmp	#LR__1387
+	jmp	#LR__1388
 LR__1385
 	add	objptr, ##23556
 	wrlong	#0, objptr
 	sub	objptr, #4
 	wrlong	#181, objptr
-	mov	arg01, #0
-	sub	objptr, #4
+	add	objptr, ##17828
+	wrlong	#0, objptr
+	sub	objptr, ##17832
 	wrlong	#0, objptr
 	sub	objptr, ##23548
+	mov	arg01, #0
 	call	#_hg010b_spin2_setfontfamily
 	add	objptr, ##23552
 	rdlong	arg01, objptr
@@ -17541,16 +17548,18 @@ LR__1385
 	add	objptr, #4
 	wrlong	arg02, objptr
 	sub	objptr, #65
-	jmp	#LR__1387
+	jmp	#LR__1388
 LR__1386
 	add	objptr, ##23556
 	wrlong	#0, objptr
 	sub	objptr, #4
 	wrlong	#15, objptr
-	mov	arg01, #0
-	sub	objptr, #4
+	add	objptr, ##17828
+	wrlong	#0, objptr
+	sub	objptr, ##17832
 	wrlong	#0, objptr
 	sub	objptr, ##23548
+	mov	arg01, #0
 	call	#_hg010b_spin2_setfontfamily
 	add	objptr, ##23552
 	rdlong	arg01, objptr
@@ -17564,7 +17573,32 @@ LR__1386
 	add	objptr, #4
 	wrlong	arg02, objptr
 	sub	objptr, #65
+	jmp	#LR__1388
 LR__1387
+	add	objptr, ##23556
+	wrlong	#1, objptr
+	sub	objptr, #4
+	wrlong	#0, objptr
+	add	objptr, ##17828
+	wrlong	#1, objptr
+	sub	objptr, ##17832
+	wrlong	#15, objptr
+	sub	objptr, ##23548
+	mov	arg01, #4
+	call	#_hg010b_spin2_setfontfamily
+	add	objptr, ##23552
+	rdlong	arg01, objptr
+	sub	objptr, #4
+	rdlong	arg02, objptr
+' 
+' write_color:=ff
+	sub	objptr, ##23487
+	wrlong	arg01, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	arg02, objptr
+	sub	objptr, #65
+LR__1388
 	add	objptr, ##23552
 	rdlong	arg01, objptr
 	sub	objptr, #4
@@ -18036,7 +18070,7 @@ _do_dir
 ' chdir("/sd/bas")       ' set working directory
 ' print "Working directory: "; currentdir$ 
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4344
@@ -18054,7 +18088,7 @@ _do_dir
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, ##@LR__4345
 	mov	arg02, #16
@@ -18080,7 +18114,7 @@ LR__1410
  if_e	jmp	#LR__1411
 '   print "[dir] ";filename
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4347
@@ -18096,7 +18130,7 @@ LR__1410
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #0
 	mov	arg02, #0
@@ -18128,7 +18162,7 @@ LR__1412
  if_e	jmp	#LR__1416
 '   print filename
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -18140,7 +18174,7 @@ LR__1412
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #0
 	mov	arg02, #0
@@ -18156,7 +18190,7 @@ LR__1412
  if_ne	jmp	#LR__1412
 '     print "-----more, press any key";
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4350
@@ -18164,7 +18198,7 @@ LR__1412
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 '     do 
 LR__1413
@@ -18199,7 +18233,7 @@ LR__1415
 	call	#_hg010b_spin2_setcursorpos
 '     position 0,35: print "                             ";: position 4,35  
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4351
@@ -18207,7 +18241,7 @@ LR__1415
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #4
 	mov	arg02, #35
@@ -18357,7 +18391,7 @@ LR__1431
 '   r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
  if_e	jmp	#LR__1432
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4354
@@ -18384,7 +18418,7 @@ LR__1431
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -19657,7 +19691,7 @@ _program
 ' 
 ' position 2*editor_spaces,1 : print ver$
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	ptr__dat__, ##5096
@@ -19671,7 +19705,7 @@ _program
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	rdlong	arg01, objptr
 	mov	arg02, #0
@@ -19686,7 +19720,7 @@ _program
 	sub	objptr, ##41376
 ' free$=decuns$(v.buf_ptr)+" BASIC bytes free" : print free$
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	objptr, ##41376
@@ -19700,7 +19734,7 @@ _program
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	add	objptr, ##23544
 	rdlong	arg01, objptr
@@ -19710,7 +19744,7 @@ _program
 	call	#_hg010b_spin2_setcursorpos
 ' position 2*editor_spaces,4 : print "Ready"
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4411
@@ -19724,7 +19758,7 @@ _program
 	call	#__system___basic_print_char
 	mov	local04, #1
 	mov	arg01, #0
-	call	#__system___getiolock_0369
+	call	#__system___getiolock_0370
 	wrlong	#0, result1
 	mov	local05, #0
 	mov	arg02, #0
@@ -25081,7 +25115,7 @@ LR__2161
 	add	fp, #20
 	rdlong	arg03, fp
 	sub	fp, #64
-	call	#__system__emitsign_0329
+	call	#__system__emitsign_0330
 	add	fp, #276
 	wrlong	result1, fp
 	sub	fp, #276
@@ -25206,7 +25240,7 @@ LR__2167
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0327
+	call	#__system__disassemble_0328
 	add	fp, #16
 	rdlong	local01, fp
 	sub	fp, #16
@@ -25297,7 +25331,7 @@ LR__2171
 	sub	fp, #4
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0327
+	call	#__system__disassemble_0328
 	jmp	#LR__2175
 LR__2172
 	add	fp, #36
@@ -25315,7 +25349,7 @@ LR__2172
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0327
+	call	#__system__disassemble_0328
 	jmp	#LR__2174
 LR__2173
 	add	fp, #12
@@ -25331,7 +25365,7 @@ LR__2173
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0327
+	call	#__system__disassemble_0328
 LR__2174
 LR__2175
 	add	fp, #28
@@ -25528,7 +25562,7 @@ LR__2185
 	add	fp, #20
 	rdlong	arg03, fp
 	sub	fp, #64
-	call	#__system__emitsign_0329
+	call	#__system__emitsign_0330
 	add	fp, #280
 	wrlong	result1, fp
 	sub	fp, #280
@@ -26549,7 +26583,7 @@ LR__2344
 	mov	arg02, local12
 	mov	arg03, local06
 	mov	arg04, local04
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2355
 LR__2345
 	cmp	local10, #255 wz
@@ -26566,7 +26600,7 @@ LR__2346
 	mov	arg04, local04
 	or	arg04, #2
 	mov	arg01, local05
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2355
 LR__2347
 	cmp	local05, #0 wz
@@ -26589,7 +26623,7 @@ LR__2350
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2355
 LR__2351
 	cmp	local08, #0 wz
@@ -26611,7 +26645,7 @@ LR__2354
 	mov	arg02, local12
 	mov	arg03, local06
 	mov	arg04, local04
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 LR__2355
 	mov	ptra, fp
 	call	#popregs_
@@ -26677,7 +26711,7 @@ LR__2362
 	mov	arg02, local10
 	mov	arg03, local09
 	mov	arg04, local03
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2374
 LR__2363
 	cmp	local04, #0 wz
@@ -26698,7 +26732,7 @@ LR__2364
 	mov	arg02, #0
 	mov	arg03, local05
 	mov	arg04, local03
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2374
 LR__2365
 	cmp	local05, #0 wz
@@ -26713,7 +26747,7 @@ LR__2365
 	or	arg04, #2
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2374
 LR__2366
 	cmp	local04, #0 wz
@@ -26733,7 +26767,7 @@ LR__2369
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local03
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2374
 LR__2370
 	cmp	local07, #0 wz
@@ -26753,7 +26787,7 @@ LR__2373
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local03
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 LR__2374
 	mov	ptra, fp
 	call	#popregs_
@@ -26837,7 +26871,7 @@ LR__2384
 	mov	arg02, local14
 	mov	arg03, local11
 	mov	arg04, local05
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2395
 LR__2385
 	cmp	local06, #0 wz
@@ -26851,7 +26885,7 @@ LR__2385
 	mov	arg02, #0
 	mov	arg03, local07
 	mov	arg04, local05
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2395
 LR__2386
 	cmp	local09, #0 wz
@@ -26862,7 +26896,7 @@ LR__2386
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2395
 LR__2387
 	cmp	local06, #0 wz
@@ -26886,7 +26920,7 @@ LR__2390
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 	jmp	#LR__2395
 LR__2391
 	cmp	local09, #0 wz
@@ -26906,7 +26940,7 @@ LR__2394
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local05
-	call	#__system__pack_0435
+	call	#__system__pack_0436
 LR__2395
 	mov	ptra, fp
 	call	#popregs_
@@ -29536,7 +29570,7 @@ LR__2860
 __system___uitoa_ret
 	ret
 
-__system__disassemble_0327
+__system__disassemble_0328
 	mov	COUNT_, #16
 	call	#pushregs_
 	mov	local01, arg01
@@ -29671,10 +29705,10 @@ LR__2881
 LR__2882
 	mov	ptra, fp
 	call	#popregs_
-__system__disassemble_0327_ret
+__system__disassemble_0328_ret
 	ret
 
-__system__emitsign_0329
+__system__emitsign_0330
 	mov	result1, #0
 	cmp	arg02, #0 wz
  if_ne	mov	_var01, arg01
@@ -29686,7 +29720,7 @@ __system__emitsign_0329
  if_ne	add	arg01, #1
  if_ne	wrbyte	arg03, arg01
  if_ne	add	result1, #2
-__system__emitsign_0329_ret
+__system__emitsign_0330_ret
 	ret
 
 __system___gettxfunc
@@ -29733,7 +29767,7 @@ LR__2902
 __system___getrxfunc_ret
 	ret
 
-__system___getiolock_0369
+__system___getiolock_0370
 	mov	COUNT_, #1
 	call	#pushregs_
 	call	#__system____getftab
@@ -29754,7 +29788,7 @@ LR__2911
 LR__2912
 	mov	ptra, fp
 	call	#popregs_
-__system___getiolock_0369_ret
+__system___getiolock_0370_ret
 	ret
 
 __system____ScanForChar
@@ -30029,7 +30063,7 @@ LR__2943
 __system___basic_dir_ret
 	ret
 
-__system__pack_0435
+__system__pack_0436
 	mov	_var01, arg01
 	add	arg03, #127
 	test	arg04, #4 wz
@@ -30102,10 +30136,10 @@ LR__2959
 	test	arg04, #1 wz
  if_ne	bith	_var01, #31
 	mov	result1, _var01
-__system__pack_0435_ret
+__system__pack_0436_ret
 	ret
 
-__system___rxtxioctl_0524
+__system___rxtxioctl_0525
 	cmp	arg02, #256 wz
  if_e	jmp	#LR__2960
 	cmp	arg02, #257 wz
@@ -30131,12 +30165,12 @@ LR__2962
 	sub	ptr___system__dat__, #32
 	neg	result1, #1
 LR__2963
-__system___rxtxioctl_0524_ret
+__system___rxtxioctl_0525_ret
 	ret
 
-__system____dummy_flush_0525
+__system____dummy_flush_0526
 	mov	result1, #0
-__system____dummy_flush_0525_ret
+__system____dummy_flush_0526_ret
 	ret
 
 __system___vfsread
@@ -30391,16 +30425,16 @@ LR__2981
 __system____default_filbuf_ret
 	ret
 
-__system__getlower_0910
+__system__getlower_0911
 	cmps	arg01, #65 wc
  if_b	jmp	#LR__2990
 	cmps	arg01, #91 wc
  if_b	mov	result1, arg01
  if_b	add	result1, #32
- if_b	jmp	#__system__getlower_0910_ret
+ if_b	jmp	#__system__getlower_0911_ret
 LR__2990
 	mov	result1, arg01
-__system__getlower_0910_ret
+__system__getlower_0911_ret
 	ret
 
 __system___pat_match
@@ -30414,10 +30448,10 @@ LR__3000
  if_ne	cmp	local02, #42 wz
  if_e	jmp	#LR__3001
 	rdbyte	arg01, arg02
-	call	#__system__getlower_0910
+	call	#__system__getlower_0911
 	mov	local03, result1
 	rdbyte	arg01, local01
-	call	#__system__getlower_0910
+	call	#__system__getlower_0911
 	cmp	result1, local03 wz
  if_ne	mov	result1, #0
  if_ne	jmp	#LR__3009
@@ -30475,10 +30509,10 @@ LR__3006
 	cmps	local06, #1 wc
  if_b	jmp	#LR__3007
 	rdbyte	arg01, local01
-	call	#__system__getlower_0910
+	call	#__system__getlower_0911
 	mov	local08, result1
 	rdbyte	arg01, arg02
-	call	#__system__getlower_0910
+	call	#__system__getlower_0911
 	cmp	local08, result1 wz
  if_ne	mov	result1, #0
  if_ne	jmp	#LR__3009
@@ -30926,30 +30960,30 @@ _fatfs_cc_disk_initialize
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #10
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_send_cmd_0969
+	call	#_fatfs_cc_deselect_0955
 	mov	arg01, #100
 	call	#__system___waitus
 	add	fp, #20
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #10
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	wrbyte	#0, fp
 	sub	fp, #12
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	getbyte	arg04, result1, #0
 	cmp	arg04, #1 wz
  if_ne	jmp	#LR__3107
 	mov	arg01, #8
 	mov	arg02, #426
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	getbyte	result1, result1, #0
 	cmp	result1, #1 wz
  if_ne	jmp	#LR__3093
@@ -30957,7 +30991,7 @@ _fatfs_cc_disk_initialize
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #4
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #22
 	rdbyte	local04, fp
 	sub	fp, #22
@@ -30978,7 +31012,7 @@ LR__3090
  if_e	jmp	#LR__3091
 	mov	arg01, #169
 	decod	arg02, #30
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_e	jmp	#LR__3091
@@ -30997,7 +31031,7 @@ LR__3091
  if_e	jmp	#LR__3092
 	mov	arg01, #58
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local03, result1
 	zerox	local03, #7 wz
  if_ne	jmp	#LR__3092
@@ -31005,7 +31039,7 @@ LR__3091
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #4
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #20
 	rdbyte	local01, fp
 	test	local01, #64 wz
@@ -31053,7 +31087,7 @@ LR__3092
 LR__3093
 	mov	arg01, #169
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	getbyte	local04, result1, #0
 	cmp	local04, #2 wc
  if_ae	jmp	#LR__3094
@@ -31085,7 +31119,7 @@ LR__3096
 	rdbyte	arg01, fp
 	sub	fp, #16
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_e	jmp	#LR__3097
@@ -31104,7 +31138,7 @@ LR__3097
  if_e	jmp	#LR__3098
 	mov	arg01, #16
 	decod	arg02, #9
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	zerox	result1, #7 wz
  if_e	jmp	#LR__3099
 LR__3098
@@ -31196,7 +31230,7 @@ LR__3107
 	sub	objptr, #1
 	wrbyte	local04, objptr
 	sub	objptr, ##544
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_deselect_0955
 	add	fp, #52
 	rdlong	arg01, fp
 	sub	fp, #24
@@ -31258,7 +31292,7 @@ _fatfs_cc_disk_read
  if_b	mov	local04, #17
 	mov	arg02, local02
 	mov	arg01, local04
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local05, result1
 	zerox	local05, #7 wz
  if_ne	jmp	#LR__3111
@@ -31266,7 +31300,7 @@ _fatfs_cc_disk_read
 LR__3110
 	mov	arg01, local01
 	decod	arg02, #9
-	call	#_fatfs_cc_rcvr_datablock_0962
+	call	#_fatfs_cc_rcvr_datablock_0963
 	cmp	result1, #0 wz
  if_ne	add	local01, ##512
  if_ne	djnz	local03, #LR__3110
@@ -31274,9 +31308,9 @@ LR__3110
 	cmp	local04, #18 wz
  if_e	mov	arg01, #12
  if_e	mov	arg02, #0
- if_e	call	#_fatfs_cc_send_cmd_0968
+ if_e	call	#_fatfs_cc_send_cmd_0969
 LR__3111
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_deselect_0955
 ' 	}
 ' 	deselect();
 ' 
@@ -31317,13 +31351,13 @@ _fatfs_cc_disk_write
  if_ne	jmp	#LR__3120
 	mov	arg01, #24
 	mov	arg02, local03
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_ne	jmp	#LR__3123
 	mov	arg01, local01
 	mov	arg02, #254
-	call	#_fatfs_cc_xmit_datablock_0964
+	call	#_fatfs_cc_xmit_datablock_0965
 	cmp	result1, #0 wz
  if_ne	mov	local02, #0
 	jmp	#LR__3123
@@ -31334,10 +31368,10 @@ LR__3120
 	test	local04, #6 wz
  if_ne	mov	arg01, #151
  if_ne	mov	arg02, local02
- if_ne	call	#_fatfs_cc_send_cmd_0968
+ if_ne	call	#_fatfs_cc_send_cmd_0969
 	mov	arg02, local03
 	mov	arg01, #25
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_ne	jmp	#LR__3122
@@ -31345,18 +31379,18 @@ LR__3120
 LR__3121
 	mov	arg01, local01
 	mov	arg02, #252
-	call	#_fatfs_cc_xmit_datablock_0964
+	call	#_fatfs_cc_xmit_datablock_0965
 	cmp	result1, #0 wz
  if_ne	add	local01, ##512
  if_ne	djnz	local02, #LR__3121
 	mov	arg01, #0
 	mov	arg02, #253
-	call	#_fatfs_cc_xmit_datablock_0964
+	call	#_fatfs_cc_xmit_datablock_0965
 	cmp	result1, #0 wz
  if_e	mov	local02, #1
 LR__3122
 LR__3123
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_deselect_0955
 ' 				count = 1;
 ' 		}
 ' 	}
@@ -31413,7 +31447,7 @@ LR__3130
 	jmp	#LR__3135
 	jmp	#LR__3136
 LR__3131
-	call	#_fatfs_cc_select_0958
+	call	#_fatfs_cc_select_0959
 	cmp	result1, #0 wz
  if_ne	add	fp, #16
  if_ne	wrlong	#0, fp
@@ -31423,7 +31457,7 @@ LR__3131
 LR__3132
 	mov	arg01, #9
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	mov	local01, result1
 	zerox	local01, #7 wz
  if_ne	jmp	#LR__3137
@@ -31431,7 +31465,7 @@ LR__3132
 	mov	arg01, fp
 	sub	fp, #24
 	mov	arg02, #16
-	call	#_fatfs_cc_rcvr_datablock_0962
+	call	#_fatfs_cc_rcvr_datablock_0963
 	cmp	result1, #0 wz
  if_e	jmp	#LR__3137
 	add	fp, #24
@@ -31535,7 +31569,7 @@ LR__3136
 	wrlong	#4, fp
 	sub	fp, #16
 LR__3137
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_deselect_0955
 ' 			res = RES_PARERR;
 ' 	}
 ' 
@@ -39375,7 +39409,7 @@ _fatfs_cc__get_fattime
 _fatfs_cc__get_fattime_ret
 	ret
 
-_fatfs_cc_unixtime_0788
+_fatfs_cc_unixtime_0789
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #52
@@ -39440,10 +39474,10 @@ _fatfs_cc_unixtime_0788
 	sub	fp, #12
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_unixtime_0788_ret
+_fatfs_cc_unixtime_0789_ret
 	ret
 
-_fatfs_cc__set_dos_error_0790
+_fatfs_cc__set_dos_error_0791
 	mov	_var01, arg01
 ' #line 74 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
 '     switch (derr) {
@@ -39529,7 +39563,7 @@ LR__3819
 	sub	ptr___system__dat__, #32
  if_ne	neg	result1, #1
  if_e	mov	result1, #0
-_fatfs_cc__set_dos_error_0790_ret
+_fatfs_cc__set_dos_error_0791_ret
 	ret
 
 _fatfs_cc_v_creat
@@ -39566,7 +39600,7 @@ _fatfs_cc_v_creat
 '     free(f);
 '     return _set_dos_error(r);
 	mov	arg01, local04
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3821
 LR__3820
 	wrlong	local03, local01
@@ -39597,7 +39631,7 @@ _fatfs_cc_v_close
 '     free(f);
 '     return _set_dos_error(r);
 	mov	arg01, local02
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	mov	ptra, fp
 	call	#popregs_
 _fatfs_cc_v_close_ret
@@ -39631,7 +39665,7 @@ _fatfs_cc_v_opendir
 '         free(f);
 '         return _set_dos_error(r);
 	mov	arg01, local04
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3831
 LR__3830
 	add	local01, #4
@@ -39659,7 +39693,7 @@ _fatfs_cc_v_closedir
 	call	#__system___gc_free
 	cmp	local02, #0 wz
  if_ne	mov	arg01, local02
- if_ne	call	#_fatfs_cc__set_dos_error_0790
+ if_ne	call	#_fatfs_cc__set_dos_error_0791
 '     return r;
 	mov	result1, local02
 	mov	ptra, fp
@@ -39692,7 +39726,7 @@ _fatfs_cc_v_readdir
 	add	fp, #296
 	rdlong	arg01, fp
 	sub	fp, #296
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3843
 LR__3840
 	add	fp, #40
@@ -39743,7 +39777,7 @@ LR__3842
 	add	fp, #2
 	rdword	arg02, fp
 	sub	fp, #18
-	call	#_fatfs_cc_unixtime_0788
+	call	#_fatfs_cc_unixtime_0789
 	add	local01, #76
 	wrlong	result1, local01
 '         ent->d_type =  (0) ;
@@ -39813,7 +39847,7 @@ LR__3852
 	add	fp, #12
 	rdlong	arg01, fp
 	sub	fp, #12
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3854
 LR__3853
 	add	fp, #300
@@ -39873,7 +39907,7 @@ LR__3853
 	add	fp, #2
 	rdword	arg02, fp
 	sub	fp, #22
-	call	#_fatfs_cc_unixtime_0788
+	call	#_fatfs_cc_unixtime_0789
 	add	local01, #44
 	wrlong	result1, local01
 	add	local02, #40
@@ -39950,7 +39984,7 @@ _fatfs_cc_v_read
 	add	fp, #16
 	rdlong	arg01, fp
 	sub	fp, #20
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3862
 LR__3860
 	add	fp, #24
@@ -40030,7 +40064,7 @@ _fatfs_cc_v_write
 	add	fp, #16
 	rdlong	arg01, fp
 	sub	fp, #20
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3871
 LR__3870
 '     }
@@ -40075,7 +40109,7 @@ LR__3880
 	mov	arg01, result1 wz
  if_e	jmp	#LR__3881
 '         return _set_dos_error(result);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3882
 LR__3881
 '     }
@@ -40103,7 +40137,7 @@ _fatfs_cc_v_mkdir
 ' 
 '     r = f_mkdir(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 _fatfs_cc_v_mkdir_ret
 	ret
 
@@ -40113,7 +40147,7 @@ _fatfs_cc_v_remove
 ' 
 '     r = f_unlink(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 _fatfs_cc_v_remove_ret
 	ret
 
@@ -40123,7 +40157,7 @@ _fatfs_cc_v_rmdir
 ' 
 '     r = f_unlink(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 _fatfs_cc_v_rmdir_ret
 	ret
 
@@ -40131,7 +40165,7 @@ _fatfs_cc_v_rename
 	call	#_fatfs_cc_f_rename
 	mov	arg01, result1
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 _fatfs_cc_v_rename_ret
 	ret
 
@@ -40199,7 +40233,7 @@ LR__3894
 ' #line 417 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(r);
 	mov	arg01, local07
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 	jmp	#LR__3896
 LR__3895
 	wrlong	local04, local01
@@ -40229,7 +40263,7 @@ _fatfs_cc_v_flush
 '     result = f_sync(f);
 ' #line 441 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(result);
-	call	#_fatfs_cc__set_dos_error_0790
+	call	#_fatfs_cc__set_dos_error_0791
 LR__3900
 _fatfs_cc_v_flush_ret
 	ret
@@ -40373,7 +40407,7 @@ _fatfs_cc_get_vfs
 _fatfs_cc_get_vfs_ret
 	ret
 
-_fatfs_cc_xmit_mmc_0937
+_fatfs_cc_xmit_mmc_0938
 	add	objptr, ##528
 	rdlong	_var01, objptr
 	add	objptr, #8
@@ -40409,10 +40443,10 @@ LR__3912
 	dirl	_var02
 	wypin	##-1, _var02
 	dirh	_var02
-_fatfs_cc_xmit_mmc_0937_ret
+_fatfs_cc_xmit_mmc_0938_ret
 	ret
 
-_fatfs_cc_rcvr_mmc_0944
+_fatfs_cc_rcvr_mmc_0945
 	add	objptr, ##528
 	rdlong	_var01, objptr
 	add	objptr, #12
@@ -40451,10 +40485,10 @@ LR__3924
 	add	arg01, #1
 	djnz	arg02, #LR__3923
 LR__3925
-_fatfs_cc_rcvr_mmc_0944_ret
+_fatfs_cc_rcvr_mmc_0945_ret
 	ret
 
-_fatfs_cc_wait_ready_0948
+_fatfs_cc_wait_ready_0949
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #16
@@ -40478,7 +40512,7 @@ LR__3930
 	mov	arg01, fp
 	sub	fp, #4
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #4
 	rdbyte	local01, fp
 	sub	fp, #4
@@ -40498,10 +40532,10 @@ LR__3930
 LR__3931
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_wait_ready_0948_ret
+_fatfs_cc_wait_ready_0949_ret
 	ret
 
-_fatfs_cc_deselect_0954
+_fatfs_cc_deselect_0955
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #20
@@ -40529,13 +40563,13 @@ _fatfs_cc_deselect_0954
 	waitx	#16
 	mov	arg01, fp
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_deselect_0954_ret
+_fatfs_cc_deselect_0955_ret
 	ret
 
-_fatfs_cc_select_0958
+_fatfs_cc_select_0959
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #16
@@ -40560,12 +40594,12 @@ _fatfs_cc_select_0958
 	mov	arg01, fp
 	sub	fp, #4
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
-	call	#_fatfs_cc_wait_ready_0948
+	call	#_fatfs_cc_rcvr_mmc_0945
+	call	#_fatfs_cc_wait_ready_0949
 	cmp	result1, #0 wz
  if_ne	mov	result1, #1
  if_ne	jmp	#LR__3940
-	call	#_fatfs_cc_deselect_0954
+	call	#_fatfs_cc_deselect_0955
 ' 
 ' 	deselect();
 ' 	return 0;
@@ -40573,10 +40607,10 @@ _fatfs_cc_select_0958
 LR__3940
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_select_0958_ret
+_fatfs_cc_select_0959_ret
 	ret
 
-_fatfs_cc_rcvr_datablock_0962
+_fatfs_cc_rcvr_datablock_0963
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #24
@@ -40607,7 +40641,7 @@ LR__3950
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	rdbyte	local01, fp
 	sub	fp, #12
@@ -40635,12 +40669,12 @@ LR__3951
 	add	fp, #4
 	rdlong	arg02, fp
 	sub	fp, #8
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #2
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 ' 
 ' 	rcvr_mmc(buff, btr);
 ' 	rcvr_mmc(d, 2);
@@ -40650,10 +40684,10 @@ LR__3951
 LR__3952
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_rcvr_datablock_0962_ret
+_fatfs_cc_rcvr_datablock_0963_ret
 	ret
 
-_fatfs_cc_xmit_datablock_0964
+_fatfs_cc_xmit_datablock_0965
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #16
@@ -40662,7 +40696,7 @@ _fatfs_cc_xmit_datablock_0964
 	add	fp, #4
 	wrbyte	arg02, fp
 	sub	fp, #8
-	call	#_fatfs_cc_wait_ready_0948
+	call	#_fatfs_cc_wait_ready_0949
 	cmp	result1, #0 wz
  if_e	mov	result1, #0
  if_e	jmp	#LR__3961
@@ -40673,7 +40707,7 @@ _fatfs_cc_xmit_datablock_0964
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_xmit_mmc_0937
+	call	#_fatfs_cc_xmit_mmc_0938
 	add	fp, #8
 	rdbyte	arg02, fp
 	sub	fp, #8
@@ -40683,17 +40717,17 @@ _fatfs_cc_xmit_datablock_0964
 	rdlong	arg01, fp
 	sub	fp, #4
 	decod	arg02, #9
-	call	#_fatfs_cc_xmit_mmc_0937
+	call	#_fatfs_cc_xmit_mmc_0938
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #2
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	rdbyte	arg02, fp
 	sub	fp, #12
@@ -40710,14 +40744,14 @@ LR__3960
 LR__3961
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_xmit_datablock_0964_ret
+_fatfs_cc_xmit_datablock_0965_ret
 	ret
 
-_fatfs_cc_send_cmd_0968
+_fatfs_cc_send_cmd_0969
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #28
-_fatfs_cc_send_cmd_0968_enter
+_fatfs_cc_send_cmd_0969_enter
 	add	fp, #4
 	wrbyte	arg01, fp
 	add	fp, #4
@@ -40734,7 +40768,7 @@ _fatfs_cc_send_cmd_0968_enter
 	sub	fp, #4
 	mov	arg01, #55
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_0968
+	call	#_fatfs_cc_send_cmd_0969
 	add	fp, #12
 	wrbyte	result1, fp
 	rdbyte	arg02, fp
@@ -40750,8 +40784,8 @@ LR__3970
 	sub	fp, #4
 	cmp	arg02, #12 wz
  if_e	jmp	#LR__3971
-	call	#_fatfs_cc_deselect_0954
-	call	#_fatfs_cc_select_0958
+	call	#_fatfs_cc_deselect_0955
+	call	#_fatfs_cc_select_0959
 	cmp	result1, #0 wz
  if_e	mov	result1, #255
  if_e	jmp	#LR__3974
@@ -40804,7 +40838,7 @@ LR__3971
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #6
-	call	#_fatfs_cc_xmit_mmc_0937
+	call	#_fatfs_cc_xmit_mmc_0938
 	add	fp, #4
 	rdbyte	local01, fp
 	sub	fp, #4
@@ -40813,7 +40847,7 @@ LR__3971
  if_e	mov	arg01, fp
  if_e	sub	fp, #16
  if_e	mov	arg02, #1
- if_e	call	#_fatfs_cc_rcvr_mmc_0944
+ if_e	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #12
 	wrbyte	#10, fp
 	sub	fp, #12
@@ -40824,7 +40858,7 @@ LR__3972
 	mov	arg01, fp
 	sub	fp, #16
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0944
+	call	#_fatfs_cc_rcvr_mmc_0945
 	add	fp, #16
 	rdbyte	local01, fp
 	sub	fp, #16
@@ -40846,7 +40880,7 @@ LR__3973
 LR__3974
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_send_cmd_0968_ret
+_fatfs_cc_send_cmd_0969_ret
 	ret
 
 _fatfs_cc_disk_deinitialize
@@ -42662,7 +42696,7 @@ _dat_
 	byte	$0d, $70, $09, $70, $07, $70, $03, $70, $01, $70, $fd, $6f, $fa, $6f, $f7, $6f
 	byte	$f6, $6f, $f2, $6f, $ef, $6f, $ec, $6f, $2c, $70, $e6, $6f, $27, $70, $9d, $6f
 	byte	$dd, $6f, $97, $6f, $d7, $6f, $84, $6e, $8f, $6f, $3f, $7d, $b7, $3d
-'-' mouse  file "mouse.def"
+'-' mouse  file "mouse2.def"
 	byte	$01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[16]
 	byte	$01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -42691,15 +42725,15 @@ _dat_
 	byte	$00[16]
 	byte	$01, $0d, $0d, $0c, $01, $09, $0d, $03, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[16]
-	byte	$01, $0d, $0c, $00, $00, $01, $0d, $0b, $01, $00, $00, $00, $00, $00, $00, $00
+	byte	$01, $0d, $0c, $01, $00, $01, $0d, $0b, $01, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[16]
-	byte	$01, $0c, $00, $00, $00, $01, $0a, $0d, $01, $00, $00, $00, $00, $00, $00, $00
+	byte	$01, $0c, $01, $00, $00, $01, $0a, $0d, $01, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[16]
-	byte	$01, $00, $00, $00, $00, $00, $01, $0d, $0b, $01, $00, $00, $00, $00, $00, $00
+	byte	$01, $01, $00, $00, $00, $00, $01, $0d, $0b, $01, $00, $00, $00, $00, $00, $00
 	byte	$00[22]
 	byte	$01, $0b, $0d, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[17]
-	byte	$01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[425]
 '-' 
 '-'              	org
@@ -52449,24 +52483,24 @@ __system__dat_
 	long	(116 {__system___tx})<<20
 	long	(117 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(118 {__system___rxtxioctl_0524})<<20
-	long	(119 {__system____dummy_flush_0525})<<20
+	long	(118 {__system___rxtxioctl_0525})<<20
+	long	(119 {__system____dummy_flush_0526})<<20
 	byte	$00[8]
 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 	long	(116 {__system___tx})<<20
 	long	(117 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(118 {__system___rxtxioctl_0524})<<20
-	long	(119 {__system____dummy_flush_0525})<<20
+	long	(118 {__system___rxtxioctl_0525})<<20
+	long	(119 {__system____dummy_flush_0526})<<20
 	byte	$00[8]
 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 	long	(116 {__system___tx})<<20
 	long	(117 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(118 {__system___rxtxioctl_0524})<<20
-	long	(119 {__system____dummy_flush_0525})<<20
+	long	(118 {__system___rxtxioctl_0525})<<20
+	long	(119 {__system____dummy_flush_0526})<<20
 	byte	$00[376]
 	long	@@@__system__dat_ + 1844
 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -52704,8 +52738,8 @@ __methodtable__
 	long	@_fatfs_cc_v_deinit
 	long	@__system___tx
 	long	@__system___rx
-	long	@__system___rxtxioctl_0524
-	long	@__system____dummy_flush_0525
+	long	@__system___rxtxioctl_0525
+	long	@__system____dummy_flush_0526
 	long	@_fatfs_cc_v_flush
 __heap_base
 	long	0[64002]
