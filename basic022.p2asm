@@ -30184,7 +30184,7 @@ _fatfs_cc_strncmp_ret
 	ret
 
 _fatfs_cc_strchr
-' #line 16 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/libc/string/strchr.c"
+' #line 16 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/libc/string/strchr.c"
 ' 	while ((c = *s++) != (char) charwanted)
 LR__3080
 	mov	_var01, arg01
@@ -30234,7 +30234,7 @@ _fatfs_cc_disk_initialize
 	sub	fp, #56
 	rdbyte	arg04, fp wz
 	sub	fp, #4
-' #line 531 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/sdmm.cc"
+' #line 531 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/sdmm.cc"
 '             return RES_NOTRDY;
  if_ne	mov	result1, #3
  if_ne	jmp	#LR__3108
@@ -30600,7 +30600,7 @@ LR__3107
 ' 
 ' 		}
 ' 	}
-' #line 631 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/sdmm.cc"
+' #line 631 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/sdmm.cc"
 ' 	CardType = ty;
 ' 	s = ty ? 0 :  0x01 ;
 ' 	Stat = s;
@@ -30610,7 +30610,7 @@ LR__3107
 ' 
 ' 	_wxpin( PIN_CLK, ck_div );
 ' 	_wrpin( PIN_DI, spm_tx );
-' #line 644 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/sdmm.cc"
+' #line 644 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/sdmm.cc"
 ' 	return s;
 	add	fp, #8
 	rdbyte	result1, fp
@@ -38825,7 +38825,7 @@ _fatfs_cc_unixtime_0769
 '     date.tm_sec = (dostime & 0x1f) << 1;
 ' 
 '     t = mktime(&date);
-' #line 60 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 60 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return t;
 	sub	fp, #12
 	mov	ptra, fp
@@ -38835,7 +38835,7 @@ _fatfs_cc_unixtime_0769_ret
 
 _fatfs_cc__set_dos_error_0771
 	mov	_var01, arg01
-' #line 74 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 74 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     switch (derr) {
 	fle	_var01, #20
 	jmprel	_var01
@@ -39003,7 +39003,7 @@ _fatfs_cc_v_opendir
 	mov	arg02, #16
 	call	#__system___gc_doalloc
 	mov	local03, result1 wz
-' #line 158 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 158 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '       return _seterror( 7 );
  if_e	add	ptr___system__dat__, #32
  if_e	wrlong	#7, ptr___system__dat__
@@ -39278,7 +39278,7 @@ LR__3853
 '     buf->st_blksize = 512;
 '     buf->st_blocks = (buf->st_size + 511) / 512;
 '     buf->st_atime = buf->st_mtime = buf->st_ctime = unixtime(finfo.fdate, finfo.ftime);
-' #line 249 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 249 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return r;
 	add	fp, #12
 	rdlong	result1, fp
@@ -39586,7 +39586,7 @@ LR__3894
 '     return _gc_free(ptr);
 	call	#__system___gc_free
 '     free(f);
-' #line 417 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 417 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(r);
 	mov	arg01, local07
 	call	#_fatfs_cc__set_dos_error_0771
@@ -39615,9 +39615,9 @@ _fatfs_cc_v_flush
 	call	#_fatfs_cc_f_sync
 	mov	arg01, result1
 '     }
-' #line 437 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 437 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     result = f_sync(f);
-' #line 441 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 441 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(result);
 	call	#_fatfs_cc__set_dos_error_0771
 LR__3900
@@ -39642,7 +39642,7 @@ _fatfs_cc_v_deinit
 	rdlong	arg02, objptr
 	sub	objptr, ##524
 	call	#__system___freepins
-' #line 462 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 462 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     _freepins(f_pinmask);
 '     return 0;
 	mov	result1, #0
@@ -40252,7 +40252,7 @@ _fatfs_cc_disk_deinitialize
 	add	objptr, #4
 	rdlong	local03, objptr
 	sub	objptr, ##540
-' #line 799 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/sdmm.cc"
+' #line 799 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/sdmm.cc"
 '         return RES_NOTRDY;
  if_ne	mov	result1, #3
  if_ne	jmp	#LR__3980
@@ -40267,7 +40267,7 @@ _fatfs_cc_disk_deinitialize
 	mov	arg01, #10
 	call	#__system___waitms
 '     }
-' #line 805 "C:/Users/Piotr/Downloads/flexprop-6.1.5/flexprop/include/filesys/fatfs/sdmm.cc"
+' #line 805 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/sdmm.cc"
 '     _pinclear(PIN_SS);
 '     _pinclear(PIN_CLK);
 '     _pinclear(PIN_DI);

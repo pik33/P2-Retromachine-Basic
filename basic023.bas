@@ -1,4 +1,4 @@
-const HEAPSIZE=256000
+const HEAPSIZE=192000
 '#define PSRAM4
 #define PSRAM16
 
@@ -23,8 +23,8 @@ dim paula as class using "audio093b-8-sc.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.21"
-const ver=21
+const ver$="P2 Retromachine BASIC version 0.23"
+const ver=23
 '' ------------------------------- Keyboard constants
 
 const   key_enter=141    
@@ -156,7 +156,9 @@ const token_getpixel=111
 const token_waitclock=112
 const token_fill=113
 const token_dim=114
-
+const token_defsnd=115
+const token_defenv=116
+const token_play=117
 
 const token_error=255
 const token_end=510
@@ -196,7 +198,8 @@ const array_string=11+256
 const maxvars=1023       
 const maxstack=512
 const maxfor=128
-
+dim samplebuf(7,1023) as short
+dim adsrbuf(7,256) as ushort
 
 
 ''-----------------------------------------------------------------------------------------
@@ -347,7 +350,7 @@ free$=decuns$(v.buf_ptr)+" BASIC bytes free" : print free$
 position 2*editor_spaces,4 : print "Ready"
 'hubset( %1_000001__00_0001_1010__1111_1011)
 
-
+for i=0 to 20: print sin(i) : next i
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -747,6 +750,9 @@ select case s
   case "waitclock"   : return token_waitclock
   case "fill"        : return token_fill
   case "dim"	     : return token_dim
+  case "defsnd"	     : return token_defsnd
+  case "defenv"	     : return token_defenv
+  case "play"	     : return token_play
   case else          : return 0  
 end select
 end function
@@ -986,6 +992,9 @@ vars=0
   case token_cls      : compile_nothing()   'no params, do nothing, only add a command to the line, but case needs something to do after 
   case token_new      : compile_nothing()   
   case token_list     : vars=compile_fun_varp()   
+  case token_defsnd     : vars=compile_fun_varp()   
+  case token_defenv     : vars=compile_fun_varp()   
+  case token_play     : vars=compile_fun_varp()   
   case token_run      : compile_nothing()   
   case token_plot     : err=compile_fun_2p()   
   case token_draw     : err=compile_fun_2p()   
@@ -1030,7 +1039,7 @@ end select
 t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr+=1
 450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 
-'print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -2037,7 +2046,82 @@ endif
 inrun=0
 end sub
 
-' ---------------  List the program. Todo: it should accept parameters and do "more"
+
+sub do_defsnd
+dim numpar,i,j,par,channel as integer
+dim even,odd, max,spl as single 
+dim t1 as expr_result
+dim s as string
+dim harm(15) as single
+
+numpar=compiledline(lineptr_e).result.uresult
+
+
+' defsnd channel, string - tries to load from /media/s an s2 file from PC-Softsynth
+' defsnd channel, h1,h2.... h15 - defines harmonics
+' defsnd channel, negfloat, negfloat - defines even and odd harmonics dampening
+' defsnd channel, oneint - defines waveshape as in SID and 0=sinewave
+ 
+if numpar=0 then return
+t1=pop()
+channel=converttoint(t1)
+ 
+if numpar=1 then
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s=do_convertstring(t1.result.uresult)
+  else if t1.result_type=result_string then 
+    s=t1.result.sresult
+  else 
+    s=""
+  endif  
+
+    
+  if s<>"" then 
+    close #9 : open "/sd/media/s/"+s for input as #9
+    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
+    get #9,17,samplebuf(channel,0),1024
+    close #9
+    return
+  endif
+ 
+  par=converttoint(t1)
+  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1/512*3.14159265359*i)) : next i
+  return
+  ' todo caser and generate sid waves
+endif
+for i=0 to 15 : harm(i)=0: next i  
+for i=numpar to 2 step -1 
+  t1=pop() 
+  harm(i-2)=converttofloat(t1)
+next i
+for j=0 to 1023: samplebuf(channel, i) =0 : next j
+max=0
+if harm(0)<0 then
+  even=abs(harm(0))
+  odd=abs(harm(1)) 
+  harm(0)=1
+  harm(1)=even
+  harm(2)=odd
+  for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
+  for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
+endif
+if harm(0)>0 then ' synthesize with harmonics
+  for i=0 to 10
+    spl=0
+    for j=0 to 15: spl+=harm(j)*sin((1/512)*3.14159265359*i*(j+1)) :next j :  print spl
+    if abs(spl)>max then max=abs(spl)  
+  next i  
+  for i=0 to 1023
+    spl=0
+    for j=0 to 15: spl+=harm(i)*(32600/max)*sin(1/512*3.14159265359*(j+1)) :next j 
+    samplebuf(channel,i)=round(spl)
+  next i  
+endif 
+for i=0 to 10 : print samplebuf(channel,i),: next i
+end sub
+
+' ---------------  List the program. 
 
 sub do_list
 dim numpar, startline,endline
@@ -2609,6 +2693,19 @@ select case t1.result_type
   case result_float: return round(t1.result.fresult)
   case result_string: return val(t1.result.sresult)
   case else: return 0
+end select
+end function
+
+function converttofloat (t1 as expr_result) as single
+
+dim s as single
+
+select case t1.result_type
+  case result_int:  s=t1.result.iresult : return s
+  case result_uint: s=t1.result.uresult : return s
+  case result_float: return t1.result.fresult
+  case result_string: return val(t1.result.sresult)
+  case else: return 0.0
 end select
 end function
 
@@ -3357,6 +3454,7 @@ commands(token_getpixel)=@do_getpixel
 commands(token_waitclock)=@do_waitclock
 commands(fun_negative)=@do_negative
 commands(token_fill)=@do_fill
+commands(token_defsnd)=@do_defsnd
 end sub
 
 ''--------------------------------Error strings -------------------------------------
