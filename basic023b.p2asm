@@ -4790,7 +4790,7 @@ LR__0408
 	sub	objptr, ##31808
 LR__0409
 ' 
-' 'print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+' ' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 ' return err
 	mov	result1, local05
 	mov	ptra, fp
@@ -10860,7 +10860,9 @@ _do_assign
 	rdlong	arg02, fp
 	add	arg03, #12
 	wrlong	arg02, arg03
-'   t1=pop() : variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type 
+'   t1=pop() 
+' 'print "In do_assign value to assign=";t1.result.uresult, "type to assign=";t1.result_type  
+'    variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type 
 '   if variables(varnum).vartype<>result_string2 then return
 	add	fp, #16
 	rdlong	arg03, fp
@@ -11628,6 +11630,10 @@ LR__0930
 	sub	fp, #52
 	call	#_pslpeek
 	wrlong	result1, fp
+	cmp	result1, ##524288 wc
+ if_ae	add	fp, #8
+ if_ae	wrlong	#43, fp
+ if_ae	sub	fp, #8
 LR__0931
 	mov	arg01, fp
 	call	#_push
@@ -11683,7 +11689,7 @@ _do_plus
 	sub	fp, #12
 	add	local01, local02
 	wrlong	local01, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0940
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult+t2.result.iresult: t1.result_type=result_int :goto 1040
 	add	fp, #8
@@ -11705,7 +11711,7 @@ LR__0940
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0941
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.uresult)+t2.result.fresult: t1.result_type=result_float :goto 1040
 	add	fp, #8
@@ -11729,7 +11735,7 @@ LR__0941
 	add	fp, #8
 	wrlong	#30, fp
 	sub	fp, #8
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0942
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult+=t2.result.uresult: goto 1040
 	add	fp, #8
@@ -11748,7 +11754,7 @@ LR__0942
 	sub	fp, #12
 	add	local01, local02
 	wrlong	local01, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0943
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult+=t2.result.iresult:goto 1040
 	add	fp, #8
@@ -11767,7 +11773,7 @@ LR__0943
 	sub	fp, #12
 	add	local01, local02
 	wrlong	local01, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0944
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.iresult)+t2.result.fresult: t1.result_type=result_float :goto 1040
 	add	fp, #8
@@ -11777,7 +11783,8 @@ LR__0944
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #30 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__0945
 	rdlong	arg01, fp
 	abs	arg01, arg01 wc
@@ -11794,7 +11801,7 @@ LR__0944
 	add	fp, #8
 	wrlong	#30, fp
 	sub	fp, #8
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0945
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.fresult=t1.result.fresult+cast(single,t2.result.uresult) :goto 1040
 	add	fp, #8
@@ -11802,8 +11809,9 @@ LR__0945
 	sub	fp, #8
 	cmp	local01, #30 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__0946
 	rdlong	local01, fp
@@ -11815,7 +11823,7 @@ LR__0945
 	mov	arg01, local01
 	call	#__system___float_add
 	wrlong	result1, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0946
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.fresult=t1.result.fresult+cast(single,t2.result.iresult) :goto 1040
 	add	fp, #8
@@ -11823,8 +11831,9 @@ LR__0946
 	sub	fp, #8
 	cmp	local01, #30 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__0947
 	rdlong	local01, fp
@@ -11840,7 +11849,7 @@ LR__0946
 	mov	arg01, local01
 	call	#__system___float_add
 	wrlong	result1, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0947
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult+=t2.result.fresult:goto 1040
 	add	fp, #8
@@ -11848,9 +11857,9 @@ LR__0947
 	sub	fp, #8
 	cmp	local01, #30 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #30 wz
+ if_e	cmp	local04, #30 wz
  if_ne	jmp	#LR__0948
 	rdlong	arg01, fp
 	add	fp, #12
@@ -11858,7 +11867,7 @@ LR__0947
 	sub	fp, #12
 	call	#__system___float_add
 	wrlong	result1, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0948
 ' if t1.result_type=result_string andalso t2.result_type<>result_string then t1.result.uresult=2 :t1.result_type=result_error:goto 1040
 	add	fp, #8
@@ -11874,7 +11883,7 @@ LR__0948
  if_ne	add	fp, #8
  if_ne	wrlong	#255, fp
  if_ne	sub	fp, #8
- if_ne	jmp	#LR__0952
+ if_ne	jmp	#LR__0955
 LR__0949
 ' if t2.result_type=result_string andalso t1.result_type<>result_string then t1.result.uresult=2 :t1.result_type=result_error:goto 1040
 	add	fp, #20
@@ -11890,7 +11899,7 @@ LR__0949
  if_ne	add	fp, #8
  if_ne	wrlong	#255, fp
  if_ne	sub	fp, #8
- if_ne	jmp	#LR__0952
+ if_ne	jmp	#LR__0955
 LR__0950
 ' if t1.result_type=result_string andalso t2.result_type=result_string then t1.result.sresult=t1.result.sresult+t2.result.sresult :goto 1040
 	add	fp, #8
@@ -11908,13 +11917,83 @@ LR__0950
 	sub	fp, #12
 	call	#__system___string_concat
 	wrlong	result1, fp
-	jmp	#LR__0952
+	jmp	#LR__0955
 LR__0951
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.sresult=convertstring(t1.result.uresult)+t2.result.sresult : t1.result_type=result_string:goto 1040
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__0952
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_concat
+	wrlong	result1, fp
+	add	fp, #8
+	wrlong	#31, fp
+	sub	fp, #8
+	jmp	#LR__0955
+LR__0952
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.sresult=t1.result.sresult+convertstring(t2.result.uresult) :goto 1040
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__0953
+	rdlong	local01, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local01
+	call	#__system___string_concat
+	wrlong	result1, fp
+	jmp	#LR__0955
+LR__0953
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)+convertstring(t2.result.uresult) : t1.result_type=result_string :goto 1040
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__0954
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local01, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local01
+	call	#__system___string_concat
+	wrlong	result1, fp
+	add	fp, #8
+	wrlong	#31, fp
+	sub	fp, #8
+	jmp	#LR__0955
+LR__0954
 	wrlong	#4, fp
 	add	fp, #8
 	wrlong	#255, fp
 	sub	fp, #8
-LR__0952
+LR__0955
 	mov	arg01, fp
 	call	#_push
 	mov	ptra, fp
@@ -13402,7 +13481,7 @@ _do_eq
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1070
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult=t2.result.fresult) : goto 1150
 	add	fp, #8
@@ -13425,7 +13504,7 @@ LR__1070
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1071
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult=t2.result.iresult) : goto 1150
 	add	fp, #8
@@ -13455,7 +13534,7 @@ LR__1071
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1072
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult=t2.result.uresult) : goto 1150
 	add	fp, #8
@@ -13465,7 +13544,8 @@ LR__1072
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1073
 	mov	local01, #0
 	rdlong	local02, fp
@@ -13480,7 +13560,7 @@ LR__1072
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1073
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult=t2.result.fresult) : goto 1150
 	add	fp, #8
@@ -13488,8 +13568,9 @@ LR__1073
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1074
 	mov	local01, #0
@@ -13508,7 +13589,7 @@ LR__1073
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1074
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult=t2.result.iresult) : goto 1150
 	add	fp, #8
@@ -13516,8 +13597,9 @@ LR__1074
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1075
 	mov	local01, #0
@@ -13528,7 +13610,7 @@ LR__1074
 	cmp	local02, local03 wz
  if_e	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1075
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult=t2.result.uresult) : goto 1150
 	add	fp, #8
@@ -13536,9 +13618,9 @@ LR__1075
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1076
 	mov	local01, #0
 	rdlong	local02, fp
@@ -13548,7 +13630,7 @@ LR__1075
 	cmp	local02, local03 wz
  if_e	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1076
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult=t2.result.fresult) : goto 1150
 	add	fp, #8
@@ -13572,7 +13654,7 @@ LR__1076
 	cmp	result1, #0 wz
  if_e	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1077
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult=t2.result.iresult) : goto 1150
 	add	fp, #8
@@ -13592,7 +13674,7 @@ LR__1077
 	cmp	local02, local03 wz
  if_e	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1078
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult=t2.result.uresult) : goto 1150
 	add	fp, #8
@@ -13612,10 +13694,83 @@ LR__1078
 	cmp	local02, local03 wz
  if_e	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1080
+	jmp	#LR__1083
 LR__1079
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)=t2.result.sresult):goto 1150
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1080
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1083
 LR__1080
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult=convertstring(t2.result.uresult)) :goto 1150
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1081
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1083
+LR__1081
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)=convertstring(t2.result.uresult)) :goto 1150
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1082
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1083
+LR__1082
+	wrlong	#0, fp
+LR__1083
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -13671,7 +13826,7 @@ _do_gt
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1090
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult>t2.result.fresult) : goto 1160
 	add	fp, #8
@@ -13694,7 +13849,7 @@ LR__1090
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1091
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult>t2.result.iresult) : goto 1160
 	add	fp, #8
@@ -13724,7 +13879,7 @@ LR__1091
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1092
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult>t2.result.uresult) : goto 1160
 	add	fp, #8
@@ -13734,7 +13889,8 @@ LR__1092
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1093
 	mov	local01, #0
 	rdlong	local02, fp
@@ -13749,7 +13905,7 @@ LR__1092
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1093
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult>t2.result.fresult) : goto 1160
 	add	fp, #8
@@ -13757,8 +13913,9 @@ LR__1093
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1094
 	mov	local01, #0
@@ -13777,7 +13934,7 @@ LR__1093
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1094
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult>t2.result.iresult) : goto 1160
 	add	fp, #8
@@ -13785,8 +13942,9 @@ LR__1094
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1095
 	mov	local01, #0
@@ -13797,7 +13955,7 @@ LR__1094
 	cmps	local02, local03 wcz
  if_a	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1095
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult>t2.result.uresult) : goto 1160
 	add	fp, #8
@@ -13805,9 +13963,9 @@ LR__1095
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1096
 	mov	local01, #0
 	rdlong	local02, fp
@@ -13817,7 +13975,7 @@ LR__1095
 	cmps	local02, local03 wcz
  if_a	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1096
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult>t2.result.fresult) : goto 1160
 	add	fp, #8
@@ -13841,7 +13999,7 @@ LR__1096
 	cmps	result1, #1 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1097
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult>t2.result.iresult) : goto 1160
 	add	fp, #8
@@ -13861,7 +14019,7 @@ LR__1097
 	cmps	local02, local03 wcz
  if_a	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1098
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult>t2.result.uresult) : goto 1160
 	add	fp, #8
@@ -13881,10 +14039,83 @@ LR__1098
 	cmp	local02, local03 wcz
  if_a	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1100
+	jmp	#LR__1103
 LR__1099
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)>t2.result.sresult):goto 1160
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1100
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1103
 LR__1100
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult>convertstring(t2.result.uresult)) :goto 1160
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1101
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1103
+LR__1101
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)>convertstring(t2.result.uresult)) :goto 1160
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1102
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1103
+LR__1102
+	wrlong	#0, fp
+LR__1103
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -13940,7 +14171,7 @@ _do_lt
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1110
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult<t2.result.fresult) : goto 1170
 	add	fp, #8
@@ -13963,7 +14194,7 @@ LR__1110
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1111
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult<t2.result.iresult) : goto 1170
 	add	fp, #8
@@ -13993,7 +14224,7 @@ LR__1111
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1112
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult<t2.result.uresult) : goto 1170
 	add	fp, #8
@@ -14003,7 +14234,8 @@ LR__1112
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1113
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14018,7 +14250,7 @@ LR__1112
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1113
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult<t2.result.fresult) : goto 1170
 	add	fp, #8
@@ -14026,8 +14258,9 @@ LR__1113
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1114
 	mov	local01, #0
@@ -14046,7 +14279,7 @@ LR__1113
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1114
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult<t2.result.iresult) : goto 1170
 	add	fp, #8
@@ -14054,8 +14287,9 @@ LR__1114
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1115
 	rdlong	local02, fp
@@ -14065,7 +14299,7 @@ LR__1114
 	cmps	local02, local03 wc
 	subx	local01, local01
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1115
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult<t2.result.uresult) : goto 1170
 	add	fp, #8
@@ -14073,9 +14307,9 @@ LR__1115
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1116
 	rdlong	local02, fp
 	add	fp, #12
@@ -14084,7 +14318,7 @@ LR__1115
 	cmps	local02, local03 wc
 	subx	local01, local01
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1116
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult<t2.result.fresult) : goto 1170
 	add	fp, #8
@@ -14108,7 +14342,7 @@ LR__1116
 	cmps	result1, #0 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1117
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult<t2.result.iresult) : goto 1170
 	add	fp, #8
@@ -14127,7 +14361,7 @@ LR__1117
 	cmps	local02, local03 wc
 	subx	local01, local01
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1118
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult<t2.result.uresult) : goto 1170
 	add	fp, #8
@@ -14146,10 +14380,83 @@ LR__1118
 	cmp	local02, local03 wc
 	subx	local01, local01
 	wrlong	local01, fp
-	jmp	#LR__1120
+	jmp	#LR__1123
 LR__1119
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<t2.result.sresult):goto 1170
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1120
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1123
 LR__1120
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<convertstring(t2.result.uresult)) :goto 1170
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1121
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1123
+LR__1121
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<convertstring(t2.result.uresult)) :goto 1170
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1122
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1123
+LR__1122
+	wrlong	#0, fp
+LR__1123
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -14205,7 +14512,7 @@ _do_ge
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1130
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult>=t2.result.fresult) : goto 1180
 	add	fp, #8
@@ -14228,7 +14535,7 @@ LR__1130
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1131
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult>=t2.result.iresult) : goto 1180
 	add	fp, #8
@@ -14258,7 +14565,7 @@ LR__1131
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1132
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult>=t2.result.uresult) : goto 1180
 	add	fp, #8
@@ -14268,7 +14575,8 @@ LR__1132
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1133
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14283,7 +14591,7 @@ LR__1132
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1133
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult>=t2.result.fresult) : goto 1180
 	add	fp, #8
@@ -14291,8 +14599,9 @@ LR__1133
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1134
 	mov	local01, #0
@@ -14311,7 +14620,7 @@ LR__1133
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1134
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult>=t2.result.iresult) : goto 1180
 	add	fp, #8
@@ -14319,8 +14628,9 @@ LR__1134
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1135
 	mov	local01, #0
@@ -14331,7 +14641,7 @@ LR__1134
 	cmps	local02, local03 wc
  if_ae	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1135
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult>=t2.result.uresult) : goto 1180
 	add	fp, #8
@@ -14339,9 +14649,9 @@ LR__1135
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1136
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14351,7 +14661,7 @@ LR__1135
 	cmps	local02, local03 wc
  if_ae	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1136
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult>=t2.result.fresult) : goto 1180
 	add	fp, #8
@@ -14375,7 +14685,7 @@ LR__1136
 	cmps	result1, #0 wc
  if_ae	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1137
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult>=t2.result.iresult) : goto 1180
 	add	fp, #8
@@ -14395,7 +14705,7 @@ LR__1137
 	cmps	local02, local03 wc
  if_ae	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1138
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult>=t2.result.uresult) : goto 1180
 	add	fp, #8
@@ -14415,10 +14725,83 @@ LR__1138
 	cmp	local02, local03 wc
  if_ae	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1140
+	jmp	#LR__1143
 LR__1139
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)>=t2.result.sresult):goto 1180
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1140
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1143
 LR__1140
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult>=convertstring(t2.result.uresult)) :goto 1180
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1141
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1143
+LR__1141
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)>=convertstring(t2.result.uresult)) :goto 1180
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1142
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #0 wc
+ if_ae	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1143
+LR__1142
+	wrlong	#0, fp
+LR__1143
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -14474,7 +14857,7 @@ _do_le
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1150
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult<=t2.result.fresult) : goto 1190
 	add	fp, #8
@@ -14497,7 +14880,7 @@ LR__1150
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1151
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult<=t2.result.iresult) : goto 1190
 	add	fp, #8
@@ -14527,7 +14910,7 @@ LR__1151
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1152
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult<=t2.result.uresult) : goto 1190
 	add	fp, #8
@@ -14537,7 +14920,8 @@ LR__1152
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1153
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14552,7 +14936,7 @@ LR__1152
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1153
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult<=t2.result.fresult) : goto 1190
 	add	fp, #8
@@ -14560,8 +14944,9 @@ LR__1153
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1154
 	mov	local01, #0
@@ -14580,7 +14965,7 @@ LR__1153
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1154
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult<=t2.result.iresult) : goto 1190
 	add	fp, #8
@@ -14588,8 +14973,9 @@ LR__1154
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1155
 	mov	local01, #0
@@ -14600,7 +14986,7 @@ LR__1154
 	cmps	local02, local03 wcz
  if_be	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1155
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult<=t2.result.uresult) : goto 1190
 	add	fp, #8
@@ -14608,9 +14994,9 @@ LR__1155
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1156
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14620,7 +15006,7 @@ LR__1155
 	cmps	local02, local03 wcz
  if_be	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1156
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult<=t2.result.fresult) : goto 1190
 	add	fp, #8
@@ -14644,7 +15030,7 @@ LR__1156
 	cmps	result1, #1 wc
  if_b	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1157
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult<=t2.result.iresult) : goto 1190
 	add	fp, #8
@@ -14664,7 +15050,7 @@ LR__1157
 	cmps	local02, local03 wcz
  if_be	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1158
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult<=t2.result.uresult) : goto 1190
 	add	fp, #8
@@ -14684,10 +15070,83 @@ LR__1158
 	cmp	local02, local03 wcz
  if_be	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1160
+	jmp	#LR__1163
 LR__1159
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<=t2.result.sresult):goto 1190
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1160
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1163
 LR__1160
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<=convertstring(t2.result.uresult)) :goto 1190
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1161
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1163
+LR__1161
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<=convertstring(t2.result.uresult)) :goto 1190
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1162
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmps	result1, #1 wc
+ if_b	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1163
+LR__1162
+	wrlong	#0, fp
+LR__1163
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -14744,7 +15203,7 @@ _do_ne
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1170
 ' if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.uresult=(t1.result.fresult<>t2.result.fresult) : goto 1192
 	add	fp, #8
@@ -14767,7 +15226,7 @@ LR__1170
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1171
 ' if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.uresult=(t1.result.fresult<>t2.result.iresult) : goto 1192
 	add	fp, #8
@@ -14797,7 +15256,7 @@ LR__1171
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1172
 ' if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.fresult<>t2.result.uresult) : goto 1192
 	add	fp, #8
@@ -14807,7 +15266,8 @@ LR__1172
  if_e	add	fp, #20
  if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local04, #29 wz
+ if_e	mov	local03, local04
+ if_e	cmp	local03, #29 wz
  if_ne	jmp	#LR__1173
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14822,7 +15282,7 @@ LR__1172
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1173
 ' if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.uresult=(t1.result.iresult<>t2.result.fresult) : goto 1192
 	add	fp, #8
@@ -14830,8 +15290,9 @@ LR__1173
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #30 wz
  if_ne	jmp	#LR__1174
 	mov	local01, #0
@@ -14850,7 +15311,7 @@ LR__1173
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1174
 ' if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.uresult=(t1.result.iresult<>t2.result.iresult) : goto 1192
 	add	fp, #8
@@ -14858,8 +15319,9 @@ LR__1174
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
+ if_e	mov	local03, local04
  if_e	cmp	local03, #28 wz
  if_ne	jmp	#LR__1175
 	mov	local01, #0
@@ -14870,7 +15332,7 @@ LR__1174
 	cmp	local02, local03 wz
  if_ne	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1175
 ' if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.iresult<>t2.result.uresult) : goto 1192
 	add	fp, #8
@@ -14878,9 +15340,9 @@ LR__1175
 	sub	fp, #8
 	cmp	local01, #28 wz
  if_e	add	fp, #20
- if_e	rdlong	local03, fp
+ if_e	rdlong	local04, fp
  if_e	sub	fp, #20
- if_e	cmp	local03, #29 wz
+ if_e	cmp	local04, #29 wz
  if_ne	jmp	#LR__1176
 	mov	local01, #0
 	rdlong	local02, fp
@@ -14890,7 +15352,7 @@ LR__1175
 	cmp	local02, local03 wz
  if_ne	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1176
 ' if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.uresult=(t1.result.uresult<>t2.result.fresult) : goto 1192
 	add	fp, #8
@@ -14914,7 +15376,7 @@ LR__1176
 	cmp	result1, #0 wz
  if_ne	not	local01, #0
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1177
 ' if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.uresult=(t1.result.uresult<>t2.result.iresult) : goto 1192
 	add	fp, #8
@@ -14934,7 +15396,7 @@ LR__1177
 	cmp	local02, local03 wz
  if_ne	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1178
 ' if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=(t1.result.uresult<>t2.result.uresult) : goto 1192
 	add	fp, #8
@@ -14954,10 +15416,83 @@ LR__1178
 	cmp	local02, local03 wz
  if_ne	neg	local01, #1
 	wrlong	local01, fp
-	jmp	#LR__1180
+	jmp	#LR__1183
 LR__1179
-	wrlong	#0, fp
+' if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<>t2.result.sresult):goto 1192
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #31 wz
+ if_ne	jmp	#LR__1180
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	arg01, result1
+	add	fp, #12
+	rdlong	arg02, fp
+	sub	fp, #12
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_ne	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1183
 LR__1180
+' if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<>convertstring(t2.result.uresult)) :goto 1192
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #31 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1181
+	mov	local01, #0
+	rdlong	local02, fp
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_ne	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1183
+LR__1181
+' if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<>convertstring(t2.result.uresult)) :goto 1192
+	add	fp, #8
+	rdlong	local01, fp
+	sub	fp, #8
+	cmp	local01, #43 wz
+ if_e	add	fp, #20
+ if_e	rdlong	local03, fp
+ if_e	sub	fp, #20
+ if_e	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1182
+	mov	local01, #0
+	rdlong	arg01, fp
+	call	#_convertstring
+	mov	local02, result1
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#_convertstring
+	mov	arg02, result1
+	mov	arg01, local02
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_ne	not	local01, #0
+	wrlong	local01, fp
+	jmp	#LR__1183
+LR__1182
+	wrlong	#0, fp
+LR__1183
 	add	fp, #8
 	wrlong	#28, fp
 	sub	fp, #8
@@ -17077,6 +17612,7 @@ _do_print
 '  
 ' r=0
 ' t1=pop() 
+' 'print t1.result_type,t1.result.uresult
 ' if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
 	cmp	local03, #43 wz
  if_ne	jmp	#LR__1340
@@ -43057,7 +43593,7 @@ _dat_
 	long	@@@_dat_ + 8468
 	byte	$50, $32, $20, $52, $65, $74, $72, $6f, $6d, $61, $63, $68, $69, $6e, $65, $20
 	byte	$42, $41, $53, $49, $43, $20, $76, $65, $72, $73, $69, $6f, $6e, $20, $30, $2e
-	byte	$32, $33, $61, $00
+	byte	$32, $33, $62, $00
 	alignl
 _hg010b_spin2_dat_
 '-' 

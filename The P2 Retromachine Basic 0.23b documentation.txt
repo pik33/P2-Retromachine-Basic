@@ -1,6 +1,6 @@
 The P2 Retromachine Basic
 
-Version 0.23a - Alpha
+Version 0.23b - Alpha
 -------------------------
 
 The P2 Retromachine Basic is a Basic interpreter for a Propeller 2 platform with an external RAM. Currently tested/developed versions work on P2-EC32 
@@ -84,8 +84,6 @@ The type can be:
 - 2 bytes per element : short, ushort
 - 4 bytes per element : long (=integer), ulong, single, string(*)
 - 8 bytes per element: reserved for the future types: 64-bit integers and double precision floats
-
-There is a bug in this version: string arrays don't work as expected.
 
 Using 'dim' without sizes: 
 
@@ -254,7 +252,9 @@ pinstart pin, mode, x,y		starts the smart pin mode and sets x,y registers of the
 pintoggle pin			toggles the state of the pin (from 0 to 1 or from 1 to 0). Doesn't work if the pin floats.
 pinwrite pin, value		if value=0, sets the pin output to low, else sets the pin output to high. Use to blink a led.
 plot x,y			sets a pixel color at x,y to the color determined by a previous "color" command and sets a new starting point for 'draw'
-print				outputs to the screen and moves the cursor to the new line if , or ; is not used. Use , after an argument to print the new one after a tab (8 characters), use ; to print the next argument directly after the previous. 
+position x,y			sets a curcor position. The x resolution is half a character, so multiply number of characters by 2. This allows centering strings that have odd number of characters.
+print				outputs to the screen and moves the cursor to the new line if , or ; is not used.
+				Use , after an argument to print the new one after a tab (8 characters), use ; to print the next argument directly after the previous. 
 rdpin pin			returns the smartpin output register value, notifies the smart pin
 rnd(value)			returns a random value. If no arguments, it is a 32-bit unsigned integer. If integer or float parameter is given, it returns integer or float that is less than,0 the parameter.
 rqpin pin			returns the smartpin output register value, does not notify the smart pin
@@ -273,6 +273,15 @@ wypin pin			writes to the Y register of the smart pin
 
 Changelog:
 ------------
+0.23b:
+
+Atari ST mode has a proper Atari ST keyboard click
+Added "position" command that sets the cursor position before print
+A mouse pointer has now a proper black outline.
+String arays now work
+Fixed a bug that disabled printing string literals while still printing string variables.
+Fixed a bug that causes errors when : character was placed inside a string
+
 
 0.23a:
 
