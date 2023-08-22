@@ -212,8 +212,8 @@ const maxvars=1023
 const maxstack=512
 const maxfor=128
 dim samplebuf(7,1023) as short
-dim envbuf(7,256) as ushort
-declare envbuf8 alias envbuf as ubyte(7,512)
+dim adsrbuf(7,256) as ushort
+
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
@@ -2097,93 +2097,10 @@ endif
 inrun=0
 end sub
 
-sub do_defenv
-dim numpar,i,j,par,channel as integer
-dim even,odd, max,spl,qqq as single 
-dim t1 as expr_result
-dim s as string
-dim harm(15) as single
-
-numpar=compiledline(lineptr_e).result.uresult
-
-
-' defenv channel, string - tries to load from /media/h a h2 file from PC-Softsynth
-' defenv channel, l1,r1,l2,r2,l3,r3,l4,r4 - defines ADSR in Yamaha DX  style, except these are linear values
-' Every 5 ms added 
-' defsnd channel, a,d,s,r - defines ADSR as in SID 
-
-
-if numpar<2 then return
-
- 
-if numpar=2 then
-  t1=pop()
-  if t1.result_type=result_string2 then 
-    s=convertstring(t1.result.uresult)
-  else if t1.result_type=result_string then 
-    s=t1.result.sresult
-  else 
-    s=""
-  endif  
-
-    
-  if s<>"" then 
-    t1=pop()
-    channel=converttoint(t1) 
-    close #9 : open "/sd/media/h/"+s for input as #9
-    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-    get #9,17,envbuf8(channel,0),256
-    for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
-    close #9
-                                                                      for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
-    return
-  endif
-  
-  par=converttoint(t1)  : print par
-  t1=pop()
-  channel=converttoint(t1)  
-  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1.0/512*3.14159265359*i)) : next i
-                                                                           '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-  return
-  ' todo caser and generate sid waves
-endif
-for i=0 to 15 : harm(i)=0: next i  
-for i=numpar to 2 step -1 
-  t1=pop() 
-  harm(i-2)=converttofloat(t1) 
-next i
-t1=pop()
-channel=converttoint(t1) : print channel
-for j=0 to 1023: samplebuf(channel, i) =0 : next j
-max=0
-if harm(0)<0 then
-  even=abs(harm(0))
-  odd=abs(harm(1)) 
-  harm(0)=1
-  harm(1)=even
-  harm(2)=odd
-  for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
-  for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
-endif
-if harm(0)>=0 then ' synthesize with harmonics
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15 : spl+=harm(j)*sin((1.0/512)*3.14159265359*i*(j+1)) : next j 
-    if abs(spl)>max then max=abs(spl)  ': print max 
-  next i  
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j ':' print spl
-    samplebuf(channel,i)=round(spl)
-  next i  
-endif 
-
-                                                               '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-end sub
 
 sub do_defsnd
 dim numpar,i,j,par,channel as integer
-dim even,odd, max,spl,qqq as single 
+dim even,odd, max,spl as single 
 dim t1 as expr_result
 dim s as string
 dim harm(15) as single
@@ -2195,14 +2112,15 @@ numpar=compiledline(lineptr_e).result.uresult
 ' defsnd channel, h1,h2.... h15 - defines harmonics
 ' defsnd channel, negfloat, negfloat - defines even and odd harmonics dampening
 ' defsnd channel, oneint - defines waveshape as in SID and 0=sinewave
-
-if numpar<2 then return
-
  
-if numpar=2 then
+if numpar=0 then return
+t1=pop()
+channel=converttoint(t1)
+ 
+if numpar=1 then
   t1=pop()
   if t1.result_type=result_string2 then 
-    s=convertstring(t1.result.uresult)
+    s=do_convertstring(t1.result.uresult)
   else if t1.result_type=result_string then 
     s=t1.result.sresult
   else 
@@ -2211,31 +2129,23 @@ if numpar=2 then
 
     
   if s<>"" then 
-    t1=pop()
-    channel=converttoint(t1) 
     close #9 : open "/sd/media/s/"+s for input as #9
     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
     get #9,17,samplebuf(channel,0),1024
     close #9
-                                                                      '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
     return
   endif
-  
-  par=converttoint(t1)  : print par
-  t1=pop()
-  channel=converttoint(t1)  
-  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1.0/512*3.14159265359*i)) : next i
-                                                                           '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
+ 
+  par=converttoint(t1)
+  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1/512*3.14159265359*i)) : next i
   return
   ' todo caser and generate sid waves
 endif
 for i=0 to 15 : harm(i)=0: next i  
 for i=numpar to 2 step -1 
   t1=pop() 
-  harm(i-2)=converttofloat(t1) 
+  harm(i-2)=converttofloat(t1)
 next i
-t1=pop()
-channel=converttoint(t1) : print channel
 for j=0 to 1023: samplebuf(channel, i) =0 : next j
 max=0
 if harm(0)<0 then
@@ -2247,20 +2157,19 @@ if harm(0)<0 then
   for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
   for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
 endif
-if harm(0)>=0 then ' synthesize with harmonics
-  for i=0 to 1023
+if harm(0)>0 then ' synthesize with harmonics
+  for i=0 to 10
     spl=0
-    for j=0 to 15 : spl+=harm(j)*sin((1.0/512)*3.14159265359*i*(j+1)) : next j 
-    if abs(spl)>max then max=abs(spl)  ': print max 
+    for j=0 to 15: spl+=harm(j)*sin((1/512)*3.14159265359*i*(j+1)) :next j :  print spl
+    if abs(spl)>max then max=abs(spl)  
   next i  
   for i=0 to 1023
     spl=0
-    for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j ':' print spl
+    for j=0 to 15: spl+=harm(i)*(32600/max)*sin(1/512*3.14159265359*(j+1)) :next j 
     samplebuf(channel,i)=round(spl)
   next i  
 endif 
-
-                                                               '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
+for i=0 to 10 : print samplebuf(channel,i),: next i
 end sub
 
 ' ---------------  List the program. 
@@ -3742,7 +3651,6 @@ commands(token_position)=@do_position
 
 commands(token_fill)=@do_fill
 commands(token_defsnd)=@do_defsnd
-commands(token_defenv)=@do_defenv
 end sub
 
 ''--------------------------------Error strings -------------------------------------
@@ -4021,7 +3929,7 @@ dim shared as ubyte keys(511)={
 
 
  '' ------------------------------- Atari 8-bit type keyboard click and overflow sounds
-  
+ 
 asm shared
 atari_spl file "atari.spl"
 atari2_spl file "atari2.spl" '1758
