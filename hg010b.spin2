@@ -505,9 +505,9 @@ fillpush(x)
 fillpush(y)
 y:=fillpop()
 x:=fillpop()
-pinhigh(38)
+'pinhigh(38)
 repeat while (x>-1)       
-  pintoggle(39)
+ ' pintoggle(39)
   x1 := x
   repeat while((x1 >= 0) && (getpixel2(x1,y) == oldColor))
     x1--
@@ -519,19 +519,19 @@ repeat while (x>-1)
     if ((spanabove == 0) && (y > 0) && (getpixel2(x1,y-1)== oldColor))
       fillpush(x1)
       fillpush(y-1)
-      spanAbove := 1 
+      spanabove := 1 
     elseif ((spanabove<>0) && (y > 0) && (getpixel2(x1,y-1)<> oldColor))
-      spanAbove := 0 
+      spanabove := 0 
     if((spanbelow == 0 ) && (y < 575) && getpixel2(x1,y+1) == oldColor)
       fillpush(x1)
       fillpush(y + 1)
       spanBelow := 1
-    elseif((spanBelow<>0) && (y < 575) && (getpixel2(x1,y + 1)<> oldColor))
-      spanBelow := 0
+    elseif((spanbelow<>0) && (y < 575) && (getpixel2(x1,y + 1)<> oldColor))
+      spanbelow := 0
     x1++
   y:=fillpop()
   x:=fillpop()
-pinlow(38)    
+'pinlow(38)    
 
 '-- A filled circle -----------------------------------------------------
 
