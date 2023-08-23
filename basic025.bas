@@ -1534,11 +1534,11 @@ varnum=t1.result.uresult
 if lparts(ct).part$<>"to" then  compile_error(33) : return 33
 ct+=1
 expr()  ' there is "to" value pushed on the stack
-if lparts(ct).part$="step" orelse lparts(ct).part$="st."then 
-ct+=1
-expr()
+if lparts(ct).part$="step" orelse lparts(ct).part$="s." then
+  ct+=1
+  expr()
 else
-compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=1 : lineptr+=1
+  compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=1 : lineptr+=1
 endif
 compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=varnum :lineptr+=1
 compiledline(lineptr).result_type=token_for : compiledline(lineptr).result.iresult=0 :lineptr+=1

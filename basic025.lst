@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/basic024.p2asm"
+00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/basic025.p2asm"
 00000                 | con
 00000                 | 	_clkfreq = 337000000
 00000                 | 	_clkmode = 21844219
@@ -8746,7 +8746,7 @@
 07730     D4 0B B0 FD | 	call	#_expr
 07734                 | ' ct+=1
 07734                 | ' expr()  ' there is "to" value pushed on the stack
-07734                 | ' if lparts(ct).part$="step" orelse lparts(ct).part$="st."then 
+07734                 | ' if lparts(ct).part$="step" orelse lparts(ct).part$="s." then
 07734     56 00 00 FF 
 07738     18 E4 05 F1 | 	add	objptr, ##44056
 0773c     F2 24 02 FB | 	rdlong	local04, objptr
@@ -9584,7 +9584,7 @@
 082c0     FD 12 02 F6 | 	mov	arg01, result1
 082c4     E8 08 B1 FD | 	call	#__system___lockmem
 082c8     42 01 00 FF 
-082cc     67 15 06 F6 | 	mov	arg02, ##@LR__4554
+082cc     66 15 06 F6 | 	mov	arg02, ##@LR__4554
 082d0     00 12 06 F6 | 	mov	arg01, #0
 082d4     00 16 06 F6 | 	mov	arg03, #0
 082d8     C8 15 B1 FD | 	call	#__system___basic_print_string
@@ -11743,7 +11743,7 @@
 09fd0     98 4E 85 F1 | 	sub	fp, #152
 09fd4     1F 1E 0E F2 | 	cmp	local01, #31 wz
 09fd8     42 01 00 5F 
-09fdc     83 1F 06 56 |  if_ne	mov	local01, ##@LR__4555
+09fdc     82 1F 06 56 |  if_ne	mov	local01, ##@LR__4555
 09fe0     8C 4E 05 51 |  if_ne	add	fp, #140
 09fe4     A7 1E 62 5C |  if_ne	wrlong	local01, fp
 09fe8     8C 4E 85 51 |  if_ne	sub	fp, #140
@@ -12025,11 +12025,11 @@
 0a380                 | '   if t1.result.sresult="" then t1.result.sresult="noname.bas"
 0a380     A7 12 02 FB | 	rdlong	arg01, fp
 0a384     42 01 00 FF 
-0a388     8E 15 06 F6 | 	mov	arg02, ##@LR__4556
+0a388     8D 15 06 F6 | 	mov	arg02, ##@LR__4556
 0a38c     48 E8 B0 FD | 	call	#__system___string_cmp
 0a390     00 FA 0D F2 | 	cmp	result1, #0 wz
 0a394     42 01 00 AF 
-0a398     8F 1F 06 A6 |  if_e	mov	local01, ##@LR__4557
+0a398     8E 1F 06 A6 |  if_e	mov	local01, ##@LR__4557
 0a39c     A7 1E 62 AC |  if_e	wrlong	local01, fp
 0a3a0                 | '   close #9: open currentdir$+"/"+t1.result.sresult for output as #9
 0a3a0     09 12 06 F6 | 	mov	arg01, #9
@@ -12041,7 +12041,7 @@
 0a3b8     71 00 00 FF 
 0a3bc     68 E4 85 F1 | 	sub	objptr, ##57960
 0a3c0     42 01 00 FF 
-0a3c4     9A 15 06 F6 | 	mov	arg02, ##@LR__4558
+0a3c4     99 15 06 F6 | 	mov	arg02, ##@LR__4558
 0a3c8     40 E8 B0 FD | 	call	#__system___string_concat
 0a3cc     FD 12 02 F6 | 	mov	arg01, result1
 0a3d0     A7 14 02 FB | 	rdlong	arg02, fp
@@ -12091,7 +12091,7 @@
 0a46c     0B 00 00 FF 
 0a470     C0 E4 85 F1 | 	sub	objptr, ##5824
 0a474     42 01 00 FF 
-0a478     9C 1F 06 F6 | 	mov	local01, ##@LR__4559
+0a478     9B 1F 06 F6 | 	mov	local01, ##@LR__4559
 0a47c     01 00 00 FF 
 0a480     B4 4E 05 F1 | 	add	fp, ##692
 0a484     A7 1E 62 FC | 	wrlong	local01, fp
@@ -12230,11 +12230,11 @@
 0a630                 | '   if t1.result.sresult="" then t1.result.sresult="noname.bas" 
 0a630     A7 12 02 FB | 	rdlong	arg01, fp
 0a634     42 01 00 FF 
-0a638     9D 15 06 F6 | 	mov	arg02, ##@LR__4560
+0a638     9C 15 06 F6 | 	mov	arg02, ##@LR__4560
 0a63c     98 E5 B0 FD | 	call	#__system___string_cmp
 0a640     00 FA 0D F2 | 	cmp	result1, #0 wz
 0a644     42 01 00 AF 
-0a648     9E 1F 06 A6 |  if_e	mov	local01, ##@LR__4561
+0a648     9D 1F 06 A6 |  if_e	mov	local01, ##@LR__4561
 0a64c     A7 1E 62 AC |  if_e	wrlong	local01, fp
 0a650                 | '   close #9: open currentdir$+"/"+t1.result.sresult for input as #9
 0a650     09 12 06 F6 | 	mov	arg01, #9
@@ -12246,7 +12246,7 @@
 0a668     71 00 00 FF 
 0a66c     68 E4 85 F1 | 	sub	objptr, ##57960
 0a670     42 01 00 FF 
-0a674     A9 15 06 F6 | 	mov	arg02, ##@LR__4562
+0a674     A8 15 06 F6 | 	mov	arg02, ##@LR__4562
 0a678     90 E5 B0 FD | 	call	#__system___string_concat
 0a67c     FD 12 02 F6 | 	mov	arg01, result1
 0a680     A7 14 02 FB | 	rdlong	arg02, fp
@@ -12268,7 +12268,7 @@
 0a6bc     FD 12 02 F6 | 	mov	arg01, result1
 0a6c0     EC E4 B0 FD | 	call	#__system___lockmem
 0a6c4     42 01 00 FF 
-0a6c8     AB 15 06 F6 | 	mov	arg02, ##@LR__4563
+0a6c8     AA 15 06 F6 | 	mov	arg02, ##@LR__4563
 0a6cc     00 12 06 F6 | 	mov	arg01, #0
 0a6d0     00 16 06 F6 | 	mov	arg03, #0
 0a6d4     CC F1 B0 FD | 	call	#__system___basic_print_string
@@ -12280,7 +12280,7 @@
 0a6ec     0A 18 06 F6 | 	mov	arg04, #10
 0a6f0     F4 F1 B0 FD | 	call	#__system___basic_print_integer
 0a6f4     42 01 00 FF 
-0a6f8     B9 15 06 F6 | 	mov	arg02, ##@LR__4564
+0a6f8     B8 15 06 F6 | 	mov	arg02, ##@LR__4564
 0a6fc     00 12 06 F6 | 	mov	arg01, #0
 0a700     00 16 06 F6 | 	mov	arg03, #0
 0a704     9C F1 B0 FD | 	call	#__system___basic_print_string
@@ -12333,7 +12333,7 @@
 0a7a8     71 00 00 FF 
 0a7ac     68 E4 85 F1 | 	sub	objptr, ##57960
 0a7b0     42 01 00 FF 
-0a7b4     BC 15 06 F6 | 	mov	arg02, ##@LR__4565
+0a7b4     BB 15 06 F6 | 	mov	arg02, ##@LR__4565
 0a7b8     50 E4 B0 FD | 	call	#__system___string_concat
 0a7bc     FD 12 02 F6 | 	mov	arg01, result1
 0a7c0     A7 14 02 FB | 	rdlong	arg02, fp
@@ -12357,7 +12357,7 @@
 0a7fc     C0 03 B1 FD | 	call	#__system__Left_S
 0a800     FD 12 02 F6 | 	mov	arg01, result1
 0a804     42 01 00 FF 
-0a808     BE 15 06 F6 | 	mov	arg02, ##@LR__4566
+0a808     BD 15 06 F6 | 	mov	arg02, ##@LR__4566
 0a80c     C8 E3 B0 FD | 	call	#__system___string_cmp
 0a810     00 FA 55 F2 | 	cmps	result1, #0 wc
 0a814     34 00 90 CD |  if_b	jmp	#LR__0853
@@ -12370,7 +12370,7 @@
 0a830     8C 03 B1 FD | 	call	#__system__Left_S
 0a834     FD 12 02 F6 | 	mov	arg01, result1
 0a838     42 01 00 FF 
-0a83c     C0 15 06 F6 | 	mov	arg02, ##@LR__4567
+0a83c     BF 15 06 F6 | 	mov	arg02, ##@LR__4567
 0a840     94 E3 B0 FD | 	call	#__system___string_cmp
 0a844     01 FA 55 F2 | 	cmps	result1, #1 wc
 0a848     D0 61 BF CD |  if_b	call	#_interpret
@@ -12381,7 +12381,7 @@
 0a858     55 00 00 FF 
 0a85c     F0 E5 85 F1 | 	sub	objptr, ##44016
 0a860     42 01 00 FF 
-0a864     C2 15 06 F6 | 	mov	arg02, ##@LR__4568
+0a864     C1 15 06 F6 | 	mov	arg02, ##@LR__4568
 0a868     6C E3 B0 FD | 	call	#__system___string_cmp
 0a86c     00 FA 0D F2 | 	cmp	result1, #0 wz
 0a870     64 FF 9F 5D |  if_ne	jmp	#LR__0852
@@ -12663,7 +12663,7 @@
 0ac28     FD 12 02 F6 | 	mov	arg01, result1
 0ac2c     80 DF B0 FD | 	call	#__system___lockmem
 0ac30     42 01 00 FF 
-0ac34     C3 15 06 F6 | 	mov	arg02, ##@LR__4569
+0ac34     C2 15 06 F6 | 	mov	arg02, ##@LR__4569
 0ac38     00 12 06 F6 | 	mov	arg01, #0
 0ac3c     00 16 06 F6 | 	mov	arg03, #0
 0ac40     60 EC B0 FD | 	call	#__system___basic_print_string
@@ -12769,7 +12769,7 @@
 0ad70     14 00 90 FD | 	jmp	#LR__0872
 0ad74                 | LR__0871
 0ad74     42 01 00 FF 
-0ad78     D4 1B 06 F6 | 	mov	arg05, ##@LR__4570
+0ad78     D3 1B 06 F6 | 	mov	arg05, ##@LR__4570
 0ad7c     34 4E 05 F1 | 	add	fp, #52
 0ad80     A7 1A 62 FC | 	wrlong	arg05, fp
 0ad84     34 4E 85 F1 | 	sub	fp, #52
@@ -12782,7 +12782,7 @@
 0ad8c     A7 12 02 FB | 	rdlong	arg01, fp
 0ad90     34 4E 85 F1 | 	sub	fp, #52
 0ad94     42 01 00 FF 
-0ad98     D5 15 06 F6 | 	mov	arg02, ##@LR__4571
+0ad98     D4 15 06 F6 | 	mov	arg02, ##@LR__4571
 0ad9c     38 DE B0 FD | 	call	#__system___string_cmp
 0ada0     00 FA 0D F2 | 	cmp	result1, #0 wz
 0ada4     9C 02 90 AD |  if_e	jmp	#LR__0878
@@ -12808,7 +12808,7 @@
 0ade8     F8 2C B1 FD | 	call	#__system__close
 0adec     09 1E 06 F6 | 	mov	local01, #9
 0adf0     42 01 00 FF 
-0adf4     D6 13 06 F6 | 	mov	arg01, ##@LR__4572
+0adf4     D5 13 06 F6 | 	mov	arg01, ##@LR__4572
 0adf8     34 4E 05 F1 | 	add	fp, #52
 0adfc     A7 14 02 FB | 	rdlong	arg02, fp
 0ae00     34 4E 85 F1 | 	sub	fp, #52
@@ -12832,7 +12832,7 @@
 0ae44     FD 12 02 F6 | 	mov	arg01, result1
 0ae48     64 DD B0 FD | 	call	#__system___lockmem
 0ae4c     42 01 00 FF 
-0ae50     E3 15 06 F6 | 	mov	arg02, ##@LR__4573
+0ae50     E2 15 06 F6 | 	mov	arg02, ##@LR__4573
 0ae54     00 12 06 F6 | 	mov	arg01, #0
 0ae58     00 16 06 F6 | 	mov	arg03, #0
 0ae5c     44 EA B0 FD | 	call	#__system___basic_print_string
@@ -12846,7 +12846,7 @@
 0ae7c     0A 18 06 F6 | 	mov	arg04, #10
 0ae80     64 EA B0 FD | 	call	#__system___basic_print_integer
 0ae84     42 01 00 FF 
-0ae88     F1 15 06 F6 | 	mov	arg02, ##@LR__4574
+0ae88     F0 15 06 F6 | 	mov	arg02, ##@LR__4574
 0ae8c     00 12 06 F6 | 	mov	arg01, #0
 0ae90     00 16 06 F6 | 	mov	arg03, #0
 0ae94     0C EA B0 FD | 	call	#__system___basic_print_string
@@ -13534,7 +13534,7 @@
 0b808     14 00 90 FD | 	jmp	#LR__0902
 0b80c                 | LR__0901
 0b80c     42 01 00 FF 
-0b810     F4 1B 06 F6 | 	mov	arg05, ##@LR__4575
+0b810     F3 1B 06 F6 | 	mov	arg05, ##@LR__4575
 0b814     34 4E 05 F1 | 	add	fp, #52
 0b818     A7 1A 62 FC | 	wrlong	arg05, fp
 0b81c     34 4E 85 F1 | 	sub	fp, #52
@@ -13547,7 +13547,7 @@
 0b824     A7 12 02 FB | 	rdlong	arg01, fp
 0b828     34 4E 85 F1 | 	sub	fp, #52
 0b82c     42 01 00 FF 
-0b830     F5 15 06 F6 | 	mov	arg02, ##@LR__4576
+0b830     F4 15 06 F6 | 	mov	arg02, ##@LR__4576
 0b834     A0 D3 B0 FD | 	call	#__system___string_cmp
 0b838     00 FA 0D F2 | 	cmp	result1, #0 wz
 0b83c     88 01 90 AD |  if_e	jmp	#LR__0905
@@ -13573,7 +13573,7 @@
 0b880     60 22 B1 FD | 	call	#__system__close
 0b884     09 1E 06 F6 | 	mov	local01, #9
 0b888     42 01 00 FF 
-0b88c     F6 13 06 F6 | 	mov	arg01, ##@LR__4577
+0b88c     F5 13 06 F6 | 	mov	arg01, ##@LR__4577
 0b890     34 4E 05 F1 | 	add	fp, #52
 0b894     A7 14 02 FB | 	rdlong	arg02, fp
 0b898     34 4E 85 F1 | 	sub	fp, #52
@@ -13597,7 +13597,7 @@
 0b8dc     FD 12 02 F6 | 	mov	arg01, result1
 0b8e0     CC D2 B0 FD | 	call	#__system___lockmem
 0b8e4     43 01 00 FF 
-0b8e8     03 14 06 F6 | 	mov	arg02, ##@LR__4578
+0b8e8     02 14 06 F6 | 	mov	arg02, ##@LR__4578
 0b8ec     00 12 06 F6 | 	mov	arg01, #0
 0b8f0     00 16 06 F6 | 	mov	arg03, #0
 0b8f4     AC DF B0 FD | 	call	#__system___basic_print_string
@@ -13611,7 +13611,7 @@
 0b914     0A 18 06 F6 | 	mov	arg04, #10
 0b918     CC DF B0 FD | 	call	#__system___basic_print_integer
 0b91c     43 01 00 FF 
-0b920     11 14 06 F6 | 	mov	arg02, ##@LR__4579
+0b920     10 14 06 F6 | 	mov	arg02, ##@LR__4579
 0b924     00 12 06 F6 | 	mov	arg01, #0
 0b928     00 16 06 F6 | 	mov	arg03, #0
 0b92c     74 DF B0 FD | 	call	#__system___basic_print_string
@@ -14746,7 +14746,7 @@
 0c860     FD 12 02 F6 | 	mov	arg01, result1
 0c864     48 C3 B0 FD | 	call	#__system___lockmem
 0c868     43 01 00 FF 
-0c86c     14 14 06 F6 | 	mov	arg02, ##@LR__4580
+0c86c     13 14 06 F6 | 	mov	arg02, ##@LR__4580
 0c870     00 12 06 F6 | 	mov	arg01, #0
 0c874     00 16 06 F6 | 	mov	arg03, #0
 0c878     28 D0 B0 FD | 	call	#__system___basic_print_string
@@ -14756,7 +14756,7 @@
 0c888     0A 18 06 F6 | 	mov	arg04, #10
 0c88c     98 D0 B0 FD | 	call	#__system___basic_print_unsigned
 0c890     43 01 00 FF 
-0c894     1B 14 06 F6 | 	mov	arg02, ##@LR__4581
+0c894     1A 14 06 F6 | 	mov	arg02, ##@LR__4581
 0c898     00 12 06 F6 | 	mov	arg01, #0
 0c89c     00 16 06 F6 | 	mov	arg03, #0
 0c8a0     00 D0 B0 FD | 	call	#__system___basic_print_string
@@ -14794,7 +14794,7 @@
 0c900     44 8F B0 FD | 	call	#_pslpeek
 0c904     FD 20 02 F6 | 	mov	local02, result1
 0c908     43 01 00 FF 
-0c90c     1E 22 06 F6 | 	mov	local03, ##@LR__4582
+0c90c     1D 22 06 F6 | 	mov	local03, ##@LR__4582
 0c910                 | ' 'print "in convertstring: psaddr=";psaddr
 0c910                 | ' l=pslpeek(psaddr)
 0c910                 | ' 'print "in convertstring: len=";l
@@ -19859,7 +19859,7 @@
 10e48     FD 12 02 F6 | 	mov	arg01, result1
 10e4c     60 7D B0 FD | 	call	#__system___lockmem
 10e50     43 01 00 FF 
-10e54     1F 14 06 F6 | 	mov	arg02, ##@LR__4583
+10e54     1E 14 06 F6 | 	mov	arg02, ##@LR__4583
 10e58     00 12 06 F6 | 	mov	arg01, #0
 10e5c     00 16 06 F6 | 	mov	arg03, #0
 10e60     40 8A B0 FD | 	call	#__system___basic_print_string
@@ -19941,7 +19941,7 @@
 10f70     FD 12 02 F6 | 	mov	arg01, result1
 10f74     38 7C B0 FD | 	call	#__system___lockmem
 10f78     43 01 00 FF 
-10f7c     25 14 06 F6 | 	mov	arg02, ##@LR__4584
+10f7c     24 14 06 F6 | 	mov	arg02, ##@LR__4584
 10f80     00 12 06 F6 | 	mov	arg01, #0
 10f84     00 16 06 F6 | 	mov	arg03, #0
 10f88     18 89 B0 FD | 	call	#__system___basic_print_string
@@ -19996,7 +19996,7 @@
 1101c     FD 12 02 F6 | 	mov	arg01, result1
 11020     8C 7B B0 FD | 	call	#__system___lockmem
 11024     43 01 00 FF 
-11028     2B 14 06 F6 | 	mov	arg02, ##@LR__4585
+11028     2A 14 06 F6 | 	mov	arg02, ##@LR__4585
 1102c     00 12 06 F6 | 	mov	arg01, #0
 11030     00 16 06 F6 | 	mov	arg03, #0
 11034     6C 88 B0 FD | 	call	#__system___basic_print_string
@@ -20073,7 +20073,7 @@
 11128     FD 12 02 F6 | 	mov	arg01, result1
 1112c     80 7A B0 FD | 	call	#__system___lockmem
 11130     43 01 00 FF 
-11134     31 14 06 F6 | 	mov	arg02, ##@LR__4586
+11134     30 14 06 F6 | 	mov	arg02, ##@LR__4586
 11138     00 12 06 F6 | 	mov	arg01, #0
 1113c     00 16 06 F6 | 	mov	arg03, #0
 11140     60 87 B0 FD | 	call	#__system___basic_print_string
@@ -20155,7 +20155,7 @@
 11248     FD 12 02 F6 | 	mov	arg01, result1
 1124c     60 79 B0 FD | 	call	#__system___lockmem
 11250     43 01 00 FF 
-11254     37 14 06 F6 | 	mov	arg02, ##@LR__4587
+11254     36 14 06 F6 | 	mov	arg02, ##@LR__4587
 11258     00 12 06 F6 | 	mov	arg01, #0
 1125c     00 16 06 F6 | 	mov	arg03, #0
 11260     40 86 B0 FD | 	call	#__system___basic_print_string
@@ -20232,7 +20232,7 @@
 11354     FD 12 02 F6 | 	mov	arg01, result1
 11358     54 78 B0 FD | 	call	#__system___lockmem
 1135c     43 01 00 FF 
-11360     3D 14 06 F6 | 	mov	arg02, ##@LR__4588
+11360     3C 14 06 F6 | 	mov	arg02, ##@LR__4588
 11364     00 12 06 F6 | 	mov	arg01, #0
 11368     00 16 06 F6 | 	mov	arg03, #0
 1136c     34 85 B0 FD | 	call	#__system___basic_print_string
@@ -20309,7 +20309,7 @@
 11460     FD 12 02 F6 | 	mov	arg01, result1
 11464     48 77 B0 FD | 	call	#__system___lockmem
 11468     43 01 00 FF 
-1146c     44 14 06 F6 | 	mov	arg02, ##@LR__4589
+1146c     43 14 06 F6 | 	mov	arg02, ##@LR__4589
 11470     00 12 06 F6 | 	mov	arg01, #0
 11474     00 16 06 F6 | 	mov	arg03, #0
 11478     28 84 B0 FD | 	call	#__system___basic_print_string
@@ -20386,7 +20386,7 @@
 1156c     FD 12 02 F6 | 	mov	arg01, result1
 11570     3C 76 B0 FD | 	call	#__system___lockmem
 11574     43 01 00 FF 
-11578     4B 14 06 F6 | 	mov	arg02, ##@LR__4590
+11578     4A 14 06 F6 | 	mov	arg02, ##@LR__4590
 1157c     00 12 06 F6 | 	mov	arg01, #0
 11580     00 16 06 F6 | 	mov	arg03, #0
 11584     1C 83 B0 FD | 	call	#__system___basic_print_string
@@ -20465,7 +20465,7 @@
 11680     FD 12 02 F6 | 	mov	arg01, result1
 11684     28 75 B0 FD | 	call	#__system___lockmem
 11688     43 01 00 FF 
-1168c     51 14 06 F6 | 	mov	arg02, ##@LR__4591
+1168c     50 14 06 F6 | 	mov	arg02, ##@LR__4591
 11690     00 12 06 F6 | 	mov	arg01, #0
 11694     00 16 06 F6 | 	mov	arg03, #0
 11698     08 82 B0 FD | 	call	#__system___basic_print_string
@@ -20532,7 +20532,7 @@
 11764     FD 12 02 F6 | 	mov	arg01, result1
 11768     44 74 B0 FD | 	call	#__system___lockmem
 1176c     43 01 00 FF 
-11770     57 14 06 F6 | 	mov	arg02, ##@LR__4592
+11770     56 14 06 F6 | 	mov	arg02, ##@LR__4592
 11774     00 12 06 F6 | 	mov	arg01, #0
 11778     00 16 06 F6 | 	mov	arg03, #0
 1177c     24 81 B0 FD | 	call	#__system___basic_print_string
@@ -20651,7 +20651,7 @@
 118e8     FD 12 02 F6 | 	mov	arg01, result1
 118ec     C0 72 B0 FD | 	call	#__system___lockmem
 118f0     43 01 00 FF 
-118f4     5F 14 06 F6 | 	mov	arg02, ##@LR__4593
+118f4     5E 14 06 F6 | 	mov	arg02, ##@LR__4593
 118f8     00 12 06 F6 | 	mov	arg01, #0
 118fc     00 16 06 F6 | 	mov	arg03, #0
 11900     A0 7F B0 FD | 	call	#__system___basic_print_string
@@ -20770,7 +20770,7 @@
 11a6c     FD 12 02 F6 | 	mov	arg01, result1
 11a70     3C 71 B0 FD | 	call	#__system___lockmem
 11a74     43 01 00 FF 
-11a78     67 14 06 F6 | 	mov	arg02, ##@LR__4594
+11a78     66 14 06 F6 | 	mov	arg02, ##@LR__4594
 11a7c     00 12 06 F6 | 	mov	arg01, #0
 11a80     00 16 06 F6 | 	mov	arg03, #0
 11a84     1C 7E B0 FD | 	call	#__system___basic_print_string
@@ -22914,7 +22914,7 @@
 13710     0C E4 85 F1 | 	sub	objptr, ##44044
 13714     B4 41 B0 FD | 	call	#_hg010b_spin2_cls
 13718     43 01 00 FF 
-1371c     72 12 06 F6 | 	mov	arg01, ##@LR__4595
+1371c     71 12 06 F6 | 	mov	arg01, ##@LR__4595
 13720                 | ' 
 13720                 | ' write(text)
 13720     64 44 B0 FD | 	call	#_hg010b_spin2_write
@@ -23423,7 +23423,7 @@
 13d78     03 4A 05 F6 | 	mov	COUNT_, #3
 13d7c     A8 00 A0 FD | 	call	#pushregs_
 13d80     43 01 00 FF 
-13d84     73 12 06 F6 | 	mov	arg01, ##@LR__4596
+13d84     72 12 06 F6 | 	mov	arg01, ##@LR__4596
 13d88     B0 54 B0 FD | 	call	#__system___chdir
 13d8c                 | ' chdir("/sd/bas")       ' set working directory
 13d8c                 | ' print "Working directory: "; currentdir$ 
@@ -23432,7 +23432,7 @@
 13d94     FD 12 02 F6 | 	mov	arg01, result1
 13d98     14 4E B0 FD | 	call	#__system___lockmem
 13d9c     43 01 00 FF 
-13da0     7B 14 06 F6 | 	mov	arg02, ##@LR__4597
+13da0     7A 14 06 F6 | 	mov	arg02, ##@LR__4597
 13da4     00 12 06 F6 | 	mov	arg01, #0
 13da8     00 16 06 F6 | 	mov	arg03, #0
 13dac     F4 5A B0 FD | 	call	#__system___basic_print_string
@@ -23452,7 +23452,7 @@
 13de4     CC A6 B0 FD | 	call	#__system___getiolock_0423
 13de8     FD 00 68 FC | 	wrlong	#0, result1
 13dec     43 01 00 FF 
-13df0     8F 12 06 F6 | 	mov	arg01, ##@LR__4598
+13df0     8E 12 06 F6 | 	mov	arg01, ##@LR__4598
 13df4     10 14 06 F6 | 	mov	arg02, #16
 13df8     F0 A7 B0 FD | 	call	#__system___basic_dir
 13dfc     FD 1E 02 F6 | 	mov	local01, result1
@@ -23462,7 +23462,7 @@
 13e00                 | LR__1570
 13e00     00 20 06 F6 | 	mov	local02, #0
 13e04     43 01 00 FF 
-13e08     91 14 06 F6 | 	mov	arg02, ##@LR__4599
+13e08     90 14 06 F6 | 	mov	arg02, ##@LR__4599
 13e0c     0F 13 02 F6 | 	mov	arg01, local01
 13e10     C4 4D B0 FD | 	call	#__system___string_cmp
 13e14     00 FA 0D F2 | 	cmp	result1, #0 wz
@@ -23481,7 +23481,7 @@
 13e44     FD 12 02 F6 | 	mov	arg01, result1
 13e48     64 4D B0 FD | 	call	#__system___lockmem
 13e4c     43 01 00 FF 
-13e50     92 14 06 F6 | 	mov	arg02, ##@LR__4600
+13e50     91 14 06 F6 | 	mov	arg02, ##@LR__4600
 13e54     00 12 06 F6 | 	mov	arg01, #0
 13e58     00 16 06 F6 | 	mov	arg03, #0
 13e5c     44 5A B0 FD | 	call	#__system___basic_print_string
@@ -23503,7 +23503,7 @@
 13e9c     60 FF 9F FD | 	jmp	#LR__1570
 13ea0                 | LR__1571
 13ea0     43 01 00 FF 
-13ea4     99 12 06 F6 | 	mov	arg01, ##@LR__4601
+13ea4     98 12 06 F6 | 	mov	arg01, ##@LR__4601
 13ea8     21 14 06 F6 | 	mov	arg02, #33
 13eac     3C A7 B0 FD | 	call	#__system___basic_dir
 13eb0     FD 1E 02 F6 | 	mov	local01, result1
@@ -23513,7 +23513,7 @@
 13eb4                 | LR__1572
 13eb4     00 20 06 F6 | 	mov	local02, #0
 13eb8     43 01 00 FF 
-13ebc     9B 14 06 F6 | 	mov	arg02, ##@LR__4602
+13ebc     9A 14 06 F6 | 	mov	arg02, ##@LR__4602
 13ec0     0F 13 02 F6 | 	mov	arg01, local01
 13ec4     10 4D B0 FD | 	call	#__system___string_cmp
 13ec8     00 FA 0D F2 | 	cmp	result1, #0 wz
@@ -23560,7 +23560,7 @@
 13f58     FD 12 02 F6 | 	mov	arg01, result1
 13f5c     50 4C B0 FD | 	call	#__system___lockmem
 13f60     43 01 00 FF 
-13f64     9C 14 06 F6 | 	mov	arg02, ##@LR__4603
+13f64     9B 14 06 F6 | 	mov	arg02, ##@LR__4603
 13f68     00 12 06 F6 | 	mov	arg01, #0
 13f6c     00 16 06 F6 | 	mov	arg03, #0
 13f70     30 59 B0 FD | 	call	#__system___basic_print_string
@@ -23610,7 +23610,7 @@
 14004     FD 12 02 F6 | 	mov	arg01, result1
 14008     A4 4B B0 FD | 	call	#__system___lockmem
 1400c     43 01 00 FF 
-14010     B5 14 06 F6 | 	mov	arg02, ##@LR__4604
+14010     B4 14 06 F6 | 	mov	arg02, ##@LR__4604
 14014     00 12 06 F6 | 	mov	arg01, #0
 14018     00 16 06 F6 | 	mov	arg03, #0
 1401c     84 58 B0 FD | 	call	#__system___basic_print_string
@@ -23807,13 +23807,13 @@
 14244     78 69 B0 FD | 	call	#__system__Left_S
 14248     FD 12 02 F6 | 	mov	arg01, result1
 1424c     43 01 00 FF 
-14250     D3 14 06 F6 | 	mov	arg02, ##@LR__4605
+14250     D2 14 06 F6 | 	mov	arg02, ##@LR__4605
 14254     80 49 B0 FD | 	call	#__system___string_cmp
 14258     00 FA 0D F2 | 	cmp	result1, #0 wz
 1425c     12 27 02 A6 |  if_e	mov	local05, local04
 14260     14 00 90 AD |  if_e	jmp	#LR__1591
 14264     43 01 00 FF 
-14268     D5 12 06 F6 | 	mov	arg01, ##@LR__4606
+14268     D4 12 06 F6 | 	mov	arg01, ##@LR__4606
 1426c     12 15 02 F6 | 	mov	arg02, local04
 14270     98 49 B0 FD | 	call	#__system___string_concat
 14274     FD 26 02 F6 | 	mov	local05, result1
@@ -23835,7 +23835,7 @@
 142a4     FD 12 02 F6 | 	mov	arg01, result1
 142a8     04 49 B0 FD | 	call	#__system___lockmem
 142ac     43 01 00 FF 
-142b0     DE 14 06 F6 | 	mov	arg02, ##@LR__4607
+142b0     DD 14 06 F6 | 	mov	arg02, ##@LR__4607
 142b4     00 12 06 F6 | 	mov	arg01, #0
 142b8     00 16 06 F6 | 	mov	arg03, #0
 142bc     E4 55 B0 FD | 	call	#__system___basic_print_string
@@ -23845,7 +23845,7 @@
 142cc     0A 18 06 F6 | 	mov	arg04, #10
 142d0     14 56 B0 FD | 	call	#__system___basic_print_integer
 142d4     43 01 00 FF 
-142d8     EC 14 06 F6 | 	mov	arg02, ##@LR__4608
+142d8     EB 14 06 F6 | 	mov	arg02, ##@LR__4608
 142dc     00 12 06 F6 | 	mov	arg01, #0
 142e0     00 16 06 F6 | 	mov	arg03, #0
 142e4     BC 55 B0 FD | 	call	#__system___basic_print_string
@@ -25000,200 +25000,200 @@
 1536c                 | ' sub init_error_strings
 1536c                 | _init_error_strings
 1536c     43 01 00 FF 
-15370     EF 00 06 F6 | 	mov	_var01, ##@LR__4609
+15370     EE 00 06 F6 | 	mov	_var01, ##@LR__4609
 15374     64 00 00 FF 
 15378     50 E4 05 F1 | 	add	objptr, ##51280
 1537c     F2 00 62 FC | 	wrlong	_var01, objptr
 15380     43 01 00 FF 
-15384     F0 00 06 F6 | 	mov	_var01, ##@LR__4610
+15384     EF 00 06 F6 | 	mov	_var01, ##@LR__4610
 15388     04 E4 05 F1 | 	add	objptr, #4
 1538c     F2 00 62 FC | 	wrlong	_var01, objptr
 15390     43 01 00 FF 
-15394     15 01 06 F6 | 	mov	_var01, ##@LR__4611
+15394     14 01 06 F6 | 	mov	_var01, ##@LR__4611
 15398     04 E4 05 F1 | 	add	objptr, #4
 1539c     F2 00 62 FC | 	wrlong	_var01, objptr
 153a0     43 01 00 FF 
-153a4     36 01 06 F6 | 	mov	_var01, ##@LR__4612
+153a4     35 01 06 F6 | 	mov	_var01, ##@LR__4612
 153a8     04 E4 05 F1 | 	add	objptr, #4
 153ac     F2 00 62 FC | 	wrlong	_var01, objptr
 153b0     43 01 00 FF 
-153b4     50 01 06 F6 | 	mov	_var01, ##@LR__4613
+153b4     4F 01 06 F6 | 	mov	_var01, ##@LR__4613
 153b8     04 E4 05 F1 | 	add	objptr, #4
 153bc     F2 00 62 FC | 	wrlong	_var01, objptr
 153c0     43 01 00 FF 
-153c4     6C 01 06 F6 | 	mov	_var01, ##@LR__4614
+153c4     6B 01 06 F6 | 	mov	_var01, ##@LR__4614
 153c8     04 E4 05 F1 | 	add	objptr, #4
 153cc     F2 00 62 FC | 	wrlong	_var01, objptr
 153d0     43 01 00 FF 
-153d4     8E 01 06 F6 | 	mov	_var01, ##@LR__4615
+153d4     8D 01 06 F6 | 	mov	_var01, ##@LR__4615
 153d8     04 E4 05 F1 | 	add	objptr, #4
 153dc     F2 00 62 FC | 	wrlong	_var01, objptr
 153e0     43 01 00 FF 
-153e4     BC 01 06 F6 | 	mov	_var01, ##@LR__4616
+153e4     BB 01 06 F6 | 	mov	_var01, ##@LR__4616
 153e8     04 E4 05 F1 | 	add	objptr, #4
 153ec     F2 00 62 FC | 	wrlong	_var01, objptr
 153f0     43 01 00 FF 
-153f4     E7 01 06 F6 | 	mov	_var01, ##@LR__4617
+153f4     E6 01 06 F6 | 	mov	_var01, ##@LR__4617
 153f8     04 E4 05 F1 | 	add	objptr, #4
 153fc     F2 00 62 FC | 	wrlong	_var01, objptr
-15400     44 01 00 FF 
-15404     00 00 06 F6 | 	mov	_var01, ##@LR__4618
+15400     43 01 00 FF 
+15404     FF 01 06 F6 | 	mov	_var01, ##@LR__4618
 15408     04 E4 05 F1 | 	add	objptr, #4
 1540c     F2 00 62 FC | 	wrlong	_var01, objptr
 15410     44 01 00 FF 
-15414     21 00 06 F6 | 	mov	_var01, ##@LR__4619
+15414     20 00 06 F6 | 	mov	_var01, ##@LR__4619
 15418     04 E4 05 F1 | 	add	objptr, #4
 1541c     F2 00 62 FC | 	wrlong	_var01, objptr
 15420     44 01 00 FF 
-15424     38 00 06 F6 | 	mov	_var01, ##@LR__4620
+15424     37 00 06 F6 | 	mov	_var01, ##@LR__4620
 15428     04 E4 05 F1 | 	add	objptr, #4
 1542c     F2 00 62 FC | 	wrlong	_var01, objptr
 15430     44 01 00 FF 
-15434     56 00 06 F6 | 	mov	_var01, ##@LR__4621
+15434     55 00 06 F6 | 	mov	_var01, ##@LR__4621
 15438     04 E4 05 F1 | 	add	objptr, #4
 1543c     F2 00 62 FC | 	wrlong	_var01, objptr
 15440     44 01 00 FF 
-15444     7A 00 06 F6 | 	mov	_var01, ##@LR__4622
+15444     79 00 06 F6 | 	mov	_var01, ##@LR__4622
 15448     04 E4 05 F1 | 	add	objptr, #4
 1544c     F2 00 62 FC | 	wrlong	_var01, objptr
 15450     44 01 00 FF 
-15454     A1 00 06 F6 | 	mov	_var01, ##@LR__4623
+15454     A0 00 06 F6 | 	mov	_var01, ##@LR__4623
 15458     04 E4 05 F1 | 	add	objptr, #4
 1545c     F2 00 62 FC | 	wrlong	_var01, objptr
 15460     44 01 00 FF 
-15464     BD 00 06 F6 | 	mov	_var01, ##@LR__4624
+15464     BC 00 06 F6 | 	mov	_var01, ##@LR__4624
 15468     04 E4 05 F1 | 	add	objptr, #4
 1546c     F2 00 62 FC | 	wrlong	_var01, objptr
 15470     44 01 00 FF 
-15474     CE 00 06 F6 | 	mov	_var01, ##@LR__4625
+15474     CD 00 06 F6 | 	mov	_var01, ##@LR__4625
 15478     04 E4 05 F1 | 	add	objptr, #4
 1547c     F2 00 62 FC | 	wrlong	_var01, objptr
 15480     44 01 00 FF 
-15484     DE 00 06 F6 | 	mov	_var01, ##@LR__4626
+15484     DD 00 06 F6 | 	mov	_var01, ##@LR__4626
 15488     04 E4 05 F1 | 	add	objptr, #4
 1548c     F2 00 62 FC | 	wrlong	_var01, objptr
 15490     44 01 00 FF 
-15494     F9 00 06 F6 | 	mov	_var01, ##@LR__4627
+15494     F8 00 06 F6 | 	mov	_var01, ##@LR__4627
 15498     04 E4 05 F1 | 	add	objptr, #4
 1549c     F2 00 62 FC | 	wrlong	_var01, objptr
 154a0     44 01 00 FF 
-154a4     0B 01 06 F6 | 	mov	_var01, ##@LR__4628
+154a4     0A 01 06 F6 | 	mov	_var01, ##@LR__4628
 154a8     04 E4 05 F1 | 	add	objptr, #4
 154ac     F2 00 62 FC | 	wrlong	_var01, objptr
 154b0     44 01 00 FF 
-154b4     23 01 06 F6 | 	mov	_var01, ##@LR__4629
+154b4     22 01 06 F6 | 	mov	_var01, ##@LR__4629
 154b8     04 E4 05 F1 | 	add	objptr, #4
 154bc     F2 00 62 FC | 	wrlong	_var01, objptr
 154c0     44 01 00 FF 
-154c4     37 01 06 F6 | 	mov	_var01, ##@LR__4630
+154c4     36 01 06 F6 | 	mov	_var01, ##@LR__4630
 154c8     04 E4 05 F1 | 	add	objptr, #4
 154cc     F2 00 62 FC | 	wrlong	_var01, objptr
 154d0     44 01 00 FF 
-154d4     47 01 06 F6 | 	mov	_var01, ##@LR__4631
+154d4     46 01 06 F6 | 	mov	_var01, ##@LR__4631
 154d8     04 E4 05 F1 | 	add	objptr, #4
 154dc     F2 00 62 FC | 	wrlong	_var01, objptr
 154e0     44 01 00 FF 
-154e4     64 01 06 F6 | 	mov	_var01, ##@LR__4632
+154e4     63 01 06 F6 | 	mov	_var01, ##@LR__4632
 154e8     04 E4 05 F1 | 	add	objptr, #4
 154ec     F2 00 62 FC | 	wrlong	_var01, objptr
 154f0     44 01 00 FF 
-154f4     75 01 06 F6 | 	mov	_var01, ##@LR__4633
+154f4     74 01 06 F6 | 	mov	_var01, ##@LR__4633
 154f8     04 E4 05 F1 | 	add	objptr, #4
 154fc     F2 00 62 FC | 	wrlong	_var01, objptr
 15500     44 01 00 FF 
-15504     86 01 06 F6 | 	mov	_var01, ##@LR__4634
+15504     85 01 06 F6 | 	mov	_var01, ##@LR__4634
 15508     04 E4 05 F1 | 	add	objptr, #4
 1550c     F2 00 62 FC | 	wrlong	_var01, objptr
 15510     44 01 00 FF 
-15514     B1 01 06 F6 | 	mov	_var01, ##@LR__4635
+15514     B0 01 06 F6 | 	mov	_var01, ##@LR__4635
 15518     04 E4 05 F1 | 	add	objptr, #4
 1551c     F2 00 62 FC | 	wrlong	_var01, objptr
 15520     44 01 00 FF 
-15524     CD 01 06 F6 | 	mov	_var01, ##@LR__4636
+15524     CC 01 06 F6 | 	mov	_var01, ##@LR__4636
 15528     04 E4 05 F1 | 	add	objptr, #4
 1552c     F2 00 62 FC | 	wrlong	_var01, objptr
 15530     44 01 00 FF 
-15534     E3 01 06 F6 | 	mov	_var01, ##@LR__4637
+15534     E2 01 06 F6 | 	mov	_var01, ##@LR__4637
 15538     04 E4 05 F1 | 	add	objptr, #4
 1553c     F2 00 62 FC | 	wrlong	_var01, objptr
 15540     44 01 00 FF 
-15544     F0 01 06 F6 | 	mov	_var01, ##@LR__4638
+15544     EF 01 06 F6 | 	mov	_var01, ##@LR__4638
 15548     04 E4 05 F1 | 	add	objptr, #4
 1554c     F2 00 62 FC | 	wrlong	_var01, objptr
 15550     45 01 00 FF 
-15554     02 00 06 F6 | 	mov	_var01, ##@LR__4639
+15554     01 00 06 F6 | 	mov	_var01, ##@LR__4639
 15558     04 E4 05 F1 | 	add	objptr, #4
 1555c     F2 00 62 FC | 	wrlong	_var01, objptr
 15560     45 01 00 FF 
-15564     13 00 06 F6 | 	mov	_var01, ##@LR__4640
+15564     12 00 06 F6 | 	mov	_var01, ##@LR__4640
 15568     04 E4 05 F1 | 	add	objptr, #4
 1556c     F2 00 62 FC | 	wrlong	_var01, objptr
 15570     45 01 00 FF 
-15574     2F 00 06 F6 | 	mov	_var01, ##@LR__4641
+15574     2E 00 06 F6 | 	mov	_var01, ##@LR__4641
 15578     04 E4 05 F1 | 	add	objptr, #4
 1557c     F2 00 62 FC | 	wrlong	_var01, objptr
 15580     45 01 00 FF 
-15584     40 00 06 F6 | 	mov	_var01, ##@LR__4642
+15584     3F 00 06 F6 | 	mov	_var01, ##@LR__4642
 15588     04 E4 05 F1 | 	add	objptr, #4
 1558c     F2 00 62 FC | 	wrlong	_var01, objptr
 15590     45 01 00 FF 
-15594     4F 00 06 F6 | 	mov	_var01, ##@LR__4643
+15594     4E 00 06 F6 | 	mov	_var01, ##@LR__4643
 15598     04 E4 05 F1 | 	add	objptr, #4
 1559c     F2 00 62 FC | 	wrlong	_var01, objptr
 155a0     45 01 00 FF 
-155a4     6A 00 06 F6 | 	mov	_var01, ##@LR__4644
+155a4     69 00 06 F6 | 	mov	_var01, ##@LR__4644
 155a8     04 E4 05 F1 | 	add	objptr, #4
 155ac     F2 00 62 FC | 	wrlong	_var01, objptr
 155b0     45 01 00 FF 
-155b4     9E 00 06 F6 | 	mov	_var01, ##@LR__4645
+155b4     9D 00 06 F6 | 	mov	_var01, ##@LR__4645
 155b8     04 E4 05 F1 | 	add	objptr, #4
 155bc     F2 00 62 FC | 	wrlong	_var01, objptr
 155c0     45 01 00 FF 
-155c4     B7 00 06 F6 | 	mov	_var01, ##@LR__4646
+155c4     B6 00 06 F6 | 	mov	_var01, ##@LR__4646
 155c8     04 E4 05 F1 | 	add	objptr, #4
 155cc     F2 00 62 FC | 	wrlong	_var01, objptr
 155d0     45 01 00 FF 
-155d4     D3 00 06 F6 | 	mov	_var01, ##@LR__4647
+155d4     D2 00 06 F6 | 	mov	_var01, ##@LR__4647
 155d8     04 E4 05 F1 | 	add	objptr, #4
 155dc     F2 00 62 FC | 	wrlong	_var01, objptr
 155e0     45 01 00 FF 
-155e4     F1 00 06 F6 | 	mov	_var01, ##@LR__4648
+155e4     F0 00 06 F6 | 	mov	_var01, ##@LR__4648
 155e8     04 E4 05 F1 | 	add	objptr, #4
 155ec     F2 00 62 FC | 	wrlong	_var01, objptr
 155f0     45 01 00 FF 
-155f4     0A 01 06 F6 | 	mov	_var01, ##@LR__4649
+155f4     09 01 06 F6 | 	mov	_var01, ##@LR__4649
 155f8     04 E4 05 F1 | 	add	objptr, #4
 155fc     F2 00 62 FC | 	wrlong	_var01, objptr
 15600     45 01 00 FF 
-15604     29 01 06 F6 | 	mov	_var01, ##@LR__4650
+15604     28 01 06 F6 | 	mov	_var01, ##@LR__4650
 15608     04 E4 05 F1 | 	add	objptr, #4
 1560c     F2 00 62 FC | 	wrlong	_var01, objptr
 15610     45 01 00 FF 
-15614     38 01 06 F6 | 	mov	_var01, ##@LR__4651
+15614     37 01 06 F6 | 	mov	_var01, ##@LR__4651
 15618     04 E4 05 F1 | 	add	objptr, #4
 1561c     F2 00 62 FC | 	wrlong	_var01, objptr
 15620     45 01 00 FF 
-15624     66 01 06 F6 | 	mov	_var01, ##@LR__4652
+15624     65 01 06 F6 | 	mov	_var01, ##@LR__4652
 15628     04 E4 05 F1 | 	add	objptr, #4
 1562c     F2 00 62 FC | 	wrlong	_var01, objptr
 15630     45 01 00 FF 
-15634     74 01 06 F6 | 	mov	_var01, ##@LR__4653
+15634     73 01 06 F6 | 	mov	_var01, ##@LR__4653
 15638     04 E4 05 F1 | 	add	objptr, #4
 1563c     F2 00 62 FC | 	wrlong	_var01, objptr
 15640     45 01 00 FF 
-15644     89 01 06 F6 | 	mov	_var01, ##@LR__4654
+15644     88 01 06 F6 | 	mov	_var01, ##@LR__4654
 15648     04 E4 05 F1 | 	add	objptr, #4
 1564c     F2 00 62 FC | 	wrlong	_var01, objptr
 15650     45 01 00 FF 
-15654     AD 01 06 F6 | 	mov	_var01, ##@LR__4655
+15654     AC 01 06 F6 | 	mov	_var01, ##@LR__4655
 15658     04 E4 05 F1 | 	add	objptr, #4
 1565c     F2 00 62 FC | 	wrlong	_var01, objptr
 15660     45 01 00 FF 
-15664     C4 01 06 F6 | 	mov	_var01, ##@LR__4656
+15664     C3 01 06 F6 | 	mov	_var01, ##@LR__4656
 15668     04 E4 05 F1 | 	add	objptr, #4
 1566c     F2 00 62 FC | 	wrlong	_var01, objptr
 15670     45 01 00 FF 
-15674     D7 01 06 F6 | 	mov	_var01, ##@LR__4657
+15674     D6 01 06 F6 | 	mov	_var01, ##@LR__4657
 15678     04 E4 05 F1 | 	add	objptr, #4
 1567c     F2 00 62 FC | 	wrlong	_var01, objptr
 15680     64 00 00 FF 
@@ -25208,14 +25208,14 @@
 15690     A8 00 A0 FD | 	call	#pushregs_
 15694     09 1F 02 F6 | 	mov	local01, arg01
 15698     45 01 00 FF 
-1569c     EE 13 06 F6 | 	mov	arg01, ##@LR__4658
+1569c     ED 13 06 F6 | 	mov	arg01, ##@LR__4658
 156a0     E4 24 B0 FD | 	call	#_hg010b_spin2_write
 156a4     0F 13 02 F6 | 	mov	arg01, local01
 156a8     DC 26 B0 FD | 	call	#_hg010b_spin2_inttostr
 156ac     FD 12 02 F6 | 	mov	arg01, result1
 156b0     D4 24 B0 FD | 	call	#_hg010b_spin2_write
 156b4     45 01 00 FF 
-156b8     F5 13 06 F6 | 	mov	arg01, ##@LR__4659
+156b8     F4 13 06 F6 | 	mov	arg01, ##@LR__4659
 156bc     C8 24 B0 FD | 	call	#_hg010b_spin2_write
 156c0     02 1E 66 F0 | 	shl	local01, #2
 156c4     64 00 00 FF 
@@ -25581,7 +25581,7 @@
 15b74     01 00 00 FF 
 15b78     B2 E4 85 F1 | 	sub	objptr, ##690
 15b7c     45 01 00 FF 
-15b80     F8 21 06 F6 | 	mov	local02, ##@LR__4660
+15b80     F7 21 06 F6 | 	mov	local02, ##@LR__4660
 15b84     3D 12 06 F6 | 	mov	arg01, #61
 15b88     3C 14 06 F6 | 	mov	arg02, #60
 15b8c     3B 16 06 F6 | 	mov	arg03, #59
@@ -25591,10 +25591,10 @@
 15b9c     10 13 02 F6 | 	mov	arg01, local02
 15ba0     D8 33 B0 FD | 	call	#__system___mount
 15ba4     45 01 00 FF 
-15ba8     FC 13 06 F6 | 	mov	arg01, ##@LR__4661
+15ba8     FB 13 06 F6 | 	mov	arg01, ##@LR__4661
 15bac     8C 36 B0 FD | 	call	#__system___chdir
 15bb0     46 01 00 FF 
-15bb4     04 20 06 F6 | 	mov	local02, ##@LR__4662
+15bb4     03 20 06 F6 | 	mov	local02, ##@LR__4662
 15bb8     71 00 00 FF 
 15bbc     68 E4 05 F1 | 	add	objptr, ##57960
 15bc0     F2 20 62 FC | 	wrlong	local02, objptr
@@ -25646,7 +25646,7 @@
 15c3c     78 51 B0 FD | 	call	#__system__Number_S
 15c40     FD 12 02 F6 | 	mov	arg01, result1
 15c44     46 01 00 FF 
-15c48     0C 14 06 F6 | 	mov	arg02, ##@LR__4663
+15c48     0B 14 06 F6 | 	mov	arg02, ##@LR__4663
 15c4c     BC 2F B0 FD | 	call	#__system___string_concat
 15c50     FD 20 02 F6 | 	mov	local02, result1
 15c54     78 00 00 FF 
@@ -25688,7 +25688,7 @@
 15cdc     FD 12 02 F6 | 	mov	arg01, result1
 15ce0     CC 2E B0 FD | 	call	#__system___lockmem
 15ce4     46 01 00 FF 
-15ce8     1E 14 06 F6 | 	mov	arg02, ##@LR__4664
+15ce8     1D 14 06 F6 | 	mov	arg02, ##@LR__4664
 15cec     00 12 06 F6 | 	mov	arg01, #0
 15cf0     00 16 06 F6 | 	mov	arg03, #0
 15cf4     AC 3B B0 FD | 	call	#__system___basic_print_string
@@ -26245,7 +26245,7 @@
 164dc     55 00 00 FF 
 164e0     F0 E5 85 F1 | 	sub	objptr, ##44016
 164e4     46 01 00 FF 
-164e8     24 24 06 F6 | 	mov	local04, ##@LR__4665
+164e8     23 24 06 F6 | 	mov	local04, ##@LR__4665
 164ec     12 15 02 F6 | 	mov	arg02, local04
 164f0     18 27 B0 FD | 	call	#__system___string_concat
 164f4     55 00 00 FF 
@@ -26254,7 +26254,7 @@
 16500     55 00 00 FF 
 16504     F0 E5 85 F1 | 	sub	objptr, ##44016
 16508     46 01 00 FF 
-1650c     26 12 06 F6 | 	mov	arg01, ##@LR__4666
+1650c     25 12 06 F6 | 	mov	arg01, ##@LR__4666
 16510     74 16 B0 FD | 	call	#_hg010b_spin2_write
 16514     18 23 02 F6 | 	mov	local03, local10
 16518     01 22 06 F1 | 	add	local03, #1
@@ -26322,7 +26322,7 @@
 165f0     24 00 90 FD | 	jmp	#LR__1693
 165f4                 | LR__1692
 165f4     46 01 00 FF 
-165f8     28 20 06 F6 | 	mov	local02, ##@LR__4667
+165f8     27 20 06 F6 | 	mov	local02, ##@LR__4667
 165fc     55 00 00 FF 
 16600     F0 E5 05 F1 | 	add	objptr, ##44016
 16604     F2 20 62 FC | 	wrlong	local02, objptr
@@ -26346,7 +26346,7 @@
 16634     B0 16 B0 FD | 	call	#_hg010b_spin2_crlf
 16638     E0 A3 BE FD | 	call	#_interpret
 1663c     46 01 00 FF 
-16640     29 20 06 F6 | 	mov	local02, ##@LR__4668
+16640     28 20 06 F6 | 	mov	local02, ##@LR__4668
 16644     55 00 00 FF 
 16648     F0 E5 05 F1 | 	add	objptr, ##44016
 1664c     F2 20 62 FC | 	wrlong	local02, objptr
@@ -49305,698 +49305,698 @@
 2855e     73 74 65 70 | 	byte	"step"
 28562     00          | 	byte	0
 28563                 | LR__4553
-28563     73 74 2E    | 	byte	"st."
-28566     00          | 	byte	0
-28567                 | LR__4554
-28567     57 65 20 68 
-2856b     61 76 65 20 
-2856f     61 20 73 6C 
-28573     6F 77 20 67 
-28577     6F 74 6F 2C 
-2857b     20 74 6F 64 
-2857f     6F 20 20    | 	byte	"We have a slow goto, todo  "
-28582     00          | 	byte	0
-28583                 | LR__4555
-28583     6E 6F 6E 61 
-28587     6D 65 2E 62 
-2858b     61 73       | 	byte	"noname.bas"
+28563     73 2E       | 	byte	"s."
+28565     00          | 	byte	0
+28566                 | LR__4554
+28566     57 65 20 68 
+2856a     61 76 65 20 
+2856e     61 20 73 6C 
+28572     6F 77 20 67 
+28576     6F 74 6F 2C 
+2857a     20 74 6F 64 
+2857e     6F 20 20    | 	byte	"We have a slow goto, todo  "
+28581     00          | 	byte	0
+28582                 | LR__4555
+28582     6E 6F 6E 61 
+28586     6D 65 2E 62 
+2858a     61 73       | 	byte	"noname.bas"
+2858c     00          | 	byte	0
+2858d                 | LR__4556
+2858d                 | 	byte	
 2858d     00          | 	byte	0
-2858e                 | LR__4556
-2858e                 | 	byte	
-2858e     00          | 	byte	0
-2858f                 | LR__4557
-2858f     6E 6F 6E 61 
-28593     6D 65 2E 62 
-28597     61 73       | 	byte	"noname.bas"
-28599     00          | 	byte	0
-2859a                 | LR__4558
-2859a     2F          | 	byte	"/"
+2858e                 | LR__4557
+2858e     6E 6F 6E 61 
+28592     6D 65 2E 62 
+28596     61 73       | 	byte	"noname.bas"
+28598     00          | 	byte	0
+28599                 | LR__4558
+28599     2F          | 	byte	"/"
+2859a     00          | 	byte	0
+2859b                 | LR__4559
+2859b                 | 	byte	
 2859b     00          | 	byte	0
-2859c                 | LR__4559
+2859c                 | LR__4560
 2859c                 | 	byte	
 2859c     00          | 	byte	0
-2859d                 | LR__4560
-2859d                 | 	byte	
-2859d     00          | 	byte	0
-2859e                 | LR__4561
-2859e     6E 6F 6E 61 
-285a2     6D 65 2E 62 
-285a6     61 73       | 	byte	"noname.bas"
-285a8     00          | 	byte	0
-285a9                 | LR__4562
-285a9     2F          | 	byte	"/"
-285aa     00          | 	byte	0
-285ab                 | LR__4563
-285ab     53 79 73 74 
-285af     65 6D 20 65 
-285b3     72 72 6F 72 
-285b7     20          | 	byte	"System error "
-285b8     00          | 	byte	0
-285b9                 | LR__4564
-285b9     3A 20       | 	byte	": "
-285bb     00          | 	byte	0
-285bc                 | LR__4565
-285bc     2F          | 	byte	"/"
-285bd     00          | 	byte	0
-285be                 | LR__4566
-285be     30          | 	byte	"0"
-285bf     00          | 	byte	0
-285c0                 | LR__4567
-285c0     39          | 	byte	"9"
+2859d                 | LR__4561
+2859d     6E 6F 6E 61 
+285a1     6D 65 2E 62 
+285a5     61 73       | 	byte	"noname.bas"
+285a7     00          | 	byte	0
+285a8                 | LR__4562
+285a8     2F          | 	byte	"/"
+285a9     00          | 	byte	0
+285aa                 | LR__4563
+285aa     53 79 73 74 
+285ae     65 6D 20 65 
+285b2     72 72 6F 72 
+285b6     20          | 	byte	"System error "
+285b7     00          | 	byte	0
+285b8                 | LR__4564
+285b8     3A 20       | 	byte	": "
+285ba     00          | 	byte	0
+285bb                 | LR__4565
+285bb     2F          | 	byte	"/"
+285bc     00          | 	byte	0
+285bd                 | LR__4566
+285bd     30          | 	byte	"0"
+285be     00          | 	byte	0
+285bf                 | LR__4567
+285bf     39          | 	byte	"9"
+285c0     00          | 	byte	0
+285c1                 | LR__4568
+285c1                 | 	byte	
 285c1     00          | 	byte	0
-285c2                 | LR__4568
-285c2                 | 	byte	
-285c2     00          | 	byte	0
-285c3                 | LR__4569
-285c3     53 74 6F 70 
-285c7     70 65 64 20 
-285cb     61 74 20 6C 
-285cf     69 6E 65 20 | 	byte	"Stopped at line "
+285c2                 | LR__4569
+285c2     53 74 6F 70 
+285c6     70 65 64 20 
+285ca     61 74 20 6C 
+285ce     69 6E 65 20 | 	byte	"Stopped at line "
+285d2     00          | 	byte	0
+285d3                 | LR__4570
+285d3                 | 	byte	
 285d3     00          | 	byte	0
-285d4                 | LR__4570
+285d4                 | LR__4571
 285d4                 | 	byte	
 285d4     00          | 	byte	0
-285d5                 | LR__4571
-285d5                 | 	byte	
-285d5     00          | 	byte	0
-285d6                 | LR__4572
-285d6     2F 73 64 2F 
-285da     6D 65 64 69 
-285de     61 2F 68 2F | 	byte	"/sd/media/h/"
-285e2     00          | 	byte	0
-285e3                 | LR__4573
-285e3     53 79 73 74 
-285e7     65 6D 20 65 
-285eb     72 72 6F 72 
-285ef     20          | 	byte	"System error "
-285f0     00          | 	byte	0
-285f1                 | LR__4574
-285f1     3A 20       | 	byte	": "
+285d5                 | LR__4572
+285d5     2F 73 64 2F 
+285d9     6D 65 64 69 
+285dd     61 2F 68 2F | 	byte	"/sd/media/h/"
+285e1     00          | 	byte	0
+285e2                 | LR__4573
+285e2     53 79 73 74 
+285e6     65 6D 20 65 
+285ea     72 72 6F 72 
+285ee     20          | 	byte	"System error "
+285ef     00          | 	byte	0
+285f0                 | LR__4574
+285f0     3A 20       | 	byte	": "
+285f2     00          | 	byte	0
+285f3                 | LR__4575
+285f3                 | 	byte	
 285f3     00          | 	byte	0
-285f4                 | LR__4575
+285f4                 | LR__4576
 285f4                 | 	byte	
 285f4     00          | 	byte	0
-285f5                 | LR__4576
-285f5                 | 	byte	
-285f5     00          | 	byte	0
-285f6                 | LR__4577
-285f6     2F 73 64 2F 
-285fa     6D 65 64 69 
-285fe     61 2F 73 2F | 	byte	"/sd/media/s/"
-28602     00          | 	byte	0
-28603                 | LR__4578
-28603     53 79 73 74 
-28607     65 6D 20 65 
-2860b     72 72 6F 72 
-2860f     20          | 	byte	"System error "
-28610     00          | 	byte	0
-28611                 | LR__4579
-28611     3A 20       | 	byte	": "
-28613     00          | 	byte	0
-28614                 | LR__4580
-28614     45 72 72 6F 
-28618     72 20       | 	byte	"Error "
-2861a     00          | 	byte	0
-2861b                 | LR__4581
-2861b     3A 20       | 	byte	": "
+285f5                 | LR__4577
+285f5     2F 73 64 2F 
+285f9     6D 65 64 69 
+285fd     61 2F 73 2F | 	byte	"/sd/media/s/"
+28601     00          | 	byte	0
+28602                 | LR__4578
+28602     53 79 73 74 
+28606     65 6D 20 65 
+2860a     72 72 6F 72 
+2860e     20          | 	byte	"System error "
+2860f     00          | 	byte	0
+28610                 | LR__4579
+28610     3A 20       | 	byte	": "
+28612     00          | 	byte	0
+28613                 | LR__4580
+28613     45 72 72 6F 
+28617     72 20       | 	byte	"Error "
+28619     00          | 	byte	0
+2861a                 | LR__4581
+2861a     3A 20       | 	byte	": "
+2861c     00          | 	byte	0
+2861d                 | LR__4582
+2861d                 | 	byte	
 2861d     00          | 	byte	0
-2861e                 | LR__4582
-2861e                 | 	byte	
-2861e     00          | 	byte	0
-2861f                 | LR__4583
-2861f     72 6E 64 3A 
-28623     20          | 	byte	"rnd: "
-28624     00          | 	byte	0
-28625                 | LR__4584
-28625     72 6E 64 3A 
-28629     20          | 	byte	"rnd: "
-2862a     00          | 	byte	0
-2862b                 | LR__4585
-2862b     73 69 6E 3A 
-2862f     20          | 	byte	"sin: "
-28630     00          | 	byte	0
-28631                 | LR__4586
-28631     63 6F 73 3A 
-28635     20          | 	byte	"cos: "
-28636     00          | 	byte	0
-28637                 | LR__4587
-28637     74 61 6E 3A 
-2863b     20          | 	byte	"tan: "
-2863c     00          | 	byte	0
-2863d                 | LR__4588
-2863d     61 73 69 6E 
-28641     3A 20       | 	byte	"asin: "
-28643     00          | 	byte	0
-28644                 | LR__4589
-28644     61 63 6F 73 
-28648     3A 20       | 	byte	"acos: "
-2864a     00          | 	byte	0
-2864b                 | LR__4590
-2864b     61 74 6E 3A 
-2864f     20          | 	byte	"atn: "
-28650     00          | 	byte	0
-28651                 | LR__4591
-28651     73 71 72 3A 
-28655     20          | 	byte	"sqr: "
-28656     00          | 	byte	0
-28657                 | LR__4592
-28657     73 74 69 63 
-2865b     6B 3A 20    | 	byte	"stick: "
-2865e     00          | 	byte	0
-2865f                 | LR__4593
-2865f     73 74 72 69 
-28663     67 3A 20    | 	byte	"strig: "
-28666     00          | 	byte	0
-28667                 | LR__4594
-28667     67 65 74 70 
-2866b     69 78 65 6C 
-2866f     3A 20       | 	byte	"getpixel: "
+2861e                 | LR__4583
+2861e     72 6E 64 3A 
+28622     20          | 	byte	"rnd: "
+28623     00          | 	byte	0
+28624                 | LR__4584
+28624     72 6E 64 3A 
+28628     20          | 	byte	"rnd: "
+28629     00          | 	byte	0
+2862a                 | LR__4585
+2862a     73 69 6E 3A 
+2862e     20          | 	byte	"sin: "
+2862f     00          | 	byte	0
+28630                 | LR__4586
+28630     63 6F 73 3A 
+28634     20          | 	byte	"cos: "
+28635     00          | 	byte	0
+28636                 | LR__4587
+28636     74 61 6E 3A 
+2863a     20          | 	byte	"tan: "
+2863b     00          | 	byte	0
+2863c                 | LR__4588
+2863c     61 73 69 6E 
+28640     3A 20       | 	byte	"asin: "
+28642     00          | 	byte	0
+28643                 | LR__4589
+28643     61 63 6F 73 
+28647     3A 20       | 	byte	"acos: "
+28649     00          | 	byte	0
+2864a                 | LR__4590
+2864a     61 74 6E 3A 
+2864e     20          | 	byte	"atn: "
+2864f     00          | 	byte	0
+28650                 | LR__4591
+28650     73 71 72 3A 
+28654     20          | 	byte	"sqr: "
+28655     00          | 	byte	0
+28656                 | LR__4592
+28656     73 74 69 63 
+2865a     6B 3A 20    | 	byte	"stick: "
+2865d     00          | 	byte	0
+2865e                 | LR__4593
+2865e     73 74 72 69 
+28662     67 3A 20    | 	byte	"strig: "
+28665     00          | 	byte	0
+28666                 | LR__4594
+28666     67 65 74 70 
+2866a     69 78 65 6C 
+2866e     3A 20       | 	byte	"getpixel: "
+28670     00          | 	byte	0
+28671                 | LR__4595
+28671                 | 	byte	
 28671     00          | 	byte	0
-28672                 | LR__4595
-28672                 | 	byte	
-28672     00          | 	byte	0
-28673                 | LR__4596
-28673     2F 73 64 2F 
-28677     62 61 73    | 	byte	"/sd/bas"
-2867a     00          | 	byte	0
-2867b                 | LR__4597
-2867b     57 6F 72 6B 
-2867f     69 6E 67 20 
-28683     64 69 72 65 
-28687     63 74 6F 72 
-2868b     79 3A 20    | 	byte	"Working directory: "
-2868e     00          | 	byte	0
-2868f                 | LR__4598
-2868f     2A          | 	byte	"*"
+28672                 | LR__4596
+28672     2F 73 64 2F 
+28676     62 61 73    | 	byte	"/sd/bas"
+28679     00          | 	byte	0
+2867a                 | LR__4597
+2867a     57 6F 72 6B 
+2867e     69 6E 67 20 
+28682     64 69 72 65 
+28686     63 74 6F 72 
+2868a     79 3A 20    | 	byte	"Working directory: "
+2868d     00          | 	byte	0
+2868e                 | LR__4598
+2868e     2A          | 	byte	"*"
+2868f     00          | 	byte	0
+28690                 | LR__4599
+28690                 | 	byte	
 28690     00          | 	byte	0
-28691                 | LR__4599
-28691                 | 	byte	
-28691     00          | 	byte	0
-28692                 | LR__4600
-28692     5B 64 69 72 
-28696     5D 20       | 	byte	"[dir] "
-28698     00          | 	byte	0
-28699                 | LR__4601
-28699     2A          | 	byte	"*"
+28691                 | LR__4600
+28691     5B 64 69 72 
+28695     5D 20       | 	byte	"[dir] "
+28697     00          | 	byte	0
+28698                 | LR__4601
+28698     2A          | 	byte	"*"
+28699     00          | 	byte	0
+2869a                 | LR__4602
+2869a                 | 	byte	
 2869a     00          | 	byte	0
-2869b                 | LR__4602
-2869b                 | 	byte	
-2869b     00          | 	byte	0
-2869c                 | LR__4603
-2869c     2D 2D 2D 2D 
-286a0     2D 6D 6F 72 
-286a4     65 2C 20 70 
-286a8     72 65 73 73 
-286ac     20 61 6E 79 
-286b0     20 6B 65 79 | 	byte	"-----more, press any key"
-286b4     00          | 	byte	0
-286b5                 | LR__4604
-286b5     20 20 20 20 
+2869b                 | LR__4603
+2869b     2D 2D 2D 2D 
+2869f     2D 6D 6F 72 
+286a3     65 2C 20 70 
+286a7     72 65 73 73 
+286ab     20 61 6E 79 
+286af     20 6B 65 79 | 	byte	"-----more, press any key"
+286b3     00          | 	byte	0
+286b4                 | LR__4604
+286b4     20 20 20 20 
       ...             
-286cd     20 20 20 20 
-286d1     20          | 	byte	"                             "
-286d2     00          | 	byte	0
-286d3                 | LR__4605
-286d3     2F          | 	byte	"/"
-286d4     00          | 	byte	0
-286d5                 | LR__4606
-286d5     2F 73 64 2F 
-286d9     62 69 6E 2F | 	byte	"/sd/bin/"
-286dd     00          | 	byte	0
-286de                 | LR__4607
-286de     53 79 73 74 
-286e2     65 6D 20 65 
-286e6     72 72 6F 72 
-286ea     20          | 	byte	"System error "
-286eb     00          | 	byte	0
-286ec                 | LR__4608
-286ec     3A 20       | 	byte	": "
+286cc     20 20 20 20 
+286d0     20          | 	byte	"                             "
+286d1     00          | 	byte	0
+286d2                 | LR__4605
+286d2     2F          | 	byte	"/"
+286d3     00          | 	byte	0
+286d4                 | LR__4606
+286d4     2F 73 64 2F 
+286d8     62 69 6E 2F | 	byte	"/sd/bin/"
+286dc     00          | 	byte	0
+286dd                 | LR__4607
+286dd     53 79 73 74 
+286e1     65 6D 20 65 
+286e5     72 72 6F 72 
+286e9     20          | 	byte	"System error "
+286ea     00          | 	byte	0
+286eb                 | LR__4608
+286eb     3A 20       | 	byte	": "
+286ed     00          | 	byte	0
+286ee                 | LR__4609
+286ee                 | 	byte	
 286ee     00          | 	byte	0
-286ef                 | LR__4609
-286ef                 | 	byte	
-286ef     00          | 	byte	0
-286f0                 | LR__4610
-286f0     45 78 70 65 
-286f4     63 74 65 64 
-286f8     20 6E 75 6D 
-286fc     62 65 72 2C 
-28700     20 67 6F 74 
-28704     20 73 6F 6D 
-28708     65 74 68 69 
-2870c     6E 67 20 65 
-28710     6C 73 65 2E | 	byte	"Expected number, got something else."
-28714     00          | 	byte	0
-28715                 | LR__4611
-28715     43 61 6E 6E 
-28719     6F 74 20 61 
-2871d     64 64 20 61 
-28721     20 6E 75 6D 
-28725     62 65 72 20 
-28729     74 6F 20 61 
-2872d     20 73 74 72 
-28731     69 6E 67 2E | 	byte	"Cannot add a number to a string."
-28735     00          | 	byte	0
-28736                 | LR__4612
-28736     43 61 6E 6E 
-2873a     6F 74 20 73 
-2873e     75 62 73 74 
-28742     72 61 63 74 
-28746     20 73 74 72 
-2874a     69 6E 67 73 
-2874e     2E          | 	byte	"Cannot substract strings."
-2874f     00          | 	byte	0
-28750                 | LR__4613
-28750     55 6E 6B 6E 
-28754     6F 77 6E 20 
-28758     65 72 72 6F 
-2875c     72 20 77 68 
-28760     69 6C 65 20 
-28764     61 64 64 69 
-28768     6E 67 2E    | 	byte	"Unknown error while adding."
-2876b     00          | 	byte	0
-2876c                 | LR__4614
-2876c     55 6E 6B 6E 
-28770     6F 77 6E 20 
-28774     65 72 72 6F 
-28778     72 20 77 68 
-2877c     69 6C 65 20 
-28780     73 75 62 73 
-28784     74 72 61 63 
-28788     74 69 6E 67 
-2878c     2E          | 	byte	"Unknown error while substracting."
-2878d     00          | 	byte	0
-2878e                 | LR__4615
-2878e     43 61 6E 6E 
-28792     6F 74 20 64 
-28796     6F 20 6C 6F 
-2879a     67 69 63 20 
-2879e     6F 70 65 72 
-287a2     61 74 69 6F 
-287a6     6E 20 6F 6E 
-287aa     20 73 74 72 
-287ae     69 6E 67 20 
-287b2     6F 72 20 66 
-287b6     6C 6F 61 74 
-287ba     2E          | 	byte	"Cannot do logic operation on string or float."
-287bb     00          | 	byte	0
-287bc                 | LR__4616
-287bc     55 6E 6B 6E 
-287c0     6F 77 6E 20 
-287c4     65 72 72 6F 
-287c8     72 20 77 68 
-287cc     69 6C 65 20 
-287d0     64 6F 69 6E 
-287d4     67 20 6C 6F 
-287d8     67 69 63 20 
-287dc     6F 70 65 72 
-287e0     61 74 69 6F 
-287e4     6E 2E       | 	byte	"Unknown error while doing logic operation."
-287e6     00          | 	byte	0
-287e7                 | LR__4617
-287e7     43 61 6E 6E 
-287eb     6F 74 20 6D 
-287ef     75 6C 74 69 
-287f3     70 6C 79 20 
-287f7     73 74 72 69 
-287fb     6E 67 73 2E | 	byte	"Cannot multiply strings."
-287ff     00          | 	byte	0
-28800                 | LR__4618
-28800     55 6E 6B 6E 
-28804     6F 77 6E 20 
-28808     65 72 72 6F 
-2880c     72 20 77 68 
-28810     69 6C 65 20 
-28814     6D 75 6C 74 
-28818     69 70 6C 79 
-2881c     69 6E 67 2E | 	byte	"Unknown error while multiplying."
-28820     00          | 	byte	0
-28821                 | LR__4619
-28821     43 61 6E 6E 
-28825     6F 74 20 64 
-28829     69 76 69 64 
-2882d     65 20 73 74 
-28831     72 69 6E 67 
-28835     73 2E       | 	byte	"Cannot divide strings."
-28837     00          | 	byte	0
-28838                 | LR__4620
-28838     55 6E 6B 6E 
-2883c     6F 77 6E 20 
-28840     65 72 72 6F 
-28844     72 20 77 68 
-28848     69 6C 65 20 
-2884c     64 69 76 69 
-28850     64 69 6E 67 
-28854     2E          | 	byte	"Unknown error while dividing."
-28855     00          | 	byte	0
-28856                 | LR__4621
-28856     43 61 6E 6E 
-2885a     6F 74 20 63 
-2885e     6F 6D 70 75 
-28862     74 65 20 61 
-28866     20 70 6F 77 
-2886a     65 72 20 6F 
-2886e     66 20 61 20 
-28872     73 74 72 69 
-28876     6E 67 2E    | 	byte	"Cannot compute a power of a string."
-28879     00          | 	byte	0
-2887a                 | LR__4622
-2887a     55 6E 6B 6E 
-2887e     6F 77 6E 20 
-28882     65 72 72 6F 
-28886     72 20 77 68 
-2888a     69 6C 65 20 
-2888e     63 6F 6D 70 
-28892     75 74 69 6E 
-28896     67 20 61 20 
-2889a     70 6F 77 65 
-2889e     72 2E       | 	byte	"Unknown error while computing a power."
-288a0     00          | 	byte	0
-288a1                 | LR__4623
-288a1     52 69 67 68 
-288a5     74 20 70 61 
-288a9     72 65 6E 74 
-288ad     68 65 73 69 
-288b1     73 20 65 78 
-288b5     70 65 63 74 
-288b9     65 64 2E    | 	byte	"Right parenthesis expected."
-288bc     00          | 	byte	0
-288bd                 | LR__4624
-288bd     45 78 70 65 
-288c1     63 74 65 64 
-288c5     20 73 74 72 
-288c9     69 6E 67 2E | 	byte	"Expected string."
-288cd     00          | 	byte	0
-288ce                 | LR__4625
-288ce     45 78 70 65 
-288d2     63 74 65 64 
-288d6     20 66 6C 6F 
-288da     61 74 2E    | 	byte	"Expected float."
-288dd     00          | 	byte	0
-288de                 | LR__4626
-288de     45 78 70 65 
-288e2     63 74 65 64 
-288e6     20 75 6E 73 
-288ea     69 67 6E 65 
-288ee     64 20 69 6E 
-288f2     74 65 67 65 
-288f6     72 2E       | 	byte	"Expected unsigned integer."
-288f8     00          | 	byte	0
-288f9                 | LR__4627
-288f9     45 78 70 65 
-288fd     63 74 65 64 
-28901     20 69 6E 74 
-28905     65 67 65 72 
-28909     2E          | 	byte	"Expected integer."
-2890a     00          | 	byte	0
-2890b                 | LR__4628
-2890b     4E 6F 20 6D 
-2890f     6F 72 65 20 
-28913     76 61 72 69 
-28917     61 62 6C 65 
-2891b     20 73 6C 6F 
-2891f     74 73 2E    | 	byte	"No more variable slots."
-28922     00          | 	byte	0
-28923                 | LR__4629
-28923     56 61 72 69 
-28927     61 62 6C 65 
-2892b     20 6E 6F 74 
-2892f     20 66 6F 75 
-28933     6E 64 2E    | 	byte	"Variable not found."
-28936     00          | 	byte	0
-28937                 | LR__4630
-28937     43 6F 6D 6D 
-2893b     61 20 65 78 
-2893f     70 65 63 74 
-28943     65 64 2E    | 	byte	"Comma expected."
-28946     00          | 	byte	0
-28947                 | LR__4631
-28947     43 6F 6D 6D 
-2894b     61 20 6F 72 
-2894f     20 73 65 6D 
-28953     69 63 6F 6C 
-28957     6F 6E 20 65 
-2895b     78 70 65 63 
-2895f     74 65 64 2E | 	byte	"Comma or semicolon expected."
-28963     00          | 	byte	0
-28964                 | LR__4632
-28964     55 6E 6B 6E 
-28968     6F 77 6E 20 
-2896c     63 6F 6D 6D 
-28970     61 6E 64 2E | 	byte	"Unknown command."
-28974     00          | 	byte	0
-28975                 | LR__4633
-28975     53 74 61 63 
-28979     6B 20 75 6E 
-2897d     64 65 72 66 
-28981     6C 6F 77 2E | 	byte	"Stack underflow."
-28985     00          | 	byte	0
-28986                 | LR__4634
-28986     43 61 6E 6E 
-2898a     6F 74 20 65 
-2898e     78 65 63 75 
-28992     74 65 20 67 
-28996     6F 74 6F 20 
-2899a     69 6E 20 74 
-2899e     68 65 20 69 
-289a2     6D 6D 65 64 
-289a6     69 61 74 65 
-289aa     20 6D 6F 64 
-289ae     65 2E       | 	byte	"Cannot execute goto in the immediate mode."
-289b0     00          | 	byte	0
-289b1                 | LR__4635
-289b1     43 61 6E 6E 
-289b5     6F 74 20 6C 
-289b9     6F 61 64 20 
-289bd     66 72 6F 6D 
-289c1     20 74 68 69 
-289c5     73 20 66 69 
-289c9     6C 65 2E    | 	byte	"Cannot load from this file."
-289cc     00          | 	byte	0
-289cd                 | LR__4636
-289cd     54 68 65 20 
-289d1     70 72 6F 67 
-289d5     72 61 6D 20 
-289d9     69 73 20 65 
-289dd     6D 70 74 79 
-289e1     2E          | 	byte	"The program is empty."
-289e2     00          | 	byte	0
-289e3                 | LR__4637
-289e3     49 66 20 61 
-289e7     66 74 65 72 
-289eb     20 69 66 2E | 	byte	"If after if."
-289ef     00          | 	byte	0
-289f0                 | LR__4638
-289f0     45 6D 70 74 
-289f4     79 20 65 78 
-289f8     70 72 65 73 
-289fc     73 69 6F 6E 
-28a00     2E          | 	byte	"Empty expression."
-28a01     00          | 	byte	0
-28a02                 | LR__4639
-28a02     53 74 72 69 
-28a06     6E 67 20 65 
-28a0a     78 70 65 63 
-28a0e     74 65 64 2E | 	byte	"String expected."
-28a12     00          | 	byte	0
-28a13                 | LR__4640
-28a13     49 6E 74 65 
-28a17     72 70 72 65 
-28a1b     74 65 72 20 
-28a1f     69 6E 74 65 
-28a23     72 6E 61 6C 
-28a27     20 65 72 72 
-28a2b     6F 72 2E    | 	byte	"Interpreter internal error."
-28a2e     00          | 	byte	0
-28a2f                 | LR__4641
-28a2f     45 78 70 65 
-28a33     63 74 65 64 
-28a37     20 61 73 73 
-28a3b     69 67 6E 2E | 	byte	"Expected assign."
-28a3f     00          | 	byte	0
-28a40                 | LR__4642
-28a40     45 78 70 65 
-28a44     63 74 65 64 
-28a48     20 27 74 6F 
-28a4c     27 2E       | 	byte	"Expected 'to'."
-28a4e     00          | 	byte	0
-28a4f                 | LR__4643
-28a4f     45 78 70 65 
-28a53     63 74 65 64 
-28a57     20 69 6E 74 
-28a5b     65 67 65 72 
-28a5f     20 76 61 72 
-28a63     69 61 62 6C 
-28a67     65 2E       | 	byte	"Expected integer variable."
-28a69     00          | 	byte	0
-28a6a                 | LR__4644
-28a6a     55 6E 69 6E 
-28a6e     69 74 69 61 
-28a72     6C 69 7A 65 
-28a76     64 20 76 61 
-28a7a     72 69 61 62 
-28a7e     6C 65 20 69 
-28a82     6E 20 27 6E 
-28a86     65 78 74 27 
-28a8a     2C 20 75 73 
-28a8e     65 20 27 66 
-28a92     6F 72 27 20 
-28a96     62 65 66 6F 
-28a9a     72 65 2E    | 	byte	"Uninitialized variable in 'next', use 'for' before."
-28a9d     00          | 	byte	0
-28a9e                 | LR__4645
-28a9e     4E 6F 20 6D 
-28aa2     6F 72 65 20 
-28aa6     73 6C 6F 74 
-28aaa     73 20 66 6F 
-28aae     72 20 27 66 
-28ab2     6F 72 27 2E | 	byte	"No more slots for 'for'."
-28ab6     00          | 	byte	0
-28ab7                 | LR__4646
-28ab7     27 4E 65 78 
-28abb     74 27 20 64 
-28abf     6F 65 73 6E 
-28ac3     27 74 20 6D 
-28ac7     61 74 63 68 
-28acb     20 27 66 6F 
-28acf     72 27 2E    | 	byte	"'Next' doesn't match 'for'."
-28ad2     00          | 	byte	0
-28ad3                 | LR__4647
-28ad3     27 47 6F 74 
-28ad7     6F 27 20 74 
-28adb     61 72 67 65 
-28adf     74 20 6C 69 
-28ae3     6E 65 20 6E 
-28ae7     6F 74 20 66 
-28aeb     6F 75 6E 64 
-28aef     2E          | 	byte	"'Goto' target line not found."
-28af0     00          | 	byte	0
-28af1                 | LR__4648
-28af1     42 61 64 20 
-28af5     6E 75 6D 62 
-28af9     65 72 20 6F 
-28afd     66 20 70 61 
-28b01     72 61 6D 65 
-28b05     74 65 72 73 | 	byte	"Bad number of parameters"
-28b09     00          | 	byte	0
-28b0a                 | LR__4649
-28b0a     46 75 6E 63 
-28b0e     74 69 6F 6E 
-28b12     20 75 6E 64 
-28b16     65 66 69 6E 
-28b1a     65 64 20 66 
-28b1e     6F 72 20 73 
-28b22     74 72 69 6E 
-28b26     67 73       | 	byte	"Function undefined for strings"
-28b28     00          | 	byte	0
-28b29                 | LR__4650
-28b29     42 61 64 20 
-28b2d     70 61 72 61 
-28b31     6D 65 74 65 
-28b35     72 2E       | 	byte	"Bad parameter."
-28b37     00          | 	byte	0
-28b38                 | LR__4651
-28b38     43 61 6E 6E 
-28b3c     6F 74 20 64 
-28b40     65 63 6C 61 
-28b44     72 65 20 61 
-28b48     6E 20 61 72 
-28b4c     72 61 79 3A 
-28b50     20 74 68 65 
-28b54     20 76 61 72 
-28b58     69 61 62 6C 
-28b5c     65 20 65 78 
-28b60     69 73 74 73 
-28b64     2E          | 	byte	"Cannot declare an array: the variable exists."
-28b65     00          | 	byte	0
-28b66                 | LR__4652
-28b66     45 78 70 65 
-28b6a     63 74 65 64 
-28b6e     20 27 28 27 
-28b72     2E          | 	byte	"Expected '('."
-28b73     00          | 	byte	0
-28b74                 | LR__4653
-28b74     45 78 70 65 
-28b78     63 74 65 64 
-28b7c     20 27 29 27 
-28b80     20 6F 72 20 
-28b84     27 2C 27 2E | 	byte	"Expected ')' or ','."
-28b88     00          | 	byte	0
-28b89                 | LR__4654
-28b89     4E 6F 20 6D 
-28b8d     6F 72 65 20 
-28b91     74 68 61 6E 
-28b95     20 33 20 64 
-28b99     69 6D 65 6E 
-28b9d     73 69 6F 6E 
-28ba1     73 20 73 75 
-28ba5     70 70 6F 72 
-28ba9     74 65 64    | 	byte	"No more than 3 dimensions supported"
-28bac     00          | 	byte	0
-28bad                 | LR__4655
-28bad     56 61 72 69 
-28bb1     61 62 6C 65 
-28bb5     20 6E 61 6D 
-28bb9     65 20 65 78 
-28bbd     70 65 63 74 
-28bc1     65 64       | 	byte	"Variable name expected"
-28bc3     00          | 	byte	0
-28bc4                 | LR__4656
-28bc4     54 79 70 65 
-28bc8     20 6E 61 6D 
-28bcc     65 20 65 78 
-28bd0     70 65 63 74 
-28bd4     65 64       | 	byte	"Type name expected"
-28bd6     00          | 	byte	0
-28bd7                 | LR__4657
-28bd7     54 79 70 65 
-28bdb     20 6E 6F 74 
-28bdf     20 73 75 70 
-28be3     70 6F 72 74 
-28be7     65 64 20 79 
-28beb     65 74       | 	byte	"Type not supported yet"
-28bed     00          | 	byte	0
-28bee                 | LR__4658
-28bee     45 72 72 6F 
-28bf2     72 20       | 	byte	"Error "
-28bf4     00          | 	byte	0
-28bf5                 | LR__4659
-28bf5     3A 20       | 	byte	": "
-28bf7     00          | 	byte	0
-28bf8                 | LR__4660
-28bf8     2F 73 64    | 	byte	"/sd"
-28bfb     00          | 	byte	0
-28bfc                 | LR__4661
-28bfc     2F 73 64 2F 
-28c00     62 61 73    | 	byte	"/sd/bas"
-28c03     00          | 	byte	0
-28c04                 | LR__4662
-28c04     2F 73 64 2F 
-28c08     62 61 73    | 	byte	"/sd/bas"
-28c0b     00          | 	byte	0
-28c0c                 | LR__4663
-28c0c     20 42 41 53 
-28c10     49 43 20 62 
-28c14     79 74 65 73 
-28c18     20 66 72 65 
-28c1c     65          | 	byte	" BASIC bytes free"
-28c1d     00          | 	byte	0
-28c1e                 | LR__4664
-28c1e     52 65 61 64 
-28c22     79          | 	byte	"Ready"
-28c23     00          | 	byte	0
-28c24                 | LR__4665
-28c24     20          | 	byte	" "
-28c25     00          | 	byte	0
-28c26                 | LR__4666
-28c26     20          | 	byte	" "
+286ef                 | LR__4610
+286ef     45 78 70 65 
+286f3     63 74 65 64 
+286f7     20 6E 75 6D 
+286fb     62 65 72 2C 
+286ff     20 67 6F 74 
+28703     20 73 6F 6D 
+28707     65 74 68 69 
+2870b     6E 67 20 65 
+2870f     6C 73 65 2E | 	byte	"Expected number, got something else."
+28713     00          | 	byte	0
+28714                 | LR__4611
+28714     43 61 6E 6E 
+28718     6F 74 20 61 
+2871c     64 64 20 61 
+28720     20 6E 75 6D 
+28724     62 65 72 20 
+28728     74 6F 20 61 
+2872c     20 73 74 72 
+28730     69 6E 67 2E | 	byte	"Cannot add a number to a string."
+28734     00          | 	byte	0
+28735                 | LR__4612
+28735     43 61 6E 6E 
+28739     6F 74 20 73 
+2873d     75 62 73 74 
+28741     72 61 63 74 
+28745     20 73 74 72 
+28749     69 6E 67 73 
+2874d     2E          | 	byte	"Cannot substract strings."
+2874e     00          | 	byte	0
+2874f                 | LR__4613
+2874f     55 6E 6B 6E 
+28753     6F 77 6E 20 
+28757     65 72 72 6F 
+2875b     72 20 77 68 
+2875f     69 6C 65 20 
+28763     61 64 64 69 
+28767     6E 67 2E    | 	byte	"Unknown error while adding."
+2876a     00          | 	byte	0
+2876b                 | LR__4614
+2876b     55 6E 6B 6E 
+2876f     6F 77 6E 20 
+28773     65 72 72 6F 
+28777     72 20 77 68 
+2877b     69 6C 65 20 
+2877f     73 75 62 73 
+28783     74 72 61 63 
+28787     74 69 6E 67 
+2878b     2E          | 	byte	"Unknown error while substracting."
+2878c     00          | 	byte	0
+2878d                 | LR__4615
+2878d     43 61 6E 6E 
+28791     6F 74 20 64 
+28795     6F 20 6C 6F 
+28799     67 69 63 20 
+2879d     6F 70 65 72 
+287a1     61 74 69 6F 
+287a5     6E 20 6F 6E 
+287a9     20 73 74 72 
+287ad     69 6E 67 20 
+287b1     6F 72 20 66 
+287b5     6C 6F 61 74 
+287b9     2E          | 	byte	"Cannot do logic operation on string or float."
+287ba     00          | 	byte	0
+287bb                 | LR__4616
+287bb     55 6E 6B 6E 
+287bf     6F 77 6E 20 
+287c3     65 72 72 6F 
+287c7     72 20 77 68 
+287cb     69 6C 65 20 
+287cf     64 6F 69 6E 
+287d3     67 20 6C 6F 
+287d7     67 69 63 20 
+287db     6F 70 65 72 
+287df     61 74 69 6F 
+287e3     6E 2E       | 	byte	"Unknown error while doing logic operation."
+287e5     00          | 	byte	0
+287e6                 | LR__4617
+287e6     43 61 6E 6E 
+287ea     6F 74 20 6D 
+287ee     75 6C 74 69 
+287f2     70 6C 79 20 
+287f6     73 74 72 69 
+287fa     6E 67 73 2E | 	byte	"Cannot multiply strings."
+287fe     00          | 	byte	0
+287ff                 | LR__4618
+287ff     55 6E 6B 6E 
+28803     6F 77 6E 20 
+28807     65 72 72 6F 
+2880b     72 20 77 68 
+2880f     69 6C 65 20 
+28813     6D 75 6C 74 
+28817     69 70 6C 79 
+2881b     69 6E 67 2E | 	byte	"Unknown error while multiplying."
+2881f     00          | 	byte	0
+28820                 | LR__4619
+28820     43 61 6E 6E 
+28824     6F 74 20 64 
+28828     69 76 69 64 
+2882c     65 20 73 74 
+28830     72 69 6E 67 
+28834     73 2E       | 	byte	"Cannot divide strings."
+28836     00          | 	byte	0
+28837                 | LR__4620
+28837     55 6E 6B 6E 
+2883b     6F 77 6E 20 
+2883f     65 72 72 6F 
+28843     72 20 77 68 
+28847     69 6C 65 20 
+2884b     64 69 76 69 
+2884f     64 69 6E 67 
+28853     2E          | 	byte	"Unknown error while dividing."
+28854     00          | 	byte	0
+28855                 | LR__4621
+28855     43 61 6E 6E 
+28859     6F 74 20 63 
+2885d     6F 6D 70 75 
+28861     74 65 20 61 
+28865     20 70 6F 77 
+28869     65 72 20 6F 
+2886d     66 20 61 20 
+28871     73 74 72 69 
+28875     6E 67 2E    | 	byte	"Cannot compute a power of a string."
+28878     00          | 	byte	0
+28879                 | LR__4622
+28879     55 6E 6B 6E 
+2887d     6F 77 6E 20 
+28881     65 72 72 6F 
+28885     72 20 77 68 
+28889     69 6C 65 20 
+2888d     63 6F 6D 70 
+28891     75 74 69 6E 
+28895     67 20 61 20 
+28899     70 6F 77 65 
+2889d     72 2E       | 	byte	"Unknown error while computing a power."
+2889f     00          | 	byte	0
+288a0                 | LR__4623
+288a0     52 69 67 68 
+288a4     74 20 70 61 
+288a8     72 65 6E 74 
+288ac     68 65 73 69 
+288b0     73 20 65 78 
+288b4     70 65 63 74 
+288b8     65 64 2E    | 	byte	"Right parenthesis expected."
+288bb     00          | 	byte	0
+288bc                 | LR__4624
+288bc     45 78 70 65 
+288c0     63 74 65 64 
+288c4     20 73 74 72 
+288c8     69 6E 67 2E | 	byte	"Expected string."
+288cc     00          | 	byte	0
+288cd                 | LR__4625
+288cd     45 78 70 65 
+288d1     63 74 65 64 
+288d5     20 66 6C 6F 
+288d9     61 74 2E    | 	byte	"Expected float."
+288dc     00          | 	byte	0
+288dd                 | LR__4626
+288dd     45 78 70 65 
+288e1     63 74 65 64 
+288e5     20 75 6E 73 
+288e9     69 67 6E 65 
+288ed     64 20 69 6E 
+288f1     74 65 67 65 
+288f5     72 2E       | 	byte	"Expected unsigned integer."
+288f7     00          | 	byte	0
+288f8                 | LR__4627
+288f8     45 78 70 65 
+288fc     63 74 65 64 
+28900     20 69 6E 74 
+28904     65 67 65 72 
+28908     2E          | 	byte	"Expected integer."
+28909     00          | 	byte	0
+2890a                 | LR__4628
+2890a     4E 6F 20 6D 
+2890e     6F 72 65 20 
+28912     76 61 72 69 
+28916     61 62 6C 65 
+2891a     20 73 6C 6F 
+2891e     74 73 2E    | 	byte	"No more variable slots."
+28921     00          | 	byte	0
+28922                 | LR__4629
+28922     56 61 72 69 
+28926     61 62 6C 65 
+2892a     20 6E 6F 74 
+2892e     20 66 6F 75 
+28932     6E 64 2E    | 	byte	"Variable not found."
+28935     00          | 	byte	0
+28936                 | LR__4630
+28936     43 6F 6D 6D 
+2893a     61 20 65 78 
+2893e     70 65 63 74 
+28942     65 64 2E    | 	byte	"Comma expected."
+28945     00          | 	byte	0
+28946                 | LR__4631
+28946     43 6F 6D 6D 
+2894a     61 20 6F 72 
+2894e     20 73 65 6D 
+28952     69 63 6F 6C 
+28956     6F 6E 20 65 
+2895a     78 70 65 63 
+2895e     74 65 64 2E | 	byte	"Comma or semicolon expected."
+28962     00          | 	byte	0
+28963                 | LR__4632
+28963     55 6E 6B 6E 
+28967     6F 77 6E 20 
+2896b     63 6F 6D 6D 
+2896f     61 6E 64 2E | 	byte	"Unknown command."
+28973     00          | 	byte	0
+28974                 | LR__4633
+28974     53 74 61 63 
+28978     6B 20 75 6E 
+2897c     64 65 72 66 
+28980     6C 6F 77 2E | 	byte	"Stack underflow."
+28984     00          | 	byte	0
+28985                 | LR__4634
+28985     43 61 6E 6E 
+28989     6F 74 20 65 
+2898d     78 65 63 75 
+28991     74 65 20 67 
+28995     6F 74 6F 20 
+28999     69 6E 20 74 
+2899d     68 65 20 69 
+289a1     6D 6D 65 64 
+289a5     69 61 74 65 
+289a9     20 6D 6F 64 
+289ad     65 2E       | 	byte	"Cannot execute goto in the immediate mode."
+289af     00          | 	byte	0
+289b0                 | LR__4635
+289b0     43 61 6E 6E 
+289b4     6F 74 20 6C 
+289b8     6F 61 64 20 
+289bc     66 72 6F 6D 
+289c0     20 74 68 69 
+289c4     73 20 66 69 
+289c8     6C 65 2E    | 	byte	"Cannot load from this file."
+289cb     00          | 	byte	0
+289cc                 | LR__4636
+289cc     54 68 65 20 
+289d0     70 72 6F 67 
+289d4     72 61 6D 20 
+289d8     69 73 20 65 
+289dc     6D 70 74 79 
+289e0     2E          | 	byte	"The program is empty."
+289e1     00          | 	byte	0
+289e2                 | LR__4637
+289e2     49 66 20 61 
+289e6     66 74 65 72 
+289ea     20 69 66 2E | 	byte	"If after if."
+289ee     00          | 	byte	0
+289ef                 | LR__4638
+289ef     45 6D 70 74 
+289f3     79 20 65 78 
+289f7     70 72 65 73 
+289fb     73 69 6F 6E 
+289ff     2E          | 	byte	"Empty expression."
+28a00     00          | 	byte	0
+28a01                 | LR__4639
+28a01     53 74 72 69 
+28a05     6E 67 20 65 
+28a09     78 70 65 63 
+28a0d     74 65 64 2E | 	byte	"String expected."
+28a11     00          | 	byte	0
+28a12                 | LR__4640
+28a12     49 6E 74 65 
+28a16     72 70 72 65 
+28a1a     74 65 72 20 
+28a1e     69 6E 74 65 
+28a22     72 6E 61 6C 
+28a26     20 65 72 72 
+28a2a     6F 72 2E    | 	byte	"Interpreter internal error."
+28a2d     00          | 	byte	0
+28a2e                 | LR__4641
+28a2e     45 78 70 65 
+28a32     63 74 65 64 
+28a36     20 61 73 73 
+28a3a     69 67 6E 2E | 	byte	"Expected assign."
+28a3e     00          | 	byte	0
+28a3f                 | LR__4642
+28a3f     45 78 70 65 
+28a43     63 74 65 64 
+28a47     20 27 74 6F 
+28a4b     27 2E       | 	byte	"Expected 'to'."
+28a4d     00          | 	byte	0
+28a4e                 | LR__4643
+28a4e     45 78 70 65 
+28a52     63 74 65 64 
+28a56     20 69 6E 74 
+28a5a     65 67 65 72 
+28a5e     20 76 61 72 
+28a62     69 61 62 6C 
+28a66     65 2E       | 	byte	"Expected integer variable."
+28a68     00          | 	byte	0
+28a69                 | LR__4644
+28a69     55 6E 69 6E 
+28a6d     69 74 69 61 
+28a71     6C 69 7A 65 
+28a75     64 20 76 61 
+28a79     72 69 61 62 
+28a7d     6C 65 20 69 
+28a81     6E 20 27 6E 
+28a85     65 78 74 27 
+28a89     2C 20 75 73 
+28a8d     65 20 27 66 
+28a91     6F 72 27 20 
+28a95     62 65 66 6F 
+28a99     72 65 2E    | 	byte	"Uninitialized variable in 'next', use 'for' before."
+28a9c     00          | 	byte	0
+28a9d                 | LR__4645
+28a9d     4E 6F 20 6D 
+28aa1     6F 72 65 20 
+28aa5     73 6C 6F 74 
+28aa9     73 20 66 6F 
+28aad     72 20 27 66 
+28ab1     6F 72 27 2E | 	byte	"No more slots for 'for'."
+28ab5     00          | 	byte	0
+28ab6                 | LR__4646
+28ab6     27 4E 65 78 
+28aba     74 27 20 64 
+28abe     6F 65 73 6E 
+28ac2     27 74 20 6D 
+28ac6     61 74 63 68 
+28aca     20 27 66 6F 
+28ace     72 27 2E    | 	byte	"'Next' doesn't match 'for'."
+28ad1     00          | 	byte	0
+28ad2                 | LR__4647
+28ad2     27 47 6F 74 
+28ad6     6F 27 20 74 
+28ada     61 72 67 65 
+28ade     74 20 6C 69 
+28ae2     6E 65 20 6E 
+28ae6     6F 74 20 66 
+28aea     6F 75 6E 64 
+28aee     2E          | 	byte	"'Goto' target line not found."
+28aef     00          | 	byte	0
+28af0                 | LR__4648
+28af0     42 61 64 20 
+28af4     6E 75 6D 62 
+28af8     65 72 20 6F 
+28afc     66 20 70 61 
+28b00     72 61 6D 65 
+28b04     74 65 72 73 | 	byte	"Bad number of parameters"
+28b08     00          | 	byte	0
+28b09                 | LR__4649
+28b09     46 75 6E 63 
+28b0d     74 69 6F 6E 
+28b11     20 75 6E 64 
+28b15     65 66 69 6E 
+28b19     65 64 20 66 
+28b1d     6F 72 20 73 
+28b21     74 72 69 6E 
+28b25     67 73       | 	byte	"Function undefined for strings"
+28b27     00          | 	byte	0
+28b28                 | LR__4650
+28b28     42 61 64 20 
+28b2c     70 61 72 61 
+28b30     6D 65 74 65 
+28b34     72 2E       | 	byte	"Bad parameter."
+28b36     00          | 	byte	0
+28b37                 | LR__4651
+28b37     43 61 6E 6E 
+28b3b     6F 74 20 64 
+28b3f     65 63 6C 61 
+28b43     72 65 20 61 
+28b47     6E 20 61 72 
+28b4b     72 61 79 3A 
+28b4f     20 74 68 65 
+28b53     20 76 61 72 
+28b57     69 61 62 6C 
+28b5b     65 20 65 78 
+28b5f     69 73 74 73 
+28b63     2E          | 	byte	"Cannot declare an array: the variable exists."
+28b64     00          | 	byte	0
+28b65                 | LR__4652
+28b65     45 78 70 65 
+28b69     63 74 65 64 
+28b6d     20 27 28 27 
+28b71     2E          | 	byte	"Expected '('."
+28b72     00          | 	byte	0
+28b73                 | LR__4653
+28b73     45 78 70 65 
+28b77     63 74 65 64 
+28b7b     20 27 29 27 
+28b7f     20 6F 72 20 
+28b83     27 2C 27 2E | 	byte	"Expected ')' or ','."
+28b87     00          | 	byte	0
+28b88                 | LR__4654
+28b88     4E 6F 20 6D 
+28b8c     6F 72 65 20 
+28b90     74 68 61 6E 
+28b94     20 33 20 64 
+28b98     69 6D 65 6E 
+28b9c     73 69 6F 6E 
+28ba0     73 20 73 75 
+28ba4     70 70 6F 72 
+28ba8     74 65 64    | 	byte	"No more than 3 dimensions supported"
+28bab     00          | 	byte	0
+28bac                 | LR__4655
+28bac     56 61 72 69 
+28bb0     61 62 6C 65 
+28bb4     20 6E 61 6D 
+28bb8     65 20 65 78 
+28bbc     70 65 63 74 
+28bc0     65 64       | 	byte	"Variable name expected"
+28bc2     00          | 	byte	0
+28bc3                 | LR__4656
+28bc3     54 79 70 65 
+28bc7     20 6E 61 6D 
+28bcb     65 20 65 78 
+28bcf     70 65 63 74 
+28bd3     65 64       | 	byte	"Type name expected"
+28bd5     00          | 	byte	0
+28bd6                 | LR__4657
+28bd6     54 79 70 65 
+28bda     20 6E 6F 74 
+28bde     20 73 75 70 
+28be2     70 6F 72 74 
+28be6     65 64 20 79 
+28bea     65 74       | 	byte	"Type not supported yet"
+28bec     00          | 	byte	0
+28bed                 | LR__4658
+28bed     45 72 72 6F 
+28bf1     72 20       | 	byte	"Error "
+28bf3     00          | 	byte	0
+28bf4                 | LR__4659
+28bf4     3A 20       | 	byte	": "
+28bf6     00          | 	byte	0
+28bf7                 | LR__4660
+28bf7     2F 73 64    | 	byte	"/sd"
+28bfa     00          | 	byte	0
+28bfb                 | LR__4661
+28bfb     2F 73 64 2F 
+28bff     62 61 73    | 	byte	"/sd/bas"
+28c02     00          | 	byte	0
+28c03                 | LR__4662
+28c03     2F 73 64 2F 
+28c07     62 61 73    | 	byte	"/sd/bas"
+28c0a     00          | 	byte	0
+28c0b                 | LR__4663
+28c0b     20 42 41 53 
+28c0f     49 43 20 62 
+28c13     79 74 65 73 
+28c17     20 66 72 65 
+28c1b     65          | 	byte	" BASIC bytes free"
+28c1c     00          | 	byte	0
+28c1d                 | LR__4664
+28c1d     52 65 61 64 
+28c21     79          | 	byte	"Ready"
+28c22     00          | 	byte	0
+28c23                 | LR__4665
+28c23     20          | 	byte	" "
+28c24     00          | 	byte	0
+28c25                 | LR__4666
+28c25     20          | 	byte	" "
+28c26     00          | 	byte	0
+28c27                 | LR__4667
+28c27                 | 	byte	
 28c27     00          | 	byte	0
-28c28                 | LR__4667
+28c28                 | LR__4668
 28c28                 | 	byte	
 28c28     00          | 	byte	0
-28c29                 | LR__4668
-28c29                 | 	byte	
-28c29     00          | 	byte	0
-28c2a     00 00       | 	alignl
+28c29     00 00 00    | 	alignl
 28c2c                 | _dat_
 28c2c     00 00 00 00 
 28c30     00 00 00 00 

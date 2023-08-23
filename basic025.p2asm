@@ -7573,7 +7573,7 @@ LR__0623
 	call	#_expr
 ' ct+=1
 ' expr()  ' there is "to" value pushed on the stack
-' if lparts(ct).part$="step" orelse lparts(ct).part$="st."then 
+' if lparts(ct).part$="step" orelse lparts(ct).part$="s." then
 	add	objptr, ##44056
 	rdlong	local04, objptr
 	shl	local04, #3
@@ -45847,7 +45847,7 @@ LR__4552
 	byte	"step"
 	byte	0
 LR__4553
-	byte	"st."
+	byte	"s."
 	byte	0
 LR__4554
 	byte	"We have a slow goto, todo  "
