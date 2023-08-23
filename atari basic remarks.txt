@@ -1,0 +1,19 @@
+LIST (L.)
+ENTER (E.)
+LOAD (LO.)
+SAVE (S.)
+CSAVE (CS.)
+rem - . or '
+goto g.
+for f. next n.
+rewturn ret.
+pop for gosub 
+
+clog, log10
+log
+int (=trunc)
+sgn
+clr clear vars while running
+open o. close cl.input i. deg rad 
+
+color c. position pos. setcollor se. sound so. lomem
