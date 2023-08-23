@@ -626,20 +626,20 @@ if isname(lparts(i).part$) then lparts(i).token=token_name : goto 102						' nam
 lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 
  '                                      					 	for i=0 to k: print lparts(i).token,lparts(i).part$ : next i
-
+if lparts(0).token=token_decimal then let addptr=1 else let addptr=0
 ' process the case when simple load or save is called without ""
-let lp$=lparts(0).part$
-if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="lo." orelse lp$="s." orelse lp$="br.") andalso lparts(1).token=token_name andalso lparts(2).token=token_end then lparts(1).token=token_string
-if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(1).token=token_name then 
-  if lparts(1).part$="on" then lparts(1).part$="1" :lparts(1).token=token_decimal
-  if lparts(1).part$="off" then lparts(1).part$="0" :lparts(1).token=token_decimal
+let lp$=lparts(addptr).part$
+if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="lo." orelse lp$="s." orelse lp$="br.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
+if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(addptr+1).token=token_name then 
+  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
 endif									
-if (lp$="mode" orelse lp$="m.") andalso lparts(1).token=token_name then
-  if lparts(1).part$="atari" then lparts(1).part$="0" :lparts(1).token=token_decimal
-  if lparts(1).part$="pc_amber" then lparts(1).part$="1" :lparts(1).token=token_decimal
-  if lparts(1).part$="pc_green" then lparts(1).part$="2" :lparts(1).token=token_decimal
-  if lparts(1).part$="pc_white" then lparts(1).part$="3" :lparts(1).token=token_decimal
-  if lparts(1).part$="st" then lparts(1).part$="4" :lparts(1).token=token_decimal
+if (lp$="mode" orelse lp$="m.") andalso lparts(addptr+1).token=token_name then
+  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4" :lparts(addptr+1).token=token_decimal
 endif
 
 
@@ -842,6 +842,7 @@ select case s
   case "atn"		: return token_atn
   case "cos"		: return token_cos
   case "getpixel"     	: return token_getpixel
+  case "ge."     	: return token_getpixel
   case "gettime"       	: return token_gettime
   case "mousek"        	: return token_mousek
   case "mousew"        	: return token_mousew
@@ -1550,7 +1551,7 @@ varnum=t1.result.uresult
 if lparts(ct).part$<>"to" then  compile_error(33) : return 33
 ct+=1
 expr()  ' there is "to" value pushed on the stack
-if lparts(ct).part$="step" then 
+if lparts(ct).part$="step" orelse lparts(ct).part$="st."then 
 ct+=1
 expr()
 else

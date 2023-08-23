@@ -1454,7 +1454,6 @@ LR__0077
 	mov	local06, local04
 	shl	local06, #3
 	add	objptr, ##42976
-	mov	local07, objptr
 	add	local06, objptr
 	rdlong	arg01, local06
 	sub	objptr, ##42976
@@ -1540,7 +1539,6 @@ LR__0085
 	mov	local06, local15
 	shl	local06, #3
 	add	objptr, ##42976
-	mov	local07, objptr
 	add	local06, objptr
 	rdlong	arg01, local06
 	mov	arg02, #1
@@ -1598,7 +1596,6 @@ LR__0089
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	wrlong	##-1, local10
@@ -1650,11 +1647,10 @@ LR__0094
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
-	rdlong	local12, local10
-	cmps	local12, #1 wc
+	rdlong	local07, local10
+	cmps	local07, #1 wc
 	sub	objptr, ##42976
  if_ae	jmp	#LR__0102
 	mov	local10, local04
@@ -1675,11 +1671,10 @@ LR__0094
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
-	rdlong	local12, local10
-	cmps	local12, #1 wc
+	rdlong	local07, local10
+	cmps	local07, #1 wc
 	sub	objptr, ##42976
  if_ae	jmp	#LR__0102
 	mov	local10, local04
@@ -1706,11 +1701,10 @@ LR__0094
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
-	rdlong	local12, local10
-	cmps	local12, #1 wc
+	rdlong	local07, local10
+	cmps	local07, #1 wc
 	sub	objptr, ##42976
  if_ae	jmp	#LR__0102
 	mov	local10, local04
@@ -1731,11 +1725,10 @@ LR__0094
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
-	rdlong	local12, local10
-	cmps	local12, #1 wc
+	rdlong	local07, local10
+	cmps	local07, #1 wc
 	sub	objptr, ##42976
  if_ae	jmp	#LR__0102
 	mov	local10, local04
@@ -1758,7 +1751,6 @@ LR__0094
 	mov	local10, local04
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	rdlong	local12, local10
@@ -1812,7 +1804,6 @@ LR__0094
 	mov	local10, local05
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	wrlong	##512, local10
@@ -1837,7 +1828,6 @@ LR__0095
 	mov	local10, local05
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	wrlong	##513, local10
@@ -1863,7 +1853,6 @@ LR__0096
 	mov	local10, local05
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	wrlong	##514, local10
@@ -1895,7 +1884,7 @@ LR__0097
 	shl	local14, #3
 	add	local14, objptr
 	rdlong	local07, local14
-	mov	local12, #2
+	mov	arg02, #2
 	mov	local24, local04
 	mov	local20, local24
 	mov	local21, local20
@@ -1916,7 +1905,6 @@ LR__0099
 	mov	arg03, local13
 	sub	arg03, #2
 	mov	arg01, local07
-	mov	arg02, local12
 	call	#__system__Mid_S
 	wrlong	result1, local10
 	jmp	#LR__0102
@@ -1936,7 +1924,6 @@ LR__0100
 	mov	local10, local05
 	shl	local10, #3
 	add	objptr, ##42976
-	mov	local06, objptr
 	add	local10, objptr
 	add	local10, #4
 	wrlong	##516, local10
@@ -1959,49 +1946,68 @@ LR__0103
 	wrlong	local07, local10
 	add	objptr, ##8276
 	wrlong	local16, objptr
-	sub	objptr, ##8276
-	rdlong	arg01, objptr
-	add	objptr, ##19668
-	wrlong	arg01, objptr
-' if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="lo." orelse lp$="s." orelse lp$="br.") andalso lparts(1).token=token_name andalso lparts(2).token=token_end then lparts(1).token=token_string
-	sub	objptr, ##62644
+' 
+' lparts(k).token=token_end : lparts(k).part$="": tokennum=k
+' 
+'  '                                      					 	for i=0 to k: print lparts(i).token,lparts(i).part$ : next i
+' if lparts(0).token=token_decimal then let addptr=1 else let addptr=0
+	sub	objptr, ##8272
+	rdlong	local01, objptr
+	sub	objptr, ##42980
+	cmp	local01, ##512 wz
+ if_e	add	objptr, ##62644
+ if_e	wrlong	#1, objptr
+	sumz	objptr, ##62644
+ if_ne	wrlong	#0, objptr
+ if_ne	sub	objptr, ##62644
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	rdlong	local12, local06
+	add	objptr, ##19672
+	wrlong	local12, objptr
+' if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="lo." orelse lp$="s." orelse lp$="br.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4321
+	mov	arg01, local12
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0104
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4322
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0104
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4323
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0104
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	local12, ##@LR__4324
 	mov	arg02, local12
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0104
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	local12, ##@LR__4325
 	mov	arg02, local12
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0104
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	local14, ##@LR__4326
 	mov	local11, local14
 	mov	arg02, local11
@@ -2009,91 +2015,151 @@ LR__0103
 	mov	local12, result1 wz
  if_ne	jmp	#LR__0105
 LR__0104
-	add	objptr, ##42988
-	rdlong	local14, objptr
-	sub	objptr, ##42988
-	mov	local11, local14
-	cmp	local11, ##516 wz
- if_e	add	objptr, ##42996
- if_e	rdlong	local24, objptr
- if_e	sub	objptr, ##42996
- if_e	mov	local13, local24
- if_e	cmp	local13, #510 wz
- if_e	add	objptr, ##42988
- if_e	wrlong	##515, objptr
- if_e	sub	objptr, ##42988
-LR__0105
-' if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(1).token=token_name then 
 	add	objptr, ##62644
+	rdlong	local14, objptr
+	mov	local11, local14
+	add	local11, #1
+	mov	local13, local11
+	mov	local24, local13
+	shl	local24, #3
+	sub	objptr, ##19668
+	mov	local20, objptr
+	add	local24, objptr
+	add	local24, #4
+	rdlong	local22, local24
+	sub	local24, #4
+	mov	local21, local22
+	cmp	local21, ##516 wz
+	sub	objptr, ##42976
+ if_ne	jmp	#LR__0105
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##515
+	add	local06, #4
+	wrlong	##515, local06
+	sub	objptr, ##42976
+LR__0105
+' if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(addptr+1).token=token_name then 
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4327
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0106
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4328
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0106
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	local07, ##@LR__4329
 	mov	arg02, local07
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0109
 LR__0106
-	add	objptr, ##42988
+	add	objptr, ##62644
 	rdlong	local07, objptr
-	sub	objptr, ##42988
-	cmp	local07, ##516 wz
+	mov	local12, local07
+	add	local12, #1
+	mov	local11, local12
+	shl	local11, #3
+	sub	objptr, ##19668
+	mov	local14, objptr
+	add	local11, objptr
+	add	local11, #4
+	rdlong	local24, local11
+	sub	local11, #4
+	mov	local13, local24
+	cmp	local13, ##516 wz
+	sub	objptr, ##42976
  if_ne	jmp	#LR__0109
-'   if lparts(1).part$="on" then lparts(1).part$="1" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4330
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0107
-	mov	local01, ##@LR__4331
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4331
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0107
-'   if lparts(1).part$="off" then lparts(1).part$="0" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	mov	local12, objptr
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4332
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0108
-	mov	local01, ##@LR__4333
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4333
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	mov	local07, objptr
+	add	local06, objptr
+	decod	local12, #9
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0108
 LR__0109
-' if (lp$="mode" orelse lp$="m.") andalso lparts(1).token=token_name then
-	add	objptr, ##62644
+' if (lp$="mode" orelse lp$="m.") andalso lparts(addptr+1).token=token_name then
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	arg02, ##@LR__4334
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0110
-	add	objptr, ##62644
+	add	objptr, ##62648
 	rdlong	arg01, objptr
-	sub	objptr, ##62644
+	sub	objptr, ##62648
 	mov	local06, ##@LR__4335
 	mov	local10, local06
 	mov	arg02, local10
@@ -2101,87 +2167,184 @@ LR__0109
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0116
 LR__0110
-	add	objptr, ##42988
+	add	objptr, ##62644
 	rdlong	local06, objptr
-	sub	objptr, ##42988
 	mov	local10, local06
-	cmp	local10, ##516 wz
+	add	local10, #1
+	mov	local07, local10
+	mov	local12, local07
+	shl	local12, #3
+	sub	objptr, ##19668
+	mov	local11, objptr
+	add	local12, objptr
+	add	local12, #4
+	rdlong	local13, local12
+	sub	local12, #4
+	mov	local14, local13
+	cmp	local14, ##516 wz
+	sub	objptr, ##42976
  if_ne	jmp	#LR__0116
-'   if lparts(1).part$="atari" then lparts(1).part$="0" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4336
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0111
-	mov	local01, ##@LR__4337
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4337
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0111
-'   if lparts(1).part$="pc_amber" then lparts(1).part$="1" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4338
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0112
-	mov	local01, ##@LR__4339
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4339
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0112
-'   if lparts(1).part$="pc_green" then lparts(1).part$="2" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4340
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0113
-	mov	local01, ##@LR__4341
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4341
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0113
-'   if lparts(1).part$="pc_white" then lparts(1).part$="3" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local07, objptr
+	add	local07, #1
+	shl	local07, #3
+	sub	objptr, ##19668
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	arg02, ##@LR__4342
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0114
-	mov	local01, ##@LR__4343
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4343
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	add	local06, #4
+	wrlong	##512, local06
+	sub	objptr, ##42976
 LR__0114
-'   if lparts(1).part$="st" then lparts(1).part$="4" :lparts(1).token=token_decimal
-	add	objptr, ##42984
-	rdlong	arg01, objptr
-	sub	objptr, ##42984
+'   if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4" :lparts(addptr+1).token=token_decimal
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	mov	local07, local06
+	shl	local07, #3
+	sub	objptr, ##19668
+	mov	local12, objptr
+	add	local07, objptr
+	rdlong	arg01, local07
 	mov	local10, ##@LR__4344
 	mov	arg02, local10
+	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0115
-	mov	local01, ##@LR__4345
-	add	objptr, ##42984
-	wrlong	local01, objptr
-	add	objptr, #4
-	wrlong	##512, objptr
-	sub	objptr, ##42988
+	add	objptr, ##62644
+	rdlong	local06, objptr
+	add	local06, #1
+	shl	local06, #3
+	sub	objptr, ##19668
+	add	local06, objptr
+	mov	local12, ##@LR__4345
+	wrlong	local12, local06
+	add	objptr, ##19668
+	rdlong	local10, objptr
+	add	local10, #1
+	mov	local06, local10
+	shl	local06, #3
+	sub	objptr, ##19668
+	mov	local07, objptr
+	add	local06, objptr
+	decod	local12, #9
+	add	local06, #4
+	wrlong	##512, local06
+	sub	local06, #4
+	sub	objptr, ##42976
 LR__0115
 LR__0116
 ' 
@@ -2430,7 +2593,7 @@ LR__0127
  if_e	cmp	local10, #20 wz
  if_ne	jmp	#LR__0128
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg02, ##@LR__4350
@@ -2442,7 +2605,7 @@ LR__0127
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	jmp	#LR__0133
 LR__0128
@@ -3555,67 +3718,75 @@ _isfunction
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0288
-	jmp	#LR__0289
+	mov	arg02, ##@LR__4486
+	mov	arg01, local01
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0289
+	jmp	#LR__0290
 LR__0270
 	mov	result1, #133
-	jmp	#LR__0290
+	jmp	#LR__0291
 LR__0271
 	mov	result1, #132
-	jmp	#LR__0290
+	jmp	#LR__0291
 LR__0272
 	mov	result1, #134
-	jmp	#LR__0290
+	jmp	#LR__0291
 LR__0273
 	mov	result1, #130
-	jmp	#LR__0290
+	jmp	#LR__0291
 LR__0274
 	mov	result1, #111
-	jmp	#LR__0290
+	jmp	#LR__0291
 LR__0275
-	mov	result1, #98
-	jmp	#LR__0290
+	mov	result1, #111
+	jmp	#LR__0291
 LR__0276
-	mov	result1, #102
-	jmp	#LR__0290
+	mov	result1, #98
+	jmp	#LR__0291
 LR__0277
-	mov	result1, #103
-	jmp	#LR__0290
+	mov	result1, #102
+	jmp	#LR__0291
 LR__0278
-	mov	result1, #100
-	jmp	#LR__0290
+	mov	result1, #103
+	jmp	#LR__0291
 LR__0279
-	mov	result1, #101
-	jmp	#LR__0290
+	mov	result1, #100
+	jmp	#LR__0291
 LR__0280
-	mov	result1, #123
-	jmp	#LR__0290
+	mov	result1, #101
+	jmp	#LR__0291
 LR__0281
-	mov	result1, #118
-	jmp	#LR__0290
+	mov	result1, #123
+	jmp	#LR__0291
 LR__0282
-	mov	result1, #122
-	jmp	#LR__0290
+	mov	result1, #118
+	jmp	#LR__0291
 LR__0283
-	mov	result1, #84
-	jmp	#LR__0290
+	mov	result1, #122
+	jmp	#LR__0291
 LR__0284
-	mov	result1, #107
-	jmp	#LR__0290
+	mov	result1, #84
+	jmp	#LR__0291
 LR__0285
-	mov	result1, #135
-	jmp	#LR__0290
+	mov	result1, #107
+	jmp	#LR__0291
 LR__0286
-	mov	result1, #106
-	jmp	#LR__0290
+	mov	result1, #135
+	jmp	#LR__0291
 LR__0287
-	mov	result1, #110
-	jmp	#LR__0290
+	mov	result1, #106
+	jmp	#LR__0291
 LR__0288
-	mov	result1, #131
-	jmp	#LR__0290
+	mov	result1, #110
+	jmp	#LR__0291
 LR__0289
-	mov	result1, #0
+	mov	result1, #131
+	jmp	#LR__0291
 LR__0290
+	mov	result1, #0
+LR__0291
 	mov	ptra, fp
 	call	#popregs_
 _isfunction_ret
@@ -3645,18 +3816,18 @@ LR__0301
 	call	#__system__Mid_S
 	mov	local04, result1
 ' m$=mid$(s,1,1) : if (m$<"a" orelse m$>"z")  andalso m$<>"_" then return false
-	mov	arg02, ##@LR__4486
+	mov	arg02, ##@LR__4487
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0302
-	mov	arg02, ##@LR__4487
+	mov	arg02, ##@LR__4488
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0303
 LR__0302
-	mov	arg02, ##@LR__4488
+	mov	arg02, ##@LR__4489
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -3681,35 +3852,35 @@ LR__0304
 '     m$=mid$(s,i,1) : if (i<l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." then return false
 	cmps	local05, local03 wc
  if_ae	jmp	#LR__0307
-	mov	arg02, ##@LR__4489
+	mov	arg02, ##@LR__4490
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0305
-	mov	arg02, ##@LR__4490
+	mov	arg02, ##@LR__4491
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0307
 LR__0305
-	mov	arg02, ##@LR__4491
+	mov	arg02, ##@LR__4492
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0306
-	mov	arg02, ##@LR__4492
+	mov	arg02, ##@LR__4493
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0307
 LR__0306
-	mov	local07, ##@LR__4493
+	mov	local07, ##@LR__4494
 	mov	arg01, local04
 	mov	arg02, local07
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0307
-	mov	local08, ##@LR__4494
+	mov	local08, ##@LR__4495
 	mov	arg01, local04
 	mov	arg02, local08
 	call	#__system___string_cmp
@@ -3720,52 +3891,52 @@ LR__0307
 '     if (i=l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"$" andalso m$<>"%" andalso m$<>"!" then return false
 	cmp	local05, local03 wz
  if_ne	jmp	#LR__0310
-	mov	local10, ##@LR__4495
+	mov	local10, ##@LR__4496
 	mov	arg01, local04
 	mov	arg02, local10
 	call	#__system___string_cmp
 	mov	local11, result1
 	cmps	local11, #0 wc
  if_b	jmp	#LR__0308
-	mov	arg02, ##@LR__4496
+	mov	arg02, ##@LR__4497
 	mov	arg01, local04
 	call	#__system___string_cmp
 	mov	local10, result1
 	cmps	local10, #1 wc
  if_b	jmp	#LR__0310
 LR__0308
-	mov	arg02, ##@LR__4497
+	mov	arg02, ##@LR__4498
 	mov	arg01, local04
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0309
-	mov	local09, ##@LR__4498
+	mov	local09, ##@LR__4499
 	mov	arg01, local04
 	mov	arg02, local09
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0310
 LR__0309
-	mov	local09, ##@LR__4499
+	mov	local09, ##@LR__4500
 	mov	arg01, local04
 	mov	arg02, local09
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	jmp	#LR__0310
-	mov	local08, ##@LR__4500
+	mov	local08, ##@LR__4501
 	mov	arg01, local04
 	mov	arg02, local08
 	call	#__system___string_cmp
 	mov	local09, result1 wz
  if_e	jmp	#LR__0310
-	mov	local12, ##@LR__4501
+	mov	local12, ##@LR__4502
 	mov	local08, local12
 	mov	arg01, local04
 	mov	arg02, local08
 	call	#__system___string_cmp
 	mov	local07, result1 wz
  if_e	jmp	#LR__0310
-	mov	local13, ##@LR__4502
+	mov	local13, ##@LR__4503
 	mov	local12, local13
 	mov	arg01, local04
 	mov	arg02, local12
@@ -3813,36 +3984,36 @@ LR__0321
 	call	#__system__Mid_S
 	mov	local06, result1
 ' m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"." andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
-	mov	arg02, ##@LR__4503
+	mov	arg02, ##@LR__4504
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0322
-	mov	arg02, ##@LR__4504
+	mov	arg02, ##@LR__4505
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0323
 LR__0322
-	mov	arg02, ##@LR__4505
+	mov	arg02, ##@LR__4506
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0323
-	mov	local07, ##@LR__4506
+	mov	local07, ##@LR__4507
 	mov	arg01, local06
 	mov	arg02, local07
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0323
-	mov	local08, ##@LR__4507
+	mov	local08, ##@LR__4508
 	mov	local07, local08
 	mov	arg01, local06
 	mov	arg02, local07
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	jmp	#LR__0323
-	mov	local09, ##@LR__4508
+	mov	local09, ##@LR__4509
 	mov	local08, local09
 	mov	arg01, local06
 	mov	arg02, local08
@@ -3852,7 +4023,7 @@ LR__0322
  if_ne	jmp	#LR__0332
 LR__0323
 ' if m$="." then ds=1
-	mov	arg02, ##@LR__4509
+	mov	arg02, ##@LR__4510
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -3873,43 +4044,43 @@ LR__0324
 	call	#__system__Mid_S
 	mov	local06, result1
 '     m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." andalso m$<>"E" andalso m$<>"e" andalso m$<>"-" then return false
-	mov	arg02, ##@LR__4510
+	mov	arg02, ##@LR__4511
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0325
-	mov	arg02, ##@LR__4511
+	mov	arg02, ##@LR__4512
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0326
 LR__0325
-	mov	arg02, ##@LR__4512
+	mov	arg02, ##@LR__4513
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0326
-	mov	local07, ##@LR__4513
+	mov	local07, ##@LR__4514
 	mov	arg01, local06
 	mov	arg02, local07
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	jmp	#LR__0326
-	mov	local08, ##@LR__4514
+	mov	local08, ##@LR__4515
 	mov	local07, local08
 	mov	arg01, local06
 	mov	arg02, local07
 	call	#__system___string_cmp
 	mov	local12, result1 wz
  if_e	jmp	#LR__0326
-	mov	local09, ##@LR__4515
+	mov	local09, ##@LR__4516
 	mov	local08, local09
 	mov	arg01, local06
 	mov	arg02, local08
 	call	#__system___string_cmp
 	mov	local07, result1 wz
  if_e	jmp	#LR__0326
-	mov	local13, ##@LR__4516
+	mov	local13, ##@LR__4517
 	mov	local09, local13
 	mov	arg01, local06
 	mov	arg02, local09
@@ -3919,7 +4090,7 @@ LR__0325
  if_ne	jmp	#LR__0332
 LR__0326
 '     if m$="-" andalso lcase$(mid$(s,i-1,1))<>"e" then return false
-	mov	arg02, ##@LR__4517
+	mov	arg02, ##@LR__4518
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -3932,14 +4103,14 @@ LR__0326
 	mov	arg01, result1
 	call	#__system__LCase_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4518
+	mov	arg02, ##@LR__4519
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	mov	result1, #0
  if_ne	jmp	#LR__0332
 LR__0327
 '     if m$="." then ds+=1: if ds>1 then return false
-	mov	arg02, ##@LR__4519
+	mov	arg02, ##@LR__4520
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -3948,12 +4119,12 @@ LR__0327
  if_nc_and_z	mov	result1, #0
  if_nc_and_z	jmp	#LR__0332
 '     if m$="E" orelse m$="e" then es+=1: if es>1 then return false
-	mov	arg02, ##@LR__4520
+	mov	arg02, ##@LR__4521
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	jmp	#LR__0328
-	mov	arg02, ##@LR__4521
+	mov	arg02, ##@LR__4522
 	mov	arg01, local06
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
@@ -4000,28 +4171,28 @@ LR__0341
 	call	#__system__Mid_S
 	mov	local03, result1
 ' m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
-	mov	arg02, ##@LR__4522
+	mov	arg02, ##@LR__4523
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0342
-	mov	arg02, ##@LR__4523
+	mov	arg02, ##@LR__4524
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0343
 LR__0342
-	mov	arg02, ##@LR__4524
-	mov	arg01, local03
-	call	#__system___string_cmp
-	cmp	result1, #0 wz
- if_e	jmp	#LR__0343
 	mov	arg02, ##@LR__4525
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0343
 	mov	arg02, ##@LR__4526
+	mov	arg01, local03
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0343
+	mov	arg02, ##@LR__4527
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -4045,18 +4216,18 @@ LR__0344
 	call	#__system__Mid_S
 	mov	local03, result1
 '     m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
-	mov	arg02, ##@LR__4527
+	mov	arg02, ##@LR__4528
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0345
-	mov	arg02, ##@LR__4528
+	mov	arg02, ##@LR__4529
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0346
 LR__0345
-	mov	arg02, ##@LR__4529
+	mov	arg02, ##@LR__4530
 	mov	arg01, local03
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -4106,18 +4277,18 @@ LR__0352
 	call	#__system__Mid_S
 	mov	local05, result1
 '     m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
-	mov	arg02, ##@LR__4530
+	mov	arg02, ##@LR__4531
 	mov	arg01, local05
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0353
-	mov	arg02, ##@LR__4531
+	mov	arg02, ##@LR__4532
 	mov	arg01, local05
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	jmp	#LR__0354
 LR__0353
-	mov	arg02, ##@LR__4532
+	mov	arg02, ##@LR__4533
 	mov	arg01, local05
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -4145,7 +4316,7 @@ _isstring
 	mov	arg02, #1
 	call	#__system__Left_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4533
+	mov	arg02, ##@LR__4534
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_ne	jmp	#LR__0360
@@ -4153,7 +4324,7 @@ _isstring
 	mov	arg02, #1
 	call	#__system__Right_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4534
+	mov	arg02, ##@LR__4535
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	neg	result1, #1
@@ -6795,7 +6966,7 @@ LR__0603
 	sub	objptr, ##1080
 	add	arg02, objptr
 	rdlong	arg01, arg02
-	mov	arg02, ##@LR__4535
+	mov	arg02, ##@LR__4536
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6807,7 +6978,7 @@ LR__0603
 	sub	objptr, ##1080
 	add	local09, objptr
 	rdlong	arg01, local09
-	mov	arg02, ##@LR__4536
+	mov	arg02, ##@LR__4537
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6825,7 +6996,7 @@ LR__0604
 	sub	objptr, ##1080
 	add	arg02, objptr
 	rdlong	arg01, arg02
-	mov	arg02, ##@LR__4537
+	mov	arg02, ##@LR__4538
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6883,7 +7054,7 @@ LR__0607
 	add	objptr, ##42976
 	add	local04, objptr
 	rdlong	arg01, local04
-	mov	arg02, ##@LR__4538
+	mov	arg02, ##@LR__4539
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6894,7 +7065,7 @@ LR__0607
 	add	objptr, ##42976
 	add	local13, objptr
 	rdlong	arg01, local13
-	mov	arg02, ##@LR__4539
+	mov	arg02, ##@LR__4540
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6911,7 +7082,7 @@ LR__0608
 	add	objptr, ##42976
 	add	local04, objptr
 	rdlong	arg01, local04
-	mov	arg02, ##@LR__4540
+	mov	arg02, ##@LR__4541
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6937,7 +7108,7 @@ LR__0610
 	add	objptr, ##42976
 	add	local04, objptr
 	rdlong	arg01, local04
-	mov	arg02, ##@LR__4541
+	mov	arg02, ##@LR__4542
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -6949,63 +7120,63 @@ LR__0610
 	add	objptr, ##42976
 	add	local12, objptr
 	rdlong	local16, local12
-	mov	arg02, ##@LR__4542
+	mov	arg02, ##@LR__4543
 	mov	arg01, local16
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0611
-	mov	arg02, ##@LR__4543
-	mov	arg01, local16
-	call	#__system___string_cmp
-	cmp	result1, #0 wz
- if_e	jmp	#LR__0612
 	mov	arg02, ##@LR__4544
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0613
+ if_e	jmp	#LR__0612
 	mov	arg02, ##@LR__4545
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0614
+ if_e	jmp	#LR__0613
 	mov	arg02, ##@LR__4546
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0615
+ if_e	jmp	#LR__0614
 	mov	arg02, ##@LR__4547
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0616
+ if_e	jmp	#LR__0615
 	mov	arg02, ##@LR__4548
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0617
+ if_e	jmp	#LR__0616
 	mov	arg02, ##@LR__4549
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0618
+ if_e	jmp	#LR__0617
 	mov	arg02, ##@LR__4550
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0619
+ if_e	jmp	#LR__0618
 	mov	arg02, ##@LR__4551
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0620
+ if_e	jmp	#LR__0619
 	mov	arg02, ##@LR__4552
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	jmp	#LR__0621
+ if_e	jmp	#LR__0620
 	mov	arg02, ##@LR__4553
+	mov	arg01, local16
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0621
+	mov	arg02, ##@LR__4554
 	mov	arg01, local16
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -7206,7 +7377,7 @@ LR__0630
 	mov	arg01, #32
 	call	#_compile_error
 	mov	result1, #32
-	jmp	#LR__0636
+	jmp	#LR__0637
 LR__0631
 	add	objptr, ##53840
 	rdlong	arg01, objptr
@@ -7239,7 +7410,7 @@ LR__0631
 	mov	arg01, #34
 	call	#_compile_error
 	mov	result1, #34
-	jmp	#LR__0636
+	jmp	#LR__0637
 LR__0632
 	mov	local07, local01
 ' varnum=t1.result.uresult
@@ -7250,7 +7421,7 @@ LR__0632
 	sub	objptr, ##1080
 	add	local04, objptr
 	rdlong	arg01, local04
-	mov	arg02, ##@LR__4554
+	mov	arg02, ##@LR__4555
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -7258,36 +7429,48 @@ LR__0632
 	mov	arg01, #33
 	call	#_compile_error
 	mov	result1, #33
-	jmp	#LR__0636
+	jmp	#LR__0637
 LR__0633
 	add	objptr, ##44056
-	rdlong	local06, objptr
-	add	local06, #1
-	wrlong	local06, objptr
+	rdlong	local04, objptr
+	add	local04, #1
+	wrlong	local04, objptr
 	sub	objptr, ##44056
 	call	#_expr
 ' ct+=1
 ' expr()  ' there is "to" value pushed on the stack
-' if lparts(ct).part$="step" then 
+' if lparts(ct).part$="step" orelse lparts(ct).part$="st."then 
 	add	objptr, ##44056
 	rdlong	local04, objptr
 	shl	local04, #3
 	sub	objptr, ##1080
 	add	local04, objptr
 	rdlong	arg01, local04
-	mov	arg02, ##@LR__4555
+	mov	arg02, ##@LR__4556
 	sub	objptr, ##42976
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_ne	jmp	#LR__0634
+ if_e	jmp	#LR__0634
+	add	objptr, ##44056
+	rdlong	local06, objptr
+	shl	local06, #3
+	sub	objptr, ##1080
+	add	local06, objptr
+	rdlong	arg01, local06
+	mov	arg02, ##@LR__4557
+	sub	objptr, ##42976
+	call	#__system___string_cmp
+	cmp	result1, #0 wz
+ if_ne	jmp	#LR__0635
+LR__0634
 	add	objptr, ##44056
 	rdlong	local06, objptr
 	add	local06, #1
 	wrlong	local06, objptr
 	sub	objptr, ##44056
 	call	#_expr
-	jmp	#LR__0635
-LR__0634
+	jmp	#LR__0636
+LR__0635
 	add	objptr, ##53840
 	rdlong	local06, objptr
 	mov	local05, local06
@@ -7312,7 +7495,7 @@ LR__0634
 	add	local06, #1
 	wrlong	local06, objptr
 	sub	objptr, ##53840
-LR__0635
+LR__0636
 	add	objptr, ##53840
 	rdlong	local06, objptr
 	mov	local05, local06
@@ -7364,7 +7547,7 @@ LR__0635
 ' 
 ' return 0
 	mov	result1, #0
-LR__0636
+LR__0637
 	mov	ptra, fp
 	call	#popregs_
 _compile_for_ret
@@ -7960,10 +8143,10 @@ LR__0674
 LR__0675
 '    print "We have a slow goto, todo  "
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4556
+	mov	arg02, ##@LR__4558
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -7972,7 +8155,7 @@ LR__0675
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__0676
 ' ' if not, there is a slow goto. Call converttoint to get an int value from expression, then do_slow_goto
@@ -9785,7 +9968,7 @@ LR__0830
 ' if t1.result_type<>result_string then name$="noname.bas" else name$=t1.result.sresult
 	sub	fp, #152
 	cmp	local01, #31 wz
- if_ne	mov	local01, ##@LR__4557
+ if_ne	mov	local01, ##@LR__4559
  if_ne	add	fp, #140
  if_ne	wrlong	local01, fp
  if_ne	sub	fp, #140
@@ -10041,10 +10224,10 @@ LR__0851
  if_ne	jmp	#LR__0855
 '   if t1.result.sresult="" then t1.result.sresult="noname.bas"
 	rdlong	arg01, fp
-	mov	arg02, ##@LR__4558
+	mov	arg02, ##@LR__4560
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	mov	local01, ##@LR__4559
+ if_e	mov	local01, ##@LR__4561
  if_e	wrlong	local01, fp
 '   close #9: open currentdir$+"/"+t1.result.sresult for output as #9
 	mov	arg01, #9
@@ -10053,7 +10236,7 @@ LR__0851
 	add	objptr, ##57960
 	rdlong	arg01, objptr
 	sub	objptr, ##57960
-	mov	arg02, ##@LR__4560
+	mov	arg02, ##@LR__4562
 	call	#__system___string_concat
 	mov	arg01, result1
 	rdlong	arg02, fp
@@ -10092,7 +10275,7 @@ LR__0852
 	sub	fp, ##552
 	call	#_psram_spin2_read1
 	sub	objptr, ##5824
-	mov	local01, ##@LR__4561
+	mov	local01, ##@LR__4563
 	add	fp, ##692
 	wrlong	local01, fp
 '     psram.read1(varptr(header(0)),saveptr,24)
@@ -10136,7 +10319,7 @@ LR__0854
 '  '   put #9,i,linebuf(0),header(3) : i+=header(3)
 '      print #9, saveline$
 	mov	arg01, #9
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, ##692
@@ -10150,7 +10333,7 @@ LR__0854
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #9
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	add	fp, ##560
 	rdlong	local01, fp
@@ -10217,10 +10400,10 @@ LR__0860
 '   do_new
 '   if t1.result.sresult="" then t1.result.sresult="noname.bas" 
 	rdlong	arg01, fp
-	mov	arg02, ##@LR__4562
+	mov	arg02, ##@LR__4564
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
- if_e	mov	local01, ##@LR__4563
+ if_e	mov	local01, ##@LR__4565
  if_e	wrlong	local01, fp
 '   close #9: open currentdir$+"/"+t1.result.sresult for input as #9
 	mov	arg01, #9
@@ -10229,7 +10412,7 @@ LR__0860
 	add	objptr, ##57960
 	rdlong	arg01, objptr
 	sub	objptr, ##57960
-	mov	arg02, ##@LR__4564
+	mov	arg02, ##@LR__4566
 	call	#__system___string_concat
 	mov	arg01, result1
 	rdlong	arg02, fp
@@ -10247,10 +10430,10 @@ LR__0860
 	sub	fp, #16
  if_e	jmp	#LR__0861
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4565
+	mov	arg02, ##@LR__4567
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -10261,7 +10444,7 @@ LR__0860
 	mov	arg03, #0
 	mov	arg04, #10
 	call	#__system___basic_print_integer
-	mov	arg02, ##@LR__4566
+	mov	arg02, ##@LR__4568
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -10278,7 +10461,7 @@ LR__0860
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -10310,7 +10493,7 @@ LR__0861
 	add	objptr, ##57960
 	rdlong	arg01, objptr
 	sub	objptr, ##57960
-	mov	arg02, ##@LR__4567
+	mov	arg02, ##@LR__4569
 	call	#__system___string_concat
 	mov	arg01, result1
 	rdlong	arg02, fp
@@ -10331,7 +10514,7 @@ LR__0862
 	mov	arg02, #1
 	call	#__system__Left_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4568
+	mov	arg02, ##@LR__4570
 	call	#__system___string_cmp
 	cmps	result1, #0 wc
  if_b	jmp	#LR__0863
@@ -10341,7 +10524,7 @@ LR__0862
 	mov	arg02, #1
 	call	#__system__Left_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4569
+	mov	arg02, ##@LR__4571
 	call	#__system___string_cmp
 	cmps	result1, #1 wc
  if_b	call	#_interpret
@@ -10349,7 +10532,7 @@ LR__0863
 	add	objptr, ##44016
 	rdlong	arg01, objptr
 	sub	objptr, ##44016
-	mov	arg02, ##@LR__4570
+	mov	arg02, ##@LR__4572
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_ne	jmp	#LR__0862
@@ -10583,10 +10766,10 @@ LR__0873
 LR__0874
 '   print "Stopped at line ";runheader(0)
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4571
+	mov	arg02, ##@LR__4573
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -10602,7 +10785,7 @@ LR__0874
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__0875
 	add	objptr, ##61840
@@ -10684,7 +10867,7 @@ LR__0880
 	sub	fp, #52
 	jmp	#LR__0882
 LR__0881
-	mov	arg05, ##@LR__4572
+	mov	arg05, ##@LR__4574
 	add	fp, #52
 	wrlong	arg05, fp
 	sub	fp, #52
@@ -10696,7 +10879,7 @@ LR__0883
 	add	fp, #52
 	rdlong	arg01, fp
 	sub	fp, #52
-	mov	arg02, ##@LR__4573
+	mov	arg02, ##@LR__4575
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0888
@@ -10721,7 +10904,7 @@ LR__0883
 	mov	arg01, #9
 	call	#__system__close
 	mov	local01, #9
-	mov	arg01, ##@LR__4574
+	mov	arg01, ##@LR__4576
 	add	fp, #52
 	rdlong	arg02, fp
 	sub	fp, #52
@@ -10733,34 +10916,34 @@ LR__0883
 	add	ptr___system__dat__, #32
 	rdlong	result1, ptr___system__dat__ wz
 	sub	ptr___system__dat__, #32
-	add	objptr, ##62660
+	add	objptr, ##62664
 	wrlong	result1, objptr
 '     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-	sub	objptr, ##62660
+	sub	objptr, ##62664
  if_e	jmp	#LR__0884
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4575
+	mov	arg02, ##@LR__4577
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
-	add	objptr, ##62660
+	add	objptr, ##62664
 	rdlong	arg02, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	mov	arg01, #0
 	mov	arg03, #0
 	mov	arg04, #10
 	call	#__system___basic_print_integer
-	mov	arg02, ##@LR__4576
+	mov	arg02, ##@LR__4578
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	local01, #0
-	add	objptr, ##62660
+	add	objptr, ##62664
 	rdlong	arg01, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	call	#__system___strerror
 	mov	arg02, result1
 	mov	arg01, local01
@@ -10771,7 +10954,7 @@ LR__0883
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -10877,7 +11060,7 @@ LR__0888
 '   
 '   par=converttoint(t1)  : print par
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, #12
@@ -10892,7 +11075,7 @@ LR__0888
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	call	#_pop
 	mov	local01, result3
@@ -11027,7 +11210,7 @@ LR__0893
 ' t1=pop()
 ' channel=converttoint(t1) : print channel
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, #16
@@ -11042,7 +11225,7 @@ LR__0893
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 ' for j=0 to 1023: samplebuf(channel, i) =0 : next j
 	add	fp, #8
@@ -11412,7 +11595,7 @@ LR__0910
 	sub	fp, #52
 	jmp	#LR__0912
 LR__0911
-	mov	arg05, ##@LR__4577
+	mov	arg05, ##@LR__4579
 	add	fp, #52
 	wrlong	arg05, fp
 	sub	fp, #52
@@ -11424,7 +11607,7 @@ LR__0913
 	add	fp, #52
 	rdlong	arg01, fp
 	sub	fp, #52
-	mov	arg02, ##@LR__4578
+	mov	arg02, ##@LR__4580
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0915
@@ -11449,7 +11632,7 @@ LR__0913
 	mov	arg01, #9
 	call	#__system__close
 	mov	local01, #9
-	mov	arg01, ##@LR__4579
+	mov	arg01, ##@LR__4581
 	add	fp, #52
 	rdlong	arg02, fp
 	sub	fp, #52
@@ -11461,34 +11644,34 @@ LR__0913
 	add	ptr___system__dat__, #32
 	rdlong	result1, ptr___system__dat__ wz
 	sub	ptr___system__dat__, #32
-	add	objptr, ##62660
+	add	objptr, ##62664
 	wrlong	result1, objptr
 '     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-	sub	objptr, ##62660
+	sub	objptr, ##62664
  if_e	jmp	#LR__0914
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4580
+	mov	arg02, ##@LR__4582
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
-	add	objptr, ##62660
+	add	objptr, ##62664
 	rdlong	arg02, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	mov	arg01, #0
 	mov	arg03, #0
 	mov	arg04, #10
 	call	#__system___basic_print_integer
-	mov	arg02, ##@LR__4581
+	mov	arg02, ##@LR__4583
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	local01, #0
-	add	objptr, ##62660
+	add	objptr, ##62664
 	rdlong	arg01, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	call	#__system___strerror
 	mov	arg02, result1
 	mov	arg01, local01
@@ -11499,7 +11682,7 @@ LR__0913
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -11536,7 +11719,7 @@ LR__0915
 '   
 '   par=converttoint(t1)  : print par
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, #12
@@ -11551,7 +11734,7 @@ LR__0915
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	call	#_pop
 	mov	local01, result3
@@ -11686,7 +11869,7 @@ LR__0920
 ' t1=pop()
 ' channel=converttoint(t1) : print channel
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	fp, #16
@@ -11701,7 +11884,7 @@ LR__0920
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 ' for j=0 to 1023: samplebuf(channel, i) =0 : next j
 	add	fp, #8
@@ -12088,7 +12271,7 @@ LR__0941
 ' 
 ' print
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -12096,22 +12279,22 @@ LR__0941
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	add	objptr, ##53848
 	rdlong	local02, objptr
-	add	objptr, ##8804
+	add	objptr, ##8808
 	wrlong	local02, objptr
-	sub	objptr, ##62652
+	sub	objptr, ##62656
 ' do 
 LR__0942
 	add	fp, #32
 	mov	arg01, fp
 	sub	fp, #32
-	add	objptr, ##62652
+	add	objptr, ##62656
 	rdlong	arg02, objptr
 	mov	arg03, #24
-	sub	objptr, ##56828
+	sub	objptr, ##56832
 	call	#_psram_spin2_read1
 	sub	objptr, ##5824
 '   psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart
@@ -12163,9 +12346,9 @@ LR__0943
 	add	fp, #52
 	rdlong	local02, fp
 	sub	fp, #52
-	add	objptr, ##62652
+	add	objptr, ##62656
 	wrlong	local02, objptr
-	sub	objptr, ##62652
+	sub	objptr, ##62656
 LR__0944
 	add	fp, #52
 	rdlong	local02, fp
@@ -12506,10 +12689,10 @@ _do_error
 ' print "Error ";r;": ";errors$(r)
 	mov	arg01, #0
 	sub	objptr, ##52304
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4582
+	mov	arg02, ##@LR__4584
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -12518,7 +12701,7 @@ _do_error
 	mov	arg03, #0
 	mov	arg04, #10
 	call	#__system___basic_print_unsigned
-	mov	arg02, ##@LR__4583
+	mov	arg02, ##@LR__4585
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -12535,7 +12718,7 @@ _do_error
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	ptra, fp
 	call	#popregs_
@@ -12553,7 +12736,7 @@ _convertstring
 	mov	local01, arg01
 	call	#_pslpeek
 	mov	local02, result1
-	mov	local03, ##@LR__4584
+	mov	local03, ##@LR__4586
 ' 'print "in convertstring: psaddr=";psaddr
 ' l=pslpeek(psaddr)
 ' 'print "in convertstring: len=";l
@@ -17542,15 +17725,15 @@ _do_rnd
 	sub	objptr, ##52304
  if_b	jmp	#LR__1330
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4585
+	mov	arg02, ##@LR__4587
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -17622,15 +17805,15 @@ LR__1332
 LR__1333
 '     print "rnd: "; : printerror(40) 
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4586
+	mov	arg02, ##@LR__4588
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #40
 	call	#_printerror
@@ -17673,15 +17856,15 @@ _do_sin
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1340
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4587
+	mov	arg02, ##@LR__4589
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -17745,15 +17928,15 @@ _do_cos
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1350
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4588
+	mov	arg02, ##@LR__4590
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -17821,15 +18004,15 @@ _do_tan
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1360
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4589
+	mov	arg02, ##@LR__4591
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -17893,15 +18076,15 @@ _do_asin
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1370
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4590
+	mov	arg02, ##@LR__4592
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -17965,15 +18148,15 @@ _do_acos
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1380
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4591
+	mov	arg02, ##@LR__4593
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18037,15 +18220,15 @@ _do_atn
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1390
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4592
+	mov	arg02, ##@LR__4594
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18110,15 +18293,15 @@ _do_sqr
  if_b	sub	fp, #12
  if_c_and_nz	jmp	#LR__1400
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4593
+	mov	arg02, ##@LR__4595
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18173,15 +18356,15 @@ _do_stick
 	sub	objptr, ##52304
  if_b	jmp	#LR__1410
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4594
+	mov	arg02, ##@LR__4596
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18282,15 +18465,15 @@ _do_strig
 	sub	objptr, ##52304
  if_b	jmp	#LR__1420
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4595
+	mov	arg02, ##@LR__4597
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18391,15 +18574,15 @@ _do_getpixel
 	sub	objptr, ##52304
  if_e	jmp	#LR__1430
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4596
+	mov	arg02, ##@LR__4598
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #39
 	call	#_printerror
@@ -18855,9 +19038,9 @@ _do_rdpin
 	mov	arg01, fp
 	call	#_converttoint
 	rdpin	result1, result1
-	add	objptr, ##62660
+	add	objptr, ##62664
 	wrlong	result1, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -18887,9 +19070,9 @@ _do_rqpin
 	mov	arg01, result1
 	mov	result1, #0
 	rqpin	result1, arg01
-	add	objptr, ##62660
+	add	objptr, ##62664
 	wrlong	result1, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -18923,9 +19106,9 @@ _do_pinread
 	shr	result1, arg01
 	shr	arg01, #6
 	zerox	result1, arg01
-	add	objptr, ##62660
+	add	objptr, ##62664
 	wrlong	result1, objptr
-	sub	objptr, ##62660
+	sub	objptr, ##62664
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -18993,7 +19176,7 @@ _do_cls
 	sub	objptr, ##44028
 ' cls(ink,paper): plot_color=ink: print
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -19001,7 +19184,7 @@ _do_cls
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 _do_cls_ret
 	ret
@@ -19892,7 +20075,7 @@ LR__1522
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1523
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -19912,7 +20095,7 @@ LR__1522
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -19921,7 +20104,7 @@ LR__1523
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1524
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -19941,7 +20124,7 @@ LR__1523
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -19950,7 +20133,7 @@ LR__1524
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1525
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -19970,7 +20153,7 @@ LR__1524
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -19979,7 +20162,7 @@ LR__1525
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1526
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -19998,7 +20181,7 @@ LR__1525
 	mov	local09, result1
 	add	local05, result1
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local10, #0
@@ -20011,7 +20194,7 @@ LR__1527
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1528
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -20026,7 +20209,7 @@ LR__1527
 	mov	local05, local06
 	add	local05, local07
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local09, #0
@@ -20035,7 +20218,7 @@ LR__1528
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1529
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	local06, #0
@@ -20050,7 +20233,7 @@ LR__1528
 	mov	local05, local06
 	add	local05, local07
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	result1, #0
 	mov	local09, #0
@@ -20059,7 +20242,7 @@ LR__1529
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1530
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20068,14 +20251,14 @@ LR__1529
 	mov	arg04, #35
 	call	#__system___basic_print_float
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1530
 '   if t1.result_type=result_string then print t1.result.sresult;
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1531
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20083,7 +20266,7 @@ LR__1530
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1531
 LR__1532
@@ -20094,7 +20277,7 @@ LR__1532
 	cmp	local03, #28 wz
  if_ne	jmp	#LR__1533
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20107,14 +20290,14 @@ LR__1532
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1533
 '   if t1.result_type=result_uint then print t1.result.uresult
 	cmp	local03, #29 wz
  if_ne	jmp	#LR__1534
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20127,14 +20310,14 @@ LR__1533
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1534
 '   if t1.result_type=result_float then print t1.result.fresult
 	cmp	local03, #30 wz
  if_ne	jmp	#LR__1535
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20147,14 +20330,14 @@ LR__1534
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1535
 '   if t1.result_type=result_string then print t1.result.sresult
 	cmp	local03, #31 wz
  if_ne	jmp	#LR__1536
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20166,7 +20349,7 @@ LR__1535
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1536
 LR__1537
@@ -20174,7 +20357,7 @@ LR__1537
 	cmp	local04, #32 wz
  if_ne	jmp	#LR__1538
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -20182,7 +20365,7 @@ LR__1537
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 LR__1538
 LR__1539
@@ -20509,7 +20692,7 @@ LR__1578
 	rdlong	arg02, objptr
 	sub	objptr, ##44044
 	call	#_hg010b_spin2_cls
-	mov	arg01, ##@LR__4597
+	mov	arg01, ##@LR__4599
 ' 
 ' write(text)
 	call	#_hg010b_spin2_write
@@ -21008,15 +21191,15 @@ _do_waitclock_ret
 _do_dir
 	mov	COUNT_, #3
 	call	#pushregs_
-	mov	arg01, ##@LR__4598
+	mov	arg01, ##@LR__4600
 	call	#__system___chdir
 ' chdir("/sd/bas")       ' set working directory
 ' print "Working directory: "; currentdir$ 
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4599
+	mov	arg02, ##@LR__4601
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -21031,9 +21214,9 @@ _do_dir
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
-	mov	arg01, ##@LR__4600
+	mov	arg01, ##@LR__4602
 	mov	arg02, #16
 	call	#__system___basic_dir
 	mov	local01, result1
@@ -21042,7 +21225,7 @@ _do_dir
 ' while filename <> "" and filename <> nil
 LR__1600
 	mov	local02, #0
-	mov	arg02, ##@LR__4601
+	mov	arg02, ##@LR__4603
 	mov	arg01, local01
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -21057,10 +21240,10 @@ LR__1600
  if_e	jmp	#LR__1601
 '   print "[dir] ";filename
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4602
+	mov	arg02, ##@LR__4604
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -21073,7 +21256,7 @@ LR__1600
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #0
 	mov	arg02, #0
@@ -21081,7 +21264,7 @@ LR__1600
 	mov	local01, result1
 	jmp	#LR__1600
 LR__1601
-	mov	arg01, ##@LR__4603
+	mov	arg01, ##@LR__4605
 	mov	arg02, #33
 	call	#__system___basic_dir
 	mov	local01, result1
@@ -21090,7 +21273,7 @@ LR__1601
 ' do while filename <> "" and filename <> nil
 LR__1602
 	mov	local02, #0
-	mov	arg02, ##@LR__4604
+	mov	arg02, ##@LR__4606
 	mov	arg01, local01
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -21105,7 +21288,7 @@ LR__1602
  if_e	jmp	#LR__1606
 '   print filename
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	mov	arg01, #0
@@ -21117,7 +21300,7 @@ LR__1602
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #0
 	mov	arg02, #0
@@ -21133,15 +21316,15 @@ LR__1602
  if_ne	jmp	#LR__1602
 '     print "-----more, press any key";
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4605
+	mov	arg02, ##@LR__4607
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 '     do 
 LR__1603
@@ -21176,15 +21359,15 @@ LR__1605
 	call	#_hg010b_spin2_setcursorpos
 '     position 0,35: print "                             ";: position 4,35  
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4606
+	mov	arg02, ##@LR__4608
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #4
 	mov	arg02, #35
@@ -21311,12 +21494,12 @@ LR__1620
 	mov	arg02, #1
 	call	#__system__Left_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4607
+	mov	arg02, ##@LR__4609
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	mov	local05, local04
  if_e	jmp	#LR__1621
-	mov	arg01, ##@LR__4608
+	mov	arg01, ##@LR__4610
 	mov	arg02, local04
 	call	#__system___string_concat
 	mov	local05, result1
@@ -21334,10 +21517,10 @@ LR__1621
 '   r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
  if_e	jmp	#LR__1622
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4609
+	mov	arg02, ##@LR__4611
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -21346,7 +21529,7 @@ LR__1621
 	mov	arg03, #0
 	mov	arg04, #10
 	call	#__system___basic_print_integer
-	mov	arg02, ##@LR__4610
+	mov	arg02, ##@LR__4612
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -21361,7 +21544,7 @@ LR__1621
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	arg01, #9
 	call	#__system__close
@@ -21413,9 +21596,9 @@ LR__1623
 	setq	objptr
 	coginit	local08, arg02 wc
  if_b	neg	local08, #1
-	add	objptr, ##18668
+	add	objptr, ##18672
 	wrlong	local08, objptr
-	sub	objptr, ##62668
+	sub	objptr, ##62672
 	mov	arg01, #0
 	cogid	arg01
 	cogstop	arg01
@@ -22174,14 +22357,8 @@ _init_commands_ret
 ' 
 ' sub init_error_strings
 _init_error_strings
-	mov	_var01, ##@LR__4611
-	add	objptr, ##51280
-	wrlong	_var01, objptr
-	mov	_var01, ##@LR__4612
-	add	objptr, #4
-	wrlong	_var01, objptr
 	mov	_var01, ##@LR__4613
-	add	objptr, #4
+	add	objptr, ##51280
 	wrlong	_var01, objptr
 	mov	_var01, ##@LR__4614
 	add	objptr, #4
@@ -22321,6 +22498,12 @@ _init_error_strings
 	mov	_var01, ##@LR__4659
 	add	objptr, #4
 	wrlong	_var01, objptr
+	mov	_var01, ##@LR__4660
+	add	objptr, #4
+	wrlong	_var01, objptr
+	mov	_var01, ##@LR__4661
+	add	objptr, #4
+	wrlong	_var01, objptr
 	sub	objptr, ##51472
 _init_error_strings_ret
 	ret
@@ -22331,13 +22514,13 @@ _printerror
 	mov	COUNT_, #1
 	call	#pushregs_
 	mov	local01, arg01
-	mov	arg01, ##@LR__4660
+	mov	arg01, ##@LR__4662
 	call	#_hg010b_spin2_write
 	mov	arg01, local01
 	call	#_hg010b_spin2_inttostr
 	mov	arg01, result1
 	call	#_hg010b_spin2_write
-	mov	arg01, ##@LR__4661
+	mov	arg01, ##@LR__4663
 	call	#_hg010b_spin2_write
 	shl	local01, #2
 	add	objptr, ##51280
@@ -22650,7 +22833,7 @@ _program
 	add	objptr, ##690
 	wrlong	#2, objptr
 	sub	objptr, ##690
-	mov	local02, ##@LR__4662
+	mov	local02, ##@LR__4664
 	mov	arg01, #61
 	mov	arg02, #60
 	mov	arg03, #59
@@ -22659,9 +22842,9 @@ _program
 	mov	arg02, result1
 	mov	arg01, local02
 	call	#__system___mount
-	mov	arg01, ##@LR__4663
+	mov	arg01, ##@LR__4665
 	call	#__system___chdir
-	mov	local02, ##@LR__4664
+	mov	local02, ##@LR__4666
 	add	objptr, ##57960
 	wrlong	local02, objptr
 	sub	objptr, ##13920
@@ -22687,7 +22870,7 @@ _program
 ' 
 ' position 2*editor_spaces,1 : print ver$
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	ptr__dat__, ##8464
@@ -22701,14 +22884,14 @@ _program
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	rdlong	arg01, objptr
 	mov	arg02, #0
 	mov	arg03, #10
 	call	#__system__Number_S
 	mov	arg01, result1
-	mov	arg02, ##@LR__4665
+	mov	arg02, ##@LR__4667
 	call	#__system___string_concat
 	mov	local02, result1
 	add	objptr, ##61872
@@ -22716,7 +22899,7 @@ _program
 	sub	objptr, ##61872
 ' free$=decuns$(v.buf_ptr)+" BASIC bytes free" : print free$
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
 	add	objptr, ##61872
@@ -22730,7 +22913,7 @@ _program
 	mov	arg03, #0
 	call	#__system___basic_print_char
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	add	objptr, ##44040
 	rdlong	arg01, objptr
@@ -22740,10 +22923,10 @@ _program
 	call	#_hg010b_spin2_setcursorpos
 ' position 2*editor_spaces,4 : print "Ready"
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	mov	arg01, result1
 	call	#__system___lockmem
-	mov	arg02, ##@LR__4666
+	mov	arg02, ##@LR__4668
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -22754,7 +22937,7 @@ _program
 	call	#__system___basic_print_char
 	mov	local04, #1
 	mov	arg01, #0
-	call	#__system___getiolock_0416
+	call	#__system___getiolock_0417
 	wrlong	#0, result1
 	mov	local05, #0
 	mov	arg02, #0
@@ -23164,13 +23347,13 @@ LR__1717
 	add	objptr, ##44016
 	rdlong	arg01, objptr
 	sub	objptr, ##44016
-	mov	local04, ##@LR__4667
+	mov	local04, ##@LR__4669
 	mov	arg02, local04
 	call	#__system___string_concat
 	add	objptr, ##44016
 	wrlong	result1, objptr
 	sub	objptr, ##44016
-	mov	arg01, ##@LR__4668
+	mov	arg01, ##@LR__4670
 	call	#_hg010b_spin2_write
 	mov	local03, local10
 	add	local03, #1
@@ -23231,7 +23414,7 @@ LR__1721
 	call	#_hg010b_spin2_setcursorpos
 	jmp	#LR__1723
 LR__1722
-	mov	local02, ##@LR__4669
+	mov	local02, ##@LR__4671
 	add	objptr, ##44016
 	wrlong	local02, objptr
 	sub	objptr, ##43960
@@ -23250,7 +23433,7 @@ LR__1724
  if_ne	jmp	#LR__1725
 	call	#_hg010b_spin2_crlf
 	call	#_interpret
-	mov	local02, ##@LR__4670
+	mov	local02, ##@LR__4672
 	add	objptr, ##44016
 	wrlong	local02, objptr
 	getct	result1
@@ -28112,7 +28295,7 @@ LR__2351
 	add	fp, #20
 	rdlong	arg03, fp
 	sub	fp, #64
-	call	#__system__emitsign_0376
+	call	#__system__emitsign_0377
 	add	fp, #276
 	wrlong	result1, fp
 	sub	fp, #276
@@ -28237,7 +28420,7 @@ LR__2357
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0374
+	call	#__system__disassemble_0375
 	add	fp, #16
 	rdlong	local01, fp
 	sub	fp, #16
@@ -28328,7 +28511,7 @@ LR__2361
 	sub	fp, #4
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0374
+	call	#__system__disassemble_0375
 	jmp	#LR__2365
 LR__2362
 	add	fp, #36
@@ -28346,7 +28529,7 @@ LR__2362
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0374
+	call	#__system__disassemble_0375
 	jmp	#LR__2364
 LR__2363
 	add	fp, #12
@@ -28362,7 +28545,7 @@ LR__2363
 	sub	fp, #156
 	rdlong	arg05, fp
 	sub	fp, #28
-	call	#__system__disassemble_0374
+	call	#__system__disassemble_0375
 LR__2364
 LR__2365
 	add	fp, #28
@@ -28559,7 +28742,7 @@ LR__2375
 	add	fp, #20
 	rdlong	arg03, fp
 	sub	fp, #64
-	call	#__system__emitsign_0376
+	call	#__system__emitsign_0377
 	add	fp, #280
 	wrlong	result1, fp
 	sub	fp, #280
@@ -29504,7 +29687,7 @@ LR__2524
 	mov	arg02, local12
 	mov	arg03, local06
 	mov	arg04, local04
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2535
 LR__2525
 	cmp	local10, #255 wz
@@ -29521,7 +29704,7 @@ LR__2526
 	mov	arg04, local04
 	or	arg04, #2
 	mov	arg01, local05
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2535
 LR__2527
 	cmp	local05, #0 wz
@@ -29544,7 +29727,7 @@ LR__2530
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2535
 LR__2531
 	cmp	local08, #0 wz
@@ -29566,7 +29749,7 @@ LR__2534
 	mov	arg02, local12
 	mov	arg03, local06
 	mov	arg04, local04
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 LR__2535
 	mov	ptra, fp
 	call	#popregs_
@@ -29611,7 +29794,7 @@ LR__2540
 	cmp	arg01, ##16777217 wc
  if_ae	add	arg03, #1
  if_ae	shr	arg01, #1
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2544
 LR__2541
 	cmp	local03, #0 wz
@@ -29691,7 +29874,7 @@ LR__2552
 	mov	arg02, local10
 	mov	arg03, local09
 	mov	arg04, local03
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2564
 LR__2553
 	cmp	local04, #0 wz
@@ -29712,7 +29895,7 @@ LR__2554
 	mov	arg02, #0
 	mov	arg03, local05
 	mov	arg04, local03
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2564
 LR__2555
 	cmp	local05, #0 wz
@@ -29727,7 +29910,7 @@ LR__2555
 	or	arg04, #2
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2564
 LR__2556
 	cmp	local04, #0 wz
@@ -29747,7 +29930,7 @@ LR__2559
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local03
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2564
 LR__2560
 	cmp	local07, #0 wz
@@ -29767,7 +29950,7 @@ LR__2563
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local03
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 LR__2564
 	mov	ptra, fp
 	call	#popregs_
@@ -29851,7 +30034,7 @@ LR__2574
 	mov	arg02, local14
 	mov	arg03, local11
 	mov	arg04, local05
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2585
 LR__2575
 	cmp	local06, #0 wz
@@ -29865,7 +30048,7 @@ LR__2575
 	mov	arg02, #0
 	mov	arg03, local07
 	mov	arg04, local05
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2585
 LR__2576
 	cmp	local09, #0 wz
@@ -29876,7 +30059,7 @@ LR__2576
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2585
 LR__2577
 	cmp	local06, #0 wz
@@ -29900,7 +30083,7 @@ LR__2580
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg03, #0
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 	jmp	#LR__2585
 LR__2581
 	cmp	local09, #0 wz
@@ -29920,7 +30103,7 @@ LR__2584
 	mov	arg02, #0
 	mov	arg03, #0
 	mov	arg04, local05
-	call	#__system__pack_0482
+	call	#__system__pack_0483
 LR__2585
 	mov	ptra, fp
 	call	#popregs_
@@ -32713,7 +32896,7 @@ LR__3060
 __system___uitoa_ret
 	ret
 
-__system__disassemble_0374
+__system__disassemble_0375
 	mov	COUNT_, #16
 	call	#pushregs_
 	mov	local01, arg01
@@ -32848,10 +33031,10 @@ LR__3081
 LR__3082
 	mov	ptra, fp
 	call	#popregs_
-__system__disassemble_0374_ret
+__system__disassemble_0375_ret
 	ret
 
-__system__emitsign_0376
+__system__emitsign_0377
 	mov	result1, #0
 	cmp	arg02, #0 wz
  if_ne	mov	_var01, arg01
@@ -32863,7 +33046,7 @@ __system__emitsign_0376
  if_ne	add	arg01, #1
  if_ne	wrbyte	arg03, arg01
  if_ne	add	result1, #2
-__system__emitsign_0376_ret
+__system__emitsign_0377_ret
 	ret
 
 __system___gettxfunc
@@ -32910,7 +33093,7 @@ LR__3102
 __system___getrxfunc_ret
 	ret
 
-__system___getiolock_0416
+__system___getiolock_0417
 	mov	COUNT_, #1
 	call	#pushregs_
 	call	#__system____getftab
@@ -32931,7 +33114,7 @@ LR__3111
 LR__3112
 	mov	ptra, fp
 	call	#popregs_
-__system___getiolock_0416_ret
+__system___getiolock_0417_ret
 	ret
 
 __system___basic_dir
@@ -33136,7 +33319,7 @@ LR__3133
 __system___basic_dir_ret
 	ret
 
-__system__pack_0482
+__system__pack_0483
 	mov	_var01, arg01
 	add	arg03, #127
 	test	arg04, #4 wz
@@ -33209,10 +33392,10 @@ LR__3149
 	test	arg04, #1 wz
  if_ne	bith	_var01, #31
 	mov	result1, _var01
-__system__pack_0482_ret
+__system__pack_0483_ret
 	ret
 
-__system___rxtxioctl_0572
+__system___rxtxioctl_0573
 	cmp	arg02, #256 wz
  if_e	jmp	#LR__3150
 	cmp	arg02, #257 wz
@@ -33238,12 +33421,12 @@ LR__3152
 	sub	ptr___system__dat__, #32
 	neg	result1, #1
 LR__3153
-__system___rxtxioctl_0572_ret
+__system___rxtxioctl_0573_ret
 	ret
 
-__system____dummy_flush_0573
+__system____dummy_flush_0574
 	mov	result1, #0
-__system____dummy_flush_0573_ret
+__system____dummy_flush_0574_ret
 	ret
 
 __system___vfsread
@@ -33498,16 +33681,16 @@ LR__3171
 __system____default_filbuf_ret
 	ret
 
-__system__getlower_0958
+__system__getlower_0959
 	cmps	arg01, #65 wc
  if_b	jmp	#LR__3180
 	cmps	arg01, #91 wc
  if_b	mov	result1, arg01
  if_b	add	result1, #32
- if_b	jmp	#__system__getlower_0958_ret
+ if_b	jmp	#__system__getlower_0959_ret
 LR__3180
 	mov	result1, arg01
-__system__getlower_0958_ret
+__system__getlower_0959_ret
 	ret
 
 __system___pat_match
@@ -33521,10 +33704,10 @@ LR__3190
  if_ne	cmp	local02, #42 wz
  if_e	jmp	#LR__3191
 	rdbyte	arg01, arg02
-	call	#__system__getlower_0958
+	call	#__system__getlower_0959
 	mov	local03, result1
 	rdbyte	arg01, local01
-	call	#__system__getlower_0958
+	call	#__system__getlower_0959
 	cmp	result1, local03 wz
  if_ne	mov	result1, #0
  if_ne	jmp	#LR__3199
@@ -33582,10 +33765,10 @@ LR__3196
 	cmps	local06, #1 wc
  if_b	jmp	#LR__3197
 	rdbyte	arg01, local01
-	call	#__system__getlower_0958
+	call	#__system__getlower_0959
 	mov	local08, result1
 	rdbyte	arg01, arg02
-	call	#__system__getlower_0958
+	call	#__system__getlower_0959
 	cmp	local08, result1 wz
  if_ne	mov	result1, #0
  if_ne	jmp	#LR__3199
@@ -34033,30 +34216,30 @@ _fatfs_cc_disk_initialize
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #10
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_send_cmd_1017
+	call	#_fatfs_cc_deselect_1003
 	mov	arg01, #100
 	call	#__system___waitus
 	add	fp, #20
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #10
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	wrbyte	#0, fp
 	sub	fp, #12
 	mov	arg01, #0
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	getbyte	arg04, result1, #0
 	cmp	arg04, #1 wz
  if_ne	jmp	#LR__3297
 	mov	arg01, #8
 	mov	arg02, #426
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	getbyte	result1, result1, #0
 	cmp	result1, #1 wz
  if_ne	jmp	#LR__3283
@@ -34064,7 +34247,7 @@ _fatfs_cc_disk_initialize
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #4
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #22
 	rdbyte	local04, fp
 	sub	fp, #22
@@ -34085,7 +34268,7 @@ LR__3280
  if_e	jmp	#LR__3281
 	mov	arg01, #169
 	decod	arg02, #30
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_e	jmp	#LR__3281
@@ -34104,7 +34287,7 @@ LR__3281
  if_e	jmp	#LR__3282
 	mov	arg01, #58
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local03, result1
 	zerox	local03, #7 wz
  if_ne	jmp	#LR__3282
@@ -34112,7 +34295,7 @@ LR__3281
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #4
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #20
 	rdbyte	local01, fp
 	test	local01, #64 wz
@@ -34160,7 +34343,7 @@ LR__3282
 LR__3283
 	mov	arg01, #169
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	getbyte	local04, result1, #0
 	cmp	local04, #2 wc
  if_ae	jmp	#LR__3284
@@ -34192,7 +34375,7 @@ LR__3286
 	rdbyte	arg01, fp
 	sub	fp, #16
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_e	jmp	#LR__3287
@@ -34211,7 +34394,7 @@ LR__3287
  if_e	jmp	#LR__3288
 	mov	arg01, #16
 	decod	arg02, #9
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	zerox	result1, #7 wz
  if_e	jmp	#LR__3289
 LR__3288
@@ -34303,7 +34486,7 @@ LR__3297
 	sub	objptr, #1
 	wrbyte	local04, objptr
 	sub	objptr, ##544
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_deselect_1003
 	add	fp, #52
 	rdlong	arg01, fp
 	sub	fp, #24
@@ -34365,7 +34548,7 @@ _fatfs_cc_disk_read
  if_b	mov	local04, #17
 	mov	arg02, local02
 	mov	arg01, local04
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local05, result1
 	zerox	local05, #7 wz
  if_ne	jmp	#LR__3301
@@ -34373,7 +34556,7 @@ _fatfs_cc_disk_read
 LR__3300
 	mov	arg01, local01
 	decod	arg02, #9
-	call	#_fatfs_cc_rcvr_datablock_1010
+	call	#_fatfs_cc_rcvr_datablock_1011
 	cmp	result1, #0 wz
  if_ne	add	local01, ##512
  if_ne	djnz	local03, #LR__3300
@@ -34381,9 +34564,9 @@ LR__3300
 	cmp	local04, #18 wz
  if_e	mov	arg01, #12
  if_e	mov	arg02, #0
- if_e	call	#_fatfs_cc_send_cmd_1016
+ if_e	call	#_fatfs_cc_send_cmd_1017
 LR__3301
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_deselect_1003
 ' 	}
 ' 	deselect();
 ' 
@@ -34424,13 +34607,13 @@ _fatfs_cc_disk_write
  if_ne	jmp	#LR__3310
 	mov	arg01, #24
 	mov	arg02, local03
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_ne	jmp	#LR__3313
 	mov	arg01, local01
 	mov	arg02, #254
-	call	#_fatfs_cc_xmit_datablock_1012
+	call	#_fatfs_cc_xmit_datablock_1013
 	cmp	result1, #0 wz
  if_ne	mov	local02, #0
 	jmp	#LR__3313
@@ -34441,10 +34624,10 @@ LR__3310
 	test	local04, #6 wz
  if_ne	mov	arg01, #151
  if_ne	mov	arg02, local02
- if_ne	call	#_fatfs_cc_send_cmd_1016
+ if_ne	call	#_fatfs_cc_send_cmd_1017
 	mov	arg02, local03
 	mov	arg01, #25
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local04, result1
 	zerox	local04, #7 wz
  if_ne	jmp	#LR__3312
@@ -34452,18 +34635,18 @@ LR__3310
 LR__3311
 	mov	arg01, local01
 	mov	arg02, #252
-	call	#_fatfs_cc_xmit_datablock_1012
+	call	#_fatfs_cc_xmit_datablock_1013
 	cmp	result1, #0 wz
  if_ne	add	local01, ##512
  if_ne	djnz	local02, #LR__3311
 	mov	arg01, #0
 	mov	arg02, #253
-	call	#_fatfs_cc_xmit_datablock_1012
+	call	#_fatfs_cc_xmit_datablock_1013
 	cmp	result1, #0 wz
  if_e	mov	local02, #1
 LR__3312
 LR__3313
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_deselect_1003
 ' 				count = 1;
 ' 		}
 ' 	}
@@ -34520,7 +34703,7 @@ LR__3320
 	jmp	#LR__3325
 	jmp	#LR__3326
 LR__3321
-	call	#_fatfs_cc_select_1006
+	call	#_fatfs_cc_select_1007
 	cmp	result1, #0 wz
  if_ne	add	fp, #16
  if_ne	wrlong	#0, fp
@@ -34530,7 +34713,7 @@ LR__3321
 LR__3322
 	mov	arg01, #9
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	mov	local01, result1
 	zerox	local01, #7 wz
  if_ne	jmp	#LR__3327
@@ -34538,7 +34721,7 @@ LR__3322
 	mov	arg01, fp
 	sub	fp, #24
 	mov	arg02, #16
-	call	#_fatfs_cc_rcvr_datablock_1010
+	call	#_fatfs_cc_rcvr_datablock_1011
 	cmp	result1, #0 wz
  if_e	jmp	#LR__3327
 	add	fp, #24
@@ -34642,7 +34825,7 @@ LR__3326
 	wrlong	#4, fp
 	sub	fp, #16
 LR__3327
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_deselect_1003
 ' 			res = RES_PARERR;
 ' 	}
 ' 
@@ -42482,7 +42665,7 @@ _fatfs_cc__get_fattime
 _fatfs_cc__get_fattime_ret
 	ret
 
-_fatfs_cc_unixtime_0836
+_fatfs_cc_unixtime_0837
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #52
@@ -42547,10 +42730,10 @@ _fatfs_cc_unixtime_0836
 	sub	fp, #12
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_unixtime_0836_ret
+_fatfs_cc_unixtime_0837_ret
 	ret
 
-_fatfs_cc__set_dos_error_0838
+_fatfs_cc__set_dos_error_0839
 	mov	_var01, arg01
 ' #line 74 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     switch (derr) {
@@ -42636,7 +42819,7 @@ LR__4009
 	sub	ptr___system__dat__, #32
  if_ne	neg	result1, #1
  if_e	mov	result1, #0
-_fatfs_cc__set_dos_error_0838_ret
+_fatfs_cc__set_dos_error_0839_ret
 	ret
 
 _fatfs_cc_v_creat
@@ -42673,7 +42856,7 @@ _fatfs_cc_v_creat
 '     free(f);
 '     return _set_dos_error(r);
 	mov	arg01, local04
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4011
 LR__4010
 	wrlong	local03, local01
@@ -42704,7 +42887,7 @@ _fatfs_cc_v_close
 '     free(f);
 '     return _set_dos_error(r);
 	mov	arg01, local02
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	mov	ptra, fp
 	call	#popregs_
 _fatfs_cc_v_close_ret
@@ -42738,7 +42921,7 @@ _fatfs_cc_v_opendir
 '         free(f);
 '         return _set_dos_error(r);
 	mov	arg01, local04
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4021
 LR__4020
 	add	local01, #4
@@ -42766,7 +42949,7 @@ _fatfs_cc_v_closedir
 	call	#__system___gc_free
 	cmp	local02, #0 wz
  if_ne	mov	arg01, local02
- if_ne	call	#_fatfs_cc__set_dos_error_0838
+ if_ne	call	#_fatfs_cc__set_dos_error_0839
 '     return r;
 	mov	result1, local02
 	mov	ptra, fp
@@ -42799,7 +42982,7 @@ _fatfs_cc_v_readdir
 	add	fp, #296
 	rdlong	arg01, fp
 	sub	fp, #296
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4033
 LR__4030
 	add	fp, #40
@@ -42850,7 +43033,7 @@ LR__4032
 	add	fp, #2
 	rdword	arg02, fp
 	sub	fp, #18
-	call	#_fatfs_cc_unixtime_0836
+	call	#_fatfs_cc_unixtime_0837
 	add	local01, #76
 	wrlong	result1, local01
 '         ent->d_type =  (0) ;
@@ -42920,7 +43103,7 @@ LR__4042
 	add	fp, #12
 	rdlong	arg01, fp
 	sub	fp, #12
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4044
 LR__4043
 	add	fp, #300
@@ -42980,7 +43163,7 @@ LR__4043
 	add	fp, #2
 	rdword	arg02, fp
 	sub	fp, #22
-	call	#_fatfs_cc_unixtime_0836
+	call	#_fatfs_cc_unixtime_0837
 	add	local01, #44
 	wrlong	result1, local01
 	add	local02, #40
@@ -43057,7 +43240,7 @@ _fatfs_cc_v_read
 	add	fp, #16
 	rdlong	arg01, fp
 	sub	fp, #20
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4052
 LR__4050
 	add	fp, #24
@@ -43137,7 +43320,7 @@ _fatfs_cc_v_write
 	add	fp, #16
 	rdlong	arg01, fp
 	sub	fp, #20
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4061
 LR__4060
 '     }
@@ -43182,7 +43365,7 @@ LR__4070
 	mov	arg01, result1 wz
  if_e	jmp	#LR__4071
 '         return _set_dos_error(result);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4072
 LR__4071
 '     }
@@ -43210,7 +43393,7 @@ _fatfs_cc_v_mkdir
 ' 
 '     r = f_mkdir(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 _fatfs_cc_v_mkdir_ret
 	ret
 
@@ -43220,7 +43403,7 @@ _fatfs_cc_v_remove
 ' 
 '     r = f_unlink(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 _fatfs_cc_v_remove_ret
 	ret
 
@@ -43230,7 +43413,7 @@ _fatfs_cc_v_rmdir
 ' 
 '     r = f_unlink(name);
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 _fatfs_cc_v_rmdir_ret
 	ret
 
@@ -43238,7 +43421,7 @@ _fatfs_cc_v_rename
 	call	#_fatfs_cc_f_rename
 	mov	arg01, result1
 '     return _set_dos_error(r);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 _fatfs_cc_v_rename_ret
 	ret
 
@@ -43306,7 +43489,7 @@ LR__4084
 ' #line 417 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(r);
 	mov	arg01, local07
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 	jmp	#LR__4086
 LR__4085
 	wrlong	local04, local01
@@ -43336,7 +43519,7 @@ _fatfs_cc_v_flush
 '     result = f_sync(f);
 ' #line 441 "C:/Users/Piotr/Downloads/flexprop-6.3.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(result);
-	call	#_fatfs_cc__set_dos_error_0838
+	call	#_fatfs_cc__set_dos_error_0839
 LR__4090
 _fatfs_cc_v_flush_ret
 	ret
@@ -43480,7 +43663,7 @@ _fatfs_cc_get_vfs
 _fatfs_cc_get_vfs_ret
 	ret
 
-_fatfs_cc_xmit_mmc_0985
+_fatfs_cc_xmit_mmc_0986
 	add	objptr, ##528
 	rdlong	_var01, objptr
 	add	objptr, #8
@@ -43516,10 +43699,10 @@ LR__4102
 	dirl	_var02
 	wypin	##-1, _var02
 	dirh	_var02
-_fatfs_cc_xmit_mmc_0985_ret
+_fatfs_cc_xmit_mmc_0986_ret
 	ret
 
-_fatfs_cc_rcvr_mmc_0992
+_fatfs_cc_rcvr_mmc_0993
 	add	objptr, ##528
 	rdlong	_var01, objptr
 	add	objptr, #12
@@ -43558,10 +43741,10 @@ LR__4114
 	add	arg01, #1
 	djnz	arg02, #LR__4113
 LR__4115
-_fatfs_cc_rcvr_mmc_0992_ret
+_fatfs_cc_rcvr_mmc_0993_ret
 	ret
 
-_fatfs_cc_wait_ready_0996
+_fatfs_cc_wait_ready_0997
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #16
@@ -43585,7 +43768,7 @@ LR__4120
 	mov	arg01, fp
 	sub	fp, #4
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #4
 	rdbyte	local01, fp
 	sub	fp, #4
@@ -43605,10 +43788,10 @@ LR__4120
 LR__4121
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_wait_ready_0996_ret
+_fatfs_cc_wait_ready_0997_ret
 	ret
 
-_fatfs_cc_deselect_1002
+_fatfs_cc_deselect_1003
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #20
@@ -43636,13 +43819,13 @@ _fatfs_cc_deselect_1002
 	waitx	#16
 	mov	arg01, fp
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_deselect_1002_ret
+_fatfs_cc_deselect_1003_ret
 	ret
 
-_fatfs_cc_select_1006
+_fatfs_cc_select_1007
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #16
@@ -43667,12 +43850,12 @@ _fatfs_cc_select_1006
 	mov	arg01, fp
 	sub	fp, #4
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
-	call	#_fatfs_cc_wait_ready_0996
+	call	#_fatfs_cc_rcvr_mmc_0993
+	call	#_fatfs_cc_wait_ready_0997
 	cmp	result1, #0 wz
  if_ne	mov	result1, #1
  if_ne	jmp	#LR__4130
-	call	#_fatfs_cc_deselect_1002
+	call	#_fatfs_cc_deselect_1003
 ' 
 ' 	deselect();
 ' 	return 0;
@@ -43680,10 +43863,10 @@ _fatfs_cc_select_1006
 LR__4130
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_select_1006_ret
+_fatfs_cc_select_1007_ret
 	ret
 
-_fatfs_cc_rcvr_datablock_1010
+_fatfs_cc_rcvr_datablock_1011
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #24
@@ -43714,7 +43897,7 @@ LR__4140
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	rdbyte	local01, fp
 	sub	fp, #12
@@ -43742,12 +43925,12 @@ LR__4141
 	add	fp, #4
 	rdlong	arg02, fp
 	sub	fp, #8
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #2
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 ' 
 ' 	rcvr_mmc(buff, btr);
 ' 	rcvr_mmc(d, 2);
@@ -43757,10 +43940,10 @@ LR__4141
 LR__4142
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_rcvr_datablock_1010_ret
+_fatfs_cc_rcvr_datablock_1011_ret
 	ret
 
-_fatfs_cc_xmit_datablock_1012
+_fatfs_cc_xmit_datablock_1013
 	mov	COUNT_, #0
 	call	#pushregs_
 	add	ptra, #16
@@ -43769,7 +43952,7 @@ _fatfs_cc_xmit_datablock_1012
 	add	fp, #4
 	wrbyte	arg02, fp
 	sub	fp, #8
-	call	#_fatfs_cc_wait_ready_0996
+	call	#_fatfs_cc_wait_ready_0997
 	cmp	result1, #0 wz
  if_e	mov	result1, #0
  if_e	jmp	#LR__4151
@@ -43780,7 +43963,7 @@ _fatfs_cc_xmit_datablock_1012
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_xmit_mmc_0985
+	call	#_fatfs_cc_xmit_mmc_0986
 	add	fp, #8
 	rdbyte	arg02, fp
 	sub	fp, #8
@@ -43790,17 +43973,17 @@ _fatfs_cc_xmit_datablock_1012
 	rdlong	arg01, fp
 	sub	fp, #4
 	decod	arg02, #9
-	call	#_fatfs_cc_xmit_mmc_0985
+	call	#_fatfs_cc_xmit_mmc_0986
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #2
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	mov	arg01, fp
 	sub	fp, #12
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	rdbyte	arg02, fp
 	sub	fp, #12
@@ -43817,14 +44000,14 @@ LR__4150
 LR__4151
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_xmit_datablock_1012_ret
+_fatfs_cc_xmit_datablock_1013_ret
 	ret
 
-_fatfs_cc_send_cmd_1016
+_fatfs_cc_send_cmd_1017
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	ptra, #28
-_fatfs_cc_send_cmd_1016_enter
+_fatfs_cc_send_cmd_1017_enter
 	add	fp, #4
 	wrbyte	arg01, fp
 	add	fp, #4
@@ -43841,7 +44024,7 @@ _fatfs_cc_send_cmd_1016_enter
 	sub	fp, #4
 	mov	arg01, #55
 	mov	arg02, #0
-	call	#_fatfs_cc_send_cmd_1016
+	call	#_fatfs_cc_send_cmd_1017
 	add	fp, #12
 	wrbyte	result1, fp
 	rdbyte	arg02, fp
@@ -43857,8 +44040,8 @@ LR__4160
 	sub	fp, #4
 	cmp	arg02, #12 wz
  if_e	jmp	#LR__4161
-	call	#_fatfs_cc_deselect_1002
-	call	#_fatfs_cc_select_1006
+	call	#_fatfs_cc_deselect_1003
+	call	#_fatfs_cc_select_1007
 	cmp	result1, #0 wz
  if_e	mov	result1, #255
  if_e	jmp	#LR__4164
@@ -43911,7 +44094,7 @@ LR__4161
 	mov	arg01, fp
 	sub	fp, #20
 	mov	arg02, #6
-	call	#_fatfs_cc_xmit_mmc_0985
+	call	#_fatfs_cc_xmit_mmc_0986
 	add	fp, #4
 	rdbyte	local01, fp
 	sub	fp, #4
@@ -43920,7 +44103,7 @@ LR__4161
  if_e	mov	arg01, fp
  if_e	sub	fp, #16
  if_e	mov	arg02, #1
- if_e	call	#_fatfs_cc_rcvr_mmc_0992
+ if_e	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #12
 	wrbyte	#10, fp
 	sub	fp, #12
@@ -43931,7 +44114,7 @@ LR__4162
 	mov	arg01, fp
 	sub	fp, #16
 	mov	arg02, #1
-	call	#_fatfs_cc_rcvr_mmc_0992
+	call	#_fatfs_cc_rcvr_mmc_0993
 	add	fp, #16
 	rdbyte	local01, fp
 	sub	fp, #16
@@ -43953,7 +44136,7 @@ LR__4163
 LR__4164
 	mov	ptra, fp
 	call	#popregs_
-_fatfs_cc_send_cmd_1016_ret
+_fatfs_cc_send_cmd_1017_ret
 	ret
 
 _fatfs_cc_disk_deinitialize
@@ -45121,600 +45304,606 @@ LR__4471
 	byte	"getpixel"
 	byte	0
 LR__4472
-	byte	"gettime"
+	byte	"ge."
 	byte	0
 LR__4473
-	byte	"mousek"
+	byte	"gettime"
 	byte	0
 LR__4474
-	byte	"mousew"
+	byte	"mousek"
 	byte	0
 LR__4475
-	byte	"mousex"
+	byte	"mousew"
 	byte	0
 LR__4476
-	byte	"mousey"
+	byte	"mousex"
 	byte	0
 LR__4477
-	byte	"pinread"
+	byte	"mousey"
 	byte	0
 LR__4478
-	byte	"rdpin"
+	byte	"pinread"
 	byte	0
 LR__4479
-	byte	"rqpin"
+	byte	"rdpin"
 	byte	0
 LR__4480
-	byte	"rnd"
+	byte	"rqpin"
 	byte	0
 LR__4481
-	byte	"sin"
+	byte	"rnd"
 	byte	0
 LR__4482
-	byte	"sqr"
+	byte	"sin"
 	byte	0
 LR__4483
-	byte	"stick"
+	byte	"sqr"
 	byte	0
 LR__4484
-	byte	"strig"
+	byte	"stick"
 	byte	0
 LR__4485
-	byte	"tan"
+	byte	"strig"
 	byte	0
 LR__4486
-	byte	"a"
+	byte	"tan"
 	byte	0
 LR__4487
-	byte	"z"
+	byte	"a"
 	byte	0
 LR__4488
-	byte	"_"
+	byte	"z"
 	byte	0
 LR__4489
-	byte	"a"
+	byte	"_"
 	byte	0
 LR__4490
-	byte	"z"
-	byte	0
-LR__4491
-	byte	"0"
-	byte	0
-LR__4492
-	byte	"9"
-	byte	0
-LR__4493
-	byte	"_"
-	byte	0
-LR__4494
-	byte	"."
-	byte	0
-LR__4495
 	byte	"a"
 	byte	0
-LR__4496
+LR__4491
 	byte	"z"
 	byte	0
-LR__4497
+LR__4492
 	byte	"0"
+	byte	0
+LR__4493
+	byte	"9"
+	byte	0
+LR__4494
+	byte	"_"
+	byte	0
+LR__4495
+	byte	"."
+	byte	0
+LR__4496
+	byte	"a"
+	byte	0
+LR__4497
+	byte	"z"
 	byte	0
 LR__4498
-	byte	"9"
+	byte	"0"
 	byte	0
 LR__4499
-	byte	"_"
+	byte	"9"
 	byte	0
 LR__4500
-	byte	"$"
-	byte	0
-LR__4501
-	byte	"%"
-	byte	0
-LR__4502
-	byte	"!"
-	byte	0
-LR__4503
-	byte	"0"
-	byte	0
-LR__4504
-	byte	"9"
-	byte	0
-LR__4505
-	byte	"."
-	byte	0
-LR__4506
-	byte	"$"
-	byte	0
-LR__4507
-	byte	"%"
-	byte	0
-LR__4508
-	byte	"-"
-	byte	0
-LR__4509
-	byte	"."
-	byte	0
-LR__4510
-	byte	"0"
-	byte	0
-LR__4511
-	byte	"9"
-	byte	0
-LR__4512
 	byte	"_"
 	byte	0
-LR__4513
+LR__4501
+	byte	"$"
+	byte	0
+LR__4502
+	byte	"%"
+	byte	0
+LR__4503
+	byte	"!"
+	byte	0
+LR__4504
+	byte	"0"
+	byte	0
+LR__4505
+	byte	"9"
+	byte	0
+LR__4506
 	byte	"."
 	byte	0
+LR__4507
+	byte	"$"
+	byte	0
+LR__4508
+	byte	"%"
+	byte	0
+LR__4509
+	byte	"-"
+	byte	0
+LR__4510
+	byte	"."
+	byte	0
+LR__4511
+	byte	"0"
+	byte	0
+LR__4512
+	byte	"9"
+	byte	0
+LR__4513
+	byte	"_"
+	byte	0
 LR__4514
-	byte	"E"
+	byte	"."
 	byte	0
 LR__4515
-	byte	"e"
+	byte	"E"
 	byte	0
 LR__4516
-	byte	"-"
+	byte	"e"
 	byte	0
 LR__4517
 	byte	"-"
 	byte	0
 LR__4518
-	byte	"e"
-	byte	0
-LR__4519
-	byte	"."
-	byte	0
-LR__4520
-	byte	"E"
-	byte	0
-LR__4521
-	byte	"e"
-	byte	0
-LR__4522
-	byte	"0"
-	byte	0
-LR__4523
-	byte	"9"
-	byte	0
-LR__4524
-	byte	"$"
-	byte	0
-LR__4525
-	byte	"%"
-	byte	0
-LR__4526
 	byte	"-"
 	byte	0
-LR__4527
+LR__4519
+	byte	"e"
+	byte	0
+LR__4520
+	byte	"."
+	byte	0
+LR__4521
+	byte	"E"
+	byte	0
+LR__4522
+	byte	"e"
+	byte	0
+LR__4523
 	byte	"0"
+	byte	0
+LR__4524
+	byte	"9"
+	byte	0
+LR__4525
+	byte	"$"
+	byte	0
+LR__4526
+	byte	"%"
+	byte	0
+LR__4527
+	byte	"-"
 	byte	0
 LR__4528
-	byte	"9"
-	byte	0
-LR__4529
-	byte	"_"
-	byte	0
-LR__4530
 	byte	"0"
 	byte	0
-LR__4531
+LR__4529
 	byte	"9"
 	byte	0
-LR__4532
+LR__4530
 	byte	"_"
 	byte	0
+LR__4531
+	byte	"0"
+	byte	0
+LR__4532
+	byte	"9"
+	byte	0
 LR__4533
-	byte	34
+	byte	"_"
 	byte	0
 LR__4534
 	byte	34
 	byte	0
 LR__4535
-	byte	"("
+	byte	34
 	byte	0
 LR__4536
-	byte	"as"
+	byte	"("
 	byte	0
 LR__4537
 	byte	"as"
 	byte	0
 LR__4538
-	byte	","
+	byte	"as"
 	byte	0
 LR__4539
-	byte	")"
+	byte	","
 	byte	0
 LR__4540
 	byte	")"
 	byte	0
 LR__4541
-	byte	"as"
+	byte	")"
 	byte	0
 LR__4542
-	byte	"byte"
+	byte	"as"
 	byte	0
 LR__4543
-	byte	"ubyte"
+	byte	"byte"
 	byte	0
 LR__4544
-	byte	"short"
+	byte	"ubyte"
 	byte	0
 LR__4545
-	byte	"ushort"
+	byte	"short"
 	byte	0
 LR__4546
-	byte	"long"
+	byte	"ushort"
 	byte	0
 LR__4547
-	byte	"integer"
+	byte	"long"
 	byte	0
 LR__4548
-	byte	"ulong"
+	byte	"integer"
 	byte	0
 LR__4549
-	byte	"int64"
+	byte	"ulong"
 	byte	0
 LR__4550
-	byte	"uint64"
+	byte	"int64"
 	byte	0
 LR__4551
-	byte	"single"
+	byte	"uint64"
 	byte	0
 LR__4552
-	byte	"double"
+	byte	"single"
 	byte	0
 LR__4553
-	byte	"string"
+	byte	"double"
 	byte	0
 LR__4554
-	byte	"to"
+	byte	"string"
 	byte	0
 LR__4555
-	byte	"step"
+	byte	"to"
 	byte	0
 LR__4556
-	byte	"We have a slow goto, todo  "
+	byte	"step"
 	byte	0
 LR__4557
-	byte	"noname.bas"
+	byte	"st."
 	byte	0
 LR__4558
-	byte	
+	byte	"We have a slow goto, todo  "
 	byte	0
 LR__4559
 	byte	"noname.bas"
 	byte	0
 LR__4560
-	byte	"/"
+	byte	
 	byte	0
 LR__4561
-	byte	
-	byte	0
-LR__4562
-	byte	
-	byte	0
-LR__4563
 	byte	"noname.bas"
 	byte	0
-LR__4564
+LR__4562
 	byte	"/"
 	byte	0
-LR__4565
-	byte	"System error "
-	byte	0
-LR__4566
-	byte	": "
-	byte	0
-LR__4567
-	byte	"/"
-	byte	0
-LR__4568
-	byte	"0"
-	byte	0
-LR__4569
-	byte	"9"
-	byte	0
-LR__4570
+LR__4563
 	byte	
 	byte	0
+LR__4564
+	byte	
+	byte	0
+LR__4565
+	byte	"noname.bas"
+	byte	0
+LR__4566
+	byte	"/"
+	byte	0
+LR__4567
+	byte	"System error "
+	byte	0
+LR__4568
+	byte	": "
+	byte	0
+LR__4569
+	byte	"/"
+	byte	0
+LR__4570
+	byte	"0"
+	byte	0
 LR__4571
-	byte	"Stopped at line "
+	byte	"9"
 	byte	0
 LR__4572
 	byte	
 	byte	0
 LR__4573
-	byte	
+	byte	"Stopped at line "
 	byte	0
 LR__4574
-	byte	"/sd/media/h/"
+	byte	
 	byte	0
 LR__4575
-	byte	"System error "
+	byte	
 	byte	0
 LR__4576
-	byte	": "
+	byte	"/sd/media/h/"
 	byte	0
 LR__4577
-	byte	
-	byte	0
-LR__4578
-	byte	
-	byte	0
-LR__4579
-	byte	"/sd/media/s/"
-	byte	0
-LR__4580
 	byte	"System error "
 	byte	0
-LR__4581
+LR__4578
 	byte	": "
 	byte	0
+LR__4579
+	byte	
+	byte	0
+LR__4580
+	byte	
+	byte	0
+LR__4581
+	byte	"/sd/media/s/"
+	byte	0
 LR__4582
-	byte	"Error "
+	byte	"System error "
 	byte	0
 LR__4583
 	byte	": "
 	byte	0
 LR__4584
-	byte	
-	byte	0
-LR__4585
-	byte	"rnd: "
-	byte	0
-LR__4586
-	byte	"rnd: "
-	byte	0
-LR__4587
-	byte	"sin: "
-	byte	0
-LR__4588
-	byte	"cos: "
-	byte	0
-LR__4589
-	byte	"tan: "
-	byte	0
-LR__4590
-	byte	"asin: "
-	byte	0
-LR__4591
-	byte	"acos: "
-	byte	0
-LR__4592
-	byte	"atn: "
-	byte	0
-LR__4593
-	byte	"sqr: "
-	byte	0
-LR__4594
-	byte	"stick: "
-	byte	0
-LR__4595
-	byte	"strig: "
-	byte	0
-LR__4596
-	byte	"getpixel: "
-	byte	0
-LR__4597
-	byte	
-	byte	0
-LR__4598
-	byte	"/sd/bas"
-	byte	0
-LR__4599
-	byte	"Working directory: "
-	byte	0
-LR__4600
-	byte	"*"
-	byte	0
-LR__4601
-	byte	
-	byte	0
-LR__4602
-	byte	"[dir] "
-	byte	0
-LR__4603
-	byte	"*"
-	byte	0
-LR__4604
-	byte	
-	byte	0
-LR__4605
-	byte	"-----more, press any key"
-	byte	0
-LR__4606
-	byte	"                             "
-	byte	0
-LR__4607
-	byte	"/"
-	byte	0
-LR__4608
-	byte	"/sd/bin/"
-	byte	0
-LR__4609
-	byte	"System error "
-	byte	0
-LR__4610
-	byte	": "
-	byte	0
-LR__4611
-	byte	
-	byte	0
-LR__4612
-	byte	"Expected number, got something else."
-	byte	0
-LR__4613
-	byte	"Cannot add a number to a string."
-	byte	0
-LR__4614
-	byte	"Cannot substract strings."
-	byte	0
-LR__4615
-	byte	"Unknown error while adding."
-	byte	0
-LR__4616
-	byte	"Unknown error while substracting."
-	byte	0
-LR__4617
-	byte	"Cannot do logic operation on string or float."
-	byte	0
-LR__4618
-	byte	"Unknown error while doing logic operation."
-	byte	0
-LR__4619
-	byte	"Cannot multiply strings."
-	byte	0
-LR__4620
-	byte	"Unknown error while multiplying."
-	byte	0
-LR__4621
-	byte	"Cannot divide strings."
-	byte	0
-LR__4622
-	byte	"Unknown error while dividing."
-	byte	0
-LR__4623
-	byte	"Cannot compute a power of a string."
-	byte	0
-LR__4624
-	byte	"Unknown error while computing a power."
-	byte	0
-LR__4625
-	byte	"Right parenthesis expected."
-	byte	0
-LR__4626
-	byte	"Expected string."
-	byte	0
-LR__4627
-	byte	"Expected float."
-	byte	0
-LR__4628
-	byte	"Expected unsigned integer."
-	byte	0
-LR__4629
-	byte	"Expected integer."
-	byte	0
-LR__4630
-	byte	"No more variable slots."
-	byte	0
-LR__4631
-	byte	"Variable not found."
-	byte	0
-LR__4632
-	byte	"Comma expected."
-	byte	0
-LR__4633
-	byte	"Comma or semicolon expected."
-	byte	0
-LR__4634
-	byte	"Unknown command."
-	byte	0
-LR__4635
-	byte	"Stack underflow."
-	byte	0
-LR__4636
-	byte	"Cannot execute goto in the immediate mode."
-	byte	0
-LR__4637
-	byte	"Cannot load from this file."
-	byte	0
-LR__4638
-	byte	"The program is empty."
-	byte	0
-LR__4639
-	byte	"If after if."
-	byte	0
-LR__4640
-	byte	"Empty expression."
-	byte	0
-LR__4641
-	byte	"String expected."
-	byte	0
-LR__4642
-	byte	"Interpreter internal error."
-	byte	0
-LR__4643
-	byte	"Expected assign."
-	byte	0
-LR__4644
-	byte	"Expected 'to'."
-	byte	0
-LR__4645
-	byte	"Expected integer variable."
-	byte	0
-LR__4646
-	byte	"Uninitialized variable in 'next', use 'for' before."
-	byte	0
-LR__4647
-	byte	"No more slots for 'for'."
-	byte	0
-LR__4648
-	byte	"'Next' doesn't match 'for'."
-	byte	0
-LR__4649
-	byte	"'Goto' target line not found."
-	byte	0
-LR__4650
-	byte	"Bad number of parameters"
-	byte	0
-LR__4651
-	byte	"Function undefined for strings"
-	byte	0
-LR__4652
-	byte	"Bad parameter."
-	byte	0
-LR__4653
-	byte	"Cannot declare an array: the variable exists."
-	byte	0
-LR__4654
-	byte	"Expected '('."
-	byte	0
-LR__4655
-	byte	"Expected ')' or ','."
-	byte	0
-LR__4656
-	byte	"No more than 3 dimensions supported"
-	byte	0
-LR__4657
-	byte	"Variable name expected"
-	byte	0
-LR__4658
-	byte	"Type name expected"
-	byte	0
-LR__4659
-	byte	"Type not supported yet"
-	byte	0
-LR__4660
 	byte	"Error "
 	byte	0
-LR__4661
+LR__4585
 	byte	": "
 	byte	0
-LR__4662
-	byte	"/sd"
-	byte	0
-LR__4663
-	byte	"/sd/bas"
-	byte	0
-LR__4664
-	byte	"/sd/bas"
-	byte	0
-LR__4665
-	byte	" BASIC bytes free"
-	byte	0
-LR__4666
-	byte	"Ready"
-	byte	0
-LR__4667
-	byte	" "
-	byte	0
-LR__4668
-	byte	" "
-	byte	0
-LR__4669
+LR__4586
 	byte	
 	byte	0
+LR__4587
+	byte	"rnd: "
+	byte	0
+LR__4588
+	byte	"rnd: "
+	byte	0
+LR__4589
+	byte	"sin: "
+	byte	0
+LR__4590
+	byte	"cos: "
+	byte	0
+LR__4591
+	byte	"tan: "
+	byte	0
+LR__4592
+	byte	"asin: "
+	byte	0
+LR__4593
+	byte	"acos: "
+	byte	0
+LR__4594
+	byte	"atn: "
+	byte	0
+LR__4595
+	byte	"sqr: "
+	byte	0
+LR__4596
+	byte	"stick: "
+	byte	0
+LR__4597
+	byte	"strig: "
+	byte	0
+LR__4598
+	byte	"getpixel: "
+	byte	0
+LR__4599
+	byte	
+	byte	0
+LR__4600
+	byte	"/sd/bas"
+	byte	0
+LR__4601
+	byte	"Working directory: "
+	byte	0
+LR__4602
+	byte	"*"
+	byte	0
+LR__4603
+	byte	
+	byte	0
+LR__4604
+	byte	"[dir] "
+	byte	0
+LR__4605
+	byte	"*"
+	byte	0
+LR__4606
+	byte	
+	byte	0
+LR__4607
+	byte	"-----more, press any key"
+	byte	0
+LR__4608
+	byte	"                             "
+	byte	0
+LR__4609
+	byte	"/"
+	byte	0
+LR__4610
+	byte	"/sd/bin/"
+	byte	0
+LR__4611
+	byte	"System error "
+	byte	0
+LR__4612
+	byte	": "
+	byte	0
+LR__4613
+	byte	
+	byte	0
+LR__4614
+	byte	"Expected number, got something else."
+	byte	0
+LR__4615
+	byte	"Cannot add a number to a string."
+	byte	0
+LR__4616
+	byte	"Cannot substract strings."
+	byte	0
+LR__4617
+	byte	"Unknown error while adding."
+	byte	0
+LR__4618
+	byte	"Unknown error while substracting."
+	byte	0
+LR__4619
+	byte	"Cannot do logic operation on string or float."
+	byte	0
+LR__4620
+	byte	"Unknown error while doing logic operation."
+	byte	0
+LR__4621
+	byte	"Cannot multiply strings."
+	byte	0
+LR__4622
+	byte	"Unknown error while multiplying."
+	byte	0
+LR__4623
+	byte	"Cannot divide strings."
+	byte	0
+LR__4624
+	byte	"Unknown error while dividing."
+	byte	0
+LR__4625
+	byte	"Cannot compute a power of a string."
+	byte	0
+LR__4626
+	byte	"Unknown error while computing a power."
+	byte	0
+LR__4627
+	byte	"Right parenthesis expected."
+	byte	0
+LR__4628
+	byte	"Expected string."
+	byte	0
+LR__4629
+	byte	"Expected float."
+	byte	0
+LR__4630
+	byte	"Expected unsigned integer."
+	byte	0
+LR__4631
+	byte	"Expected integer."
+	byte	0
+LR__4632
+	byte	"No more variable slots."
+	byte	0
+LR__4633
+	byte	"Variable not found."
+	byte	0
+LR__4634
+	byte	"Comma expected."
+	byte	0
+LR__4635
+	byte	"Comma or semicolon expected."
+	byte	0
+LR__4636
+	byte	"Unknown command."
+	byte	0
+LR__4637
+	byte	"Stack underflow."
+	byte	0
+LR__4638
+	byte	"Cannot execute goto in the immediate mode."
+	byte	0
+LR__4639
+	byte	"Cannot load from this file."
+	byte	0
+LR__4640
+	byte	"The program is empty."
+	byte	0
+LR__4641
+	byte	"If after if."
+	byte	0
+LR__4642
+	byte	"Empty expression."
+	byte	0
+LR__4643
+	byte	"String expected."
+	byte	0
+LR__4644
+	byte	"Interpreter internal error."
+	byte	0
+LR__4645
+	byte	"Expected assign."
+	byte	0
+LR__4646
+	byte	"Expected 'to'."
+	byte	0
+LR__4647
+	byte	"Expected integer variable."
+	byte	0
+LR__4648
+	byte	"Uninitialized variable in 'next', use 'for' before."
+	byte	0
+LR__4649
+	byte	"No more slots for 'for'."
+	byte	0
+LR__4650
+	byte	"'Next' doesn't match 'for'."
+	byte	0
+LR__4651
+	byte	"'Goto' target line not found."
+	byte	0
+LR__4652
+	byte	"Bad number of parameters"
+	byte	0
+LR__4653
+	byte	"Function undefined for strings"
+	byte	0
+LR__4654
+	byte	"Bad parameter."
+	byte	0
+LR__4655
+	byte	"Cannot declare an array: the variable exists."
+	byte	0
+LR__4656
+	byte	"Expected '('."
+	byte	0
+LR__4657
+	byte	"Expected ')' or ','."
+	byte	0
+LR__4658
+	byte	"No more than 3 dimensions supported"
+	byte	0
+LR__4659
+	byte	"Variable name expected"
+	byte	0
+LR__4660
+	byte	"Type name expected"
+	byte	0
+LR__4661
+	byte	"Type not supported yet"
+	byte	0
+LR__4662
+	byte	"Error "
+	byte	0
+LR__4663
+	byte	": "
+	byte	0
+LR__4664
+	byte	"/sd"
+	byte	0
+LR__4665
+	byte	"/sd/bas"
+	byte	0
+LR__4666
+	byte	"/sd/bas"
+	byte	0
+LR__4667
+	byte	" BASIC bytes free"
+	byte	0
+LR__4668
+	byte	"Ready"
+	byte	0
+LR__4669
+	byte	" "
+	byte	0
 LR__4670
+	byte	" "
+	byte	0
+LR__4671
+	byte	
+	byte	0
+LR__4672
 	byte	
 	byte	0
 	alignl
@@ -55964,24 +56153,24 @@ __system__dat_
 	long	(125 {__system___tx})<<20
 	long	(126 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(127 {__system___rxtxioctl_0572})<<20
-	long	(128 {__system____dummy_flush_0573})<<20
+	long	(127 {__system___rxtxioctl_0573})<<20
+	long	(128 {__system____dummy_flush_0574})<<20
 	byte	$00[8]
 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 	long	(125 {__system___tx})<<20
 	long	(126 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(127 {__system___rxtxioctl_0572})<<20
-	long	(128 {__system____dummy_flush_0573})<<20
+	long	(127 {__system___rxtxioctl_0573})<<20
+	long	(128 {__system____dummy_flush_0574})<<20
 	byte	$00[8]
 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 	long	(125 {__system___tx})<<20
 	long	(126 {__system___rx})<<20
 	byte	$00, $00, $00, $00
-	long	(127 {__system___rxtxioctl_0572})<<20
-	long	(128 {__system____dummy_flush_0573})<<20
+	long	(127 {__system___rxtxioctl_0573})<<20
+	long	(128 {__system____dummy_flush_0574})<<20
 	byte	$00[376]
 	long	@@@__system__dat_ + 1844
 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -56228,13 +56417,13 @@ __methodtable__
 	long	@_fatfs_cc_v_deinit
 	long	@__system___tx
 	long	@__system___rx
-	long	@__system___rxtxioctl_0572
-	long	@__system____dummy_flush_0573
+	long	@__system___rxtxioctl_0573
+	long	@__system____dummy_flush_0574
 	long	@_fatfs_cc_v_flush
 __heap_base
 	long	0[48002]
 objmem
-	long	0[15668]
+	long	0[15669]
 stackspace
 	long	0[1]
 	org	COG_BSS_START
