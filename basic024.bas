@@ -177,6 +177,9 @@ const token_asin=132
 const token_acos=133
 const token_atn=134
 const token_sqr=135
+const token_rad=136
+const token_deg=137
+const token_int=138
 
 
 const token_error=255
@@ -329,6 +332,9 @@ dim hkcnt as ulong
 dim memtop as ulong
 dim nostalgic_mode, spl_len as ulong
 dim keyclick_spl as any pointer
+dim trig_coeff as single
+dim trig_coeff2 as single
+
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -802,6 +808,7 @@ select case s
   case "defenv"	     	: return token_defenv
   case "defsprite"   	: return token_defsprite
   case "ds."   		: return token_defsprite
+  case "deg"		: return token_deg
   case "dim"	     	: return token_dim
   case "dir"	     	: return token_dir
   case "draw"        	: return token_draw
@@ -821,6 +828,7 @@ select case s
   case "if"	     	: return token_if
   case "ink"	     	: return token_ink
   case "i."	     	: return token_ink
+  case "int"		: return token_int
   case "list"	     	: return token_list
   case "l."	     	: return token_list
   case "load"	     	: return token_load
@@ -846,6 +854,7 @@ select case s
   case "pos."   	: return token_position
   case "print"       	: return token_print
   case "?"       	: return token_print
+  case "rad"		: return token_rad
   case "run"	     	: return token_run
   case "save"	     	: return token_save
   case "s."	     	: return token_save
@@ -1132,7 +1141,9 @@ vars=0
   case token_if      :   compile_if() :goto 450
   case token_for     :   compile_for() :goto 450
   case token_next     :   compile_next() :goto 450
-
+  case token_deg	: compile_nothing
+  case token_rad	: compile_nothing
+  case token_int	: err=compile_fun_1p()
   case token_else    :   compile_else() : goto 450
   case token_beep	: err=compile_fun_2p()
   case token_dir	:compile_nothing
@@ -1789,7 +1800,7 @@ if op=token_minus then m=-1: ct+=1 : op=lparts(ct).token
 select case op
   
   case token_decimal
-    if m=1 then t1.result.uresult=m*val%(lparts(ct).part$): t1.result_type=result_uint ' todo token_int64
+    if m=1 then t1.result.uresult=m*val%(lparts(ct).part$): t1.result_type=result_int ' todo token_int64
     if m=-1 then t1.result.iresult=m*val%(lparts(ct).part$): t1.result_type=result_int ' todo token_int64
     compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_integer
@@ -2380,8 +2391,10 @@ programptr=0 : stringptr=0
 lastline=0 : lastlineptr=-1 :fortop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
 for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i))
+trig_coeff=1.0 : trig_coeff2=1.0
 memtop=v.buf_ptr
 v.setspritesize(17,8,16)
+v.setspritesize(16,32,32)
 next i
 end sub
 
@@ -2482,7 +2495,7 @@ t1=pop() ' var value
 if numpar>0 then
   for i=numpar to 1 step -1
     t2=pop()
-    arrid(i-1)=t2.result.uresult ': print "in do_assign arrid(";i;")=";arrid(i-1)
+    arrid(i-1)=converttoint(t2) ': print "in do_assign arrid(";i;")=";arrid(i-1)
   next i
 endif  
 'print "In do_assign value to assign=";t1.result.uresult, "type to assign=";t1.result_type
@@ -2537,9 +2550,9 @@ esize=pspeek(arrptr+2)
 dim1=pslpeek(arrptr+4) ' todo :do one read from psram for speed
 dim2=pslpeek(arrptr+8) ' todo :do one read from psram for speed
 dim3=pslpeek(arrptr+12) ' todo :do one read from psram for speed
-if numpar>2 then t1=pop() : i3=t1.result.uresult   else i3=0 
-if numpar>1 then t1=pop() : i2=t1.result.uresult   else i2=0 
-if numpar>0 then t1=pop() : i1=t1.result.uresult   else i1=0 
+if numpar>2 then t1=pop() : i3=converttoint(t1)   else i3=0 
+if numpar>1 then t1=pop() : i2=converttoint(t1)   else i2=0 
+if numpar>0 then t1=pop() : i1=converttoint(t1)   else i1=0 
 'print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
 varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize ': print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
 
@@ -2995,7 +3008,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "sin: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=sin(3.141592654*converttofloat(t1)/180.0)
+t1.result.fresult=sin(trig_coeff*converttofloat(t1))
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3008,7 +3021,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "cos: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=cos(3.141592654*converttofloat(t1)/180.0)
+t1.result.fresult=cos(trig_coeff*converttofloat(t1))
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3021,7 +3034,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "tan: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=tan(3.141592654*converttofloat(t1)/180.0)
+t1.result.fresult=tan(trig_coeff*converttofloat(t1))
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3034,7 +3047,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "asin: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=asin(converttofloat(t1))*180.0/3.141592654
+t1.result.fresult=asin(converttofloat(t1))*trig_coeff2
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3047,7 +3060,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "acos: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=acos(converttofloat(t1))*180.0/3.141592654
+t1.result.fresult=acos(converttofloat(t1))*trig_coeff2
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3060,7 +3073,7 @@ dim numpar as ulong
 numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "atn: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=atan(converttofloat(t1))*180.0/3.141592654
+t1.result.fresult=atan(converttofloat(t1))*trig_coeff2
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3302,25 +3315,16 @@ end sub
 ' ----------------------------- Plot a point, set starting point to draw a line
 
 sub do_plot
+
 dim t1,t2 as expr_result 
 dim x,y as integer
+
 t2=pop() 					 
 t1=pop()
-
-x=t1.result.iresult
-y=t2.result.iresult	
-if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) then 					  
-   plot_x=x			 
-   plot_y=y			 
-   v.putpixel(plot_x,plot_y,plot_color) 		 
-else
-  if t1.result_type=result_float then x=round(t1.result.fresult)
-  if t2.result_type=result_float then y=round(t2.result.fresult)
-  if t1.result_type=result_string then x=val(t1.result.sresult)
-  if t2.result_type=result_string then y=val(t2.result.sresult)
-  plot_x=x: plot_y=y
-  v.putpixel(plot_x,plot_y,plot_color)      
-endif
+x=converttoint(t1)
+y=converttoint(t2)
+plot_x=x: plot_y=y
+v.putpixel(plot_x,plot_y,plot_color)      
 end sub
 
 ' --------------------------- Draw a line to point set by plot or previous draw, set a new starting point
@@ -3331,21 +3335,11 @@ dim x,y as integer
 
 t2=pop()
 t1=pop()
-x=t1.result.iresult
-y=t2.result.iresult
-if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) then 					  
-   v.draw(plot_x,plot_y,x,y,plot_color) 
-   plot_x=x
-   plot_y=y
-else
-  if t1.result_type=result_float then x=round(t1.result.fresult)
-  if t2.result_type=result_float then y=round(t2.result.fresult)
-  if t1.result_type=result_string then x=val(t1.result.fresult)
-  if t2.result_type=result_string then y=val(t2.result.fresult)    
-  v.draw(plot_x,plot_y,x,y,plot_color) 
-  plot_x=x
-  plot_y=y 
-endif   
+x=converttoint(t1)
+y=converttoint(t2)
+v.draw(plot_x,plot_y,x,y,plot_color) 
+plot_x=x
+plot_y=y
 end sub
 
 ' -------------------------- Draw a filled circle at x,y and radius r
@@ -3651,7 +3645,23 @@ sub do_else
 lineptr_e=lineptr-1
 end sub
 
+sub do_rad
+trig_coeff=1.0
+trig_coeff2=1.0
+end sub
 
+sub do_deg
+trig_coeff=0.01745329251994329576923690768489
+trig_coeff2=57.295779513082320876798154814105
+end sub
+
+sub do_int
+dim t1 as expr_result
+
+t1=pop()
+t1.result.iresult=converttoint(t1) : t1.result_type=result_int
+push t1
+end sub
 
 sub do_nothing
 ' else, then  itself does nothing.
@@ -3892,6 +3902,11 @@ commands(token_sqr)=@do_sqr
 commands(token_fill)=@do_fill
 commands(token_defsnd)=@do_defsnd
 commands(token_defenv)=@do_defenv
+commands(token_rad)=@do_rad
+commands(token_deg)=@do_deg
+commands(token_int)=@do_int
+
+
 end sub
 
 ''--------------------------------Error strings -------------------------------------
