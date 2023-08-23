@@ -602,6 +602,45 @@ for i=0 to k: lparts(i).token=-1: next i
 
 if len(lparts(0).part$)=0 then goto 101				' empty line, nothing to do
 
+
+if isdec(lparts(0).part$) then let addptr=1 else let addptr=0
+let lp$=lparts(addptr).part$ 
+' abbreviated command has to be at the position addptr so let split it .. maybe also tokenize this here in the future
+let dot=instr(1,lparts(addptr).part$,".")
+if dot>0 andalso dot<len(lparts(addptr).part$) then 
+  k+=1
+  for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
+  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-dot)
+  lparts(addptr).part$=left$(lparts(addptr).part$,dot)
+endif  
+if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then
+  k+=1
+  for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
+  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-1)
+  lparts(addptr).part$="?"
+endif  
+
+let lp$=lparts(addptr).part$ 
+
+' process the case when simple load or save is called without ""
+
+if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(addptr+1).token=token_name then 
+  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
+endif									
+if (lp$="mode" orelse lp$="m.") then 
+  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0"  
+  if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1"  
+  if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2"  
+  if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3"  
+  if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4"  
+endif
+
+
+
+
+
+
 ' 2a find part types 
 
 for i=0 to k-1
@@ -626,21 +665,11 @@ if isname(lparts(i).part$) then lparts(i).token=token_name : goto 102						' nam
 lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 
  '                                      					 	for i=0 to k: print lparts(i).token,lparts(i).part$ : next i
-if lparts(0).token=token_decimal then let addptr=1 else let addptr=0
-' process the case when simple load or save is called without ""
-let lp$=lparts(addptr).part$
+ 
 if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="lo." orelse lp$="s." orelse lp$="br.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
-if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(addptr+1).token=token_name then 
-  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
-endif									
-if (lp$="mode" orelse lp$="m.") andalso lparts(addptr+1).token=token_name then
-  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4" :lparts(addptr+1).token=token_decimal
-endif
+
+' abbreviated command has to be at the position addptr
+
 
 
 '2b determine a type of the line
@@ -814,7 +843,7 @@ select case s
   case "plot"        	: return token_plot
   case "pl."        	: return token_plot
   case "position"	: return token_position
-  case "pos.	"	: return token_position
+  case "pos."   	: return token_position
   case "print"       	: return token_print
   case "?"       	: return token_print
   case "run"	     	: return token_run
