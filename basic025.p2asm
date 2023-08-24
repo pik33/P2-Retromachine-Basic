@@ -4680,7 +4680,7 @@ LR__0380
 ' 
 ' pslpoke(lineptr2,$FFFF_FFFF) ' flag the deleted line
 ' 
-' if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then ' this is one and only line in the program
+' if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  ' this is one and only line in the program
 	add	fp, #40
 	rdlong	local01, fp
 	sub	fp, #40
@@ -4699,12 +4699,10 @@ LR__0380
 	add	objptr, #4
 	wrlong	##-1, objptr
 	mov	arg01, #0
-	sub	objptr, #16
-	wrlong	#0, objptr
 	neg	arg02, #1
 	mov	arg03, #1
 	mov	arg04, #0
-	sub	objptr, ##48272
+	sub	objptr, ##48288
 '     return fill(addr, pattern, count, listPtr, 4)
 	mov	arg05, #4
 	call	#_psram_spin2_fill
@@ -4722,7 +4720,11 @@ LR__0380
 '     return fill(addr, pattern, count, listPtr, 4)
 	mov	arg05, #4
 	call	#_psram_spin2_fill
-	sub	objptr, ##5824
+	add	objptr, ##56260
+	wrlong	#0, objptr
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, ##62088
 LR__0381
 ' 
 ' if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' this is the last, and not first, line of the program
@@ -6000,7 +6002,6 @@ LR__0490
 ' ' 2 - this is the last continued line
 ' ' 3 - this is the ome and only part
 ' 
-' 
 ' err=compile_immediate(cont+1) 
 ' if err=0 then
  if_ne	jmp	#LR__0496
@@ -6021,7 +6022,7 @@ LR__0491
 	mov	arg01, local01
 	call	#_deleteline
 '       deleteline(alinemajor)  
-'       if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor) ' yes I know that's not optimal    
+'       if alinemajor>lastline then add_line_at_end(alinemajor)  else insertline(alinemajor)   ' yes I know that's not optimal    
 	add	objptr, ##54108
 	rdlong	arg03, objptr
 	sub	objptr, ##54108
@@ -12486,7 +12487,8 @@ LR__0932
 	sub	objptr, ##57100
 	call	#_psram_spin2_read1
 	sub	objptr, ##5824
-'   psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart
+'   psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
+'   
 '   if header(0)<> $FFFFFFFF then
 	add	fp, #32
 	rdlong	local02, fp
@@ -20189,19 +20191,11 @@ _do_print
 ' r=0
 ' t1=pop() 
 ' 'print t1.result_type,t1.result.uresult
-' if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
-	cmp	local03, #43 wz
- if_ne	jmp	#LR__1490
-	mov	arg01, local01
-	call	#_convertstring
-	mov	local05, result1
-	mov	local01, local05
-	mov	local03, #31
-LR__1490
+' 
 ' if t1.result_type=print_mod_comma orelse t1.result_type=print_mod_semicolon then r=t1.result_type :  t1=pop()
 	cmp	local03, #33 wz
  if_ne	cmp	local03, #34 wz
- if_ne	jmp	#LR__1491
+ if_ne	jmp	#LR__1490
 	mov	local04, local03
 	call	#_pop
 	mov	local05, result1
@@ -20210,16 +20204,25 @@ LR__1490
 	mov	local01, local05
 	mov	local02, local06
 	mov	local03, local07
-LR__1491
+LR__1490
 ' if t1.result_type=print_mod_empty then r=t1.result_type 
 	cmp	local03, #32 wz
  if_e	mov	local04, local03
 ' if t1.result_type=result_error then printerror(t1.result.uresult): goto 811
 	cmp	local03, #255 wz
- if_ne	jmp	#LR__1492
+ if_ne	jmp	#LR__1491
 	mov	arg01, local01
 	call	#_printerror
 	jmp	#LR__1509
+LR__1491
+' if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
+	cmp	local03, #43 wz
+ if_ne	jmp	#LR__1492
+	mov	arg01, local01
+	call	#_convertstring
+	mov	local05, result1
+	mov	local01, local05
+	mov	local03, #31
 LR__1492
 ' 
 ' if r=print_mod_comma  then

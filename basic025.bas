@@ -988,9 +988,9 @@ if header(0)<>aline then return -1
 
 pslpoke(lineptr2,$FFFF_FFFF) ' flag the deleted line
 
-if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then ' this is one and only line in the program
-  programstart=0 : programptr=0 : lastline=0 : lastlineptr=-1  : lineptr=0 
-  pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF
+if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  ' this is one and only line in the program
+  programstart=0 : programptr=0 : lastline=0 : lastlineptr=-1 
+  pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF : runptr=0 : runptr2=0
 endif
 
 if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' this is the last, and not first, line of the program
@@ -1039,10 +1039,11 @@ llength2=len (fullline$): if llength2 mod 4 <>0 then llength2=4*((llength2/4)+1)
 llength3=llength+llength2
 ucompiledline(2)=programptr+llength
 ucompiledline(3)=llength2 
-   
+
 psram.write(varptr(compiledline),programptr,llength)
 psram.write(lpeek(varptr(fullline$)),programptr+llength,llength2)
 programptr+=llength3
+
 
 end sub
 
@@ -1088,6 +1089,7 @@ lastline=aline: ucompiledline(4)=lastlineptr : pslpoke(lastlineptr+20,programptr
 if programptr=0 then ucompiledline(4)=$FFFFFFFF ' that is the first line
 save_line
 pslpoke(programptr,$FFFFFFFF) ' write end flag ' is it eeded at all here? 
+
 end sub
 
 function compile_immediate(linetype as ulong) as integer
@@ -1278,7 +1280,6 @@ ucompiledline(1)=alineminor
 ' 2 - this is the last continued line
 ' 3 - this is the ome and only part
 
-
 err=compile_immediate(cont+1) 
 if err=0 then
   if cont=3 orelse cont=2 then 
@@ -1286,7 +1287,7 @@ if err=0 then
       add_line_at_end(alinemajor)
     else
       deleteline(alinemajor)  
-      if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor) ' yes I know that's not optimal    
+      if alinemajor>lastline then add_line_at_end(alinemajor)  else insertline(alinemajor)   ' yes I know that's not optimal    
     endif 
   endif   
 
@@ -2313,7 +2314,8 @@ if numpar=2 then t1=pop() : endline=converttoint(t1) : t1=pop() : startline=conv
 print
 let listptr=programstart
 do 
-  psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart
+  psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
+  
   if header(0)<> $FFFFFFFF then
     longfill(linebuf,0,64)
     psram.read1(varptr(linebuf),header(2),header(3))
@@ -3374,10 +3376,11 @@ dim r as integer
 r=0
 t1=pop() 
 'print t1.result_type,t1.result.uresult
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
+
 if t1.result_type=print_mod_comma orelse t1.result_type=print_mod_semicolon then r=t1.result_type :  t1=pop()
 if t1.result_type=print_mod_empty then r=t1.result_type 
 if t1.result_type=result_error then printerror(t1.result.uresult): goto 811
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
 
 if r=print_mod_comma  then
   if t1.result_type=result_int then print t1.result.iresult,
