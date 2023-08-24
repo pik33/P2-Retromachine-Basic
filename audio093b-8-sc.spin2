@@ -42,20 +42,25 @@ long #6  period and skip
          Setting higher skip value skips the samples while playing, allows for higher frequencies for the same period
 long #7  was: (reserved, unused. The planned usage is ADSR stuff.)
          Command, bit 31=set sample rate, bit 30 - set sample source (1=hub,0=psram)
+long #8  envelope phase accumulator
+long #9  envelope pointer. Points to the start of the envelope definition
+long #10 envelope speed. Number of Paula's periods between 2 envelope values. 
+long #11 envelope length
+long #12..15 reserved, unused
 }}
 
 '
 long mailboxaddr
 long scope_ptr
 long cache_ptr
-long channel1[8]
-long channel2[8]
-long channel3[8]
-long channel4[8]
-long channel5[8]
-long channel6[8]
-long channel7[8]
-long channel8[8]
+long channel1[16]
+long channel2[16]
+long channel3[16]
+long channel4[16]
+long channel5[16]
+long channel6[16]
+long channel7[16]
+long channel8[16]
 
 
 '--------------------------------------------------------------
@@ -74,15 +79,19 @@ cache_ptr:=cache
 base:=@channel1[0]
 
 repeat iii from 0 to 7
-  long[base+32*iii]:=0
-  long[base+32*iii+4]:=0
-  long[base+32*iii+12]:=0
-  long[base+32*iii+16]:=2 
-  word[base+32*iii+20]:=0
-  word[base+32*iii+22]:=8192
-  word[base+32*iii+24]:=4000+2*iii
-  word[base+32*iii+26]:=2
-  long [base+32*iii+8]:=@null | $C0000000
+  long[base+64*iii]:=0
+  long[base+64*iii+4]:=0
+  long[base+64*iii+12]:=0
+  long[base+64*iii+16]:=2 
+  word[base+64*iii+20]:=0
+  word[base+64*iii+22]:=8192
+  word[base+64*iii+24]:=4000+2*iii
+  word[base+64*iii+26]:=2
+  long [base+64*iii+8]:=@null | $C0000000
+  long[base+64*iii+32]:=0
+  long[base+64*iii+36]:=0
+  long[base+64*iii+40]:=0
+  long[base+64*iii+44]:=0
   
 cog:=coginit(16,@audio,@mailboxaddr)
 waitms(100)
@@ -92,7 +101,7 @@ return cog,base
 
 pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
 
-base2:=@channel1[0]+32*channel
+base2:=@channel1[0]+64*channel
 long[base2+8]:=sample+$C0000000 
 long[base2+12]:= len
 if loop >=0 
@@ -107,7 +116,7 @@ long[base2+28]:=$40000000
     
 pub playtoend8(channel,sample,splfreq,vol,len) |base2,i
 
-base2:=@channel1[0]+32*channel
+base2:=@channel1[0]+64*channel
 long[base2]:=0
 long[base2+8]:=sample+$40000000 
 long[base2+12]:= len
@@ -122,7 +131,7 @@ until (i >>8) >=len
 
 pub play8(channel,sample,splfreq,vol,len,loop=-1) |base2,i
 
-base2:=@channel1[0]+32*channel
+base2:=@channel1[0]+64*channel
 long[base2]:=0
 long[base2+8]:=sample+$40000000 
 if loop>=0
@@ -139,7 +148,7 @@ long[base2+28]:=$40000000
     
 pub stop(channel) 'silence it
 
-word[@channel1[0]+32*channel+20]:=0
+word[@channel1[0]+64*channel+20]:=0
 
 
 '--------------------------------------------------------------
@@ -160,7 +169,7 @@ audio       org     0
             mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
 
             mov     ptrb,#0              ' A tail pointer for the buffer
-            wrpin   dac,#left            ' Noise dither DACs at clk/100
+            wrpin   dac,#left            ' Noise dither DACs at clk/95
             wxpin   #95,#left       	 ' Set initial DACs sample rate. It is now controlled via a register by the main program
             wrpin   dac,#right
             wxpin   #95,#right    
@@ -205,16 +214,11 @@ loop1       mov     cn,#0               ' Find the channel to compute
 
 
 p401        mov     channeladd,cn             ' compute the pointer to channel parameters block
-            shl     channeladd,#5
+            shl     channeladd,#6
             add     ptra,channeladd
 
-            setq    #7                        ' read parameters
+            setq    #11                        ' read parameters
             rdlong  pointer0,ptra
-'            testb   command0,#29 wz
-'    if_nz   jmp     #p408
-'    	    getword envptr,command0,#0
-'    	    getbyte envspeed,command0,#2
-'    	    jmp     #p404                     'if envelope then no sample rate
     	    
 p408        testb   command0,#31 wz	      ' bit #31 command - set the DAC sample rate
     if_nz   jmp     #p404                     ' if not set, proceed
@@ -244,8 +248,35 @@ p405        getword oldls,sample0,#0          ' extract old sample value
             altd    cn, #time1                ' add channel period to channel time
             add     0-0,afreq0  	
 
-            add     pointer0,askip0           ' compute the pointer to the next sample       
-            setbyte pointer00,pointer0,#0
+            cmp envptr0,#0
+            if_z mov envs1,##$4000
+            if_z jmp #p410
+      	    mov     envhi, envph0
+	    shr     envhi,#6
+	    getword envlo,envhi, #0
+	    shr     envhi,#16
+	    cmp     envhi, envlen0 wcz
+    if_ge   mov     envhi,envlen0
+    if_lt   mov envs1,afreq0
+    if_lt  mul envs1,envspd0
+    if_lt   add	    envph0,envs1
+            mov envs1,envhi
+            shl envs1,#1
+            add envs1,envptr0
+            rdlong envs1,envs1
+            getword envs2,envs1,#1
+            getword envs1,envs1,#0
+            
+            mul envs2,envlo
+            not envlo
+            mul envs1,envlo
+            add envs1,envs2
+            shr envs1,#18
+            
+	    
+
+p410              add     pointer0,askip0           ' compute the pointer to the next sample       
+         setbyte pointer00,pointer0,#0
             shr     pointer0,#8
          
             testb   sstart0,#31 wz            
@@ -278,7 +309,10 @@ p405        getword oldls,sample0,#0          ' extract old sample value
 	    setbyte pointer0,pointer00,#0       
     
 
-p406        scas    spl,avol0                 ' apply volume
+p406        
+            scas spl, envs1
+            mov spl,0-0
+            scas    spl,avol0                 ' apply volume
             mov     spl,0-0
  
             scas    spl,apan0                 ' apply pan
@@ -296,8 +330,9 @@ p406        scas    spl,avol0                 ' apply volume
             setword sample0,rs0,#1           ' pack samples into long
             setword sample0,ls0,#0
             
-            bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointer needs resetting  
+            bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointers needs resetting  
     if_z    mov     pointer0, #0  
+    if_z    mov     envph0, #0  
     if_z    wrlong  sstart0, ptra[2]          ' reset bit #30 in hub
             bitl    sstart0, #29 wcz	      ' if bit #29 is set, synchronize stereo at channels 1 and 2
     if_z    add     time1,##2048
@@ -306,6 +341,7 @@ p406        scas    spl,avol0                 ' apply volume
             
 p403        setq #1                          ' write new pointer and sample value to the hub
             wrlong  pointer0,ptra
+            wrlong  envph0,ptra[8]
             sub     ptra, channeladd         ' reset the pointer to channel parameters
                       
             cmp     oldt0,time0 wz           ' If more than 1 sample is computed at the same time, write only the last result
@@ -359,7 +395,7 @@ p302        wrlut   oldsample, front        ' if there is a free slot, put the s
 '----------------------------------------------------------------------------------
 
 ' There are 8 cache pointers for 8 channels
-' if 24 higher bits of address=cache, then ger a word from the cache
+' if 24 higher bits of address=cache, then get a word from the cache
 ' else load the cache from PSRAM, update the pointer, then read a sample
 
 
@@ -462,6 +498,14 @@ lend0       long 0
 volpan0     long 0
 freqskip0   long 0
 command0    long 0
+envph0	    long 0
+envptr0	    long 0
+envspd0	    long 0
+envlen0	    long 0
+res5	    long 0
+res6	    long 0
+res7	    long 0
+res8	    long 0
 
 afreq0      long 0
 askip0      long 0
@@ -514,7 +558,10 @@ count       long 256
 addrlo long 0
 addrhi long 0
 pointer00 long 0
-
+envhi long 0
+envlo long 0
+envs1 long 0
+envs2 long 0
 '-----------------------------------------------------------------------------------------
 '------ PASM driver ends here ------------------------------------------------------------
 '----------------------------------------------------------------------------------------- 

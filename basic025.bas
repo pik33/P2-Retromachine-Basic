@@ -23,8 +23,8 @@ dim paula as class using "audio093b-8-sc.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.24"
-const ver=24
+const ver$="P2 Retromachine BASIC version 0.25"
+const ver=25
 '' ------------------------------- Keyboard constants
 
 const   key_enter=141    
@@ -329,6 +329,7 @@ dim nostalgic_mode, spl_len as ulong
 dim keyclick_spl as any pointer
 dim trig_coeff as single
 dim trig_coeff2 as single
+dim linenum as ulong
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
@@ -370,6 +371,7 @@ free$=decuns$(v.buf_ptr)+" BASIC bytes free" : print free$
 position 2*editor_spaces,4 : print "Ready"
 'hubset( %1_000001__00_0001_1010__1111_1011)
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
+
 
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
@@ -488,7 +490,7 @@ dim i,j,k,q
 dim result as expr_result
 dim etype as integer
 dim separators(125)
-dim linenum as ulong
+
 dim err as integer
 
 ' ---------------------------------------------------  Pass 1: Split the line to parts, detect and concatenate strings
@@ -1461,7 +1463,8 @@ if isname(lparts(ct).part$) then
     next i
 
   endif 
-  if j<>-1 then printerror (42) : return 42
+'  if j<>-1 then printerror (42) : return 42
+  if j=-1 then j=varnum else print "Dim: at line ";linenum;": warning: the variable existed."
   if lparts(ct+1).part$ <>"(" andalso lparts(ct+1).part$<>"as" then printerror(43) : return 43
   if lparts(ct+1).part$ = "as" then l=ct+1: goto 1350
   l=ct+2 : m=0 : do
@@ -1510,10 +1513,10 @@ pslpoke arrayptr+4,dims(0)
 pslpoke arrayptr+8,dims(1)
 pslpoke arrayptr+12,dims(2)
 
-variables(varnum).name=varname2$
-variables(varnum).value.uresult=arrayptr
-variables(varnum).vartype=arraytype
-varnum+=1
+variables(j).name=varname2$
+variables(j).value.uresult=arrayptr
+variables(j).vartype=arraytype
+if j=varnum then varnum+=1
 
 return 0
 end function
@@ -2445,9 +2448,7 @@ endif
 arrptr=variables(varnum).value.uresult ': print  "In do_assign arrptr="; arrptr
 arrtype=pslpeek(arrptr) and 65535 ': print   "In do_assign arrtype="; arrtype
 esize=pspeek(arrptr+2)
-'print " in do_assign, pslpeek(arrptr+4)="; pslpeek(arrptr+4)
-'print " in do_assign, pslpeek(arrptr+8)="; pslpeek(arrptr+8)
-'print " in do_assign, pslpeek(arrptr+12)="; pslpeek(arrptr+12)
+if arrid(0)>=pslpeek(arrptr+4) orelse arrid(1)>=pslpeek(arrptr+8) orelse arrid(2)>=pslpeek(arrptr+12) then printerror(49) : return
 
 arridx=arrptr+16+esize*(arrid(0)+pslpeek(arrptr+4)*arrid(1)+pslpeek(arrptr+8)*pslpeek(arrptr+4)*arrid(2))
 select case arrtype
@@ -3906,6 +3907,7 @@ errors$(45)="No more than 3 dimensions supported"
 errors$(46)="Variable name expected"
 errors$(47)="Type name expected"
 errors$(48)="Type not supported yet"
+errors$(49)="Array index out of bound"
 
 end sub
         

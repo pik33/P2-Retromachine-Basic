@@ -168,83 +168,111 @@ _start
 ' 
 ' repeat iii from 0 to 7
 	mov	local03, #0
-	add	ptr__dat__, ##984
+	add	ptr__dat__, ##1028
 	sub	objptr, #12
 	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
 LR__0001
-'   long[base+32*iii]:=0
+'   long[base+64*iii]:=0
 	mov	local01, local02
 	mov	result2, local03
-	shl	result2, #5
+	shl	result2, #6
 	add	local01, result2
 	wrlong	#0, local01
-'   long[base+32*iii+4]:=0
+'   long[base+64*iii+4]:=0
 	mov	local01, local02
 	mov	result2, local03
-	shl	result2, #5
+	shl	result2, #6
 	add	local01, result2
 	add	local01, #4
 	wrlong	#0, local01
-'   long[base+32*iii+12]:=0
+'   long[base+64*iii+12]:=0
 	mov	local04, local02
 	mov	local01, local03
-	shl	local01, #5
+	shl	local01, #6
 	add	local04, local01
 	add	local04, #12
 	wrlong	#0, local04
-'   long[base+32*iii+16]:=2 
+'   long[base+64*iii+16]:=2 
 	mov	local04, local02
 	mov	local01, local03
-	shl	local01, #5
+	shl	local01, #6
 	add	local04, local01
 	add	local04, #16
 	wrlong	#2, local04
-'   word[base+32*iii+20]:=0
+'   word[base+64*iii+20]:=0
 	mov	local04, local02
 	mov	local01, local03
-	shl	local01, #5
+	shl	local01, #6
 	add	local04, local01
 	add	local04, #20
 	wrword	#0, local04
-'   word[base+32*iii+22]:=8192
+'   word[base+64*iii+22]:=8192
 	mov	local04, local02
 	mov	local01, local03
-	shl	local01, #5
+	shl	local01, #6
 	add	local04, local01
 	add	local04, #22
 	wrword	##8192, local04
-'   word[base+32*iii+24]:=4000+2*iii
+'   word[base+64*iii+24]:=4000+2*iii
 	mov	local04, local03
 	shl	local04, #1
 	mov	local01, ##4000
 	add	local01, local04
 	mov	local04, local02
 	mov	result2, local03
-	shl	result2, #5
+	shl	result2, #6
 	add	local04, result2
 	add	local04, #24
 	wrword	local01, local04
-'   word[base+32*iii+26]:=2
+'   word[base+64*iii+26]:=2
 	mov	local04, local02
 	mov	local01, local03
-	shl	local01, #5
+	shl	local01, #6
 	add	local04, local01
 	add	local04, #26
 	wrword	#2, local04
-'   long [base+32*iii+8]:=@null | $C0000000
+'   long [base+64*iii+8]:=@null | $C0000000
 	mov	local01, ptr__dat__
 	bith	local01, #62
 	mov	local04, local02
 	mov	arg03, local03
-	shl	arg03, #5
+	shl	arg03, #6
 	add	local04, arg03
 	add	local04, #8
 	wrlong	local01, local04
+'   long[base+64*iii+32]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #32
+	wrlong	#0, local04
+'   long[base+64*iii+36]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #36
+	wrlong	#0, local04
+'   long[base+64*iii+40]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #40
+	wrlong	#0, local04
+'   long[base+64*iii+44]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #44
+	wrlong	#0, local04
 	add	local03, #1
 	cmps	local03, #8 wc
  if_b	jmp	#LR__0001
 LR__0002
-	sub	ptr__dat__, ##984
+	sub	ptr__dat__, ##1028
 '   
 ' cog:=coginit(16,@audio,@mailboxaddr)
 	mov	arg02, ptr__dat__
@@ -302,29 +330,29 @@ _dat_
 '-' audio       org     0
 '-' 
 '-'             rdlong  mailbox2, ptra++     ' get start address of all mailboxes
-	byte	$61, $85, $05, $fb
+	byte	$61, $8b, $05, $fb
 '-'             rdlong  scbase, ptra++       ' get start address of scope buffer
-	byte	$61, $c3, $05, $fb
+	byte	$61, $d9, $05, $fb
 '-'             rdlong  hubptr, ptra++       ' get start address of PSRAM cache
-	byte	$61, $cf, $05, $fb
+	byte	$61, $e5, $05, $fb
 '-' 
 '-'             cogid   pa                   ' compute cogid
 	byte	$01, $ec, $63, $fd
 '-'             mul     pa, #12              ' and mailbox spacing
 	byte	$0c, $ec, $07, $fa
 '-'             add     mailbox2, pa         ' add offset to find this COG's mailbox
-	byte	$f6, $85, $01, $f1
+	byte	$f6, $8b, $01, $f1
 '-'             mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
-	byte	$c2, $82, $01, $f6
+	byte	$c5, $88, $01, $f6
 '-' 
 '-'             mov     ptrb,#0              ' A tail pointer for the buffer
 	byte	$00, $f2, $07, $f6
-'-'             wrpin   dac,#left            ' Noise dither DACs at clk/100
-	byte	$0e, $ca, $05, $fc
+'-'             wrpin   dac,#left            ' Noise dither DACs at clk/95
+	byte	$0e, $e0, $05, $fc
 '-'             wxpin   #95,#left       	 ' Set initial DACs sample rate. It is now controlled via a register by the main program
 	byte	$0e, $be, $1c, $fc
 '-'             wrpin   dac,#right
-	byte	$0f, $ca, $05, $fc
+	byte	$0f, $e0, $05, $fc
 '-'             wxpin   #95,#right    
 	byte	$0f, $be, $1c, $fc
 '-'             dirh    #left addpins 1
@@ -332,7 +360,7 @@ _dat_
 '-'             setse1  #%001<<6 + left      ' Set the event - DAC empty
 	byte	$20, $9c, $64, $fd
 '-'             mov     ijmp1,#isr1          ' Init the interrupt
-	byte	$a9, $e8, $07, $f6
+	byte	$ac, $e8, $07, $f6
 '-'             setint1 #4                   ' Interrupt from DAC empty event
 	byte	$25, $08, $64, $fd
 '-'             
@@ -341,51 +369,51 @@ _dat_
 '-' '---------------------------------------------------------------------------------
 '-' 
 '-' loop        cmp     time0,a41000000 wc  ' time counter overflow protection
-	byte	$b2, $66, $11, $f2
+	byte	$b5, $6c, $11, $f2
 '-'       if_c  jmp     #loop1
 	byte	$10, $00, $90, $cd
 '-'   
 '-'             mov     cn,#9               ' Substract $40000000 from all the channel times and the main timer
-	byte	$09, $a8, $05, $f6
+	byte	$09, $be, $05, $f6
 '-' p402        altd    cn,#a41000000       ' this has to be done at once for all channels
-	byte	$b2, $a8, $8d, $f9
+	byte	$b5, $be, $8d, $f9
 '-'             sub     0-0,a40000000
-	byte	$b1, $00, $80, $f1
+	byte	$b4, $00, $80, $f1
 '-'             djnz    cn,#p402
-	byte	$fd, $a9, $6d, $fb
+	byte	$fd, $bf, $6d, $fb
 '-'     
 '-' loop1       mov     cn,#0               ' Find the channel to compute
-	byte	$00, $a8, $05, $f6
+	byte	$00, $be, $05, $f6
 '-'             mov     ct,time1            ' with the lowest next sample time
-	byte	$b4, $aa, $01, $f6
+	byte	$b7, $c0, $01, $f6
 '-'             fle     ct,time2 wcz        ' How to size-optimize this???
-	byte	$b5, $aa, $39, $f3
+	byte	$b8, $c0, $39, $f3
 '-'     if_c    mov     cn,#1
-	byte	$01, $a8, $05, $c6
+	byte	$01, $be, $05, $c6
 '-'             fle     ct,time3 wcz
-	byte	$b6, $aa, $39, $f3
+	byte	$b9, $c0, $39, $f3
 '-'     if_c    mov     cn,#2     
-	byte	$02, $a8, $05, $c6
+	byte	$02, $be, $05, $c6
 '-'             fle     ct,time4 wcz
-	byte	$b7, $aa, $39, $f3
+	byte	$ba, $c0, $39, $f3
 '-'     if_c    mov     cn,#3
-	byte	$03, $a8, $05, $c6
+	byte	$03, $be, $05, $c6
 '-'             fle     ct,time5 wcz
-	byte	$b8, $aa, $39, $f3
+	byte	$bb, $c0, $39, $f3
 '-'     if_c    mov     cn,#4
-	byte	$04, $a8, $05, $c6
+	byte	$04, $be, $05, $c6
 '-'             fle     ct,time6 wcz
-	byte	$b9, $aa, $39, $f3
+	byte	$bc, $c0, $39, $f3
 '-'     if_c    mov     cn,#5
-	byte	$05, $a8, $05, $c6
+	byte	$05, $be, $05, $c6
 '-'             fle     ct,time7 wcz
-	byte	$ba, $aa, $39, $f3
+	byte	$bd, $c0, $39, $f3
 '-'     if_c    mov     cn,#6
-	byte	$06, $a8, $05, $c6
+	byte	$06, $be, $05, $c6
 '-'             fle     ct,time8 wcz
-	byte	$bb, $aa, $39, $f3
+	byte	$be, $c0, $39, $f3
 '-'     if_c    mov     cn,#7
-	byte	$07, $a8, $05, $c6
+	byte	$07, $be, $05, $c6
 '-' 
 '-' 
 '-' '----------------------------------------------------------------------------------
@@ -394,247 +422,255 @@ _dat_
 '-' 
 '-' 
 '-' p401        mov     channeladd,cn             ' compute the pointer to channel parameters block
-	byte	$d4, $78, $01, $f6
-'-'             shl     channeladd,#5
-	byte	$05, $78, $65, $f0
+	byte	$df, $7e, $01, $f6
+'-'             shl     channeladd,#6
+	byte	$06, $7e, $65, $f0
 '-'             add     ptra,channeladd
-	byte	$bc, $f0, $03, $f1
+	byte	$bf, $f0, $03, $f1
 '-' 
-'-'             setq    #7                        ' read parameters
-	byte	$28, $0e, $64, $fd
+'-'             setq    #11                        ' read parameters
+	byte	$28, $16, $64, $fd
 '-'             rdlong  pointer0,ptra
-	byte	$00, $8f, $05, $fb
-'-'             testb   command0,#31 wz	      ' bit #31 command - set the DAC sample rate
-	byte	$1f, $9c, $0d, $f4
+	byte	$00, $95, $05, $fb
+'-'     	    
+'-' p408        testb   command0,#31 wz	      ' bit #31 command - set the DAC sample rate
+	byte	$1f, $a2, $0d, $f4
 '-'     if_nz   jmp     #p404                     ' if not set, proceed
 	byte	$18, $00, $90, $5d
 '-'             getword qq,command0,#0            ' get the new rate
-	byte	$ce, $7c, $31, $f9
+	byte	$d1, $82, $31, $f9
 '-'             wxpin   qq,#left addpins 1        ' and program the pins
-	byte	$4e, $7c, $15, $fc
+	byte	$4e, $82, $15, $fc
 '-'             getbyte qq,qq,#0 		      ' check if the rate is n*256
-	byte	$be, $7c, $e1, $f8
+	byte	$c1, $82, $e1, $f8
 '-'             cmp     qq,#0 wz                         
-	byte	$00, $7c, $0d, $f2
+	byte	$00, $82, $0d, $f2
 '-'     if_z    wrpin   dac2,#left addpins 1      ' if yes, set PWM DAC mode
-	byte	$4e, $cc, $05, $ac
+	byte	$4e, $e2, $05, $ac
 '-'     if_nz   wrpin   dac,#left addpins 1       ' else set noise DAC mode
-	byte	$4e, $ca, $05, $5c
+	byte	$4e, $e0, $05, $5c
 '-'             
 '-' p404        bitl    command0,#30 wcz             ' bit #30: select PSRAM/HUB
-	byte	$1e, $9c, $1d, $f4
+	byte	$1e, $a2, $1d, $f4
 '-'     if_nz   mov     mailbox,mailbox2             ' if not set, use PSRAM
-	byte	$c2, $82, $01, $56
+	byte	$c5, $88, $01, $56
 '-'     if_z    mov     mailbox,#0                   ' if set, use HUB : TODO: this can be done at a channel level!
-	byte	$00, $82, $05, $a6
+	byte	$00, $88, $05, $a6
 '-' 
 '-' 
 '-' p405        getword oldls,sample0,#0          ' extract old sample value
-	byte	$c8, $ae, $31, $f9
+	byte	$cb, $c4, $31, $f9
 '-'             getword oldrs,sample0,#1
-	byte	$c8, $b0, $39, $f9
+	byte	$cb, $c6, $39, $f9
 '-'      	    getword apan0,volpan0,#1          ' extract vol,pan,skip and freq from longs 
-	byte	$cc, $a4, $39, $f9
+	byte	$cf, $ba, $39, $f9
 '-'     	    getword avol0,volpan0,#0
-	byte	$cc, $a2, $31, $f9
+	byte	$cf, $b8, $31, $f9
 '-'             getword askip0,freqskip0,#1    	    
-	byte	$cd, $a0, $39, $f9
+	byte	$d0, $b6, $39, $f9
 '-'             getword afreq0,freqskip0,#0
-	byte	$cd, $9e, $31, $f9
+	byte	$d0, $b4, $31, $f9
 '-' 
 '-'             alts    cn, #time1                ' compute the time difference between this and previous sample
-	byte	$b4, $a8, $95, $f9
+	byte	$b7, $be, $95, $f9
 '-'             mov     dt0,0-0    
-	byte	$00, $ac, $01, $f6
+	byte	$00, $c2, $01, $f6
 '-'             sub     dt0,time0
-	byte	$b3, $ac, $81, $f1
+	byte	$b6, $c2, $81, $f1
 '-'             
 '-'             altd    cn, #time1                ' add channel period to channel time
-	byte	$b4, $a8, $8d, $f9
+	byte	$b7, $be, $8d, $f9
 '-'             add     0-0,afreq0  	
-	byte	$cf, $00, $00, $f1
+	byte	$da, $00, $00, $f1
+'-' 
+'-' 	    add	    envph0,afreq0
+	byte	$da, $a4, $01, $f1
 '-' 
 '-'             add     pointer0,askip0           ' compute the pointer to the next sample       
-	byte	$d0, $8e, $01, $f1
+	byte	$db, $94, $01, $f1
 '-'             setbyte pointer00,pointer0,#0
-	byte	$c7, $ea, $c1, $f8
+	byte	$ca, $00, $c2, $f8
 '-'             shr     pointer0,#8
-	byte	$08, $8e, $45, $f0
+	byte	$08, $94, $45, $f0
 '-'          
 '-'             testb   sstart0,#31 wz            
-	byte	$1f, $92, $0d, $f4
+	byte	$1f, $98, $0d, $f4
 '-'     if_z    shl     pointer0,#1        
-	byte	$01, $8e, $65, $a0
+	byte	$01, $94, $65, $a0
 '-'             testb   sstart0,#28 wz            
-	byte	$1c, $92, $0d, $f4
+	byte	$1c, $98, $0d, $f4
 '-'     if_z    shl     pointer0,#1        
-	byte	$01, $8e, $65, $a0
+	byte	$01, $94, $65, $a0
 '-'             
 '-'             cmp     pointer0,lend0 wcz
-	byte	$cb, $8e, $19, $f2
+	byte	$ce, $94, $19, $f2
 '-'     if_ge   sub     pointer0,lend0	      ' and loop if needed     
-	byte	$cb, $8e, $81, $31
+	byte	$ce, $94, $81, $31
 '-'     if_ge   add     pointer0,lstart0       
-	byte	$ca, $8e, $01, $31
+	byte	$cd, $94, $01, $31
 '-'             
 '-'             mov     qq,pointer0               ' compute place in the memory from where the sample will be loaded
-	byte	$c7, $7c, $01, $f6
+	byte	$ca, $82, $01, $f6
 '-'             add     qq,sstart0            
-	byte	$c9, $7c, $01, $f1
+	byte	$cc, $82, $01, $f1
 '-' 
 '-' 
 '-' 
 '-'             cmps    mailbox,#$1FF wcz            ' the mailbox has to point somewhere not at the start of HUB RAM
-	byte	$ff, $83, $5d, $f2
+	byte	$ff, $89, $5d, $f2
 '-'     if_le   rdword  spl,qq                     ' if not, use HUB RAM for samples
-	byte	$be, $7e, $e1, $ea
+	byte	$c1, $84, $e1, $ea
 '-'     if_gt   call    #cache_read
-	byte	$04, $01, $b0, $1d
+	byte	$0c, $01, $b0, $1d
 '-'          
 '-'          
 '-'  
 '-'          
 '-'             testb   sstart0,#31 wz 
-	byte	$1f, $92, $0d, $f4
+	byte	$1f, $98, $0d, $f4
 '-'     if_nz   shl     spl,#8
-	byte	$08, $7e, $65, $50
+	byte	$08, $84, $65, $50
 '-'     if_nz   shl     pointer0,#8
-	byte	$08, $8e, $65, $50
+	byte	$08, $94, $65, $50
 '-'     if_z    shl     pointer0,#7
-	byte	$07, $8e, $65, $a0
+	byte	$07, $94, $65, $a0
 '-'             testb   sstart0,#28 wz            
-	byte	$1c, $92, $0d, $f4
+	byte	$1c, $98, $0d, $f4
 '-'     if_z    shr     pointer0,#1    
-	byte	$01, $8e, $45, $a0
+	byte	$01, $94, $45, $a0
 '-' 	    setbyte pointer0,pointer00,#0       
-	byte	$f5, $8e, $c1, $f8
+	byte	$00, $95, $c1, $f8
 '-'     
 '-' 
 '-' p406        scas    spl,avol0                 ' apply volume
-	byte	$d1, $7e, $31, $fa
+	byte	$dc, $84, $31, $fa
 '-'             mov     spl,0-0
-	byte	$00, $7e, $01, $f6
+	byte	$00, $84, $01, $f6
 '-'  
 '-'             scas    spl,apan0                 ' apply pan
-	byte	$d2, $7e, $31, $fa
+	byte	$dd, $84, $31, $fa
 '-'             mov     ls0,0-0
-	byte	$00, $b2, $01, $f6
+	byte	$00, $c8, $01, $f6
 '-'             mov     qq,##16384
-	byte	$20, $00, $00, $ff, $00, $7c, $05, $f6
+	byte	$20, $00, $00, $ff, $00, $82, $05, $f6
 '-'             sub     qq,apan0
-	byte	$d2, $7c, $81, $f1
+	byte	$dd, $82, $81, $f1
 '-'             scas    spl,qq
-	byte	$be, $7e, $31, $fa
+	byte	$c1, $84, $31, $fa
 '-'             mov     rs0, 0-0
-	byte	$00, $b4, $01, $f6
+	byte	$00, $ca, $01, $f6
 '-' 
 '-'             sub     rs,oldrs 		      ' replace the old sample with the new one in the mix
-	byte	$d8, $b8, $81, $f1
+	byte	$e3, $ce, $81, $f1
 '-'             add     rs,rs0
-	byte	$da, $b8, $01, $f1
+	byte	$e5, $ce, $01, $f1
 '-'             sub     ls,oldls
-	byte	$d7, $b6, $81, $f1
+	byte	$e2, $cc, $81, $f1
 '-'             add     ls,ls0
-	byte	$d9, $b6, $01, $f1
+	byte	$e4, $cc, $01, $f1
 '-'    
 '-'             setword sample0,rs0,#1           ' pack samples into long
-	byte	$da, $90, $29, $f9
+	byte	$e5, $96, $29, $f9
 '-'             setword sample0,ls0,#0
-	byte	$d9, $90, $21, $f9
+	byte	$e4, $96, $21, $f9
 '-'             
-'-'             bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointer needs resetting  
-	byte	$1e, $92, $1d, $f4
+'-'             bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointers needs resetting  
+	byte	$1e, $98, $1d, $f4
 '-'     if_z    mov     pointer0, #0  
-	byte	$00, $8e, $05, $a6
+	byte	$00, $94, $05, $a6
+'-'     if_z    mov     envph0, #0  
+	byte	$00, $a4, $05, $a6
 '-'     if_z    wrlong  sstart0, ptra[2]          ' reset bit #30 in hub
-	byte	$02, $93, $65, $ac
+	byte	$02, $99, $65, $ac
 '-'             bitl    sstart0, #29 wcz	      ' if bit #29 is set, synchronize stereo at channels 1 and 2
-	byte	$1d, $92, $1d, $f4
+	byte	$1d, $98, $1d, $f4
 '-'     if_z    add     time1,##2048
-	byte	$04, $00, $00, $af, $00, $68, $05, $a1
+	byte	$04, $00, $00, $af, $00, $6e, $05, $a1
 '-'     if_z    mov     time2,time1
-	byte	$b4, $6a, $01, $a6
+	byte	$b7, $70, $01, $a6
 '-'     if_z    wrlong  sstart0,ptra[2]
-	byte	$02, $93, $65, $ac
+	byte	$02, $99, $65, $ac
 '-'             
 '-' p403        setq #1                          ' write new pointer and sample value to the hub
 	byte	$28, $02, $64, $fd
 '-'             wrlong  pointer0,ptra
-	byte	$00, $8f, $65, $fc
+	byte	$00, $95, $65, $fc
+'-'             wrlong  envph0,ptra[8]
+	byte	$08, $a5, $65, $fc
 '-'             sub     ptra, channeladd         ' reset the pointer to channel parameters
-	byte	$bc, $f0, $83, $f1
+	byte	$bf, $f0, $83, $f1
 '-'                       
 '-'             cmp     oldt0,time0 wz           ' If more than 1 sample is computed at the same time, write only the last result
-	byte	$b3, $a6, $09, $f2
+	byte	$b6, $bc, $09, $f2
 '-'     if_z    decmod  front, #511          
-	byte	$ff, $7b, $25, $a7
+	byte	$ff, $81, $25, $a7
 '-'          
 '-'             getword oldls,ls,#0              ' reuse oldls variable to convert the sample to unsigned
-	byte	$db, $ae, $31, $f9
+	byte	$e6, $c4, $31, $f9
 '-'  	    getword oldrs,rs,#0              ' getword instead of mov makes the upper bits=0
-	byte	$dc, $b0, $31, $f9
+	byte	$e7, $c6, $31, $f9
 '-'             bitnot  oldls,#15                ' convert to unsigned. TODO: compute and apply the gain for samples to not exceed 16 bit range
-	byte	$0f, $ae, $e5, $f4
+	byte	$0f, $c4, $e5, $f4
 '-'             bitnot  oldrs,#15		     ' warning: no filter here (yet) but before applying any, remember to and sample values with $FFFF and use signed samples 
-	byte	$0f, $b0, $e5, $f4
+	byte	$0f, $c6, $e5, $f4
 '-' 	    
 '-' 		    
 '-'             setword oldrs,oldls,#1           ' Pack L and R to one long    		
-	byte	$d7, $b0, $29, $f9
+	byte	$e2, $c6, $29, $f9
 '-'             mov     oldsample, newsample     ' The new computed sample will be outputted in the next loop, now we have to fill the buffer with the old one
-	byte	$de, $ba, $01, $f6
+	byte	$e9, $d0, $01, $f6
 '-'             mov     newsample, oldrs       
-	byte	$d8, $bc, $01, $f6
+	byte	$e3, $d2, $01, $f6
 '-' 
 '-'             mov     oldt0,time0              ' update global time
-	byte	$b3, $a6, $01, $f6
+	byte	$b6, $bc, $01, $f6
 '-'             add     time0,dt0    
-	byte	$d6, $66, $01, $f1
+	byte	$e1, $6c, $01, $f1
 '-'                                      
 '-'             cmp     dt0,#0 wz                ' now push dt0 samples to the buffer
-	byte	$00, $ac, $0d, $f2
+	byte	$00, $c2, $0d, $f2
 '-'     if_z    jmp     #loop1
-	byte	$60, $fe, $9f, $ad
+	byte	$54, $fe, $9f, $ad
 '-'             mov     qq,dt0
-	byte	$d6, $7c, $01, $f6
+	byte	$e1, $82, $01, $f6
 '-'   
 '-' p301        alts    ptrb,#511                ' checking if the buffer is full - Wuerfel_21's magic stuff
 	byte	$ff, $f3, $97, $f9
 '-'             cmpr    front, #0-0 wcz
-	byte	$00, $7a, $9d, $f2
+	byte	$00, $80, $9d, $f2
 '-'     if_e    jmp     #p301    
 	byte	$f4, $ff, $9f, $ad
 '-' 		
 '-' 	    cmp     scbase,#0 wz
-	byte	$00, $c2, $0d, $f2
+	byte	$00, $d8, $0d, $f2
 '-'     if_z    jmp #p302	   
 	byte	$20, $00, $90, $ad
 '-'  
 '-'  
 '-'             incmod  scope,#63 wc            ' save every 127th sample to the scope buffer
-	byte	$3f, $c8, $15, $f7
+	byte	$3f, $de, $15, $f7
 '-'     if_c    mov scptr2,scptr
-	byte	$e2, $c6, $01, $c6
+	byte	$ed, $dc, $01, $c6
 '-'     if_c    shl scptr2,#2
-	byte	$02, $c6, $65, $c0
+	byte	$02, $dc, $65, $c0
 '-'     if_c    add scptr2,scbase     
-	byte	$e1, $c6, $01, $c1
+	byte	$ec, $dc, $01, $c1
 '-'             wrlong scptr2,#$60
-	byte	$60, $c6, $65, $fc
+	byte	$60, $dc, $65, $fc
 '-'     if_c    wrlong oldsample,scptr2
-	byte	$e3, $ba, $61, $cc
+	byte	$ee, $d0, $61, $cc
 '-'     if_c    incmod scptr,##639
-	byte	$01, $00, $00, $cf, $7f, $c4, $05, $c7
+	byte	$01, $00, $00, $cf, $7f, $da, $05, $c7
 '-' 			    
 '-' p302        wrlut   oldsample, front        ' if there is a free slot, put the sample into the buffer
-	byte	$bd, $ba, $31, $fc
+	byte	$c0, $d0, $31, $fc
 '-'             incmod  front, ##511
-	byte	$00, $00, $00, $ff, $ff, $7b, $05, $f7
+	byte	$00, $00, $00, $ff, $ff, $81, $05, $f7
 '-'             djnz    qq,#p301
-	byte	$ef, $7d, $6d, $fb
+	byte	$ef, $83, $6d, $fb
 '-'             
 '-'             jmp     #loop            'loop
-	byte	$fc, $fd, $9f, $fd
+	byte	$f0, $fd, $9f, $fd
 '-' 
 '-' '----------------------------------------------------------------------------------
 '-' '------------- This is the end of the main loop -----------------------------------
@@ -645,62 +681,62 @@ _dat_
 '-' '----------------------------------------------------------------------------------
 '-' 
 '-' ' There are 8 cache pointers for 8 channels
-'-' ' if 24 higher bits of address=cache, then ger a word from the cache
+'-' ' if 24 higher bits of address=cache, then get a word from the cache
 '-' ' else load the cache from PSRAM, update the pointer, then read a sample
 '-' 
 '-' 
 '-' cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
-	byte	$be, $e6, $e1, $f8
+	byte	$c1, $fc, $e1, $f8
 '-'             
 '-' 	    mov     addrhi,qq		
-	byte	$be, $e8, $01, $f6
+	byte	$c1, $fe, $01, $f6
 '-' 	    shr     addrhi,#8		        ' get 24 upper bits
-	byte	$08, $e8, $45, $f0
+	byte	$08, $fe, $45, $f0
 '-' 	    alts    cn,#cache1            
-	byte	$e8, $a8, $95, $f9
+	byte	$f3, $be, $95, $f9
 '-' 	    cmp	    addrhi,0-0 wz               ' and compare with the cache pointer for the channel
-	byte	$00, $e8, $09, $f2
+	byte	$00, $fe, $09, $f2
 '-'     if_z    jmp     #p701	    		' if equal, cache hit, read the sample from it
 	byte	$34, $00, $90, $ad
 '-' 	
 '-' p702	    altd    cn,#cache1			' cache miss. 
-	byte	$e8, $a8, $8d, $f9
+	byte	$f3, $be, $8d, $f9
 '-' 	    mov     0-0,addrhi                  ' update the pointer
-	byte	$f4, $00, $00, $f6
+	byte	$ff, $00, $00, $f6
 '-' 	    mov     cmd,addrhi			' prepare the mailbox
-	byte	$f4, $e0, $01, $f6
+	byte	$ff, $f6, $01, $f6
 '-' 	    shl     cmd,#8
-	byte	$08, $e0, $65, $f0
+	byte	$08, $f6, $65, $f0
 '-'             setnib  cmd, #%1011, #7             ' read burst from the external memory
-	byte	$0b, $e0, $3d, $f8
+	byte	$0b, $f6, $3d, $f8
 '-'             mov     hubaddr,cn                  ' to the channel cache
-	byte	$d4, $e2, $01, $f6
+	byte	$df, $f8, $01, $f6
 '-'             shl     hubaddr,#8                  '
-	byte	$08, $e2, $65, $f0
+	byte	$08, $f8, $65, $f0
 '-'             add     hubaddr,hubptr 
-	byte	$e7, $e2, $01, $f1
+	byte	$f2, $f8, $01, $f1
 '-'             mov     count,#256                  ' 256 bytes
-	byte	$00, $e5, $05, $f6
+	byte	$00, $fb, $05, $f6
 '-'             setq    #2                          ' write 3 longs
 	byte	$28, $04, $64, $fd
 '-'             wrlong  cmd, mailbox                ' run it
-	byte	$c1, $e0, $61, $fc
+	byte	$c4, $f6, $61, $fc
 '-' poll1       rdlong  cmd, mailbox                ' poll mailbox for result
-	byte	$c1, $e0, $01, $fb
+	byte	$c4, $f6, $01, $fb
 '-'             tjs     cmd, #poll1                 ' retry until valid 
-	byte	$fe, $e1, $b5, $fb
+	byte	$fe, $f7, $b5, $fb
 '-'             
 '-' 	
 '-' p701	    mov     qq,cn			' cache hit
-	byte	$d4, $7c, $01, $f6
+	byte	$df, $82, $01, $f6
 '-' 	    shl     qq,#8			' compute the cache start
-	byte	$08, $7c, $65, $f0
+	byte	$08, $82, $65, $f0
 '-' 	    add     qq,hubptr
-	byte	$e7, $7c, $01, $f1
+	byte	$f2, $82, $01, $f1
 '-' 	    add	    qq,addrlo			' add 8 lower bits to the cache addredd
-	byte	$f3, $7c, $01, $f1
+	byte	$fe, $82, $01, $f1
 '-'     _ret_   rdword  spl,qq                      ' read a word
-	byte	$be, $7e, $e1, $0a
+	byte	$c1, $84, $e1, $0a
 '-'           
 '-' 
 '-' '--------------------------------------------------------------------------
@@ -709,19 +745,19 @@ _dat_
 '-' '--------------------------------------------------------------------------
 '-' 
 '-' isr1        wypin   lsample,#left        '2     The sample has to be outputted every 100 cycles     
-	byte	$0e, $86, $25, $fc
+	byte	$0e, $8c, $25, $fc
 '-'             wypin   rsample,#right       '4
-	byte	$0f, $88, $25, $fc
+	byte	$0f, $8e, $25, $fc
 '-'             cmp     ptrb,front wcz       '6    If the buffer is empty, do nothing 
-	byte	$bd, $f2, $1b, $f2
+	byte	$c0, $f2, $1b, $f2
 '-'     if_ne   rdlut   lsnext,ptrb          '11    else read the sample and its time from LUT
-	byte	$80, $8b, $a5, $5a
+	byte	$80, $91, $a5, $5a
 '-'     if_ne   incmod  ptrb,#511
 	byte	$ff, $f3, $07, $57
 '-'     if_ne   getword rsample,lsnext,#1    '13
-	byte	$c5, $88, $39, $59
+	byte	$c8, $8e, $39, $59
 '-'     if_ne   getword lsample,lsnext,#0    '15
-	byte	$c5, $86, $31, $59
+	byte	$c8, $8c, $31, $59
 '-'     
 '-'             reti1                        '17/19 
 	byte	$f5, $ff, $3b, $fb
@@ -809,6 +845,22 @@ _dat_
 '-' freqskip0   long 0
 	byte	$00, $00, $00, $00
 '-' command0    long 0
+	byte	$00, $00, $00, $00
+'-' envph0	    long 0
+	byte	$00, $00, $00, $00
+'-' envptr0	    long 0
+	byte	$00, $00, $00, $00
+'-' envspd0	    long 0
+	byte	$00, $00, $00, $00
+'-' envlen0	    long 0
+	byte	$00, $00, $00, $00
+'-' res5	    long 0
+	byte	$00, $00, $00, $00
+'-' res6	    long 0
+	byte	$00, $00, $00, $00
+'-' res7	    long 0
+	byte	$00, $00, $00, $00
+'-' res8	    long 0
 	byte	$00, $00, $00, $00
 '-' 
 '-' afreq0      long 0
@@ -904,7 +956,7 @@ _dat_
 '-' null  			long 	0,0           ' for channel reset
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 objmem
-	long	0[67]
+	long	0[131]
 stackspace
 	long	0[1]
 	org	COG_BSS_START
