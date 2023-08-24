@@ -247,33 +247,40 @@ p405        getword oldls,sample0,#0          ' extract old sample value
             
             altd    cn, #time1                ' add channel period to channel time
             add     0-0,afreq0  	
+            
+'---- envelopes
+            
+            cmp     envptr0,#0 wcz    		' read the pointer
+    if_z    mov     envs1,##$4000		' if 0, no envelope, load $4000=1 for scas
+    if_z    jmp     #p410			' and run away	
 
-            cmp envptr0,#0
-            if_z mov envs1,##$4000
-            if_z jmp #p410
-      	    mov     envhi, envph0
-	    shr     envhi,#6
-	    getword envlo,envhi, #0
-	    shr     envhi,#16
-	    cmp     envhi, envlen0 wcz
-    if_ge   mov     envhi,envlen0
-    if_lt   mov envs1,afreq0
-    if_lt  mul envs1,envspd0
-    if_lt   add	    envph0,envs1
+            mov envs1,afreq0
+            mul envs1,envspd0
+            add envph0,envs1 
+
+      	    mov     envhi, envph0		' move phase acc to high part of env pointer
+	    shr     envhi,#6			' leave 10 bits in hi
+	    getword envlo,envhi,#0              ' and 16 bit in lo
+	    shr     envhi,#16			' move 10 bits of hi to the lower word
+	    cmp     envhi,envlen0 wcz		' compare this to envelope length
+    if_ge   mov     envhi,envlen0		' if greater than, set it at envlen
+    if_ge   mov     envlo,#0
+    if_ge   mov     envph0,envlen0
+    if_ge   shl     envph0,#22
+
             mov envs1,envhi
             shl envs1,#1
             add envs1,envptr0
             rdlong envs1,envs1
             getword envs2,envs1,#1
             getword envs1,envs1,#0
-            
             mul envs2,envlo
             not envlo
             mul envs1,envlo
             add envs1,envs2
             shr envs1,#18
             
-	    
+
 
 p410              add     pointer0,askip0           ' compute the pointer to the next sample       
          setbyte pointer00,pointer0,#0
@@ -310,7 +317,7 @@ p410              add     pointer0,askip0           ' compute the pointer to the
     
 
 p406        
-            scas spl, envs1
+           scas spl, envs1
             mov spl,0-0
             scas    spl,avol0                 ' apply volume
             mov     spl,0-0

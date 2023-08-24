@@ -221,7 +221,7 @@ const maxvars=1023
 const maxstack=512
 const maxfor=128
 dim samplebuf(7,1023) as short
-dim envbuf(7,256) as ushort
+dim envbuf(7,255) as ushort
 declare envbuf8 alias envbuf as ubyte(7,512)
 
 ''-----------------------------------------------------------------------------------------
@@ -355,6 +355,7 @@ compiledslot=sizeof(test)
 
 init_commands
 init_error_strings
+init_audio
 do_new
 
 
@@ -372,7 +373,34 @@ position 2*editor_spaces,4 : print "Ready"
 'hubset( %1_000001__00_0001_1010__1111_1011)
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 
+'paula.play(0,@samplebuf(0,0),88200,16484,0,2048)
 
+'base2:=@channel1[0]+64*channel
+'long[base2+8]:=sample+$C0000000 
+'long[base2+12]:= len
+'if loop >=0 
+'  long[base2+16]:= loop
+'else
+'  long[base2+16]:= len+2
+'word[base2+20]:=vol
+'word[base2+24]:= 3546911/splfreq 
+'word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+'long[base2+28]:=$40000000
+
+'lpoke base+8,varptr(samplebuf(0,0))+$C000_0000 
+'lpoke base+16,2048
+'lpoke base+12,0
+'dpoke base+20,16383
+'dpoke base+22,8192
+'dpoke base+24,40
+'dpoke base+26,1280 ' todo: use skip to make accurate sample rate
+'dpoke base+28,$4000_0000
+'lpoke base+32,0 
+'lpoke base+36, varptr(envbuf(0,0))
+'lpoke base+40,25600' speed
+'lpoke base+44,1023 'len
+
+'do: position 0,0 : print lpeek(base+32): loop 
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -854,6 +882,8 @@ select case s
   case "run"	     	: return token_run
   case "save"	     	: return token_save
   case "s."	     	: return token_save
+  case "sound"	     	: return token_play 
+  case "so."	     	: return token_play 
   case "sprite"	     	: return token_sprite  
   case "sp."	     	: return token_sprite  
   case "then"	     	: return token_then
@@ -1112,59 +1142,60 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1 ' continued after if/else
 vars=0
 'print  "In compile_immediate cmd=:", cmd
 451 select case cmd
-  case token_cls      	: compile_nothing()   'no params, do nothing, only add a command to the line, but case needs something to do after 
-  case token_new      	: compile_nothing()   
-  case token_list     	: vars=compile_fun_varp()   
-  case token_defsnd     : vars=compile_fun_varp()   
-  case token_defenv     : vars=compile_fun_varp()   
-  case token_play     	: vars=compile_fun_varp()   
-  case token_run      	: compile_nothing()   
-  case token_plot     	: err=compile_fun_2p()   
-  case token_draw     	: err=compile_fun_2p()   
-  case token_circle   	: err=compile_fun_3p()  
-  case token_fcircle  	: err=compile_fun_3p()  
-  case token_box      	: err=compile_fun_4p()  
-  case token_frame     	: err=compile_fun_4p()  
-  case token_color    	: err=compile_fun_1p()  
-  case token_print    	: err=compile_print()  : goto 450
-  case token_fast_goto  : if linetype>0 then compile_goto() : goto 450 else printerror(25) : goto 450
-  case token_csave    	: err=compile_fun_1p()  
-  case token_save    	: err=compile_fun_1p()  'todo compile_str_fun_1p
-  case token_load    	: err=compile_fun_1p()  'todo compile_str_fun_1p
-  case token_brun    	: err=compile_fun_1p()  'todo compile_str_fun_1p
-  case token_pinwrite   : err=compile_fun_2p()
-  case token_waitms    	: err=compile_fun_1p()
-  case token_waitvbl    : compile_nothing()
-  case token_waitclock  : compile_nothing()
-  case token_if      	: compile_if() :goto 450
-  case token_for     	: compile_for() :goto 450
-  case token_next     	: compile_next() :goto 450
-  case token_deg	: compile_nothing
-  case token_rad	: compile_nothing
-  case token_int	: err=compile_fun_1p()
-  case token_else    	: compile_else() : goto 450
   case token_beep	: err=compile_fun_2p()
+  case token_box      	: err=compile_fun_4p()  
+  case token_brun    	: err=compile_fun_1p()  
+  case token_circle   	: err=compile_fun_3p()  
+  case token_click	: err=compile_fun_1p()
+  case token_cls      	: compile_nothing()                    'no params, do nothing, only add a command to the line, but case needs something to do after 
+  case token_color    	: err=compile_fun_1p()  
+  case token_csave    	: vars=compile_fun_varp()  
+  case token_cursor	: err=compile_fun_1p()
+  case token_defenv     : vars=compile_fun_varp()   
+  case token_defsnd     : vars=compile_fun_varp()   
+  case token_defsprite	: err=compile_fun_5p()
+  case token_deg	: compile_nothing
+  case token_dim	: compile_dim: goto 450
   case token_dir	: compile_nothing
-  case token_paper	: err=compile_fun_1p()
-  case token_ink	: err=compile_fun_1p()
+  case token_draw     	: err=compile_fun_2p()   
+  case token_else    	: compile_else() : goto 450
+  case token_fast_goto  : if linetype>0 then compile_goto() : goto 450 else printerror(25) : goto 450
+  case token_fcircle  	: err=compile_fun_3p()  
+  case token_fill	: err=compile_fun_4p()
   case token_font	: err=compile_fun_1p()
+  case token_for     	: compile_for() :goto 450
+  case token_frame     	: err=compile_fun_4p()  
+  case token_if      	: compile_if() :goto 450
+  case token_ink	: err=compile_fun_1p()
+  case token_int	: err=compile_fun_1p()
+  case token_list     	: vars=compile_fun_varp()   
+  case token_load    	: vars=compile_fun_varp() 
   case token_mode	: err=compile_fun_1p()
   case token_mouse	: err=compile_fun_1p()
-  case token_cursor	: err=compile_fun_1p()
-  case token_click	: err=compile_fun_1p()
-  case token_sprite	: err=compile_fun_3p()
-  case token_defsprite	: err=compile_fun_5p()
-  case token_fill	: err=compile_fun_4p()
-  case token_wrpin	: err=compile_fun_2p()
-  case token_wxpin	: err=compile_fun_2p()
-  case token_wypin	: err=compile_fun_2p()
+  case token_new      	: compile_nothing()   
+  case token_next     	: compile_next() :goto 450
+  case token_paper	: err=compile_fun_1p()
   case token_pinfloat	: err=compile_fun_1p()
   case token_pinlo	: err=compile_fun_1p()
   case token_pinhi	: err=compile_fun_1p()
   case token_pinstart	: err=compile_fun_4p()
   case token_pintoggle 	: err=compile_fun_1p()
-  case token_dim	: compile_dim: goto 450
+  case token_pinwrite   : err=compile_fun_2p()
+  case token_play     	: vars=compile_fun_varp()   
+  case token_plot     	: err=compile_fun_2p()   
   case token_position	: err=compile_fun_2p()
+  case token_print    	: err=compile_print()  : goto 450
+  case token_rad	: compile_nothing()
+  case token_run      	: compile_nothing()   
+  case token_save    	: vars=compile_fun_varp()  
+  case token_sprite	: err=compile_fun_3p()
+  case token_waitclock  : compile_nothing()
+  case token_waitms    	: err=compile_fun_1p()
+  case token_waitvbl    : compile_nothing()
+  case token_wrpin	: err=compile_fun_2p()
+  case token_wxpin	: err=compile_fun_2p()
+  case token_wypin	: err=compile_fun_2p()
+
   case token_name       : compile_array_assign : goto 450
   case else	     	: compile_unknown() : goto 450
 
@@ -2167,7 +2198,7 @@ if numpar=2 then
     get #9,17,envbuf8(channel,0),256
     for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
     close #9
-                                                                      for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
+                                                                    '  for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
     return
   endif
   
@@ -2213,6 +2244,42 @@ endif
                                                                '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
 end sub
 
+
+sub do_play
+
+' play channel, frequency, waveform, volume (envelope, playtime)
+dim numpar,i,base2,channel,skip as integer
+dim params(5) as integer
+dim t1 as expr_result
+
+params(0)=0 : params(1)=440 : params(2)=0 : params(3)=16384 : params(4)=-1
+
+numpar=compiledline(lineptr_e).result.uresult
+for i=numpar to 1 step -1 
+  t1=pop() 
+  params(i-1)=converttofloat(t1) 
+next i
+base2=base+64*params(0)
+skip=round(params(1)*4.4338896)
+ 
+lpoke base2+8,varptr(samplebuf(params(0),0))+$C000_0000 
+lpoke base2+16,2048
+lpoke base2+12,0
+dpoke base2+20,params(3)
+dpoke base2+22,8192
+dpoke base2+24,60  'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
+dpoke base2+26,skip ' todo: use skip to make accurate sample rate
+dpoke base2+28,$4000_0000
+lpoke base2+32,0 
+if params(4)=-1 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
+lpoke base2+40,512' speed
+lpoke base2+44,255 'len
+
+
+end sub
+
+
+
 sub do_defsnd
 dim numpar,i,j,par,channel as integer
 dim even,odd, max,spl,qqq as single 
@@ -2249,7 +2316,7 @@ if numpar=2 then
     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
     get #9,17,samplebuf(channel,0),1024
     close #9
-                                                                      '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
+                                                                       'for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
     return
   endif
   
@@ -3853,10 +3920,19 @@ commands(token_rad)=@do_rad
 commands(token_deg)=@do_deg
 commands(token_int)=@do_int
 
+commands(token_play)=@do_play
+
 
 end sub
 
 ''--------------------------------Error strings -------------------------------------
+sub init_audio
+
+dim i,j as integer
+
+for i=0 to 1023 : for j=0 to 7 : samplebuf(j,i)=round(32600*sin(i*3.1415926535/512.0)) : next j: next i
+for i=0 to 255 : for j=0 to 7 : envbuf(j,i)=65280-256*i : next j : next i
+end sub
 
 sub init_error_strings
 
