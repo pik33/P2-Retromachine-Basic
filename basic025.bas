@@ -15,7 +15,7 @@ dim psram as class using "psram4.spin2"
 #endif
 
 dim kbm as class using "usbnew.spin2"
-dim paula as class using "audio093b-8-sc.spin2"
+dim paula as class using "audio095-8-sc.spin2"
 
 #include "dir.bi"
 
@@ -350,7 +350,7 @@ housekeeper_cog=cpu(housekeeper(),@housekeeper_stack(0)) : hkcnt=0
 editor_spaces=2
 paper=147: ink=154 : font=4
 plot_color=ink : plot_x=0: plot_y=0
-keyclick=1 : nostalgic_mode=0 : keyclick_spl=@atari_spl : spl_len=1684
+keyclick=1 : nostalgic_mode=0 : keyclick_spl=@atari_spl : spl_len=1694
 compiledslot=sizeof(test)
 
 init_commands
@@ -407,6 +407,7 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 
 do
 waitvbl
+paula.stop(6)
 
 '' Do key repeat
 
@@ -420,7 +421,7 @@ if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 
 
 if key3<>0 then
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,16384,spl_len) 
+  if keyclick=1 then paula.play(6,keyclick_spl,44100,16384,spl_len) 
   let key4=scantochar(key3) 
   if leds and 2 = 2 then 
     if key4>96 andalso key4<123 then
@@ -2247,35 +2248,72 @@ end sub
 
 sub do_play
 
-' play channel, frequency, waveform, volume (envelope, playtime)
-dim numpar,i,base2,channel,skip as integer
-dim params(5) as integer
+' play channel : play 440 Hz with waveform(channel) and envelope(channel) with max volume
+' play channel, freq: play freq with waveform(channel and envleope(channel) 
+' play channel, freq, volume
+' play channel, freq, volume, waveform
+' play channel, freq, volume, waveform, envelope
+' play channel, freq, volume, waveform, envelope, length
+' play channel, freq, volume, waveform, envelope, length, wait
+' play channel, freq, volume, waveform, envelope, length, wait, pan
+
+
+'channel: int, 0..7
+'freq: float in Hz
+'volume : float from 0 to 16
+'waveform : int, 0 to 7 - from def, 8: noise
+'envelope : int, 0 to 7, 8: no envelope
+'wait : in ms
+
+
+dim numpar,i,base2,channel,skip,speed,pan as integer
+dim params(7) as single
 dim t1 as expr_result
-
-params(0)=0 : params(1)=440 : params(2)=0 : params(3)=16384 : params(4)=-1
-
+dim speed_coeff as single
+speed_coeff=302.68686433234421364985163204748 
+params(0)=0.0 : params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0
+'chn		freq		   vol		   wave#	   env#		   len		   delay	   pan
 numpar=compiledline(lineptr_e).result.uresult
 for i=numpar to 1 step -1 
   t1=pop() 
   params(i-1)=converttofloat(t1) 
+
+
+
 next i
+'for i=0 to 7 : print params(i): next i
+if numpar<4 then params(3)=params(0) : params(4)=params(0) ' set wave and env # as chn#
+if numpar<5 then params(4)=params(0) ' set wave and env # as chn#
+speed=round(speed_coeff/params(5))
+pan=8192+round(8192*params(7))
 base2=base+64*params(0)
 skip=round(params(1)*4.4338896)
- 
-lpoke base2+8,varptr(samplebuf(params(0),0))+$C000_0000 
+if params(3)<8 then 
+  lpoke base2+8,varptr(samplebuf(round(params(0)),0))+$C000_0000 
+else
+  lpoke base2+8,$C800_0000 
+endif
+  
 lpoke base2+16,2048
 lpoke base2+12,0
-dpoke base2+20,params(3)
-dpoke base2+22,8192
-dpoke base2+24,60  'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
-dpoke base2+26,skip ' todo: use skip to make accurate sample rate
+dpoke base2+20,round(1000*params(2))
+dpoke base2+22,pan
+if params(3)<8 then
+  dpoke base2+24,60  'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
+  dpoke base2+26,skip ' todo: use skip to make accurate sample rate
+else
+  dpoke base2+24,round(3500000.0/params(1)) 
+  dpoke base2+26,256
+endif 
 dpoke base2+28,$4000_0000
 lpoke base2+32,0 
-if params(4)=-1 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
-lpoke base2+40,512' speed
+if params(4)=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
+lpoke base2+40,speed' speed
 lpoke base2+44,255 'len
 
-
+if params(6)>0 then waitms(round(params(6)))' : print "wait "; round(params(6)) : l
+'lpoke bASE+7*64+20,0
+'do: position(0,0): print dpeek(base+4),dpeek(base+4+64),dpeek(base+4+128),dpeek(base+4+192),dpeek(base+4+256),dpeek(base+4+320)," ",lpeek(base+4+384);"           ",dpeek(base+4+448) : loop
 end sub
 
 
@@ -2297,7 +2335,7 @@ numpar=compiledline(lineptr_e).result.uresult
 
 if numpar<2 then return
 
- 
+  
 if numpar=2 then
   t1=pop()
   if t1.result_type=result_string2 then 
@@ -3503,11 +3541,11 @@ t1=pop()
 if t1.result_type=result_float then t1.result.iresult=t1.result.fresult
 if t1.result_type=result_string then t1.result.iresult=val(t1.result.sresult)
 select case t1.result.iresult
-   case 0: font=1 :ink=154 : keyclick=1 : paper=147 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atari_spl : spl_len=1684
+   case 0: font=1 :ink=154 : keyclick=1 : paper=147 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atari_spl : spl_len=1684+4
    case 1: font=0 :ink=23 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
    case 2: font=0 :ink=181 : keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
    case 3: font=0 :ink=15 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684
+   case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
 end select
 nostalgic_mode=t1.result.iresult
 v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
@@ -3929,9 +3967,13 @@ end sub
 sub init_audio
 
 dim i,j as integer
-
+v.cls(147,154)
 for i=0 to 1023 : for j=0 to 7 : samplebuf(j,i)=round(32600*sin(i*3.1415926535/512.0)) : next j: next i
 for i=0 to 255 : for j=0 to 7 : envbuf(j,i)=65280-256*i : next j : next i
+lpoke base+7*64+36,varptr(envbuf(7,0))
+lpoke base+7*64+40,256
+lpoke base+7*64+44,255
+
 end sub
 
 sub init_error_strings
@@ -4212,8 +4254,11 @@ dim shared as ubyte keys(511)={
   
 asm shared
 atari_spl file "atari.spl"
+zero long 0
 atari2_spl file "atari2.spl" '1758
+zero1 long 0
 atarist_spl file "atarist.spl" '512
+zero2 long 0
 mouse  file "mouse2.def"
 end asm
 

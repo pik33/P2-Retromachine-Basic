@@ -359,8 +359,8 @@ itmp2_
 	long	0
 objptr
 	long	@objmem
-ptr__Audio093b_8_sc_spin2_dat__
-	long	@_Audio093b_8_sc_spin2_dat_
+ptr__Audio095_8_sc_spin2_dat__
+	long	@_Audio095_8_sc_spin2_dat_
 ptr___system__dat__
 	long	@__system__dat_
 ptr__dat__
@@ -10219,7 +10219,7 @@ LR__0834
 	mov	arg05, #256
 	mov	arg06, #0
 	sub	objptr, ##54960
-	call	#_Audio093b_8_sc_spin2_play8
+	call	#_Audio095_8_sc_spin2_play8
 	sub	objptr, ##5824
 	mov	arg01, ##3000
 	call	#__system___waitms
@@ -10963,7 +10963,7 @@ LR__0873
 	decod	arg04, #14
 	neg	arg06, #1
 	sub	objptr, ##56964
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 LR__0874
 '   print "Stopped at line ";runheader(0)
@@ -11698,20 +11698,28 @@ _do_defenv_ret
 ' 
 ' sub do_play
 _do_play
-	mov	COUNT_, #4
+	mov	COUNT_, #2
 	call	#pushregs_
-	add	ptra, #56
-	add	fp, #20
+	add	ptra, #76
+	add	fp, #72
+	wrlong	##1133991915, fp
+	sub	fp, #44
 	wrlong	#0, fp
 	add	fp, #4
-	wrlong	#440, fp
+	wrlong	##1138491392, fp
+	add	fp, #4
+	wrlong	##1098907648, fp
 	add	fp, #4
 	wrlong	#0, fp
 	add	fp, #4
-	wrlong	##16384, fp
+	wrlong	#0, fp
 	add	fp, #4
-	wrlong	##-1, fp
-	sub	fp, #36
+	wrlong	##1065353216, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#0, fp
+	sub	fp, #56
 	add	objptr, ##54084
 	rdlong	local01, objptr
 	mov	local02, local01
@@ -11720,64 +11728,112 @@ _do_play
 	shl	local02, #2
 	sub	objptr, ##1540
 	add	local02, objptr
-	rdlong	local03, local02
-	wrlong	local03, fp
-' 
-' params(0)=0 : params(1)=440 : params(2)=0 : params(3)=16384 : params(4)=-1
-' 
+	rdlong	local01, local02
+	wrlong	local01, fp
+' speed_coeff=302.68686433234421364985163204748 
+' params(0)=0.0 : params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0
+' 'chn		freq		   vol		   wave#	   env#		   len		   delay	   pan
 ' numpar=compiledline(lineptr_e).result.uresult
 ' for i=numpar to 1 step -1 
 	add	fp, #4
-	wrlong	local03, fp
+	wrlong	local01, fp
 	sub	fp, #4
 	sub	objptr, ##52544
 LR__0910
 	call	#_pop
-	add	fp, #44
+	add	fp, #60
 	wrlong	result1, fp
 	add	fp, #4
 	wrlong	result2, fp
 	add	fp, #4
 	wrlong	result3, fp
-	sub	fp, #48
+	sub	fp, #64
 	rdlong	local02, fp
 	sub	local02, #1
 	shl	local02, #2
-	add	fp, #16
-	add	local02, fp
 	add	fp, #24
+	add	local02, fp
+	add	fp, #32
 	mov	arg01, fp
-	sub	fp, #44
+	sub	fp, #60
 	call	#_converttofloat
+	wrlong	result1, local02
+	add	fp, #4
+	rdlong	local02, fp
+	sub	local02, #1
+	wrlong	local02, fp
+	sub	fp, #4
+	cmps	local02, #1 wc
+ if_ae	jmp	#LR__0910
+' 'for i=0 to 7 : print params(i): next i
+' if numpar<4 then params(3)=params(0) : params(4)=params(0) ' set wave and env # as chn#
+	rdlong	local01, fp
+	cmps	local01, #4 wc
+ if_ae	jmp	#LR__0911
+	add	fp, #28
+	rdlong	local01, fp
+	add	fp, #12
+	wrlong	local01, fp
+	sub	fp, #12
+	rdlong	local01, fp
+	add	fp, #16
+	wrlong	local01, fp
+	sub	fp, #44
+LR__0911
+' if numpar<5 then params(4)=params(0) ' set wave and env # as chn#
+	rdlong	local01, fp
+	cmps	local01, #5 wc
+ if_b	add	fp, #28
+ if_b	rdlong	local01, fp
+ if_b	add	fp, #16
+ if_b	wrlong	local01, fp
+ if_b	sub	fp, #44
+	add	fp, #72
+	rdlong	arg01, fp
+	sub	fp, #24
+	rdlong	arg02, fp
+	sub	fp, #48
+	call	#__system___float_div
+	mov	arg01, result1
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	mov	local01, result1
+	add	fp, #20
+	wrlong	local01, fp
+	add	fp, #36
+	rdlong	arg02, fp
+	sub	fp, #56
+	mov	arg01, ##1174405120
+	call	#__system___float_mul
+	mov	arg01, result1
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	decod	local01, #13
+	add	local01, result1
+	add	fp, #24
+	wrlong	local01, fp
+	sub	fp, #24
+	add	objptr, ##44244
+	rdlong	arg01, objptr
+	sub	objptr, ##44244
+	call	#__system___float_fromuns
+	mov	local01, result1
+	add	fp, #28
+	rdlong	arg02, fp
+	sub	fp, #28
+	mov	arg01, ##1115684864
+	call	#__system___float_mul
+	mov	arg02, result1
+	mov	arg01, local01
+	call	#__system___float_add
 	mov	arg01, result1
 	mov	arg02, #0
 	call	#__system___float_tointeger
-	wrlong	result1, local02
-	add	fp, #4
-	rdlong	local03, fp
-	sub	local03, #1
-	wrlong	local03, fp
-	sub	fp, #4
-	cmps	local03, #1 wc
- if_ae	jmp	#LR__0910
-	add	objptr, ##44244
-	rdlong	local03, objptr
-	sub	objptr, ##44244
-	add	fp, #20
-	rdlong	local01, fp
-	shl	local01, #6
-	add	local03, local01
-	sub	fp, #12
-	wrlong	local03, fp
-	add	fp, #16
+	add	fp, #8
+	wrlong	result1, fp
+	add	fp, #24
 	rdlong	arg01, fp
-	sub	fp, #24
-	abs	arg01, arg01 wc
- if_b	decod	local04, #31
- if_ae	mov	local04, #0
-	call	#__system___float_fromuns
-	xor	result1, local04
-	mov	arg01, result1
+	sub	fp, #32
 	mov	arg02, ##1083040364
 	call	#__system___float_mul
 	mov	arg01, result1
@@ -11785,33 +11841,80 @@ LR__0910
 	call	#__system___float_tointeger
 	add	fp, #16
 	wrlong	result1, fp
-	sub	fp, #8
+' speed=round(speed_coeff/params(5))
+' pan=8192+round(8192*params(7))
+' base2=base+64*params(0)
+' skip=round(params(1)*4.4338896)
+' if params(3)<8 then 
+	add	fp, #24
 	rdlong	arg01, fp
-	add	arg01, #8
-	add	fp, #12
-	rdlong	arg02, fp
-	shl	arg02, #11
+	sub	fp, #40
+	mov	arg02, ##1090519040
+	mov	arg03, #1
+	call	#__system___float_cmp
+	cmps	result1, #0 wc
+ if_ae	jmp	#LR__0912
+	add	fp, #8
+	rdlong	local01, fp
+	add	local01, #8
+	add	fp, #20
+	rdlong	arg01, fp
+	sub	fp, #28
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	shl	result1, #11
 	add	objptr, ##6348
-	add	arg02, objptr
+	add	result1, objptr
 	sub	objptr, ##6348
-	add	arg02, ##-1073741824
-	wrlong	arg02, arg01
-	sub	fp, #12
+	add	result1, ##-1073741824
+	wrlong	result1, local01
+	jmp	#LR__0913
+LR__0912
+	add	fp, #8
+	rdlong	arg01, fp
+	sub	fp, #8
+	add	arg01, #8
+	wrlong	##-939524096, arg01
+LR__0913
+	add	fp, #8
 	rdlong	arg01, fp
 	add	arg01, #16
 	wrlong	##2048, arg01
 	rdlong	arg01, fp
 	add	arg01, #12
 	wrlong	#0, arg01
-	rdlong	arg01, fp
-	add	arg01, #20
-	add	fp, #24
+	rdlong	local01, fp
+	add	local01, #20
+	add	fp, #28
 	rdlong	arg02, fp
-	wrword	arg02, arg01
-	sub	fp, #24
+	sub	fp, #36
+	mov	arg01, ##1148846080
+	call	#__system___float_mul
+	mov	arg01, result1
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	wrword	result1, local01
+	add	fp, #8
 	rdlong	arg01, fp
 	add	arg01, #22
-	wrword	##8192, arg01
+	add	fp, #16
+	rdlong	arg02, fp
+	wrword	arg02, arg01
+'   
+' lpoke base2+16,2048
+' lpoke base2+12,0
+' dpoke base2+20,round(1000*params(2))
+' dpoke base2+22,pan
+' if params(3)<8 then
+	add	fp, #16
+	rdlong	arg01, fp
+	sub	fp, #40
+	mov	arg02, ##1090519040
+	mov	arg03, #1
+	call	#__system___float_cmp
+	cmps	result1, #0 wc
+ if_ae	jmp	#LR__0914
+	add	fp, #8
 	rdlong	arg01, fp
 	add	arg01, #24
 	wrword	#60, arg01
@@ -11819,59 +11922,97 @@ LR__0910
 	add	arg01, #26
 	add	fp, #8
 	rdlong	arg02, fp
+	sub	fp, #16
 	wrword	arg02, arg01
+	jmp	#LR__0915
+LR__0914
+	add	fp, #8
+	rdlong	local01, fp
+	add	local01, #24
+	add	fp, #24
+	rdlong	arg02, fp
+	sub	fp, #32
+	mov	arg01, ##1247125376
+	call	#__system___float_div
+	mov	arg01, result1
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	wrword	result1, local01
+	add	fp, #8
+	rdlong	arg01, fp
 	sub	fp, #8
+	add	arg01, #26
+	wrword	#256, arg01
+LR__0915
+	add	fp, #8
 	rdlong	arg01, fp
 	add	arg01, #28
 	wrword	#0, arg01
 	rdlong	arg01, fp
 	add	arg01, #32
 	wrlong	#0, arg01
-' base2=base+64*params(0)
-' skip=round(params(1)*4.4338896)
-'  
-' lpoke base2+8,varptr(samplebuf(params(0),0))+$C000_0000 
-' lpoke base2+16,2048
-' lpoke base2+12,0
-' dpoke base2+20,params(3)
-' dpoke base2+22,8192
-' dpoke base2+24,60  'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
-' dpoke base2+26,skip ' todo: use skip to make accurate sample rate
 ' dpoke base2+28,$4000_0000
 ' lpoke base2+32,0 
-' if params(4)=-1 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
-	add	fp, #28
-	rdlong	local03, fp
-	sub	fp, #36
-	cmp	local03, ##-1 wz
- if_ne	jmp	#LR__0911
+' if params(4)=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
+	add	fp, #36
+	rdlong	arg01, fp
+	sub	fp, #44
+	mov	arg02, ##1090519040
+	mov	arg03, #1
+	call	#__system___float_cmp
+	cmp	result1, #0 wz
+ if_ne	jmp	#LR__0916
 	add	fp, #8
 	rdlong	arg01, fp
 	sub	fp, #8
 	add	arg01, #36
 	wrlong	#0, arg01
-	jmp	#LR__0912
-LR__0911
+	jmp	#LR__0917
+LR__0916
 	add	fp, #8
+	rdlong	local01, fp
+	add	local01, #36
+	add	fp, #36
 	rdlong	arg01, fp
-	add	arg01, #36
-	add	fp, #28
-	rdlong	arg02, fp
-	sub	fp, #36
-	shl	arg02, #9
+	sub	fp, #44
+	mov	arg02, #0
+	call	#__system___float_tointeger
+	shl	result1, #9
 	add	objptr, ##22732
-	add	arg02, objptr
+	add	result1, objptr
 	sub	objptr, ##22732
-	wrlong	arg02, arg01
-LR__0912
+	wrlong	result1, local01
+LR__0917
 	add	fp, #8
 	rdlong	arg01, fp
 	add	arg01, #40
-	wrlong	##512, arg01
+	add	fp, #12
+	rdlong	arg02, fp
+	wrlong	arg02, arg01
+	sub	fp, #12
 	rdlong	arg01, fp
-	sub	fp, #8
 	add	arg01, #44
 	wrlong	#255, arg01
+' lpoke base2+40,speed' speed
+' lpoke base2+44,255 'len
+' 
+' if params(6)>0 then waitms(round(params(6)))' : print "wait "; round(params(6)) : l
+	add	fp, #44
+	rdlong	arg01, fp
+	sub	fp, #52
+	mov	arg02, #0
+	neg	arg03, #1
+	call	#__system___float_cmp
+	cmps	result1, #1 wc
+ if_b	jmp	#LR__0918
+	add	fp, #52
+	rdlong	arg01, fp
+	sub	fp, #52
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	mov	arg01, result1
+	call	#__system___waitms
+LR__0918
 	mov	ptra, fp
 	call	#popregs_
 _do_play_ret
@@ -11909,7 +12050,7 @@ _do_defsnd
 	sub	objptr, ##52544
  if_b	jmp	#LR__0944
 ' 
-'  
+'   
 ' if numpar=2 then
 	rdlong	arg05, fp
 	cmp	arg05, #2 wz
@@ -20894,7 +21035,7 @@ LR__1563
 	add	objptr, ##62727
 	wrlong	ptr__dat__, objptr
 	sub	objptr, #4
-	wrlong	##1684, objptr
+	wrlong	##1688, objptr
 	sub	objptr, ##62788
 	sub	ptr__dat__, ##512
 	jmp	#LR__1568
@@ -20996,13 +21137,13 @@ LR__1567
 ' write_background:=bb
 	add	objptr, #4
 	wrlong	arg02, objptr
-	add	ptr__dat__, ##3954
+	add	ptr__dat__, ##3978
 	add	objptr, ##62727
 	wrlong	ptr__dat__, objptr
 	sub	objptr, #4
-	wrlong	##1684, objptr
+	wrlong	##1688, objptr
 	sub	objptr, ##62788
-	sub	ptr__dat__, ##3954
+	sub	ptr__dat__, ##3978
 LR__1568
 	add	objptr, ##62784
 	wrlong	local01, objptr
@@ -21018,9 +21159,9 @@ LR__1568
 	call	#_hg010b_spin2_write
 ' crlf
 	call	#_hg010b_spin2_crlf
-	add	ptr__dat__, ##8464
+	add	ptr__dat__, ##8492
 	rdlong	arg01, ptr__dat__
-	sub	ptr__dat__, ##8464
+	sub	ptr__dat__, ##8492
 ' 
 ' write(text)
 	call	#_hg010b_spin2_write
@@ -21671,7 +21812,7 @@ LR__1594
 	decod	arg04, #14
 	neg	arg06, #1
 	sub	objptr, ##56964
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 LR__1595
 	mov	arg01, #0
@@ -21954,9 +22095,9 @@ LR__1613
 	add	objptr, ##17888
 	rdlong	arg01, objptr
 	cogstop	arg01
-	add	ptr__dat__, ##8348
+	add	ptr__dat__, ##8376
 	mov	arg02, ptr__dat__
-	sub	ptr__dat__, ##8348
+	sub	ptr__dat__, ##8376
 	sub	objptr, ##17880
 	mov	local08, #30
 	setq	objptr
@@ -22106,7 +22247,7 @@ LR__1640
 	mov	arg05, #2
 	mov	arg06, #0
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_play8
+	call	#_Audio095_8_sc_spin2_play8
 	sub	objptr, ##5824
 	add	fp, #12
 	mov	arg01, fp
@@ -22115,7 +22256,7 @@ LR__1640
 	call	#_do_waitms
 	mov	arg01, #7
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_stop
+	call	#_Audio095_8_sc_spin2_stop
 	sub	objptr, ##5824
 	mov	ptra, fp
 	call	#popregs_
@@ -22744,7 +22885,10 @@ _init_commands_ret
 _init_audio
 	mov	COUNT_, #5
 	call	#pushregs_
-' 
+	mov	arg01, #147
+	mov	arg02, #154
+	call	#_hg010b_spin2_cls
+' v.cls(147,154)
 ' for i=0 to 1023 : for j=0 to 7 : samplebuf(j,i)=round(32600*sin(i*3.1415926535/512.0)) : next j: next i
 	mov	local01, #0
 LR__1670
@@ -22811,6 +22955,19 @@ LR__1673
 	cmps	local01, #256 wc
  if_b	jmp	#LR__1672
 LR__1674
+	add	objptr, ##44244
+	rdlong	arg01, objptr
+	add	arg01, #484
+	sub	objptr, ##17928
+	wrlong	objptr, arg01
+	add	objptr, ##17928
+	rdlong	arg01, objptr
+	add	arg01, #488
+	wrlong	#256, arg01
+	rdlong	arg01, objptr
+	sub	objptr, ##44244
+	add	arg01, #492
+	wrlong	#255, arg01
 	mov	ptra, fp
 	call	#popregs_
 _init_audio_ret
@@ -23192,7 +23349,7 @@ _program
 	mov	arg02, #0
 	mov	arg03, #0
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_start
+	call	#_Audio095_8_sc_spin2_start
 	mov	arg06, result2
 	add	objptr, ##38400
 	wrlong	result1, objptr
@@ -23223,9 +23380,9 @@ _program
 	add	ptr__usbnew_spin2_dat__, #4
 	wrlong	arg01, ptr__usbnew_spin2_dat__
 	sub	ptr__usbnew_spin2_dat__, ##7876
-	add	ptr__dat__, ##7322
+	add	ptr__dat__, ##7350
 	mov	arg02, ptr__dat__
-	sub	ptr__dat__, ##7322
+	sub	ptr__dat__, ##7350
 	mov	arg01, #16
 	call	#_hg010b_spin2_setspriteptr
 	mov	arg01, #16
@@ -23275,7 +23432,7 @@ _program
 	add	objptr, #8
 	wrlong	ptr__dat__, objptr
 	sub	objptr, #4
-	wrlong	##1684, objptr
+	wrlong	##1694, objptr
 	sub	objptr, ##11292
 	wrlong	#12, objptr
 	sub	objptr, ##51496
@@ -23339,9 +23496,9 @@ _program
 	call	#__system___getiolock_0425
 	mov	arg01, result1
 	call	#__system___lockmem
-	add	ptr__dat__, ##8464
+	add	ptr__dat__, ##8492
 	rdlong	arg02, ptr__dat__
-	sub	ptr__dat__, ##8464
+	sub	ptr__dat__, ##8492
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
@@ -23450,6 +23607,10 @@ _program
 LR__1700
 	mov	arg01, #1
 	call	#_hg010b_spin2_waitvbl
+	mov	arg01, #6
+	add	objptr, ##5824
+	call	#_Audio095_8_sc_spin2_stop
+	sub	objptr, ##5824
 	call	#_usbnew_spin2_get_key
 	add	objptr, ##51512
 	wrlong	result1, objptr
@@ -23477,9 +23638,9 @@ LR__1700
 	mov	local05, local01
 	cmp	local05, #1 wz
  if_ne	jmp	#LR__1701
-	add	ptr__dat__, ##2196
+	add	ptr__dat__, ##2216
 	mov	arg02, ptr__dat__
-	sub	ptr__dat__, ##2196
+	sub	ptr__dat__, ##2216
 	mov	local03, ##44100
 	decod	local04, #14
 	mov	local05, #0
@@ -23490,13 +23651,13 @@ LR__1700
 	mov	arg05, #0
 	mov	arg06, ##1758
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 	mov	arg01, #10
 	call	#__system___waitms
 	mov	arg01, #7
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_stop
+	call	#_Audio095_8_sc_spin2_stop
 	sub	objptr, ##5824
 LR__1701
 ' if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then let key2=key : let rpt=1 : let key3=key2
@@ -23579,7 +23740,7 @@ LR__1704
 	rdlong	local06, objptr wz
 	sub	objptr, ##62816
  if_e	jmp	#LR__1700
-'   if keyclick=1 then paula.play(7,keyclick_spl,44100,16384,spl_len) 
+'   if keyclick=1 then paula.play(6,keyclick_spl,44100,16384,spl_len) 
 	add	objptr, ##62116
 	rdlong	local02, objptr
 	sub	objptr, ##62116
@@ -23592,13 +23753,13 @@ LR__1704
 	sub	objptr, #4
 	rdlong	local05, objptr
 	neg	local01, #1
-	mov	arg01, #7
+	mov	arg01, #6
 	mov	arg03, ##44100
 	decod	arg04, #14
 	mov	arg05, local05
 	neg	arg06, #1
 	sub	objptr, ##56964
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 LR__1705
 	add	objptr, ##62816
@@ -23745,9 +23906,9 @@ LR__1714
  if_e	mov	local09, local08
  if_e	cmp	local09, #1 wz
  if_ne	jmp	#LR__1715
-	add	ptr__dat__, ##2196
+	add	ptr__dat__, ##2216
 	mov	arg02, ptr__dat__
-	sub	ptr__dat__, ##2196
+	sub	ptr__dat__, ##2216
 	mov	local03, ##44100
 	decod	local04, #14
 	mov	local05, #0
@@ -23758,13 +23919,13 @@ LR__1714
 	mov	arg05, #0
 	mov	arg06, ##1758
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 	mov	arg01, #300
 	call	#__system___waitms
 	mov	arg01, #7
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_stop
+	call	#_Audio095_8_sc_spin2_stop
 	sub	objptr, ##5824
 LR__1715
 '  
@@ -23788,9 +23949,9 @@ LR__1715
 	mov	local05, local01
 	cmp	local05, #1 wz
  if_ne	jmp	#LR__1716
-	add	ptr__dat__, ##2196
+	add	ptr__dat__, ##2216
 	mov	arg02, ptr__dat__
-	sub	ptr__dat__, ##2196
+	sub	ptr__dat__, ##2216
 	mov	local03, ##44100
 	decod	local04, #14
 	mov	local05, #0
@@ -23801,13 +23962,13 @@ LR__1715
 	mov	arg05, #0
 	mov	arg06, ##1758
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_play
+	call	#_Audio095_8_sc_spin2_play
 	sub	objptr, ##5824
 	mov	arg01, #300
 	call	#__system___waitms
 	mov	arg01, #0
 	add	objptr, ##5824
-	call	#_Audio093b_8_sc_spin2_stop
+	call	#_Audio095_8_sc_spin2_stop
 	sub	objptr, ##5824
 LR__1716
 '   if (key3 and 255) = 43 andalso v.cursor_x<240 then let x=(v.cursor_x mod 16)/2: for i=x to 7: line$+=" " :  v.write (" ") : next i  
@@ -26842,7 +27003,7 @@ _usbnew_spin2_hidpad_axis_ret
 ' '--------------------------------------------------------------
 ' 
 ' pub start(mbox,scope,cache) :cog,base | iii
-_Audio093b_8_sc_spin2_start
+_Audio095_8_sc_spin2_start
 	mov	COUNT_, #4
 	call	#pushregs_
 	mov	local01, arg01
@@ -26865,7 +27026,7 @@ _Audio093b_8_sc_spin2_start
 ' 
 ' repeat iii from 0 to 7
 	mov	local03, #0
-	add	ptr__Audio093b_8_sc_spin2_dat__, ##1156
+	add	ptr__Audio095_8_sc_spin2_dat__, ##1176
 	sub	objptr, #12
 	callpa	#(@LR__2021-@LR__2020)>>2,fcache_load_ptr_
 LR__2020
@@ -26929,7 +27090,7 @@ LR__2020
 	add	local04, #26
 	wrword	#2, local04
 '   long [base+64*iii+8]:=@null | $C0000000
-	mov	local01, ptr__Audio093b_8_sc_spin2_dat__
+	mov	local01, ptr__Audio095_8_sc_spin2_dat__
 	bith	local01, #62
 	mov	local04, local02
 	mov	arg03, local03
@@ -26969,10 +27130,10 @@ LR__2020
 	cmps	local03, #8 wc
  if_b	jmp	#LR__2020
 LR__2021
-	sub	ptr__Audio093b_8_sc_spin2_dat__, ##1156
+	sub	ptr__Audio095_8_sc_spin2_dat__, ##1176
 '   
 ' cog:=coginit(16,@audio,@mailboxaddr)
-	mov	arg02, ptr__Audio093b_8_sc_spin2_dat__
+	mov	arg02, ptr__Audio095_8_sc_spin2_dat__
 	mov	arg03, objptr
 	mov	local04, #16
 	setq	arg03
@@ -26986,68 +27147,66 @@ LR__2021
 	mov	result1, local04
 	mov	ptra, fp
 	call	#popregs_
-_Audio093b_8_sc_spin2_start_ret
+_Audio095_8_sc_spin2_start_ret
 	ret
 
 ' 
 ' ' a simple play procedure to not poke everything. 
 ' 
 ' pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
-_Audio093b_8_sc_spin2_play
-	add	objptr, #12
-	mov	_var01, objptr
-	shl	arg01, #6
-	add	_var01, arg01
-	add	arg02, ##-1073741824
-	mov	arg01, _var01
-	add	arg01, #8
-	wrlong	arg02, arg01
-	mov	arg02, _var01
-	add	arg02, #12
-	wrlong	arg05, arg02
-	cmps	arg06, #0 wc
- if_ae	mov	arg02, _var01
- if_ae	add	arg02, #16
- if_ae	wrlong	arg06, arg02
- if_b	add	arg05, #2
- if_b	mov	arg01, _var01
- if_b	add	arg01, #16
- if_b	wrlong	arg05, arg01
-	abs	arg02, arg03 wc
-	qdiv	##3546911, arg02
+_Audio095_8_sc_spin2_play
+	abs	arg03, arg03 wc
+	qdiv	##3546911, arg03
 ' 
 ' base2:=@channel1[0]+64*channel
+	add	objptr, #12
+	mov	arg03, objptr
+	shl	arg01, #6
+	add	arg03, arg01
+' long[base2+4]:=0
+	mov	arg01, arg03
+	add	arg01, #4
+	wrlong	#0, arg01
 ' long[base2+8]:=sample+$C0000000 
-' long[base2+12]:= len
-' if loop >=0 
-'   long[base2+16]:= loop
-	sub	objptr, #12
-' else
-'   long[base2+16]:= len+2
+	add	arg02, ##-1073741824
+	mov	arg01, arg03
+	add	arg01, #8
+	wrlong	arg02, arg01
+' long[base2+12]:= len-4
+	mov	arg02, arg05
+	sub	arg02, #4
+	mov	arg01, arg03
+	add	arg01, #12
+	wrlong	arg02, arg01
+' long[base2+16]:= len+4
+	add	arg05, #4
+	mov	arg02, arg03
+	add	arg02, #16
+	wrlong	arg05, arg02
 ' word[base2+20]:=vol
-	mov	arg02, _var01
-	add	arg02, #20
-	wrword	arg04, arg02
+	mov	arg05, arg03
+	add	arg05, #20
+	wrword	arg04, arg05
 ' word[base2+24]:= 3546911/splfreq 
-	mov	arg01, _var01
-	add	arg01, #24
+	sub	objptr, #12
+	mov	arg04, arg03
+	getqx	arg05
+	negc	arg05, arg05
+	add	arg04, #24
+	wrword	arg05, arg04
 ' word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+	mov	arg04, arg03
+	add	arg04, #26
+	wrword	#256, arg04
 ' long[base2+28]:=$40000000
-	getqx	arg02
-	negc	arg02, arg02
-	wrword	arg02, arg01
-	mov	arg02, _var01
-	add	arg02, #26
-	wrword	#256, arg02
-	add	_var01, #28
-	wrlong	##1073741824, _var01
-_Audio093b_8_sc_spin2_play_ret
+	add	arg03, #28
+	wrlong	##1073741824, arg03
+_Audio095_8_sc_spin2_play_ret
 	ret
 
-' until (i >>8) >=len
 ' 
 ' pub play8(channel,sample,splfreq,vol,len,loop=-1) |base2,i
-_Audio093b_8_sc_spin2_play8
+_Audio095_8_sc_spin2_play8
 ' 
 ' base2:=@channel1[0]+64*channel
 	add	objptr, #12
@@ -27105,23 +27264,30 @@ LR__2031
 	wrword	#256, arg04
 	add	_var01, #28
 	wrlong	##1073741824, _var01
-_Audio093b_8_sc_spin2_play8_ret
+_Audio095_8_sc_spin2_play8_ret
 	ret
 
 ' 
 '     
 ' pub stop(channel) 'silence it
-_Audio093b_8_sc_spin2_stop
+_Audio095_8_sc_spin2_stop
 ' 
 ' word[@channel1[0]+64*channel+20]:=0
 	add	objptr, #12
+	mov	_var01, objptr
+	mov	_var02, arg01
+	shl	_var02, #6
+	add	_var01, _var02
+	add	_var01, #20
+	wrword	#0, _var01
+' word[@channel1[0]+64*channel+20]:=0
 	mov	_var01, objptr
 	shl	arg01, #6
 	add	_var01, arg01
 	add	_var01, #20
 	wrword	#0, _var01
 	sub	objptr, #12
-_Audio093b_8_sc_spin2_stop_ret
+_Audio095_8_sc_spin2_stop_ret
 	ret
 hubexit
 	jmp	#cogexit
@@ -46742,7 +46908,10 @@ _dat_
 	byte	$27, $93, $39, $93, $3a, $93, $39, $93, $39, $93, $39, $93, $4c, $93, $4c, $93
 	byte	$4b, $93, $4c, $93, $5f, $93, $5f, $93, $5f, $93, $5e, $93, $5e, $93, $71, $93
 	byte	$5f, $93, $84, $93, $4c, $93, $96, $93, $5f, $93, $ae, $94, $e4, $90, $29, $90
-	byte	$7b, $c1, $00, $00
+	byte	$7b, $c1, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00
+'-' zero long 0
+	byte	$00, $00, $00, $00
 '-' atari2_spl file "atari2.spl" '1758
 	byte	$7a, $d7, $00, $80, $87, $8a, $48, $8f, $ec, $8c, $76, $8d, $f2, $8c, $c0, $8d
 	byte	$3c, $8d, $82, $8d, $42, $8d, $88, $8d, $8c, $8d, $8e, $8d, $92, $8d, $d8, $8d
@@ -46854,6 +47023,8 @@ _dat_
 	byte	$0d, $70, $09, $70, $07, $70, $03, $70, $01, $70, $fd, $6f, $fa, $6f, $f7, $6f
 	byte	$f6, $6f, $f2, $6f, $ef, $6f, $ec, $6f, $2c, $70, $e6, $6f, $27, $70, $9d, $6f
 	byte	$dd, $6f, $97, $6f, $d7, $6f, $84, $6e, $8f, $6f, $3f, $7d, $b7, $3d
+'-' zero1 long 0
+	byte	$00, $00, $00, $00
 '-' atarist_spl file "atarist.spl" '512
 	byte	$ff[6]
 	byte	$00[10]
@@ -47067,6 +47238,8 @@ _dat_
 	byte	$1a, $fb, $1d, $fb, $1f, $fb, $20, $fb, $23, $fb, $92, $fc, $94, $fc, $96, $fc
 	byte	$96, $fc, $97, $fc, $9a, $fc, $9c, $fc, $9e, $fc, $9f, $fc, $a1, $fc, $e7, $fb
 	byte	$5a, $fb, $41, $fb, $3e, $fb, $41, $fb
+'-' zero2 long 0
+	byte	$00, $00, $00, $00
 '-' mouse  file "mouse2.def"
 	byte	$01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00[16]
@@ -47168,7 +47341,7 @@ _dat_
 	byte	$00, $00, $00, $00
 '-' buf2            long    16384
 	byte	$00, $40, $00, $00
-	long	@@@_dat_ + 8468
+	long	@@@_dat_ + 8496
 	byte	$50, $32, $20, $52, $65, $74, $72, $6f, $6d, $61, $63, $68, $69, $6e, $65, $20
 	byte	$42, $41, $53, $49, $43, $20, $76, $65, $72, $73, $69, $6f, $6e, $20, $30, $2e
 	byte	$32, $35, $00, $00
@@ -56170,34 +56343,34 @@ _usbnew_spin2_dat_
 '-' driver_cog      byte    0                       ' Current driver cog + 1
 	byte	$00
 	alignl
-_Audio093b_8_sc_spin2_dat_
+_Audio095_8_sc_spin2_dat_
 '-' 
 '-' audio       org     0
 '-' 
 '-'             rdlong  mailbox2, ptra++     ' get start address of all mailboxes
-	byte	$61, $c3, $05, $fb
+	byte	$61, $cb, $05, $fb
 '-'             rdlong  scbase, ptra++       ' get start address of scope buffer
-	byte	$61, $11, $06, $fb
+	byte	$61, $19, $06, $fb
 '-'             rdlong  hubptr, ptra++       ' get start address of PSRAM cache
-	byte	$61, $1d, $06, $fb
+	byte	$61, $25, $06, $fb
 '-' 
 '-'             cogid   pa                   ' compute cogid
 	byte	$01, $ec, $63, $fd
 '-'             mul     pa, #12              ' and mailbox spacing
 	byte	$0c, $ec, $07, $fa
 '-'             add     mailbox2, pa         ' add offset to find this COG's mailbox
-	byte	$f6, $c3, $01, $f1
+	byte	$f6, $cb, $01, $f1
 '-'             mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
-	byte	$e1, $c0, $01, $f6
+	byte	$e5, $c8, $01, $f6
 '-' 
 '-'             mov     ptrb,#0              ' A tail pointer for the buffer
 	byte	$00, $f2, $07, $f6
 '-'             wrpin   dac,#left            ' Noise dither DACs at clk/95
-	byte	$0e, $18, $06, $fc
+	byte	$0e, $20, $06, $fc
 '-'             wxpin   #95,#left       	 ' Set initial DACs sample rate. It is now controlled via a register by the main program
 	byte	$0e, $be, $1c, $fc
 '-'             wrpin   dac,#right
-	byte	$0f, $18, $06, $fc
+	byte	$0f, $20, $06, $fc
 '-'             wxpin   #95,#right    
 	byte	$0f, $be, $1c, $fc
 '-'             dirh    #left addpins 1
@@ -56205,7 +56378,7 @@ _Audio093b_8_sc_spin2_dat_
 '-'             setse1  #%001<<6 + left      ' Set the event - DAC empty
 	byte	$20, $9c, $64, $fd
 '-'             mov     ijmp1,#isr1          ' Init the interrupt
-	byte	$c8, $e8, $07, $f6
+	byte	$cc, $e8, $07, $f6
 '-'             setint1 #4                   ' Interrupt from DAC empty event
 	byte	$25, $08, $64, $fd
 '-'             
@@ -56214,51 +56387,51 @@ _Audio093b_8_sc_spin2_dat_
 '-' '---------------------------------------------------------------------------------
 '-' 
 '-' loop        cmp     time0,a41000000 wc  ' time counter overflow protection
-	byte	$d1, $a4, $11, $f2
+	byte	$d5, $ac, $11, $f2
 '-'       if_c  jmp     #loop1
 	byte	$10, $00, $90, $cd
 '-'   
 '-'             mov     cn,#9               ' Substract $40000000 from all the channel times and the main timer
-	byte	$09, $f6, $05, $f6
+	byte	$09, $fe, $05, $f6
 '-' p402        altd    cn,#a41000000       ' this has to be done at once for all channels
-	byte	$d1, $f6, $8d, $f9
+	byte	$d5, $fe, $8d, $f9
 '-'             sub     0-0,a40000000
-	byte	$d0, $00, $80, $f1
+	byte	$d4, $00, $80, $f1
 '-'             djnz    cn,#p402
-	byte	$fd, $f7, $6d, $fb
+	byte	$fd, $ff, $6d, $fb
 '-'     
 '-' loop1       mov     cn,#0               ' Find the channel to compute
-	byte	$00, $f6, $05, $f6
+	byte	$00, $fe, $05, $f6
 '-'             mov     ct,time1            ' with the lowest next sample time
-	byte	$d3, $f8, $01, $f6
+	byte	$d7, $00, $02, $f6
 '-'             fle     ct,time2 wcz        ' How to size-optimize this???
-	byte	$d4, $f8, $39, $f3
+	byte	$d8, $00, $3a, $f3
 '-'     if_c    mov     cn,#1
-	byte	$01, $f6, $05, $c6
+	byte	$01, $fe, $05, $c6
 '-'             fle     ct,time3 wcz
-	byte	$d5, $f8, $39, $f3
+	byte	$d9, $00, $3a, $f3
 '-'     if_c    mov     cn,#2     
-	byte	$02, $f6, $05, $c6
+	byte	$02, $fe, $05, $c6
 '-'             fle     ct,time4 wcz
-	byte	$d6, $f8, $39, $f3
+	byte	$da, $00, $3a, $f3
 '-'     if_c    mov     cn,#3
-	byte	$03, $f6, $05, $c6
+	byte	$03, $fe, $05, $c6
 '-'             fle     ct,time5 wcz
-	byte	$d7, $f8, $39, $f3
+	byte	$db, $00, $3a, $f3
 '-'     if_c    mov     cn,#4
-	byte	$04, $f6, $05, $c6
+	byte	$04, $fe, $05, $c6
 '-'             fle     ct,time6 wcz
-	byte	$d8, $f8, $39, $f3
+	byte	$dc, $00, $3a, $f3
 '-'     if_c    mov     cn,#5
-	byte	$05, $f6, $05, $c6
+	byte	$05, $fe, $05, $c6
 '-'             fle     ct,time7 wcz
-	byte	$d9, $f8, $39, $f3
+	byte	$dd, $00, $3a, $f3
 '-'     if_c    mov     cn,#6
-	byte	$06, $f6, $05, $c6
+	byte	$06, $fe, $05, $c6
 '-'             fle     ct,time8 wcz
-	byte	$da, $f8, $39, $f3
+	byte	$de, $00, $3a, $f3
 '-'     if_c    mov     cn,#7
-	byte	$07, $f6, $05, $c6
+	byte	$07, $fe, $05, $c6
 '-' 
 '-' 
 '-' '----------------------------------------------------------------------------------
@@ -56267,317 +56440,326 @@ _Audio093b_8_sc_spin2_dat_
 '-' 
 '-' 
 '-' p401        mov     channeladd,cn             ' compute the pointer to channel parameters block
-	byte	$fb, $b6, $01, $f6
+	byte	$ff, $be, $01, $f6
 '-'             shl     channeladd,#6
-	byte	$06, $b6, $65, $f0
+	byte	$06, $be, $65, $f0
 '-'             add     ptra,channeladd
-	byte	$db, $f0, $03, $f1
+	byte	$df, $f0, $03, $f1
 '-' 
 '-'             setq    #11                        ' read parameters
 	byte	$28, $16, $64, $fd
 '-'             rdlong  pointer0,ptra
-	byte	$00, $cd, $05, $fb
+	byte	$00, $d5, $05, $fb
 '-'     	    
 '-' p408        testb   command0,#31 wz	      ' bit #31 command - set the DAC sample rate
-	byte	$1f, $da, $0d, $f4
+	byte	$1f, $e2, $0d, $f4
 '-'     if_nz   jmp     #p404                     ' if not set, proceed
 	byte	$18, $00, $90, $5d
 '-'             getword qq,command0,#0            ' get the new rate
-	byte	$ed, $ba, $31, $f9
+	byte	$f1, $c2, $31, $f9
 '-'             wxpin   qq,#left addpins 1        ' and program the pins
-	byte	$4e, $ba, $15, $fc
+	byte	$4e, $c2, $15, $fc
 '-'             getbyte qq,qq,#0 		      ' check if the rate is n*256
-	byte	$dd, $ba, $e1, $f8
+	byte	$e1, $c2, $e1, $f8
 '-'             cmp     qq,#0 wz                         
-	byte	$00, $ba, $0d, $f2
+	byte	$00, $c2, $0d, $f2
 '-'     if_z    wrpin   dac2,#left addpins 1      ' if yes, set PWM DAC mode
-	byte	$4e, $1a, $06, $ac
+	byte	$4e, $22, $06, $ac
 '-'     if_nz   wrpin   dac,#left addpins 1       ' else set noise DAC mode
-	byte	$4e, $18, $06, $5c
+	byte	$4e, $20, $06, $5c
 '-'             
 '-' p404        bitl    command0,#30 wcz             ' bit #30: select PSRAM/HUB
-	byte	$1e, $da, $1d, $f4
+	byte	$1e, $e2, $1d, $f4
 '-'     if_nz   mov     mailbox,mailbox2             ' if not set, use PSRAM
-	byte	$e1, $c0, $01, $56
+	byte	$e5, $c8, $01, $56
 '-'     if_z    mov     mailbox,#0                   ' if set, use HUB : TODO: this can be done at a channel level!
-	byte	$00, $c0, $05, $a6
+	byte	$00, $c8, $05, $a6
 '-' 
 '-' 
 '-' p405        getword oldls,sample0,#0          ' extract old sample value
-	byte	$e7, $fc, $31, $f9
+	byte	$eb, $04, $32, $f9
 '-'             getword oldrs,sample0,#1
-	byte	$e7, $fe, $39, $f9
+	byte	$eb, $06, $3a, $f9
 '-'      	    getword apan0,volpan0,#1          ' extract vol,pan,skip and freq from longs 
-	byte	$eb, $f2, $39, $f9
+	byte	$ef, $fa, $39, $f9
 '-'     	    getword avol0,volpan0,#0
-	byte	$eb, $f0, $31, $f9
+	byte	$ef, $f8, $31, $f9
 '-'             getword askip0,freqskip0,#1    	    
-	byte	$ec, $ee, $39, $f9
+	byte	$f0, $f6, $39, $f9
 '-'             getword afreq0,freqskip0,#0
-	byte	$ec, $ec, $31, $f9
+	byte	$f0, $f4, $31, $f9
 '-' 
 '-'             alts    cn, #time1                ' compute the time difference between this and previous sample
-	byte	$d3, $f6, $95, $f9
+	byte	$d7, $fe, $95, $f9
 '-'             mov     dt0,0-0    
-	byte	$00, $fa, $01, $f6
+	byte	$00, $02, $02, $f6
 '-'             sub     dt0,time0
-	byte	$d2, $fa, $81, $f1
+	byte	$d6, $02, $82, $f1
 '-'             
 '-'             altd    cn, #time1                ' add channel period to channel time
-	byte	$d3, $f6, $8d, $f9
+	byte	$d7, $fe, $8d, $f9
 '-'             add     0-0,afreq0  	
-	byte	$f6, $00, $00, $f1
+	byte	$fa, $00, $00, $f1
 '-'             
 '-' '---- envelopes
 '-'             
 '-'             cmp     envptr0,#0 wcz    		' read the pointer
-	byte	$00, $de, $1d, $f2
+	byte	$00, $e6, $1d, $f2
 '-'     if_z    mov     envs1,##$4000		' if 0, no envelope, load $4000=1 for scas
-	byte	$20, $00, $00, $af, $00, $3e, $06, $a6
+	byte	$20, $00, $00, $af, $00, $46, $06, $a6
 '-'     if_z    jmp     #p410			' and run away	
 	byte	$5c, $00, $90, $ad
 '-' 
 '-'             mov envs1,afreq0
-	byte	$f6, $3e, $02, $f6
+	byte	$fa, $46, $02, $f6
 '-'             mul envs1,envspd0
-	byte	$f0, $3e, $02, $fa
+	byte	$f4, $46, $02, $fa
 '-'             add envph0,envs1 
-	byte	$1f, $dd, $01, $f1
+	byte	$23, $e5, $01, $f1
 '-' 
 '-'       	    mov     envhi, envph0		' move phase acc to high part of env pointer
-	byte	$ee, $3a, $02, $f6
+	byte	$f2, $42, $02, $f6
 '-' 	    shr     envhi,#6			' leave 10 bits in hi
-	byte	$06, $3a, $46, $f0
+	byte	$06, $42, $46, $f0
 '-' 	    getword envlo,envhi,#0              ' and 16 bit in lo
-	byte	$1d, $3d, $32, $f9
+	byte	$21, $45, $32, $f9
 '-' 	    shr     envhi,#16			' move 10 bits of hi to the lower word
-	byte	$10, $3a, $46, $f0
+	byte	$10, $42, $46, $f0
 '-' 	    cmp     envhi,envlen0 wcz		' compare this to envelope length
-	byte	$f1, $3a, $1a, $f2
+	byte	$f5, $42, $1a, $f2
 '-'     if_ge   mov     envhi,envlen0		' if greater than, set it at envlen
-	byte	$f1, $3a, $02, $36
+	byte	$f5, $42, $02, $36
 '-'     if_ge   mov     envlo,#0
-	byte	$00, $3c, $06, $36
+	byte	$00, $44, $06, $36
 '-'     if_ge   mov     envph0,envlen0
-	byte	$f1, $dc, $01, $36
+	byte	$f5, $e4, $01, $36
 '-'     if_ge   shl     envph0,#22
-	byte	$16, $dc, $65, $30
+	byte	$16, $e4, $65, $30
 '-' 
 '-'             mov envs1,envhi
-	byte	$1d, $3f, $02, $f6
+	byte	$21, $47, $02, $f6
 '-'             shl envs1,#1
-	byte	$01, $3e, $66, $f0
+	byte	$01, $46, $66, $f0
 '-'             add envs1,envptr0
-	byte	$ef, $3e, $02, $f1
+	byte	$f3, $46, $02, $f1
 '-'             rdlong envs1,envs1
-	byte	$1f, $3f, $02, $fb
+	byte	$23, $47, $02, $fb
 '-'             getword envs2,envs1,#1
-	byte	$1f, $41, $3a, $f9
+	byte	$23, $49, $3a, $f9
 '-'             getword envs1,envs1,#0
-	byte	$1f, $3f, $32, $f9
+	byte	$23, $47, $32, $f9
 '-'             mul envs2,envlo
-	byte	$1e, $41, $02, $fa
+	byte	$22, $49, $02, $fa
 '-'             not envlo
-	byte	$1e, $3d, $22, $f6
+	byte	$22, $45, $22, $f6
 '-'             mul envs1,envlo
-	byte	$1e, $3f, $02, $fa
+	byte	$22, $47, $02, $fa
 '-'             add envs1,envs2
-	byte	$20, $3f, $02, $f1
+	byte	$24, $47, $02, $f1
 '-'             shr envs1,#18
-	byte	$12, $3e, $46, $f0
+	byte	$12, $46, $46, $f0
 '-'             
 '-' 
 '-' 
-'-' p410              add     pointer0,askip0           ' compute the pointer to the next sample       
-	byte	$f7, $cc, $01, $f1
-'-'          setbyte pointer00,pointer0,#0
-	byte	$e6, $38, $c2, $f8
+'-' p410        testb   sstart0, #27 wz
+	byte	$1b, $d8, $0d, $f4
+'-'     if_z    getrnd  spl
+	byte	$1b, $c4, $61, $ad
+'-'     if_z    jmp     #p406
+	byte	$58, $00, $90, $ad
+'-'  
+'-'             add     pointer0,askip0           ' compute the pointer to the next sample       
+	byte	$fb, $d4, $01, $f1
+'-'             setbyte pointer00,pointer0,#0
+	byte	$ea, $40, $c2, $f8
 '-'             shr     pointer0,#8
-	byte	$08, $cc, $45, $f0
+	byte	$08, $d4, $45, $f0
 '-'          
 '-'             testb   sstart0,#31 wz            
-	byte	$1f, $d0, $0d, $f4
+	byte	$1f, $d8, $0d, $f4
 '-'     if_z    shl     pointer0,#1        
-	byte	$01, $cc, $65, $a0
+	byte	$01, $d4, $65, $a0
 '-'             testb   sstart0,#28 wz            
-	byte	$1c, $d0, $0d, $f4
+	byte	$1c, $d8, $0d, $f4
 '-'     if_z    shl     pointer0,#1        
-	byte	$01, $cc, $65, $a0
-'-'             
+	byte	$01, $d4, $65, $a0
+'-'         
 '-'             cmp     pointer0,lend0 wcz
-	byte	$ea, $cc, $19, $f2
+	byte	$ee, $d4, $19, $f2
 '-'     if_ge   sub     pointer0,lend0	      ' and loop if needed     
-	byte	$ea, $cc, $81, $31
+	byte	$ee, $d4, $81, $31
 '-'     if_ge   add     pointer0,lstart0       
-	byte	$e9, $cc, $01, $31
+	byte	$ed, $d4, $01, $31
 '-'             
 '-'             mov     qq,pointer0               ' compute place in the memory from where the sample will be loaded
-	byte	$e6, $ba, $01, $f6
+	byte	$ea, $c2, $01, $f6
 '-'             add     qq,sstart0            
-	byte	$e8, $ba, $01, $f1
+	byte	$ec, $c2, $01, $f1
 '-' 
 '-' 
 '-' 
 '-'             cmps    mailbox,#$1FF wcz            ' the mailbox has to point somewhere not at the start of HUB RAM
-	byte	$ff, $c1, $5d, $f2
+	byte	$ff, $c9, $5d, $f2
 '-'     if_le   rdword  spl,qq                     ' if not, use HUB RAM for samples
-	byte	$dd, $bc, $e1, $ea
+	byte	$e1, $c4, $e1, $ea
 '-'     if_gt   call    #cache_read
-	byte	$14, $01, $b0, $1d
+	byte	$18, $01, $b0, $1d
 '-'          
 '-'          
 '-'  
 '-'          
 '-'             testb   sstart0,#31 wz 
-	byte	$1f, $d0, $0d, $f4
+	byte	$1f, $d8, $0d, $f4
 '-'     if_nz   shl     spl,#8
-	byte	$08, $bc, $65, $50
+	byte	$08, $c4, $65, $50
 '-'     if_nz   shl     pointer0,#8
-	byte	$08, $cc, $65, $50
+	byte	$08, $d4, $65, $50
 '-'     if_z    shl     pointer0,#7
-	byte	$07, $cc, $65, $a0
+	byte	$07, $d4, $65, $a0
 '-'             testb   sstart0,#28 wz            
-	byte	$1c, $d0, $0d, $f4
+	byte	$1c, $d8, $0d, $f4
 '-'     if_z    shr     pointer0,#1    
-	byte	$01, $cc, $45, $a0
+	byte	$01, $d4, $45, $a0
 '-' 	    setbyte pointer0,pointer00,#0       
-	byte	$1c, $cd, $c1, $f8
-'-'     
+	byte	$20, $d5, $c1, $f8
 '-' 
-'-' p406        
-'-'            scas spl, envs1
-	byte	$1f, $bd, $31, $fa
-'-'             mov spl,0-0
-	byte	$00, $bc, $01, $f6
+'-' 
+'-' p406         scas    spl,envs1
+	byte	$23, $c5, $31, $fa
+'-'              mov     spl,0-0
+	byte	$00, $c4, $01, $f6
 '-'             scas    spl,avol0                 ' apply volume
-	byte	$f8, $bc, $31, $fa
+	byte	$fc, $c4, $31, $fa
 '-'             mov     spl,0-0
-	byte	$00, $bc, $01, $f6
-'-'  
+	byte	$00, $c4, $01, $f6
+'-' 
 '-'             scas    spl,apan0                 ' apply pan
-	byte	$f9, $bc, $31, $fa
+	byte	$fd, $c4, $31, $fa
 '-'             mov     ls0,0-0
-	byte	$00, $00, $02, $f6
+	byte	$00, $08, $02, $f6
 '-'             mov     qq,##16384
-	byte	$20, $00, $00, $ff, $00, $ba, $05, $f6
+	byte	$20, $00, $00, $ff, $00, $c2, $05, $f6
 '-'             sub     qq,apan0
-	byte	$f9, $ba, $81, $f1
+	byte	$fd, $c2, $81, $f1
 '-'             scas    spl,qq
-	byte	$dd, $bc, $31, $fa
+	byte	$e1, $c4, $31, $fa
 '-'             mov     rs0, 0-0
-	byte	$00, $02, $02, $f6
+	byte	$00, $0a, $02, $f6
 '-' 
 '-'             sub     rs,oldrs 		      ' replace the old sample with the new one in the mix
-	byte	$ff, $06, $82, $f1
+	byte	$03, $0f, $82, $f1
 '-'             add     rs,rs0
-	byte	$01, $07, $02, $f1
+	byte	$05, $0f, $02, $f1
 '-'             sub     ls,oldls
-	byte	$fe, $04, $82, $f1
+	byte	$02, $0d, $82, $f1
 '-'             add     ls,ls0
-	byte	$00, $05, $02, $f1
+	byte	$04, $0d, $02, $f1
 '-'    
 '-'             setword sample0,rs0,#1           ' pack samples into long
-	byte	$01, $cf, $29, $f9
+	byte	$05, $d7, $29, $f9
 '-'             setword sample0,ls0,#0
-	byte	$00, $cf, $21, $f9
+	byte	$04, $d7, $21, $f9
 '-'             
 '-'             bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointers needs resetting  
-	byte	$1e, $d0, $1d, $f4
+	byte	$1e, $d8, $1d, $f4
 '-'     if_z    mov     pointer0, #0  
-	byte	$00, $cc, $05, $a6
+	byte	$00, $d4, $05, $a6
 '-'     if_z    mov     envph0, #0  
-	byte	$00, $dc, $05, $a6
+	byte	$00, $e4, $05, $a6
+'-'     if_z    mov     sample0,#0
+	byte	$00, $d6, $05, $a6
 '-'     if_z    wrlong  sstart0, ptra[2]          ' reset bit #30 in hub
-	byte	$02, $d1, $65, $ac
+	byte	$02, $d9, $65, $ac
 '-'             bitl    sstart0, #29 wcz	      ' if bit #29 is set, synchronize stereo at channels 1 and 2
-	byte	$1d, $d0, $1d, $f4
+	byte	$1d, $d8, $1d, $f4
 '-'     if_z    add     time1,##2048
-	byte	$04, $00, $00, $af, $00, $a6, $05, $a1
+	byte	$04, $00, $00, $af, $00, $ae, $05, $a1
 '-'     if_z    mov     time2,time1
-	byte	$d3, $a8, $01, $a6
+	byte	$d7, $b0, $01, $a6
 '-'     if_z    wrlong  sstart0,ptra[2]
-	byte	$02, $d1, $65, $ac
+	byte	$02, $d9, $65, $ac
+'-' 
 '-'             
 '-' p403        setq #1                          ' write new pointer and sample value to the hub
 	byte	$28, $02, $64, $fd
 '-'             wrlong  pointer0,ptra
-	byte	$00, $cd, $65, $fc
+	byte	$00, $d5, $65, $fc
 '-'             wrlong  envph0,ptra[8]
-	byte	$08, $dd, $65, $fc
+	byte	$08, $e5, $65, $fc
 '-'             sub     ptra, channeladd         ' reset the pointer to channel parameters
-	byte	$db, $f0, $83, $f1
+	byte	$df, $f0, $83, $f1
 '-'                       
 '-'             cmp     oldt0,time0 wz           ' If more than 1 sample is computed at the same time, write only the last result
-	byte	$d2, $f4, $09, $f2
+	byte	$d6, $fc, $09, $f2
 '-'     if_z    decmod  front, #511          
-	byte	$ff, $b9, $25, $a7
+	byte	$ff, $c1, $25, $a7
 '-'          
 '-'             getword oldls,ls,#0              ' reuse oldls variable to convert the sample to unsigned
-	byte	$02, $fd, $31, $f9
+	byte	$06, $05, $32, $f9
 '-'  	    getword oldrs,rs,#0              ' getword instead of mov makes the upper bits=0
-	byte	$03, $ff, $31, $f9
+	byte	$07, $07, $32, $f9
 '-'             bitnot  oldls,#15                ' convert to unsigned. TODO: compute and apply the gain for samples to not exceed 16 bit range
-	byte	$0f, $fc, $e5, $f4
+	byte	$0f, $04, $e6, $f4
 '-'             bitnot  oldrs,#15		     ' warning: no filter here (yet) but before applying any, remember to and sample values with $FFFF and use signed samples 
-	byte	$0f, $fe, $e5, $f4
+	byte	$0f, $06, $e6, $f4
 '-' 	    
 '-' 		    
 '-'             setword oldrs,oldls,#1           ' Pack L and R to one long    		
-	byte	$fe, $fe, $29, $f9
+	byte	$02, $07, $2a, $f9
 '-'             mov     oldsample, newsample     ' The new computed sample will be outputted in the next loop, now we have to fill the buffer with the old one
-	byte	$05, $09, $02, $f6
+	byte	$09, $11, $02, $f6
 '-'             mov     newsample, oldrs       
-	byte	$ff, $0a, $02, $f6
+	byte	$03, $13, $02, $f6
 '-' 
 '-'             mov     oldt0,time0              ' update global time
-	byte	$d2, $f4, $01, $f6
+	byte	$d6, $fc, $01, $f6
 '-'             add     time0,dt0    
-	byte	$fd, $a4, $01, $f1
+	byte	$01, $ad, $01, $f1
 '-'                                      
 '-'             cmp     dt0,#0 wz                ' now push dt0 samples to the buffer
-	byte	$00, $fa, $0d, $f2
+	byte	$00, $02, $0e, $f2
 '-'     if_z    jmp     #loop1
-	byte	$e4, $fd, $9f, $ad
+	byte	$d4, $fd, $9f, $ad
 '-'             mov     qq,dt0
-	byte	$fd, $ba, $01, $f6
+	byte	$01, $c3, $01, $f6
 '-'   
 '-' p301        alts    ptrb,#511                ' checking if the buffer is full - Wuerfel_21's magic stuff
 	byte	$ff, $f3, $97, $f9
 '-'             cmpr    front, #0-0 wcz
-	byte	$00, $b8, $9d, $f2
+	byte	$00, $c0, $9d, $f2
 '-'     if_e    jmp     #p301    
 	byte	$f4, $ff, $9f, $ad
 '-' 		
 '-' 	    cmp     scbase,#0 wz
-	byte	$00, $10, $0e, $f2
+	byte	$00, $18, $0e, $f2
 '-'     if_z    jmp #p302	   
 	byte	$20, $00, $90, $ad
 '-'  
 '-'  
 '-'             incmod  scope,#63 wc            ' save every 127th sample to the scope buffer
-	byte	$3f, $16, $16, $f7
+	byte	$3f, $1e, $16, $f7
 '-'     if_c    mov scptr2,scptr
-	byte	$09, $15, $02, $c6
+	byte	$0d, $1d, $02, $c6
 '-'     if_c    shl scptr2,#2
-	byte	$02, $14, $66, $c0
+	byte	$02, $1c, $66, $c0
 '-'     if_c    add scptr2,scbase     
-	byte	$08, $15, $02, $c1
+	byte	$0c, $1d, $02, $c1
 '-'             wrlong scptr2,#$60
-	byte	$60, $14, $66, $fc
+	byte	$60, $1c, $66, $fc
 '-'     if_c    wrlong oldsample,scptr2
-	byte	$0a, $09, $62, $cc
+	byte	$0e, $11, $62, $cc
 '-'     if_c    incmod scptr,##639
-	byte	$01, $00, $00, $cf, $7f, $12, $06, $c7
+	byte	$01, $00, $00, $cf, $7f, $1a, $06, $c7
 '-' 			    
 '-' p302        wrlut   oldsample, front        ' if there is a free slot, put the sample into the buffer
-	byte	$dc, $08, $32, $fc
+	byte	$e0, $10, $32, $fc
 '-'             incmod  front, ##511
-	byte	$00, $00, $00, $ff, $ff, $b9, $05, $f7
+	byte	$00, $00, $00, $ff, $ff, $c1, $05, $f7
 '-'             djnz    qq,#p301
-	byte	$ef, $bb, $6d, $fb
+	byte	$ef, $c3, $6d, $fb
 '-'             
 '-'             jmp     #loop            'loop
-	byte	$80, $fd, $9f, $fd
+	byte	$70, $fd, $9f, $fd
 '-' 
 '-' '----------------------------------------------------------------------------------
 '-' '------------- This is the end of the main loop -----------------------------------
@@ -56593,57 +56775,57 @@ _Audio093b_8_sc_spin2_dat_
 '-' 
 '-' 
 '-' cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
-	byte	$dd, $34, $e2, $f8
+	byte	$e1, $3c, $e2, $f8
 '-'             
 '-' 	    mov     addrhi,qq		
-	byte	$dd, $36, $02, $f6
+	byte	$e1, $3e, $02, $f6
 '-' 	    shr     addrhi,#8		        ' get 24 upper bits
-	byte	$08, $36, $46, $f0
+	byte	$08, $3e, $46, $f0
 '-' 	    alts    cn,#cache1            
-	byte	$0f, $f7, $95, $f9
+	byte	$13, $ff, $95, $f9
 '-' 	    cmp	    addrhi,0-0 wz               ' and compare with the cache pointer for the channel
-	byte	$00, $36, $0a, $f2
+	byte	$00, $3e, $0a, $f2
 '-'     if_z    jmp     #p701	    		' if equal, cache hit, read the sample from it
 	byte	$34, $00, $90, $ad
 '-' 	
 '-' p702	    altd    cn,#cache1			' cache miss. 
-	byte	$0f, $f7, $8d, $f9
+	byte	$13, $ff, $8d, $f9
 '-' 	    mov     0-0,addrhi                  ' update the pointer
-	byte	$1b, $01, $00, $f6
+	byte	$1f, $01, $00, $f6
 '-' 	    mov     cmd,addrhi			' prepare the mailbox
-	byte	$1b, $2f, $02, $f6
+	byte	$1f, $37, $02, $f6
 '-' 	    shl     cmd,#8
-	byte	$08, $2e, $66, $f0
+	byte	$08, $36, $66, $f0
 '-'             setnib  cmd, #%1011, #7             ' read burst from the external memory
-	byte	$0b, $2e, $3e, $f8
+	byte	$0b, $36, $3e, $f8
 '-'             mov     hubaddr,cn                  ' to the channel cache
-	byte	$fb, $30, $02, $f6
+	byte	$ff, $38, $02, $f6
 '-'             shl     hubaddr,#8                  '
-	byte	$08, $30, $66, $f0
+	byte	$08, $38, $66, $f0
 '-'             add     hubaddr,hubptr 
-	byte	$0e, $31, $02, $f1
+	byte	$12, $39, $02, $f1
 '-'             mov     count,#256                  ' 256 bytes
-	byte	$00, $33, $06, $f6
+	byte	$00, $3b, $06, $f6
 '-'             setq    #2                          ' write 3 longs
 	byte	$28, $04, $64, $fd
 '-'             wrlong  cmd, mailbox                ' run it
-	byte	$e0, $2e, $62, $fc
+	byte	$e4, $36, $62, $fc
 '-' poll1       rdlong  cmd, mailbox                ' poll mailbox for result
-	byte	$e0, $2e, $02, $fb
+	byte	$e4, $36, $02, $fb
 '-'             tjs     cmd, #poll1                 ' retry until valid 
-	byte	$fe, $2f, $b6, $fb
+	byte	$fe, $37, $b6, $fb
 '-'             
 '-' 	
 '-' p701	    mov     qq,cn			' cache hit
-	byte	$fb, $ba, $01, $f6
+	byte	$ff, $c2, $01, $f6
 '-' 	    shl     qq,#8			' compute the cache start
-	byte	$08, $ba, $65, $f0
+	byte	$08, $c2, $65, $f0
 '-' 	    add     qq,hubptr
-	byte	$0e, $bb, $01, $f1
+	byte	$12, $c3, $01, $f1
 '-' 	    add	    qq,addrlo			' add 8 lower bits to the cache addredd
-	byte	$1a, $bb, $01, $f1
+	byte	$1e, $c3, $01, $f1
 '-'     _ret_   rdword  spl,qq                      ' read a word
-	byte	$dd, $bc, $e1, $0a
+	byte	$e1, $c4, $e1, $0a
 '-'           
 '-' 
 '-' '--------------------------------------------------------------------------
@@ -56652,19 +56834,19 @@ _Audio093b_8_sc_spin2_dat_
 '-' '--------------------------------------------------------------------------
 '-' 
 '-' isr1        wypin   lsample,#left        '2     The sample has to be outputted every 100 cycles     
-	byte	$0e, $c4, $25, $fc
+	byte	$0e, $cc, $25, $fc
 '-'             wypin   rsample,#right       '4
-	byte	$0f, $c6, $25, $fc
+	byte	$0f, $ce, $25, $fc
 '-'             cmp     ptrb,front wcz       '6    If the buffer is empty, do nothing 
-	byte	$dc, $f2, $1b, $f2
+	byte	$e0, $f2, $1b, $f2
 '-'     if_ne   rdlut   lsnext,ptrb          '11    else read the sample and its time from LUT
-	byte	$80, $c9, $a5, $5a
+	byte	$80, $d1, $a5, $5a
 '-'     if_ne   incmod  ptrb,#511
 	byte	$ff, $f3, $07, $57
 '-'     if_ne   getword rsample,lsnext,#1    '13
-	byte	$e4, $c6, $39, $59
+	byte	$e8, $ce, $39, $59
 '-'     if_ne   getword lsample,lsnext,#0    '15
-	byte	$e4, $c4, $31, $59
+	byte	$e8, $cc, $31, $59
 '-'     
 '-'             reti1                        '17/19 
 	byte	$f5, $ff, $3b, $fb
@@ -56867,6 +57049,8 @@ _Audio093b_8_sc_spin2_dat_
 '-' envs1 long 0
 	byte	$00, $00, $00, $00
 '-' envs2 long 0
+	byte	$00, $00, $00, $00
+'-' noise0 long 0
 	byte	$00, $00, $00, $00
 '-' null  			long 	0,0           ' for channel reset
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
