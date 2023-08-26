@@ -1,0 +1,335 @@
+The P2 Retromachine Basic
+
+Version 0.24 - Alpha
+-------------------------
+
+The P2 Retromachine Basic is a Basic interpreter for a Propeller 2 platform with an external RAM. Currently tested/developed versions work on P2-EC32 
+The Eval board with 4-bit PSRAM attached, that was supported up to 0.17, is not supported at this moment due to video driver change. The 4-bit video driver will be synchronized later.
+
+The goal is to make the Propeller 2 platform a fully independent computer that can be programmed and used without any external PC, with a nostalgic feeling added. The look and feel is selectable from 5 different modes: 8-bit Atari, PC with amber/green/white monitor and Atari ST mono.
+
+The power of a retro style Basic interpreter is that you can make a powerful program in a very short code, in a short time. 
+
+Version 0.24 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
+
+The current version of the interpreter needs a digital video accessory board at P0, AV accessory board at P8 and a serial host accessory board at P16.
+
+Preparing the hardware
+----------------------
+
+Flash the compiled interpreter to the P2-EC32 flash memory.
+Prepare the SD card: if not in FAT32 format, format it as FAT32. Create 'bin' and 'bas' directories in the main directory of the card. The card doesn't need to be empty, it only has to have these 2 directories in it
+Place your precompiled binary files that you want to use with a P2 in 'bin' directory. 
+The interpreter will load and save Basic programs from 'bas' directory. There is an 'examples' folder in the repository: you can copy these examples there.
+
+Connect the DV accessory (with a HDMI type socket) to the Pin 0 bank. Connect a monitor to the DV accessory board with a HDMI cable. The generated digital video is 1024x576 at 8 bpp and 50 Hz. 
+Connect the AV accessory (with a VGA socket) to the Pin 8 bank, Connect an amplifier or headphones to the headphone output of the AV board.
+Connect the serial host accessory (with 2 USB Type A sockets) to the Pin 16 bank. Connect a hub to the upper USB port on a serial host accessory. Connect a keyboard, a mouse and a joystick to the hub.
+
+Using the interpreter:
+----------------------
+
+The interpreter starts in an interactive mode. You can enter commands that are executed immediately after.
+
+To switch to the programming mode, write a line starting from an unsigned integer number. The line will then be added to a program, and no "ready" prompt will be displayed.
+You can then write another line of program. All lines have to be started with a number and they are ordered using these line numbers.
+
+You can use more commands in one program line, separated by a colon (:). The line can not exceed 125 characters. 
+
+Writing a line without a number exits the programming mode. The line written will be executed and a "Ready" prompt will be displayed.
+
+The program can be listed with 'list' and saved on an SD card with 'save "filename"'. File name can be typed without "" string delimiters. The working directory is /sd/bas
+
+To list a fragment of a program, list startnum, endnum can be used.
+
+To run the program, use 'run' command in the immediate mode. The precompiled program to run is placed in, and executed from the external memory (PSRAM). 
+
+If the program doesn't end itself, ctr-c stops it, unless it executes a long wait instruction.
+
+To delete the program from memory and start a new one, use 'new'.
+
+Any compiled P2 binary file saved on an SD card can be executed from within the interpreter using 'brun'. That allows to have a collection of P2 binary programs on the SD card and call them when needed.
+The default directory for binary files is /sd/bin
+
+Variables:
+----------
+
+There are several types of variables available in the P2 Retromachine Basic.
+
+A standard variable is created by using it. Assigning a value to the variable determines its type. Suffixes like #,!,$ are optional and are simply a part of a variable name. Use them for compatibility with other Basic interpreters and compilers, and to make reading the program easier. A string variable name should end with '$' and a floating point variable name should end with '!' 
+
+A variable can be
+
+- a string,
+- a single precision float,
+- a 32 bit unsigned integer,
+- a 32 bit signed integer
+
+These variables are kept in the HUB RAM
+
+To define an array or a typed variable, use 'dim' instruction.
+
+dim varname(size1,size2,size3)
+
+An array can have up to 3 dimensions.
+
+If no type is given, an untyped array is created. Every element of the array can be of a different type. Such arrays are kept in the PSRAM and need 12 bytes per element.
+
+To save the memory space, a typed array can be declared:
+
+dim varname(dimensions...) as typename
+
+The type can be:
+- 1 byte per an element: byte, ubyte
+- 2 bytes per element : short, ushort
+- 4 bytes per element : long (=integer), ulong, single, string(*)
+- 8 bytes per element: reserved for the future types: 64-bit integers and double precision floats
+
+Using 'dim' without sizes: 
+
+dim a as integer
+
+declares a typed variable that is placed in the PSRAM - in the  reality, this is an one-element array, that has an array header (16 bytes) before the variable itself. 
+
+Arrays and typed variables are very fresh, experimental and buggy feature in the current version.
+
+Operators:
+----------
+
+Supported operators are:
+
+- assign: =
+
+- comparison: =, <,>,>=,<=, <>
+
+- arithmetic: +,-,*,/,div, mod, ^
+
+- logic: and, or, shl, shr
+
+Priority: (highest) mul/div/mod -> add/sub/logic -> comparison (lowest)
+
+There are 2 divide operators: '/' is a float divide and the result is always float. 'div' is an integer divide.
+
+Program control:
+----------------
+
+The current version implements 'goto', 'if-then-else' and 'for-next' to control the program execution
+
+'goto' jumps to the line with the given number. That number has to be a constant unsigned integer, not a variable or expression. These will be added later.
+
+'if-then-else' construction has a syntax like this
+
+20 if a=0 then b=1 : else c=2
+
+The syntax is different than FlexBasic: there has to be colon before 'else'. Also, there can be more than one if, but only one else in the line. Every 'if' in the line that fails will jump to the 'else' section.
+Multiple lines if-else-endif is not yet supported. Use 'goto' instead.
+
+'for-next' syntax is:
+
+10 for intvar=startvalue to endvalue step stepvalue
+(commands)
+90 next intvar
+
+When 'for' is executed, it assigns a start value to the variable. When 'next' is encountered, the step value is added to the variable. Then the variable is compared to the end value. If it is greater than the end value (or less then, if negative step), the program will continueIf not, it will jump to the instruction, that is placed immediately after 'for'.
+
+Start, end and step values can be expressions. They are evaluated only by 'for' line and then saved, so this program:
+
+10 a=1 : b=2 : c=10
+20 for i=a to c step b : c=c+5 : b=b*2 : print i,b,c : next i
+
+will print
+
+1	4	15
+3	8	20
+5	16	25
+7	32	30
+9	64	35
+
+Step value can be negative. Also, if there is no 'step', 1 will be assumed.
+After the loop, the control variable has the value that caused the loop to exit, so after 
+
+for i=1 to 10 step 50
+
+i will be 51.
+
+The loop can be done in one line:
+
+10 for i=1 to 10 : print i: next i
+
+One line 'for' loops are much faster, as the line resides in the HUB RAM cache while running
+
+'For' loops can be nested:
+
+10 for i=1 to 10 : for j=1 to 10 : print i,j : next j : next i
+
+but not interleaved. This line will generate errors while executing
+
+10 for i=1 to 10 : for j=1 to 10 : print i,j : next i : next j
+
+In the current version only integer variables are allowed as control variables for 'for' loops. Using floats or strings causes strange effects.
+
+The control variable can be changed inside a loop and a 0 step can be used, so this code:
+
+10 for i=1 to 10 step 0
+20 i=i+1
+30 print i
+40 next i
+
+will print numbers from 2 to 11, simulating do..loop until i>10 that is not implemented yet.
+
+Sprites
+-------
+
+There are 16 sprites, each up to 512x576 pixel size. They reside in the HUB RAM, so its sise limits the amount and size of sprites that can be simultaneously used.
+You can make a sprite out of the rectangle fragment of the screen using defsprite sprite#,x,y,w,h, where spritenum is a number from 0 to 15 and x,y,w,h are screen cooordinates to get a sprite from
+The sprite can me moved by 'sprite spritenum,x,y' where x,y is a upper left point of the sprite
+The color #0 (black) is transparent.
+To hide the sprite, move it out of the screen.
+
+
+Mouse and joystick
+------------------
+
+If connected, a mouse can be accessed via mousex, mousey, mousek and mousew. These function return x and y position of a mouse pointer, mouse key status and mouse wheel. 
+Not all mice reports the wheel in a so called "boot mode" used in the USB HID driver.
+Up to 4 USB joysticks can be connected. Version 0.19 supports digital type joystick that has 3 positions in both axes.
+
+A stick(joynum) function returns the joystick state as a 4-bit number. If 0 returned, the joystick is not present. If joystick present, its position is returned as shown below
+
+					5         6        7
+					9        10       11
+					13	 14       15
+
+strig(joynum) returns the joystick button(s) state. 0 if not pressed
+
+		
+Pin control
+-----------
+
+There is a standard P2 command set for the pin control : pinwrite, pinread, pinfloat, pintoggle, pinhi, pinlo, pinstart, wrpin, rdpin, rqpin, wxpin, wypin. Spin 2 constants are not yet implemented, decimal numerical values have to be used instead, as the hexadecimals are also not yet implemented.
+Addpin syntax is also not yet implemented. Use pin+addpin_val shl 6
+
+Shortcuts/abbreviations
+-----------------------
+
+Atari Basic enables several commands to be entered either in full or shortened version. That was convenient, speeds up the writing and saves the limited space in the program line. 
+I added them into the P2 Retromachine Basic. 
+Not all of them are meaningful - in Atari Basic you can write CLOA. instead of CLOAD or RU. instead of RUN. I added only real shortcuts that are shorten than the original command.
+			
+Commands (shortcuts):
+----------
+
+Alphabetically sorted
+
+acos(x)					returns the inverse cosine 
+asin(x)					returns the inverse sine
+atn(x)					returns the inverse tangent
+beep frequency, time (b.)  		generates the square vave at frequency in Hz for the time in ms
+box x1,y1,x2,y2				draws a filled rectangle from x1,y1 to x2,y2
+brun filename  (br.) 			loads and executes a binary file compiled for a P2 by anything
+circle x,y,r (ci.)			draws the empty circle with the center at x,y and radius r
+click on/off or 1/0     		switches the keyboard click on and off 
+cls 					clears the screen
+color colornum	(c.)			sets a color for graphic operations. There are 256 colors, 16 hues (high nibble) and 16 brightnesses (low nibble) similar to the 8-bit Atari. 0 to 15 are greys
+cos(x)					returns a cosine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+csave (cs.)				tries to save a program to an audio cassette. Experimental and there is no cload yet.
+cursor on/off or 1/0    		switches the text cursor on and off. Because of a bug in this version, use 1/0 in programs. 
+defsprite spritenum,x,y,w,h (ds.)	makes a sprite from a screen rectangle
+dim					declares an array or a typed variable
+dir					lists the working directory of an SD card
+draw end_x, end_y (dr.)			draws the line to point end_x, end_y. This will be the starting point for the new draw. The first starting point can be set with 'plot'
+fcircle x,y,r (fc.)			draws the filled circle with the center at x,y and radius r
+fill x,y,newcolor,oldcolor (fi.)	flood fill. Starts at x,y and replaces all pixels with oldcolor to newcolor until other color boundary fouund.
+font fontnum			        sets the font family for characters to print. 2 fonts are implemented, 0=Atari ST mono, 1=PC DOS
+for (f.) 				starts a loop (see program control)
+frame (fr.)				draws an empty rectangle from x1,y1 to x2,y2
+getpixel(x,y)			        returns the color of the pixel at screen position x,y. The function returns the bacgkround pixel color even if there is a sprite drawn over this pixel.
+goto line (g.)				jumps to the line
+if					with 'then' and 'else' controls the program flow
+ink colornum (i.)			sets the color of the characters to print
+list startline, endline (l.)		outputs the code on the screen form startline to endline. If no endline specified, the program will be listed to the end. 
+load "filename" (lo.)	         	loads a Basic program from the file May be used in format load filename - without ""
+mode modenum (m.)			sets "look and feel" of the interpreter. 0 - Atari style, 1 - PC amber, 2 - PC green, 3 - PC white, 4 - Atari ST mono 
+					Names can be used instead of numbers: 'atari', pc_amber", 'pc_green', 'pc_white', 'st'
+mouse on/off or 1/0			switches the mouse pointer on and off
+mousex					returns the x coordinate of a mouse pointer
+mousey					returns the y coordinate of a mouse pointer
+mousek					returns the mouse key state: 0 - not pressed, 1-left, 2-right, 4-middle
+mousew					returns the mousewheel position. It is unbounded 16-bit signed integer.
+new					clears the program memory and all variables
+next (n.)				closes a 'for' loop
+paper colornum	(p.)		 	sets the background of the characters to print
+pinfloat pin				sets the pin to float
+pinhi pin				sets the pin to logic 1 (normally about 3.3V)
+pinlo pin				sets the pin to logoc 0 (normally about 0V)
+pinread pin				returns the pin logoc state (0 or 1)
+pinstart pin, mode, x,y			starts the smart pin mode and sets x,y registers of the pin		
+pintoggle pin				toggles the state of the pin (from 0 to 1 or from 1 to 0). Doesn't work if the pin floats.
+pinwrite pin, value			if value=0, sets the pin output to low, else sets the pin output to high. Use to blink a led.
+plot x,y (pl.)				sets a pixel color at x,y to the color determined by a previous "color" command and sets a new starting point for 'draw'
+position x,y (po.)			sets a curcor position. The x resolution is half a character, so multiply number of characters by 2. This allows centering strings that have odd number of characters.
+print (?)				outputs to the screen and moves the cursor to the new line if , or ; is not used.
+					Use , after an argument to print the new one after a tab (8 characters), use ; to print the next argument directly after the previous. 
+rdpin pin				returns the smartpin output register value, notifies the smart pin
+rnd(value)				returns a random value. If no arguments, it is a 32-bit unsigned integer. If integer or float parameter is given, it returns integer or float that is less than,0 the parameter.
+rqpin pin				returns the smartpin output register value, does not notify the smart pin
+run					starts the program. You can use "run" inside the program to restart it.
+save filename (s.)			saves the program to the file
+sin(x)					returns a sine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+sprite spritenum,x,y (sp.)		move the sprite number sprite# (from 0 to 15
+sqr(x)					returns the square root of x
+stick(joynum)				returns the position of a digital joystick
+strig(joynum)				returns the button state of a digital jystick
+tan(x)					returns a tangent of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+waitms time				waits "time" miliseconds. Doesn't have any upper limits as it creates an internal loop when time>5000 ms
+waitclock (wc.)				waits for the internal 5 ms/200Hz clock tick. The clock is vblank synchronized so there is 1 vblank for 4 ticks
+waitvbl	(wv.)				waits for the screen vertical blank. Use to synchronize the program with the screen refresh
+wrpin pin				writes to the mode register of the smart pin
+wxpin pin				writes to the X register of the smar tpin
+wypin pin				writes to the Y register of the smart pin
+
+Changelog:
+------------
+
+0.24:
+
+Basic math functions added : cos, tan, atn, asin, acos, sqr (sin was already there)
+8-bit Atari style command shortcuts added
+'mode' command can be now used with a text names instead of numbers
+
+0.23b:
+
+Atari ST mode has a proper Atari ST keyboard click
+Added "position" command that sets the cursor position before print
+A mouse pointer has now a proper black outline.
+String arays now work
+Fixed a bug that disabled printing string literals while still printing string variables.
+Fixed a bug that causes errors when : character was placed inside a string
+
+
+0.23a:
+
+Pin operations added
+Atari ST mono look and feel (minus ST key click click that I have yet to sample)(mode=4)
+PC look and feel modes (1,2,3) have now keyclick switched off as these PCs did.
+
+0.22:
+
+Load/save format changed to a plain text.
+Solved the problem of disappearing strings.
+Added dim - arrays and typed variables.
+
+0.19:
+
+Commands and function added: mouse, cursor, click, defsprite, sprite, sin, mousex, mousey, mousew, mousek, stick, strig, getpixel
+List can have parameters that select the fragment of the program to list.
+rnd can now have a parameter. 
+
+0.17:
+
+- proper GOTO that can be written at any time
+- new commands: "paper", "ink", "font" and "mode"
+- "load", "save" and "brun" file names can be written without ""
+- only ctrl-c is now used to break the program
+
+0.16: for-next loop added

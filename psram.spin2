@@ -437,7 +437,7 @@ PUB fill(addr, pattern, count, listPtr, datasize) : r | mailbox, req
         return ERR_MAILBOX_BUSY
     long[mailbox][2] := count
     long[mailbox][1] := pattern
-    long[mailbox] := req + (addr & $fffffff)
+    long[mailbox] := req + (addr & $1ffffff)
     repeat
         r := long[mailbox]
     while r < 0

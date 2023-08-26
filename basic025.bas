@@ -15,7 +15,7 @@ dim psram as class using "psram4.spin2"
 #endif
 
 dim kbm as class using "usbnew.spin2"
-dim paula as class using "audio095-8-sc.spin2"
+dim paula as class using "audio096.spin2"
 
 #include "dir.bi"
 
@@ -180,7 +180,15 @@ const token_sqr=135
 const token_rad=136
 const token_deg=137
 const token_int=138
-
+const token_setvol=139
+const token_setpan=140
+const token_setlen=141
+const token_setdelay=142
+const token_setwave=143
+const token_setenv=144
+const token_setsustain=145
+const token_release=146
+const token_getenvsustain=147
 
 const token_error=255
 const token_end=510
@@ -261,6 +269,17 @@ class for_entry
   dim endval as integer
 end class  
 
+
+class audiochannel
+  dim wave as ubyte
+  dim env as ubyte
+  dim delay as ushort
+  dim length as single
+  dim vol as single
+  dim pan as single
+  dim sus as ushort
+end class
+
 type parts as part(125)         ' parts to split the line into, line has 125 chars max
 type asub as sub()		' sub type to make a sub table
 
@@ -268,6 +287,7 @@ type asub as sub()		' sub type to make a sub table
 ''---------------------------------- Global variables ------------------------------------
 ''-----------------------------------------------------------------------------------------
 
+dim channels(7) as audiochannel
 dim variables as variable(maxvars)
 dim varnum as integer
 dim lparts as parts
@@ -330,6 +350,7 @@ dim keyclick_spl as any pointer
 dim trig_coeff as single
 dim trig_coeff2 as single
 dim linenum as ulong
+dim suspoints(7) as ushort
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
@@ -392,15 +413,16 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 'lpoke base+12,0
 'dpoke base+20,16383
 'dpoke base+22,8192
-'dpoke base+24,40
-'dpoke base+26,1280 ' todo: use skip to make accurate sample rate
+'dpoke base+24,60
+'dpoke base+26,256 ' todo: use skip to make accurate sample rate
 'dpoke base+28,$4000_0000
 'lpoke base+32,0 
-'lpoke base+36, varptr(envbuf(0,0))
+'lpoke base+36, 0
 'lpoke base+40,25600' speed
 'lpoke base+44,1023 'len
 
 'do: position 0,0 : print lpeek(base+32): loop 
+
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -413,7 +435,7 @@ paula.stop(6)
 
 let key=kbm.get_key() 
 let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-if key>0 andalso key<4 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,16384,0,1758): waitms(10): paula.stop(7)
+if key>0 andalso key<4 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): paula.stop(7)
 if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then let key2=key : let rpt=1 : let key3=key2
 if key>$80000000 then let rptcnt=0 : let rpt=0
 if key=0 andalso rpt=1 then rptcnt+=1
@@ -421,7 +443,7 @@ if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 
 
 if key3<>0 then
-  if keyclick=1 then paula.play(6,keyclick_spl,44100,16384,spl_len) 
+  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
   let key4=scantochar(key3) 
   if leds and 2 = 2 then 
     if key4>96 andalso key4<123 then
@@ -436,7 +458,7 @@ if key3<>0 then
   endif
  
   if key4>0 andalso key4<127 andalso v.cursor_x<254 then line$+=chr$(key4): v.putchar(key4)
-  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(7) 'end of line reached
+  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): paula.stop(7) 'end of line reached
  
   'tab
   if (key3 and 255) = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)
@@ -880,9 +902,17 @@ select case s
   case "print"       	: return token_print
   case "?"       	: return token_print
   case "rad"		: return token_rad
+  case "release"	: return token_release
   case "run"	     	: return token_run
   case "save"	     	: return token_save
   case "s."	     	: return token_save
+  case "setdelay"	: return token_setdelay 
+  case "setenv"		: return token_setenv
+  case "setlen"		: return token_setlen  
+  case "setpan"		: return token_setpan
+  case "setsustain"	: return token_setsustain
+  case "setvol" 	: return token_setvol
+  case "setwave"	: return token_setwave
   case "sound"	     	: return token_play 
   case "so."	     	: return token_play 
   case "sprite"	     	: return token_sprite  
@@ -908,6 +938,7 @@ select case s
   case "cos"		: return token_cos
   case "getpixel"     	: return token_getpixel
   case "ge."     	: return token_getpixel
+  case "getenvsustain"	: return token_getenvsustain
   case "gettime"       	: return token_gettime
   case "mousek"        	: return token_mousek
   case "mousew"        	: return token_mousew
@@ -1187,8 +1218,16 @@ vars=0
   case token_position	: err=compile_fun_2p()
   case token_print    	: err=compile_print()  : goto 450
   case token_rad	: compile_nothing()
+  case token_release	: compile_fun_1p()
   case token_run      	: compile_nothing()   
   case token_save    	: vars=compile_fun_varp()  
+  case token_setdelay   : err=compile_fun_2p()
+  case token_setenv 	: err=compile_fun_2p()
+  case token_setlen   	: err=compile_fun_2p()
+  case token_setpan 	: err=compile_fun_2p()
+  case token_setsustain	: err=compile_fun_2p()
+  case token_setvol 	: err=compile_fun_2p()
+  case token_setwave 	: err=compile_fun_2p()
   case token_sprite	: err=compile_fun_3p()
   case token_waitclock  : compile_nothing()
   case token_waitms    	: err=compile_fun_1p()
@@ -2162,10 +2201,10 @@ inrun=0
 end sub
 
 sub do_defenv
-dim numpar,i,j,par,channel as integer
-dim even,odd, max,spl,qqq as single 
+dim a,d,s,r,numpar,i,j,par,channel,wptr  as integer
+dim aa,dd,ss,rr,even,odd, max,spl,qqq,fulltime,timeunit,da,dr as single 
 dim t1 as expr_result
-dim s as string
+dim s1 as string
 dim harm(15) as single
 
 numpar=compiledline(lineptr_e).result.uresult
@@ -2173,74 +2212,68 @@ numpar=compiledline(lineptr_e).result.uresult
 
 ' defenv channel, string - tries to load from /media/h a h2 file from PC-Softsynth
 ' defenv channel, l1,r1,l2,r2,l3,r3,l4,r4 - defines ADSR in Yamaha DX  style, except these are linear values
-' Every 5 ms added 
-' defsnd channel, a,d,s,r - defines ADSR as in SID 
+' defsnd channel, a,d,s,r - defines ADSR attack time, decay time, sus level, release time. Sus point has to be returned - how?
 
 
-if numpar<2 then return
+if numpar<>2 andalso numpar<>5 andalso numpar<>9 then return ' and print error
 
  
 if numpar=2 then
   t1=pop()
   if t1.result_type=result_string2 then 
-    s=convertstring(t1.result.uresult)
+    s1=convertstring(t1.result.uresult)
   else if t1.result_type=result_string then 
-    s=t1.result.sresult
+    s1=t1.result.sresult
   else 
-    s=""
+    s1=""
+   wptr=converttoint(t1)
   endif  
 
     
-  if s<>"" then 
+  if s1<>"" then 
     t1=pop()
     channel=converttoint(t1) 
-    close #9 : open "/sd/media/h/"+s for input as #9
+    close #9 : open "/sd/media/h/"+s1 for input as #9
     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
     get #9,17,envbuf8(channel,0),256
     for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
     close #9
                                                                     '  for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
     return
+  else
+    if wptr < ($80000 - 2048) then 
+      for i=0 to 255: envbuf(channel,i)=dpeek(wptr+2*i): next i
+    else
+      for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i) : next i
+    endif
+    return   
   endif
+endif  
+
+if numpar=5 then    'simple adsr
+
+  t1=pop() : rr=converttofloat(t1)
+  t1=pop() : ss=converttofloat(t1) 
+  t1=pop() : dd=converttofloat(t1)
+  t1=pop() : aa=converttofloat(t1)
+  t1=pop() : channel=converttoint(t1)
+  if ss<0.0 then ss=0.0 
+  if ss>1.0 then ss=1.0
+  fulltime=aa+dd+rr
+  timeunit=256/fulltime : a=round(aa*timeunit) : d=round(dd*timeunit) : r=round(rr*timeunit) :print a,d,r,a+d+r
+  da=65520.0/a : dd=(65520.0-65520.0*ss)/d : dr=(65520.0*ss)/r : print da,dd,dr
+  suspoints(channel)=a+d
+  aa=0.0 : for i=0 to a-1  : envbuf(channel,i)=round(aa): aa+=da : next i
+  for i=a to (a+d-1) : envbuf(channel,i)=round(aa) : aa=aa-dd : if aa<0.0 then aa=0.0
+  next i
+  for i=(a+d) to 255 : envbuf(channel,i)=round(aa): aa=aa-dr : if aa<0.0 then aa=0.0
+  next i
+  envbuf(channel,255)=0
+  for i=0 to 255 : print envbuf(channel,i), : next i
+ endif
   
-  par=converttoint(t1)  : print par
-  t1=pop()
-  channel=converttoint(t1)  
-  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1.0/512*3.14159265359*i)) : next i
-                                                                           '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-  return
-  ' todo caser and generate sid waves
-endif
-for i=0 to 15 : harm(i)=0: next i  
-for i=numpar to 2 step -1 
-  t1=pop() 
-  harm(i-2)=converttofloat(t1) 
-next i
-t1=pop()
-channel=converttoint(t1) : print channel
-for j=0 to 1023: samplebuf(channel, i) =0 : next j
-max=0
-if harm(0)<0 then
-  even=abs(harm(0))
-  odd=abs(harm(1)) 
-  harm(0)=1
-  harm(1)=even
-  harm(2)=odd
-  for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
-  for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
-endif
-if harm(0)>=0 then ' synthesize with harmonics
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15 : spl+=harm(j)*sin((1.0/512)*3.14159265359*i*(j+1)) : next j 
-    if abs(spl)>max then max=abs(spl)  ': print max 
-  next i  
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j ':' print spl
-    samplebuf(channel,i)=round(spl)
-  next i  
-endif 
+  
+  
 
                                                                '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
 end sub
@@ -2265,61 +2298,77 @@ sub do_play
 'envelope : int, 0 to 7, 8: no envelope
 'wait : in ms
 
+'samplefreq 1 316 406.25
 
-dim numpar,i,base2,channel,skip,speed,pan as integer
-dim params(7) as single
+dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus as integer
+dim params(8) as single
 dim t1 as expr_result
-dim speed_coeff as single
-speed_coeff=302.68686433234421364985163204748 
-params(0)=0.0 : params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0
-'chn		freq		   vol		   wave#	   env#		   len		   delay	   pan
+dim speed_coeff, freq,pan ,vol,slen as single
+speed_coeff=815.6614449376854599406528189911
+
+for i=0 to 8 : params(i)=-2.0 : next i
+'params(0)=0: params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0 : 
+'chn		freq		   vol		   wave#	   env#		   len		   delay	   pan		: sus 
 numpar=compiledline(lineptr_e).result.uresult
 for i=numpar to 1 step -1 
   t1=pop() 
   params(i-1)=converttofloat(t1) 
-
-
-
 next i
-'for i=0 to 7 : print params(i): next i
-if numpar<4 then params(3)=params(0) : params(4)=params(0) ' set wave and env # as chn#
-if numpar<5 then params(4)=params(0) ' set wave and env # as chn#
-speed=round(speed_coeff/params(5))
-pan=8192+round(8192*params(7))
-base2=base+64*params(0)
-skip=round(params(1)*4.4338896)
-if params(3)<8 then 
-  lpoke base2+8,varptr(samplebuf(round(params(0)),0))+$C000_0000 
+if params(0)<0 then channel=0 else channel=round(params(0))
+if params(1)<0 then freq=440.0 else freq=params(1)
+if params(2)<0 orelse params(2)>16.384 then vol=channels(channel).vol else vol=params(2) : channels(channel).vol=vol
+if params(3)<0 orelse params(3)>8.0 then wave=channels(channel).wave else wave=round(params(3)) : channels(channel).wave=wave
+if params(4)<0 orelse params(4)>8.0 then env=channels(channel).env else env=round(params(4)) : channels(channel).env=env
+if params(5)<0 orelse params(5)>1000.0 then slen=channels(channel).length else slen=params(5) : channels(channel).length=slen
+if params(6)<0 orelse params(6)>10000.0 then delay=channels(channel).delay else delay=round(params(6)) : channels(channel).delay=delay
+if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
+if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
+
+speed=round(speed_coeff/slen)
+ipan=8192+round(8192*pan)
+ivol=round(1000.0*vol)
+base2=base+64*channel
+skip=round(freq*3.9827219) 
+if wave <8 then 
+  lpoke base2+8,varptr(samplebuf(wave,0))+$C000_0000 
 else
   lpoke base2+8,$C800_0000 
 endif
   
 lpoke base2+16,2048
 lpoke base2+12,0
-dpoke base2+20,round(1000*params(2))
-dpoke base2+22,pan
-if params(3)<8 then
-  dpoke base2+24,60  'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
+dpoke base2+20,ivol 
+dpoke base2+22,ipan 
+if wave<8 then
+  dpoke base2+24,20 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
   dpoke base2+26,skip ' todo: use skip to make accurate sample rate
 else
-  dpoke base2+24,round(3500000.0/params(1)) 
+  dpoke base2+24,round(1316406/freq)  : print 1316406/freq
   dpoke base2+26,256
 endif 
-dpoke base2+28,$4000_0000
+'dpoke base2+28,$4000_0000
 lpoke base2+32,0 
-if params(4)=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(params(4),0))
+if env=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(env,0))
 lpoke base2+40,speed' speed
-lpoke base2+44,255 'len
+lpoke base2+44,sus 'len
 
-if params(6)>0 then waitms(round(params(6)))' : print "wait "; round(params(6)) : l
+if delay>0 then waitms(delay) ' : print "wait "; round(params(6)) : l
 'lpoke bASE+7*64+20,0
 'do: position(0,0): print dpeek(base+4),dpeek(base+4+64),dpeek(base+4+128),dpeek(base+4+192),dpeek(base+4+256),dpeek(base+4+320)," ",lpeek(base+4+384);"           ",dpeek(base+4+448) : loop
 end sub
 
+sub do_release
+
+dim t1 as expr_result
+dim channel as integer
+t1=pop()
+channel=converttoint(t1)
+if channel>=0 andalso channel<=7 then lpoke base+64*channel+44,255 ' else printerror
+end sub
 
 
 sub do_defsnd
-dim numpar,i,j,par,channel as integer
+dim numpar,i,j,par,channel,wptr as integer
 dim even,odd, max,spl,qqq as single 
 dim t1 as expr_result
 dim s as string
@@ -2331,7 +2380,7 @@ numpar=compiledline(lineptr_e).result.uresult
 ' defsnd channel, string - tries to load from /media/s an s2 file from PC-Softsynth
 ' defsnd channel, h1,h2.... h15 - defines harmonics
 ' defsnd channel, negfloat, negfloat - defines even and odd harmonics dampening
-' defsnd channel, oneint - defines waveshape as in SID and 0=sinewave
+' defsnd channel, oneint - loads the wave from the pointer
 
 if numpar<2 then return
 
@@ -2344,6 +2393,7 @@ if numpar=2 then
     s=t1.result.sresult
   else 
     s=""
+    wptr=converttoint(t1)
   endif  
 
     
@@ -2356,6 +2406,13 @@ if numpar=2 then
     close #9
                                                                        'for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
     return
+  else
+    if wptr < ($80000 - 2048) then 
+      for i=0 to 1023: samplebuf(channel,i)=dpeek(wptr+2*i): next i
+    else
+      for i=0 to 1023 : samplebuf(channel,i)=psdpeek(wptr+2*i) : next i
+    endif
+    return 
   endif
   
   par=converttoint(t1)  : print par
@@ -3051,6 +3108,19 @@ else
 endif  
 end sub
 
+sub do_getenvsustain
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "getenvsustain: "; : printerror(39) : return
+t1=pop()
+t1.result.iresult=suspoints(converttoint(t1))
+t1.result_type=result_int
+push t1  
+end sub
+
 sub do_sin
 
 dim t1 as expr_result
@@ -3551,6 +3621,54 @@ nostalgic_mode=t1.result.iresult
 v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
 end sub
 
+sub do_setwave
+dim t1,t2 as expr_result
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).wave=converttoint(t1)
+end sub
+
+sub do_setsustain
+dim t1,t2 as expr_result
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).sus=converttoint(t1)
+end sub
+
+sub do_setenv
+dim t1,t2 as expr_result
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).env=converttoint(t1)
+end sub
+
+sub do_setdelay
+dim t1,t2 as expr_result
+t1=pop() 
+t2=pop()  
+channels(converttoint(t2)).delay=converttoint(t1)
+end sub
+
+sub do_setlen
+dim t1,t2 as expr_result
+t1=pop()  
+t2=pop()  
+channels(converttoint(t2)).length=converttofloat(t1)
+end sub
+
+sub do_setvol
+dim t1,t2 as expr_result
+t1=pop()  
+t2=pop()  
+channels(converttoint(t2)).vol=converttofloat(t1)
+end sub
+
+sub do_setpan
+dim t1,t2 as expr_result
+t1=pop() 'value
+t2=pop() ' pin
+channels(converttoint(t2)).pan=converttofloat(t1)
+end sub
 
 
 sub do_pinwrite
@@ -3959,7 +4077,15 @@ commands(token_deg)=@do_deg
 commands(token_int)=@do_int
 
 commands(token_play)=@do_play
-
+commands(token_setdelay)=@do_setdelay
+commands(token_setenv)=@do_setenv
+commands(token_setlen)=@do_setlen
+commands(token_setpan)=@do_setpan
+commands(token_setvol)=@do_setvol
+commands(token_setwave)=@do_setwave
+commands(token_setsustain)=@do_setsustain
+commands(token_release)=@do_release
+commands(token_getenvsustain)=@do_getenvsustain
 
 end sub
 
@@ -3968,12 +4094,39 @@ sub init_audio
 
 dim i,j as integer
 v.cls(147,154)
-for i=0 to 1023 : for j=0 to 7 : samplebuf(j,i)=round(32600*sin(i*3.1415926535/512.0)) : next j: next i
-for i=0 to 255 : for j=0 to 7 : envbuf(j,i)=65280-256*i : next j : next i
-lpoke base+7*64+36,varptr(envbuf(7,0))
-lpoke base+7*64+40,256
-lpoke base+7*64+44,255
-
+dim k as single : k=1.0
+for i=0 to 1023 : samplebuf(0,i)=round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
+for i=0 to 511  : samplebuf(1,i)= -32512+127*i: samplebuf(1,512+i)=-samplebuf(1,i) : next i   		' 1 : triangle 
+for i=0 to 1023 : samplebuf(2,i)= -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
+for i=0 to 127  : samplebuf(3,i)= -32600 : next i : for i=128 to 1023 : samplebuf(3,i) =32600 : next i 	' 3 pulse 12.5%
+for i=0 to 511  : samplebuf(4,i)= -32600 : next i : for i=512 to 1023 : samplebuf(4,i) =32600 : next i 	' 4 square
+for i=0 to 255  : samplebuf(5,i)= -32600 : next i : for i=256 to 1023 : samplebuf(5,i) =32600 : next i 	' 5 pulse 25%
+for i=0 to 1023 : samplebuf(6,i)= dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
+for i=0 to 1023 : samplebuf(7,i)= dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
+for i=0 to 255 : envbuf(0,i)=65280-256*i : next i							' instant attack, linear release	
+for i=0 to 255 : envbuf(1,i)=round(65280.0*k) : k=k*0.975 :  next i : envbuf(1,255)=0			' instant attack, log release
+for i=0 to 254 : envbuf(2,i)=65280 : next i : envbuf(2,255)=0						' instant attack, instant release
+for i=0 to 15 :  envbuf(3,i)=4096*i : next i 
+for i=16 to 239: envbuf(3,i)=65280 : next i
+for i=240 to 255 : envbuf(3,i)=4096*(255-i) : next i							' smooth attack, smooth release
+for i=0 to 255 : envbuf(4,i)=256*i : next i : envbuf(4,255)=0						' slow attack, instant release
+for i=0 to 239 : envbuf(5,i)=272*i : next i : for i=240 to 255 : envbuf(5,i)=4096*(255-i) : next i	' slow attack, smooth release
+for i=0 to 127 : envbuf(6,i)=512*i : envbuf(6,255-i)=512*i : next i 					' triangle
+for i=0 to 7: envbuf(7,i)=8192*i : next i
+for i=8 to 23 : envbuf(7,i)=65280-2048*(i-8) : next i 	
+for i=24 to 128 : envbuf(7,i)=32768 : next i
+for i=129 to 255: envbuf(7,i)=256*(255-i) : next i 							' classic adsr
+for i=0 to 7
+  channels(i).wave=i
+  channels(i).env=i
+  channels(i).delay=0
+  channels(i).length=1.0
+  channels(i).vol=4.0
+  channels(i).pan=0.0
+  channels(i).sus=255
+  suspoints(i)=255
+ ' lpoke base+64*i+28,$80000100 : waitms(2) : lpoke base+28,$40000000  
+next i
 end sub
 
 sub init_error_strings
@@ -4028,7 +4181,7 @@ errors$(45)="No more than 3 dimensions supported"
 errors$(46)="Variable name expected"
 errors$(47)="Type name expected"
 errors$(48)="Type not supported yet"
-errors$(49)="Array index out of bound"
+errors$(49)="Array index out of range"
 
 end sub
         
@@ -4078,6 +4231,10 @@ sub pslpoke(addr as ulong,value as ulong)
 psram.filllongs(addr,value,1,0)
 end sub
 
+sub psdpoke(addr as ulong,value as ulong)
+psram.fillwords(addr,value,1,0)
+end sub
+
 sub pspoke(addr as ulong,value as ulong)
 psram.fillbytes(addr,value,1,0)
 end sub
@@ -4091,6 +4248,12 @@ end function
 function pslpeek(adr as ulong) as ulong
 dim res as ulong
 psram.read1(varptr(res),adr,4)
+return res
+end function
+
+function psdpeek(adr as ulong) as ulong
+dim res as ushort
+psram.read1(varptr(res),adr,2)
 return res
 end function
 
@@ -4260,6 +4423,8 @@ zero1 long 0
 atarist_spl file "atarist.spl" '512
 zero2 long 0
 mouse  file "mouse2.def"
+atari2 file "atari2.s2"
+atari12 file "atari12.s2"
 end asm
 
 '' ------------------------------- the loader cog for BRUN
