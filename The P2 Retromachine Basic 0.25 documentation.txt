@@ -1,6 +1,6 @@
 The P2 Retromachine Basic
 
-Version 0.24 - Alpha
+Version 0.25 - Alpha
 -------------------------
 
 The P2 Retromachine Basic is a Basic interpreter for a Propeller 2 platform with an external RAM. Currently tested/developed versions work on P2-EC32 
@@ -10,16 +10,18 @@ The goal is to make the Propeller 2 platform a fully independent computer that c
 
 The power of a retro style Basic interpreter is that you can make a powerful program in a very short code, in a short time. 
 
-Version 0.24 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
+Version 0.25 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
 
 The current version of the interpreter needs a digital video accessory board at P0, AV accessory board at P8 and a serial host accessory board at P16.
 
 Preparing the hardware
 ----------------------
 
-Flash the compiled interpreter to the P2-EC32 flash memory.
-Prepare the SD card: if not in FAT32 format, format it as FAT32. Create 'bin' and 'bas' directories in the main directory of the card. The card doesn't need to be empty, it only has to have these 2 directories in it
-Place your precompiled binary files that you want to use with a P2 in 'bin' directory. 
+Get the interpreter from the repository https://github.com/pik33/P2-Retromachine-Basic
+
+Flash the compiled interpreter binary to the P2-EC32 flash memory using Flexprop.
+Prepare the SD card: if not in FAT32 format, format it as FAT32. Create 'bin', 'bas' and 'media' directories in the main directory of the card. The card doesn't need to be empty, it only has to have these 3 directories in it
+Place your precompiled binary files that you want to use with a P2 in 'bin' directory. Copy 'media' directory (with 's' and 'h' dirs inside) from the repository to the SD
 The interpreter will load and save Basic programs from 'bas' directory. There is an 'examples' folder in the repository: you can copy these examples there.
 
 Connect the DV accessory (with a HDMI type socket) to the Pin 0 bank. Connect a monitor to the DV accessory board with a HDMI cable. The generated digital video is 1024x576 at 8 bpp and 50 Hz. 
@@ -202,6 +204,57 @@ A stick(joynum) function returns the joystick state as a 4-bit number. If 0 retu
 
 strig(joynum) returns the joystick button(s) state. 0 if not pressed
 
+Audio system
+------------
+
+The P2 Retromachine Basic has an 8-channel audio generator that plays sampled waveforms. 
+Every audio channel can play a sound that has its frequency, volume, waveform, envelope, length (=time of playing), wait after command, stereo position ('pan') and sustain point.
+It has also 8 sets of these parameters that can be assigned to any audio channel.
+
+At the start, and after 'new' command these sets are initialized as:
+- waveforms: 0 - sine, 1 - triangle, 2 - sawtooth, 3 - pulse, 12.5%, 4 - square, 5 - pulse, 25%, 6 - Atari Pokey waveform 12, 7 - Atari Pokey waveform 2
+  Use Atari Pokey waveforms at low frequencies, or aliasing will occur.
+
+- envelopes: 0: instant attack, linear release, 1: instant attack, exponential release, 2: instant attack, long sustain, instant release,
+             3: smooth both ends, 4: slow linear attack, instant release, 5: slow attack as in 4, smooth release, 6: triangle wave, 7: "classic ADSR"
+- all lengths are set to 1 (second), delays to 0, stereo position to center, volumes to 4.0, that's about 1/4 of maximum to avoid clipping, and sustain point to 255 (=no sustain)
+- every audio channels gets the waveform and envelope the same number as the channel
+
+To play the sound, there is 'play' instruction that has 0 to 9 parameters. For parameters that aren't provided, defaults will be used. If a parameter is provided, it becomes a new default. 
+The negative numbers will be ignored and defaults used instead except pan, that has range from -1.0 to 1.0. To ignore it, use less than -1
+
+The syntax is: play channel, frequency, volume, waveform, envelope, length, delay, pan, sustain
+
+Channel is the integer number from 0 to 7
+Frequency is float, in Hz. The resolution is ~0.25 Hz, the effective sample rate is 65820 Hz
+Volume is a float from 0 to 16.384
+Waveform is an integer number from 0 to 8. 0..7 selects one of predefined waveforms (as described above, if not changed by the user, see below). 8 is noise
+Envelope is an integer number from 0 to 8. 0..7 selects one of predefined waveforms (as described above, if not changed by the user, see below). 
+8 is no envelope, the sound will not stop until next play command.
+Length is a float, and it is the time in seconds for the sound to play
+Delay is integer, the time in ms, that the play instruction will wait as if waitms was added at the end
+Pan is a float in range -1 .0 to 1.0,  -1 is left, 1 is right
+Sustain is the sustain point needed to play an instrument using the keyboard. The sound will stay at the sustain volume until released. 
+Setting the sustain point  < 255 will cause the envelope to stop there. To end playing, there is the command 'release' channel. The envelope will then continue to the end.
+
+Envelopes and waveforms can be redefined.
+
+'defsnd' defines the waveform at given slot from 0 to 7. The syntax is:
+
+defsnd slot, "filename" - loads the file in /media/s directory. This is PC-Softsynth type .s2 file that has 16 bytes of a header and 1024 16-bit signed samples that define one wave period.
+The interpreter doesn't check the header, it simply loads 1024 words from the offset #16, so the user can deefine anything and save it in such a file
+defsnd slot, harmonic,harmonic... (up to 16 of them) synthesizes the waveform from harmonics
+defsnd slot, negative number,number also synthesizes the wave from harmonics, but these numbers are dampening coefficients for even and odd harmonics
+
+'defenv' defines the envelope.
+
+defenv slot, filename loads the file in /media/h directory. This is PC-Softsynth type .h2 file, that has 16 bytes of header and 256 unsigned 8-bit samples
+defenv slot,a,d,s,r defines standard ADSR envelope. a,d and r can be anything that is not negative, s should be a float in range 0.0..1.0
+
+Setting ADSR envelope will also compute its sustain point that can be retrieved by getenvsustain(slot)
+
+While the interpreter remembers all parameters from a previous play command, there is a set of commands to change them individually and then simply use play channel, freq only
+These are setenv, setlen, setpan, setrvol, setwave and setsustain. They all have syntax setxxx(channel,parameter)
 		
 Pin control
 -----------
@@ -215,6 +268,7 @@ Shortcuts/abbreviations
 Atari Basic enables several commands to be entered either in full or shortened version. That was convenient, speeds up the writing and saves the limited space in the program line. 
 I added them into the P2 Retromachine Basic. 
 Not all of them are meaningful - in Atari Basic you can write CLOA. instead of CLOAD or RU. instead of RUN. I added only real shortcuts that are shorten than the original command.
+Shortcuts don't work yet if used after 'then' or 'else' without a space after them.
 			
 Commands (shortcuts):
 ----------
@@ -234,7 +288,10 @@ color colornum	(c.)			sets a color for graphic operations. There are 256 colors,
 cos(x)					returns a cosine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
 csave (cs.)				tries to save a program to an audio cassette. Experimental and there is no cload yet.
 cursor on/off or 1/0    		switches the text cursor on and off. Because of a bug in this version, use 1/0 in programs. 
+defenv channel,params			defines the sound envelope for the channel
+defsnd channel, params			defines the waveform for the channel
 defsprite spritenum,x,y,w,h (ds.)	makes a sprite from a screen rectangle
+deg					switches trigonometric functions to 360 degree system
 dim					declares an array or a typed variable
 dir					lists the working directory of an SD card
 draw end_x, end_y (dr.)			draws the line to point end_x, end_y. This will be the starting point for the new draw. The first starting point can be set with 'plot'
@@ -243,10 +300,12 @@ fill x,y,newcolor,oldcolor (fi.)	flood fill. Starts at x,y and replaces all pixe
 font fontnum			        sets the font family for characters to print. 2 fonts are implemented, 0=Atari ST mono, 1=PC DOS
 for (f.) 				starts a loop (see program control)
 frame (fr.)				draws an empty rectangle from x1,y1 to x2,y2
+getenvsustain(slot)			gets the sustain point set by defenv, to use with setsustain
 getpixel(x,y)			        returns the color of the pixel at screen position x,y. The function returns the bacgkround pixel color even if there is a sprite drawn over this pixel.
 goto line (g.)				jumps to the line
 if					with 'then' and 'else' controls the program flow
 ink colornum (i.)			sets the color of the characters to print
+int					converts anything, including strings if doable, to integer
 list startline, endline (l.)		outputs the code on the screen form startline to endline. If no endline specified, the program will be listed to the end. 
 load "filename" (lo.)	         	loads a Basic program from the file May be used in format load filename - without ""
 mode modenum (m.)			sets "look and feel" of the interpreter. 0 - Atari style, 1 - PC amber, 2 - PC green, 3 - PC white, 4 - Atari ST mono 
@@ -266,15 +325,25 @@ pinread pin				returns the pin logoc state (0 or 1)
 pinstart pin, mode, x,y			starts the smart pin mode and sets x,y registers of the pin		
 pintoggle pin				toggles the state of the pin (from 0 to 1 or from 1 to 0). Doesn't work if the pin floats.
 pinwrite pin, value			if value=0, sets the pin output to low, else sets the pin output to high. Use to blink a led.
+play channel, (parameters)		plays a sound
 plot x,y (pl.)				sets a pixel color at x,y to the color determined by a previous "color" command and sets a new starting point for 'draw'
 position x,y (po.)			sets a curcor position. The x resolution is half a character, so multiply number of characters by 2. This allows centering strings that have odd number of characters.
 print (?)				outputs to the screen and moves the cursor to the new line if , or ; is not used.
 					Use , after an argument to print the new one after a tab (8 characters), use ; to print the next argument directly after the previous. 
+rad					switches trigonometric functions to radians
 rdpin pin				returns the smartpin output register value, notifies the smart pin
+release channel				makes the envelope in the audio channel to continue to the end. 
 rnd(value)				returns a random value. If no arguments, it is a 32-bit unsigned integer. If integer or float parameter is given, it returns integer or float that is less than,0 the parameter.
 rqpin pin				returns the smartpin output register value, does not notify the smart pin
 run					starts the program. You can use "run" inside the program to restart it.
 save filename (s.)			saves the program to the file
+setdelay channel, delay			sets the delay in ms for the audio channel to wait after 'play' instruction. Default=0
+setenv channel,env#			sets the predefined envelope for the audio channel. Redefine it with defenv if needed
+setlen channel, len			sets the time of the sound in seconds. Default 1.0
+setpan channel, pan			sets the stereo position, -1.0 left, +1.0 right, 0.0 center. Default 0.0
+setvol channel, vol			sets the volume of the channel, from 0.0 to 16.384. Higher values will cause clipping; default=4.0
+setwave channel, wave#			sets the predefined waveform for the channel. Redefine it with defsnd.
+setsustain channel,point		sets the sustain point for the envelope. The envelope will stop there until 'release' command is executed
 sin(x)					returns a sine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
 sprite spritenum,x,y (sp.)		move the sprite number sprite# (from 0 to 15
 sqr(x)					returns the square root of x
@@ -290,6 +359,11 @@ wypin pin				writes to the Y register of the smart pin
 
 Changelog:
 ------------
+
+0.25:
+
+Math function added : deg, rad, int
+First version of an overengineered audio subsystem(tm) now works.
 
 0.24:
 

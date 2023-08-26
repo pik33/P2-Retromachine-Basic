@@ -2290,6 +2290,7 @@ sub do_play
 ' play channel, freq, volume, waveform, envelope, length
 ' play channel, freq, volume, waveform, envelope, length, wait
 ' play channel, freq, volume, waveform, envelope, length, wait, pan
+' play channel, freq, volume, waveform, envelope, length, wait, pan, sus
 
 
 'channel: int, 0..7
