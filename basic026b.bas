@@ -1,3 +1,10 @@
+' A Retromachine Basic interpreter
+' v. 0.26 alpha - 20230827
+' MIT license
+' Piotr Kardasz pik33@o2.pl 
+'-------------------------------------------------------------------
+
+
 const HEAPSIZE=192000
 '#define PSRAM4
 #define PSRAM16
@@ -198,6 +205,16 @@ const token_dpeek=153
 const token_lpeek=154
 const token_adr=155
 const token_fre=156
+const token_inkey=157
+
+const token_abs=158
+
+
+
+
+
+
+
 const token_error=255
 const token_end=510
 const token_space=511
@@ -988,7 +1005,7 @@ end function
 function isfunction(s as string) as ubyte
 
 select case s
- 
+  case "abs"		: return token_abs
   case "acos"		: return token_acos
   case "adr"		: return token_adr
   case "addr"		: return token_adr
@@ -1003,6 +1020,7 @@ select case s
   case "getenvsustain"	: return token_getenvsustain
   case "getnotevalue"	: return token_getnotevalue
   case "gettime"       	: return token_gettime
+  case "inkey$"		: return token_inkey
   case "lpeek"		: return token_lpeek
   case "mousek"        	: return token_mousek
   case "mousew"        	: return token_mousew
@@ -2265,9 +2283,10 @@ do
   endif
 runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, time="; tt
 runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
-loop until runptr=$7FFF_FFFF orelse kbm.get_key()=$106 
+loop until runptr=$7FFF_FFFF orelse (kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C)
+  ''do whatever kbm.peek_latest_key()=$106 
 if runheader(5)<>$7FFF_FFFF then 
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,16384,spl_len)  
+  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
   print "Stopped at line ";runheader(0)
 endif
 inrun=0
@@ -2795,8 +2814,31 @@ push t1
 end sub
 
 
+sub do_inkey
 
+dim t1 as expr_result
+let key=kbm.get_key() 
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then  
+  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
+ endif
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then
+  if leds and 2 = 2 then 
+    if key>96 andalso key<123 then
+      key-=32
+    else if key>64 andalso key<91 then 
+      key+=32
+    else if key>22 andalso key<32 then 
+      key-=9
+    else if key>13 andalso key<23 then 
+      key4+=39
+    endif
+  endif
 
+t1.result.sresult=chr$(scantochar(key)) else t1.result.sresult=""
+t1.result_type=result_string
+push t1
+end sub 
+ 
 '------------------------ Operators 
 
 sub do_plus 
@@ -4141,6 +4183,21 @@ endif
 push t1
 end sub
 
+sub do_abs
+
+dim t1 as expr_result
+t1=pop()
+if t1.result_type=result_int then 
+  t1.result.iresult=abs(t1.result.iresult)
+'uresult is always positive
+else if t1.result_type=result_float then 
+  t1.result.fresult=abs(t1.result.fresult)
+else 
+  t1.result_type=result_error : t1.result.uresult=40
+endif
+push t1
+end sub
+
 '--------------------------- THE END OF THE MAIN PROGRAM ------------------------------------------------------
 
 ''----------------------------------------------------------------------------------------------------
@@ -4287,6 +4344,8 @@ commands(token_adr)=@do_adr
 commands(token_fre)=@do_fre
 commands(token_getnotevalue)=@do_getnotevalue
 commands(fun_getaddr)=@do_getaddr
+commands(token_inkey)=@do_inkey
+commands(token_abs)=@do_abs
 
 
 end sub

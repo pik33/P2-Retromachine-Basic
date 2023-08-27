@@ -170,6 +170,13 @@ PUB peek_key() : r | tail
   else
     return keyq_data[tail]
 
+PUB peek_latest_key() : r | head
+  head := keyq_head
+  if keyq_tail == head
+    return 0 ' No event
+  else
+    return keyq_data[head]
+
 OBJ '' Mouse API
     '' Set HAVE_MOUSE to enable
 

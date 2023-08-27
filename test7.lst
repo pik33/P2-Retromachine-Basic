@@ -1,0 +1,3054 @@
+00000                 | 
+00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/test7.p2asm"
+00000                 | con
+00000                 | 	_clkfreq = 160000000
+00000                 | 	_clkmode = 16779259
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 160000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $10007fb
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 94 05 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 0C 02 90 5D |  if_ne	jmp	#spininit
+0040c 002 C9 F0 03 F6 | 	mov	ptra, ptr_stackspace_
+00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
+00414 004 EC 01 90 5D |  if_ne	jmp	#skip_clock_set_
+00418 005 00 00 64 FD | 	hubset	#0
+0041c 006 03 80 80 FF 
+00420 007 00 F0 67 FD | 	hubset	##16779256
+00424 008 86 01 80 FF 
+00428 009 1F 80 66 FD | 	waitx	##200000
+0042c 00a 03 80 00 FF 
+00430 00b FB ED 07 F6 | 	mov	pa, ##16779259
+00434 00c 00 EC 63 FD | 	hubset	pa
+00438 00d 18 EC 67 FC | 	wrlong	pa, #24
+0043c 00e B4 C4 84 FF 
+00440 00f 14 00 6C FC | 	wrlong	##160000000, #20
+00444 010 BC 01 90 FD | 	jmp	#skip_clock_set_
+00448 011 00 00 00 00 
+      ...             
+005fc 07e 00 00 00 00 
+00600 07f 00 00 00 00 | 	orgf	128
+00604 080             | skip_clock_set_
+00604 080 38 07 A0 FD | 	call	#_program
+00608 081             | cogexit
+00608 081 38 01 80 FF 
+0060c 082 1F 00 66 FD | 	waitx	##160000
+00610 083 01 A2 61 FD | 	cogid	arg01
+00614 084 03 A2 61 FD | 	cogstop	arg01
+00618 085             | spininit
+00618 085 61 8F 05 FB | 	rdlong	objptr, ptra++
+0061c 086 61 95 05 FB | 	rdlong	result1, ptra++
+00620 087 28 06 64 FD | 	setq	#3
+00624 088 00 A3 05 FB | 	rdlong	arg01, ptra
+00628 089 04 F0 87 F1 | 	sub	ptra, #4
+0062c 08a 2D 94 61 FD | 	call	result1
+00630 08b D4 FF 9F FD | 	jmp	#cogexit
+00634 08c             | FCACHE_LOAD_
+00634 08c F9 2D 01 F6 |     mov	fcache_tmpb_,ptrb
+00638 08d 2B F2 63 FD |     pop	ptrb
+0063c 08e 95 EC 8B F9 |     altd	pa,ret_instr_
+00640 08f 95 00 00 F6 |     mov	 0-0, ret_instr_
+00644 090 28 EC 63 FD |     setq	pa
+00648 091 E1 01 04 FB |     rdlong	$0, ptrb++
+0064c 092 2A F2 63 FD |     push	ptrb
+00650 093 96 F2 03 F6 |     mov ptrb,fcache_tmpb_
+00654 094 00 00 80 FD |     jmp	#\$0 ' jmp to cache
+00658 095             | ret_instr_
+00658 095 00 FE 07 02 |     _ret_ cmp inb,#0
+0065c 096             | fcache_tmpb_
+0065c 096 00 00 00 00 |     long 0
+00660 097             | fcache_load_ptr_
+00660 097 8C 00 00 00 |     long FCACHE_LOAD_
+00664 098             | builtin_bytefill_
+00664 098 01 A6 55 F0 |         shr	arg03, #1 wc
+00668 099 D1 A4 41 CC |  if_c   wrbyte	arg02, arg01
+0066c 09a 01 A2 05 C1 |  if_c   add	arg01, #1
+00670 09b 00 A4 FD F9 |         movbyts	arg02, #0
+00674 09c             | builtin_wordfill_
+00674 09c 01 A6 55 F0 |         shr	arg03, #1 wc
+00678 09d D1 A4 51 CC |  if_c   wrword	arg02, arg01
+0067c 09e 02 A2 05 C1 |  if_c   add	arg01, #2
+00680 09f D2 A4 29 F9 |         setword	arg02, arg02, #1
+00684 0a0             | builtin_longfill_
+00684 0a0 D1 00 88 FC |         wrfast	#0,arg01
+00688 0a1 00 A6 0D F2 |         cmp	arg03, #0 wz
+0068c 0a2 D3 02 D8 5C |  if_nz  rep	#1, arg03
+00690 0a3 17 A4 61 5D |  if_nz  wflong	arg02
+00694 0a4 2D 00 64 FD |         ret
+00698 0a5             | COUNT_
+00698 0a5 00 00 00 00 |     long 0
+0069c 0a6             | RETADDR_
+0069c 0a6 00 00 00 00 |     long 0
+006a0 0a7             | fp
+006a0 0a7 00 00 00 00 |     long 0
+006a4 0a8             | pushregs_
+006a4 0a8 2B EC 63 FD |     pop  pa
+006a8 0a9 2B 4C 61 FD |     pop  RETADDR_
+006ac 0aa 03 4A 95 FB |     tjz  COUNT_, #pushregs_done_
+006b0 0ab FF 4B 8D F9 |     altd  COUNT_, #511
+006b4 0ac 28 00 64 FD |     setq #0-0
+006b8 0ad 61 AD 65 FC |     wrlong local01, ptra++
+006bc 0ae             | pushregs_done_
+006bc 0ae 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
+006c0 0af 61 4B 65 FC |     wrlong COUNT_, ptra++
+006c4 0b0 F8 4F 01 F6 |     mov    fp, ptra
+006c8 0b1 2C EC 63 FD |     jmp  pa
+006cc 0b2             |  popregs_
+006cc 0b2 2B EC 63 FD |     pop    pa
+006d0 0b3 28 04 64 FD |     setq   #2
+006d4 0b4 5F 4B 05 FB |     rdlong COUNT_, --ptra
+006d8 0b5 02 4A 75 FB |     djf    COUNT_, #popregs__ret
+006dc 0b6 28 4A 61 FD |     setq   COUNT_
+006e0 0b7 5F AD 05 FB |     rdlong local01, --ptra
+006e4 0b8             | popregs__ret
+006e4 0b8 2A 4C 61 FD |     push   RETADDR_
+006e8 0b9 2C EC 63 FD |     jmp    pa
+006ec 0ba             | 
+006ec 0ba             | divide_
+006ec 0ba E7 CE 59 F6 |        abs     muldivb_,muldivb_     wcz      'abs(y)
+006f0 0bb 6C 8C 61 FD |        wrc     itmp2_                         'store sign of y
+006f4 0bc E6 CC 51 F6 |        abs     muldiva_,muldiva_     wc       'abs(x)
+006f8 0bd E7 CC 11 FD |        qdiv    muldiva_, muldivb_             'queue divide
+006fc 0be 01 8C 65 C5 |  if_c  xor     itmp2_,#1                      'store sign of x
+00700 0bf 18 CE 61 FD |        getqx   muldivb_                       'get quotient
+00704 0c0 19 CC 61 FD |        getqy   muldiva_                       'get remainder
+00708 0c1 E6 CC 81 F6 |        negc    muldiva_,muldiva_              'restore sign, remainder (sign of x)
+0070c 0c2 00 8C 15 F4 |        testb   itmp2_,#0             wc       'restore sign, division result
+00710 0c3 E7 CE 81 06 |  _ret_ negc    muldivb_,muldivb_     
+00714 0c4             | 
+00714 0c4             | __methods__
+00714 0c4 B4 2F 00 00 | 	long	@__methodtable__
+00718 0c5             | itmp1_
+00718 0c5 00 00 00 00 | 	long	0
+0071c 0c6             | itmp2_
+0071c 0c6 00 00 00 00 | 	long	0
+00720 0c7             | objptr
+00720 0c7 E4 2F 00 00 | 	long	@objmem
+00724 0c8             | ptr___system__dat__
+00724 0c8 84 2D 00 00 | 	long	@__system__dat_
+00728 0c9             | ptr_stackspace_
+00728 0c9 EC 2F 00 00 | 	long	@stackspace
+0072c 0ca             | result1
+0072c 0ca 00 00 00 00 | 	long	0
+00730 0cb             | result2
+00730 0cb 01 00 00 00 | 	long	1
+00734 0cc             | result3
+00734 0cc 02 00 00 00 | 	long	2
+00738 0cd             | COG_BSS_START
+00738 0cd             | 	fit	480
+00738                 | 	orgh
+00738                 | hubentry
+00738                 | 
+00738                 | _program
+00738     01 4A 05 F6 | 	mov	COUNT_, #1
+0073c     A8 00 A0 FD | 	call	#pushregs_
+00740     00 6E A0 FF 
+00744     C7 00 68 FC | 	wrlong	##1088159744, objptr
+00748                 | ' a=6.875 : for i=1 to 3 : a=a*(2.0^(1/12)) : print a : next i : for i=0 to 11 : a=a*(2.0^(1/12)) : print a : next i
+00748     04 8E 05 F1 | 	add	objptr, #4
+0074c     C7 02 68 FC | 	wrlong	#1, objptr
+00750     04 8E 85 F1 | 	sub	objptr, #4
+00754                 | LR__0001
+00754     C7 A2 01 FB | 	rdlong	arg01, objptr
+00758     00 C0 1F FF 
+0075c     00 A4 05 F6 | 	mov	arg02, ##1065353216
+00760     2C 14 B0 FD | 	call	#__system___float_mul
+00764     C7 94 61 FC | 	wrlong	result1, objptr
+00768     00 A2 05 F6 | 	mov	arg01, #0
+0076c     E8 21 B0 FD | 	call	#__system___getiolock_0088
+00770     CA A2 01 F6 | 	mov	arg01, result1
+00774     90 02 B0 FD | 	call	#__system___lockmem
+00778     C7 A4 01 FB | 	rdlong	arg02, objptr
+0077c     00 A2 05 F6 | 	mov	arg01, #0
+00780     00 A6 05 F6 | 	mov	arg03, #0
+00784     23 A8 05 F6 | 	mov	arg04, #35
+00788     C0 19 B0 FD | 	call	#__system___basic_print_float
+0078c     00 A2 05 F6 | 	mov	arg01, #0
+00790     0A A4 05 F6 | 	mov	arg02, #10
+00794     00 A6 05 F6 | 	mov	arg03, #0
+00798     50 03 B0 FD | 	call	#__system___basic_print_char
+0079c     00 A2 05 F6 | 	mov	arg01, #0
+007a0     B4 21 B0 FD | 	call	#__system___getiolock_0088
+007a4     CA 00 68 FC | 	wrlong	#0, result1
+007a8     04 8E 05 F1 | 	add	objptr, #4
+007ac     C7 AC 01 FB | 	rdlong	local01, objptr
+007b0     01 AC 05 F1 | 	add	local01, #1
+007b4     C7 AC 61 FC | 	wrlong	local01, objptr
+007b8     04 8E 85 F1 | 	sub	objptr, #4
+007bc     04 AC 15 F2 | 	cmp	local01, #4 wc
+007c0     90 FF 9F CD |  if_b	jmp	#LR__0001
+007c4     04 8E 05 F1 | 	add	objptr, #4
+007c8     C7 00 68 FC | 	wrlong	#0, objptr
+007cc     04 8E 85 F1 | 	sub	objptr, #4
+007d0                 | LR__0002
+007d0     C7 A2 01 FB | 	rdlong	arg01, objptr
+007d4     00 C0 1F FF 
+007d8     00 A4 05 F6 | 	mov	arg02, ##1065353216
+007dc     B0 13 B0 FD | 	call	#__system___float_mul
+007e0     C7 94 61 FC | 	wrlong	result1, objptr
+007e4     00 A2 05 F6 | 	mov	arg01, #0
+007e8     6C 21 B0 FD | 	call	#__system___getiolock_0088
+007ec     CA A2 01 F6 | 	mov	arg01, result1
+007f0     14 02 B0 FD | 	call	#__system___lockmem
+007f4     C7 A4 01 FB | 	rdlong	arg02, objptr
+007f8     00 A2 05 F6 | 	mov	arg01, #0
+007fc     00 A6 05 F6 | 	mov	arg03, #0
+00800     23 A8 05 F6 | 	mov	arg04, #35
+00804     44 19 B0 FD | 	call	#__system___basic_print_float
+00808     00 A2 05 F6 | 	mov	arg01, #0
+0080c     0A A4 05 F6 | 	mov	arg02, #10
+00810     00 A6 05 F6 | 	mov	arg03, #0
+00814     D4 02 B0 FD | 	call	#__system___basic_print_char
+00818     00 A2 05 F6 | 	mov	arg01, #0
+0081c     38 21 B0 FD | 	call	#__system___getiolock_0088
+00820     CA 00 68 FC | 	wrlong	#0, result1
+00824     04 8E 05 F1 | 	add	objptr, #4
+00828     C7 AC 01 FB | 	rdlong	local01, objptr
+0082c     01 AC 05 F1 | 	add	local01, #1
+00830     C7 AC 61 FC | 	wrlong	local01, objptr
+00834     04 8E 85 F1 | 	sub	objptr, #4
+00838     0C AC 55 F2 | 	cmps	local01, #12 wc
+0083c     90 FF 9F CD |  if_b	jmp	#LR__0002
+00840     A7 F0 03 F6 | 	mov	ptra, fp
+00844     B2 00 A0 FD | 	call	#popregs_
+00848                 | _program_ret
+00848     2D 00 64 FD | 	ret
+0084c                 | hubexit
+0084c     81 00 80 FD | 	jmp	#cogexit
+00850                 | 
+00850                 | __system___setbaud
+00850     14 CC 05 FB | 	rdlong	muldiva_, #20
+00854     D1 CE 01 F6 | 	mov	muldivb_, arg01
+00858     BA 00 A0 FD | 	call	#divide_
+0085c     97 06 48 FB | 	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+00860                 | LR__0010
+00860     3E 94 9D FA | 	rdpin	result1, #62 wc
+00864     CB 96 A1 F1 | 	subx	result2, result2
+00868     F4 FF 9F CD |  if_b	jmp	#LR__0010
+0086c                 | LR__0011
+0086c     40 7C 64 FD | 	dirl	#62
+00870     40 7E 64 FD | 	dirl	#63
+00874     C8 CE 61 FC | 	wrlong	muldivb_, ptr___system__dat__
+00878     10 CE 65 F0 | 	shl	muldivb_, #16
+0087c     07 A4 05 F6 | 	mov	arg02, #7
+00880     E7 A4 01 F1 | 	add	arg02, muldivb_
+00884     3E F8 0C FC | 	wrpin	#124, #62
+00888     3E A4 15 FC | 	wxpin	arg02, #62
+0088c     3F 7C 0C FC | 	wrpin	#62, #63
+00890     14 A4 05 F1 | 	add	arg02, #20
+00894     3F A4 15 FC | 	wxpin	arg02, #63
+00898     41 7C 64 FD | 	dirh	#62
+0089c     41 7E 64 FD | 	dirh	#63
+008a0                 | __system___setbaud_ret
+008a0     2D 00 64 FD | 	ret
+008a4                 | 
+008a4                 | __system___txraw
+008a4     01 4A 05 F6 | 	mov	COUNT_, #1
+008a8     A8 00 A0 FD | 	call	#pushregs_
+008ac     D1 AC 01 F6 | 	mov	local01, arg01
+008b0     97 06 48 FB | 	callpa	#(@LR__0021-@LR__0020)>>2,fcache_load_ptr_
+008b4                 | LR__0020
+008b4     3E 94 9D FA | 	rdpin	result1, #62 wc
+008b8     CB 96 A1 F1 | 	subx	result2, result2
+008bc     F4 FF 9F CD |  if_b	jmp	#LR__0020
+008c0                 | LR__0021
+008c0     C8 94 09 FB | 	rdlong	result1, ptr___system__dat__ wz
+008c4     C2 01 00 AF 
+008c8     00 A2 05 A6 |  if_e	mov	arg01, ##230400
+008cc     80 FF BF AD |  if_e	call	#__system___setbaud
+008d0     58 7C 64 FD | 	drvl	#62
+008d4     3E AC 25 FC | 	wypin	local01, #62
+008d8     01 94 05 F6 | 	mov	result1, #1
+008dc     A7 F0 03 F6 | 	mov	ptra, fp
+008e0     B2 00 A0 FD | 	call	#popregs_
+008e4                 | __system___txraw_ret
+008e4     2D 00 64 FD | 	ret
+008e8                 | 
+008e8                 | __system___rxraw
+008e8     0D 4A 05 F6 | 	mov	COUNT_, #13
+008ec     A8 00 A0 FD | 	call	#pushregs_
+008f0     D1 AC 01 F6 | 	mov	local01, arg01
+008f4     C8 AE 09 FB | 	rdlong	local02, ptr___system__dat__ wz
+008f8     C2 01 00 AF 
+008fc     00 A2 05 A6 |  if_e	mov	arg01, ##230400
+00900     4C FF BF AD |  if_e	call	#__system___setbaud
+00904     00 AC 0D F2 | 	cmp	local01, #0 wz
+00908     20 00 90 AD |  if_e	jmp	#LR__0030
+0090c     14 B0 05 FB | 	rdlong	local03, #20
+00910     0A B0 45 F0 | 	shr	local03, #10
+00914     D8 AC 01 FD | 	qmul	local01, local03
+00918     1A 94 61 FD | 	getct	result1
+0091c     18 B2 61 FD | 	getqx	local04
+00920     D9 94 01 F1 | 	add	result1, local04
+00924     CA B4 01 F6 | 	mov	local05, result1
+00928     04 00 90 FD | 	jmp	#LR__0031
+0092c                 | LR__0030
+0092c     00 B4 05 F6 | 	mov	local05, #0
+00930                 | LR__0031
+00930     01 B6 65 F6 | 	neg	local06, #1
+00934     3F B8 05 F6 | 	mov	local07, #63
+00938     00 BA 05 F6 | 	mov	local08, #0
+0093c     04 90 05 F1 | 	add	ptr___system__dat__, #4
+00940     C8 BC 01 FB | 	rdlong	local09, ptr___system__dat__
+00944     04 90 85 F1 | 	sub	ptr___system__dat__, #4
+00948                 | LR__0032
+00948     08 BC 15 F4 | 	testb	local09, #8 wc
+0094c     09 BC 75 F4 | 	testbn	local09, #9 andc
+00950     0A BC 45 F0 | 	shr	local09, #10
+00954     01 BA 05 C6 |  if_b	mov	local08, #1
+00958     40 7E 6C 3D |  if_ae	testp	#63 wz
+0095c     01 BA 05 26 |  if_nc_and_z	mov	local08, #1
+00960     3F BC 8D 2A |  if_nc_and_z	rdpin	local09, #63
+00964     04 BC 45 20 |  if_nc_and_z	shr	local09, #4
+00968                 | LR__0033
+00968     00 AE 05 F6 | 	mov	local02, #0
+0096c     00 BA 0D F2 | 	cmp	local08, #0 wz
+00970     01 AE 65 56 |  if_ne	neg	local02, #1
+00974     00 BE 05 F6 | 	mov	local10, #0
+00978     00 B0 05 F6 | 	mov	local03, #0
+0097c     00 AC 0D F2 | 	cmp	local01, #0 wz
+00980     01 B0 65 56 |  if_ne	neg	local03, #1
+00984     00 B2 05 F6 | 	mov	local04, #0
+00988     00 C0 05 F6 | 	mov	local11, #0
+0098c     1A 94 61 FD | 	getct	result1
+00990     CA C2 01 F6 | 	mov	local12, result1
+00994     E1 C4 01 F6 | 	mov	local13, local12
+00998     DA C4 81 F1 | 	sub	local13, local05
+0099c     00 C4 55 F2 | 	cmps	local13, #0 wc
+009a0     00 C0 25 C6 |  if_b	not	local11, #0
+009a4     00 C0 0D F2 | 	cmp	local11, #0 wz
+009a8     00 B2 25 56 |  if_ne	not	local04, #0
+009ac     D9 B0 C9 F7 | 	test	local03, local04 wz
+009b0     00 BE 25 56 |  if_ne	not	local10, #0
+009b4     DF AE 49 F5 | 	or	local02, local10 wz
+009b8     8C FF 9F AD |  if_e	jmp	#LR__0032
+009bc     00 BA 0D F2 | 	cmp	local08, #0 wz
+009c0     DE B6 01 56 |  if_ne	mov	local06, local09
+009c4     DB B6 E1 58 |  if_ne	getbyte	local06, local06, #0
+009c8     04 90 05 F1 | 	add	ptr___system__dat__, #4
+009cc     C8 BC 61 FC | 	wrlong	local09, ptr___system__dat__
+009d0     04 90 85 F1 | 	sub	ptr___system__dat__, #4
+009d4     DB 94 01 F6 | 	mov	result1, local06
+009d8     A7 F0 03 F6 | 	mov	ptra, fp
+009dc     B2 00 A0 FD | 	call	#popregs_
+009e0                 | __system___rxraw_ret
+009e0     2D 00 64 FD | 	ret
+009e4                 | 
+009e4                 | __system____builtin_strcpy
+009e4     D1 9A 01 F6 | 	mov	_var01, arg01
+009e8     97 0A 48 FB | 	callpa	#(@LR__0041-@LR__0040)>>2,fcache_load_ptr_
+009ec                 | LR__0040
+009ec     D2 94 C9 FA | 	rdbyte	result1, arg02 wz
+009f0     D1 94 41 FC | 	wrbyte	result1, arg01
+009f4     01 A4 05 F1 | 	add	arg02, #1
+009f8     01 A2 05 F1 | 	add	arg01, #1
+009fc     EC FF 9F 5D |  if_ne	jmp	#LR__0040
+00a00                 | LR__0041
+00a00     CD 94 01 F6 | 	mov	result1, _var01
+00a04                 | __system____builtin_strcpy_ret
+00a04     2D 00 64 FD | 	ret
+00a08                 | 
+00a08                 | __system___lockmem
+00a08     00 94 05 F6 | 	mov	result1, #0
+00a0c     01 94 61 FD | 	cogid	result1
+00a10     00 95 05 F1 | 	add	result1, #256
+00a14                 | LR__0050
+00a14     D1 9A 09 FB | 	rdlong	_var01, arg01 wz
+00a18     D1 94 61 AC |  if_e	wrlong	result1, arg01
+00a1c     D1 9A 01 AB |  if_e	rdlong	_var01, arg01
+00a20     D1 9A 01 AB |  if_e	rdlong	_var01, arg01
+00a24     CA 9A 09 F2 | 	cmp	_var01, result1 wz
+00a28     E8 FF 9F 5D |  if_ne	jmp	#LR__0050
+00a2c                 | __system___lockmem_ret
+00a2c     2D 00 64 FD | 	ret
+00a30                 | 
+00a30                 | __system___tx
+00a30     02 4A 05 F6 | 	mov	COUNT_, #2
+00a34     A8 00 A0 FD | 	call	#pushregs_
+00a38     D1 AC 01 F6 | 	mov	local01, arg01
+00a3c     0A AC 0D F2 | 	cmp	local01, #10 wz
+00a40     18 00 90 5D |  if_ne	jmp	#LR__0060
+00a44     08 90 05 F1 | 	add	ptr___system__dat__, #8
+00a48     C8 AE 01 FB | 	rdlong	local02, ptr___system__dat__
+00a4c     08 90 85 F1 | 	sub	ptr___system__dat__, #8
+00a50     02 AE CD F7 | 	test	local02, #2 wz
+00a54     0D A2 05 56 |  if_ne	mov	arg01, #13
+00a58     48 FE BF 5D |  if_ne	call	#__system___txraw
+00a5c                 | LR__0060
+00a5c     D6 A2 01 F6 | 	mov	arg01, local01
+00a60     40 FE BF FD | 	call	#__system___txraw
+00a64     A7 F0 03 F6 | 	mov	ptra, fp
+00a68     B2 00 A0 FD | 	call	#popregs_
+00a6c                 | __system___tx_ret
+00a6c     2D 00 64 FD | 	ret
+00a70                 | 
+00a70                 | __system___rx
+00a70     01 4A 05 F6 | 	mov	COUNT_, #1
+00a74     A8 00 A0 FD | 	call	#pushregs_
+00a78                 | LR__0070
+00a78     00 A2 05 F6 | 	mov	arg01, #0
+00a7c     68 FE BF FD | 	call	#__system___rxraw
+00a80     CA AC 01 F6 | 	mov	local01, result1
+00a84     FF FF 7F FF 
+00a88     FF AD 0D F2 | 	cmp	local01, ##-1 wz
+00a8c     E8 FF 9F AD |  if_e	jmp	#LR__0070
+00a90     0D AC 0D F2 | 	cmp	local01, #13 wz
+00a94     14 00 90 5D |  if_ne	jmp	#LR__0071
+00a98     08 90 05 F1 | 	add	ptr___system__dat__, #8
+00a9c     C8 94 01 FB | 	rdlong	result1, ptr___system__dat__
+00aa0     08 90 85 F1 | 	sub	ptr___system__dat__, #8
+00aa4     02 94 CD F7 | 	test	result1, #2 wz
+00aa8     0A AC 05 56 |  if_ne	mov	local01, #10
+00aac                 | LR__0071
+00aac     08 90 05 F1 | 	add	ptr___system__dat__, #8
+00ab0     C8 A2 01 FB | 	rdlong	arg01, ptr___system__dat__
+00ab4     08 90 85 F1 | 	sub	ptr___system__dat__, #8
+00ab8     01 A2 CD F7 | 	test	arg01, #1 wz
+00abc     1C 00 90 AD |  if_e	jmp	#LR__0074
+00ac0     7F AC 0D F2 | 	cmp	local01, #127 wz
+00ac4     0C 00 90 5D |  if_ne	jmp	#LR__0072
+00ac8     08 A2 05 F6 | 	mov	arg01, #8
+00acc     60 FF BF FD | 	call	#__system___tx
+00ad0     08 00 90 FD | 	jmp	#LR__0073
+00ad4                 | LR__0072
+00ad4     D6 A2 01 F6 | 	mov	arg01, local01
+00ad8     54 FF BF FD | 	call	#__system___tx
+00adc                 | LR__0073
+00adc                 | LR__0074
+00adc     D6 94 01 F6 | 	mov	result1, local01
+00ae0     A7 F0 03 F6 | 	mov	ptra, fp
+00ae4     B2 00 A0 FD | 	call	#popregs_
+00ae8                 | __system___rx_ret
+00ae8     2D 00 64 FD | 	ret
+00aec                 | 
+00aec                 | __system___basic_print_char
+00aec     03 4A 05 F6 | 	mov	COUNT_, #3
+00af0     A8 00 A0 FD | 	call	#pushregs_
+00af4     D2 AC 01 F6 | 	mov	local01, arg02
+00af8     1C 1E B0 FD | 	call	#__system___gettxfunc
+00afc     CA AE 09 F6 | 	mov	local02, result1 wz
+00b00     00 94 05 A6 |  if_e	mov	result1, #0
+00b04     30 00 90 AD |  if_e	jmp	#LR__0080
+00b08     D7 B0 01 F6 | 	mov	local03, local02
+00b0c     13 AE 45 F7 | 	zerox	local02, #19
+00b10     14 B0 45 F0 | 	shr	local03, #20
+00b14     02 B0 65 F0 | 	shl	local03, #2
+00b18     C4 B0 01 F1 | 	add	local03, __methods__
+00b1c     D8 B0 01 FB | 	rdlong	local03, local03
+00b20     D6 A2 01 F6 | 	mov	arg01, local01
+00b24     C7 AC 01 F6 | 	mov	local01, objptr
+00b28     D7 8E 01 F6 | 	mov	objptr, local02
+00b2c     2D B0 61 FD | 	call	local03
+00b30     D6 8E 01 F6 | 	mov	objptr, local01
+00b34     01 94 05 F6 | 	mov	result1, #1
+00b38                 | LR__0080
+00b38     A7 F0 03 F6 | 	mov	ptra, fp
+00b3c     B2 00 A0 FD | 	call	#popregs_
+00b40                 | __system___basic_print_char_ret
+00b40     2D 00 64 FD | 	ret
+00b44                 | 
+00b44                 | __system___fmtstr
+00b44     09 4A 05 F6 | 	mov	COUNT_, #9
+00b48     A8 00 A0 FD | 	call	#pushregs_
+00b4c     D1 AC 01 F6 | 	mov	local01, arg01
+00b50     D2 AE 01 F6 | 	mov	local02, arg02
+00b54     D3 B0 01 F6 | 	mov	local03, arg03
+00b58     D7 A8 E1 F8 | 	getbyte	arg04, local02, #0
+00b5c     D8 A2 01 F6 | 	mov	arg01, local03
+00b60     D1 B2 01 F6 | 	mov	local04, arg01
+00b64     97 06 48 FB | 	callpa	#(@LR__0091-@LR__0090)>>2,fcache_load_ptr_
+00b68                 | LR__0090
+00b68     D9 94 C9 FA | 	rdbyte	result1, local04 wz
+00b6c     01 B2 05 51 |  if_ne	add	local04, #1
+00b70     F4 FF 9F 5D |  if_ne	jmp	#LR__0090
+00b74                 | LR__0091
+00b74     D1 B2 81 F1 | 	sub	local04, arg01
+00b78     00 A8 0D F2 | 	cmp	arg04, #0 wz
+00b7c     D4 B2 79 53 |  if_ne	fles	local04, arg04 wcz
+00b80     D7 A4 01 F6 | 	mov	arg02, local02
+00b84     D9 A6 01 F6 | 	mov	arg03, local04
+00b88     D6 A2 01 F6 | 	mov	arg01, local01
+00b8c     02 A8 05 F6 | 	mov	arg04, #2
+00b90     24 1A B0 FD | 	call	#__system___fmtpad
+00b94     CA B4 01 F6 | 	mov	local05, result1
+00b98     00 B4 55 F2 | 	cmps	local05, #0 wc
+00b9c     DA 94 01 C6 |  if_b	mov	result1, local05
+00ba0     80 00 90 CD |  if_b	jmp	#LR__0094
+00ba4     01 B2 55 F2 | 	cmps	local04, #1 wc
+00ba8     50 00 90 CD |  if_b	jmp	#LR__0093
+00bac     D9 B6 01 F6 | 	mov	local06, local04
+00bb0                 | LR__0092
+00bb0     D6 B8 01 F6 | 	mov	local07, local01
+00bb4     D6 BA 01 F6 | 	mov	local08, local01
+00bb8     13 B8 45 F7 | 	zerox	local07, #19
+00bbc     14 BA 45 F0 | 	shr	local08, #20
+00bc0     02 BA 65 F0 | 	shl	local08, #2
+00bc4     C4 BA 01 F1 | 	add	local08, __methods__
+00bc8     DD BA 01 FB | 	rdlong	local08, local08
+00bcc     D8 A2 C1 FA | 	rdbyte	arg01, local03
+00bd0     C7 BC 01 F6 | 	mov	local09, objptr
+00bd4     DC 8E 01 F6 | 	mov	objptr, local07
+00bd8     01 B0 05 F1 | 	add	local03, #1
+00bdc     2D BA 61 FD | 	call	local08
+00be0     DE 8E 01 F6 | 	mov	objptr, local09
+00be4     CA BC 01 F6 | 	mov	local09, result1
+00be8     00 BC 55 F2 | 	cmps	local09, #0 wc
+00bec     DE 94 01 C6 |  if_b	mov	result1, local09
+00bf0     30 00 90 CD |  if_b	jmp	#LR__0094
+00bf4     DE B4 01 F1 | 	add	local05, local09
+00bf8     ED B7 6D FB | 	djnz	local06, #LR__0092
+00bfc                 | LR__0093
+00bfc     D7 A4 01 F6 | 	mov	arg02, local02
+00c00     D9 A6 01 F6 | 	mov	arg03, local04
+00c04     D6 A2 01 F6 | 	mov	arg01, local01
+00c08     01 A8 05 F6 | 	mov	arg04, #1
+00c0c     A8 19 B0 FD | 	call	#__system___fmtpad
+00c10     CA BC 01 F6 | 	mov	local09, result1
+00c14     00 BC 55 F2 | 	cmps	local09, #0 wc
+00c18     DE 94 01 C6 |  if_b	mov	result1, local09
+00c1c     DE B4 01 31 |  if_ae	add	local05, local09
+00c20     DA 94 01 36 |  if_ae	mov	result1, local05
+00c24                 | LR__0094
+00c24     A7 F0 03 F6 | 	mov	ptra, fp
+00c28     B2 00 A0 FD | 	call	#popregs_
+00c2c                 | __system___fmtstr_ret
+00c2c     2D 00 64 FD | 	ret
+00c30                 | 
+00c30                 | __system___fmtfloat
+00c30     10 4A 05 F6 | 	mov	COUNT_, #16
+00c34     A8 00 A0 FD | 	call	#pushregs_
+00c38     24 F1 07 F1 | 	add	ptra, #292
+00c3c     04 4E 05 F1 | 	add	fp, #4
+00c40     A7 A2 61 FC | 	wrlong	arg01, fp
+00c44     04 4E 05 F1 | 	add	fp, #4
+00c48     A7 A4 61 FC | 	wrlong	arg02, fp
+00c4c     04 4E 05 F1 | 	add	fp, #4
+00c50     A7 A6 61 FC | 	wrlong	arg03, fp
+00c54     04 4E 05 F1 | 	add	fp, #4
+00c58     A7 A8 61 FC | 	wrlong	arg04, fp
+00c5c     0C 4E 05 F1 | 	add	fp, #12
+00c60     A7 14 68 FC | 	wrlong	#10, fp
+00c64     08 4E 05 F1 | 	add	fp, #8
+00c68     A7 00 68 FC | 	wrlong	#0, fp
+00c6c     08 4E 05 F1 | 	add	fp, #8
+00c70     A7 00 68 FC | 	wrlong	#0, fp
+00c74     08 4E 05 F1 | 	add	fp, #8
+00c78     A7 00 68 FC | 	wrlong	#0, fp
+00c7c     04 4E 05 F1 | 	add	fp, #4
+00c80     A7 04 68 FC | 	wrlong	#2, fp
+00c84     04 4E 05 F1 | 	add	fp, #4
+00c88     A7 00 68 FC | 	wrlong	#0, fp
+00c8c     04 4E 05 F1 | 	add	fp, #4
+00c90     A7 00 68 FC | 	wrlong	#0, fp
+00c94     04 4E 05 F1 | 	add	fp, #4
+00c98     A7 00 68 FC | 	wrlong	#0, fp
+00c9c     04 4E 05 F1 | 	add	fp, #4
+00ca0     A7 00 68 FC | 	wrlong	#0, fp
+00ca4     18 4E 05 F1 | 	add	fp, #24
+00ca8     A7 00 68 FC | 	wrlong	#0, fp
+00cac     68 4E 05 F1 | 	add	fp, #104
+00cb0     A7 AC 01 F6 | 	mov	local01, fp
+00cb4     08 4E 85 F1 | 	sub	fp, #8
+00cb8     A7 AC 61 FC | 	wrlong	local01, fp
+00cbc     04 4E 05 F1 | 	add	fp, #4
+00cc0     A7 AC 61 FC | 	wrlong	local01, fp
+00cc4     BC 4E 85 F1 | 	sub	fp, #188
+00cc8     A7 AC 01 FB | 	rdlong	local01, fp
+00ccc     10 AC 45 F0 | 	shr	local01, #16
+00cd0     3F AC 05 F5 | 	and	local01, #63
+00cd4     B0 4E 05 F1 | 	add	fp, #176
+00cd8     A7 AC 61 FC | 	wrlong	local01, fp
+00cdc     B0 4E 85 F1 | 	sub	fp, #176
+00ce0     A7 AC 01 FB | 	rdlong	local01, fp
+00ce4     1C AC 45 F0 | 	shr	local01, #28
+00ce8     01 AC 05 F5 | 	and	local01, #1
+00cec     08 4F 05 F1 | 	add	fp, #264
+00cf0     A7 AC 61 FC | 	wrlong	local01, fp
+00cf4     58 4E 85 F1 | 	sub	fp, #88
+00cf8     A7 AC 09 FB | 	rdlong	local01, fp wz
+00cfc     B8 4E 85 F1 | 	sub	fp, #184
+00d00     3C 00 90 5D |  if_ne	jmp	#LR__0101
+00d04     10 4E 05 F1 | 	add	fp, #16
+00d08     A7 AC 01 FB | 	rdlong	local01, fp
+00d0c     10 4E 85 F1 | 	sub	fp, #16
+00d10     61 AC 0D F2 | 	cmp	local01, #97 wz
+00d14     18 00 90 5D |  if_ne	jmp	#LR__0100
+00d18     B8 4E 05 F1 | 	add	fp, #184
+00d1c     A7 1A 68 FC | 	wrlong	#13, fp
+00d20     84 4E 85 F1 | 	sub	fp, #132
+00d24     A7 02 68 FC | 	wrlong	#1, fp
+00d28     34 4E 85 F1 | 	sub	fp, #52
+00d2c     24 00 90 FD | 	jmp	#LR__0102
+00d30                 | LR__0100
+00d30     B8 4E 05 F1 | 	add	fp, #184
+00d34     A7 0C 68 FC | 	wrlong	#6, fp
+00d38     B8 4E 85 F1 | 	sub	fp, #184
+00d3c     14 00 90 FD | 	jmp	#LR__0102
+00d40                 | LR__0101
+00d40     B8 4E 05 F1 | 	add	fp, #184
+00d44     A7 AC 01 FB | 	rdlong	local01, fp
+00d48     01 AC 85 F1 | 	sub	local01, #1
+00d4c     A7 AC 61 FC | 	wrlong	local01, fp
+00d50     B8 4E 85 F1 | 	sub	fp, #184
+00d54                 | LR__0102
+00d54     08 4E 05 F1 | 	add	fp, #8
+00d58     A7 AC 01 FB | 	rdlong	local01, fp
+00d5c     16 AC 45 F0 | 	shr	local01, #22
+00d60     03 AC 05 F5 | 	and	local01, #3
+00d64     04 4F 05 F1 | 	add	fp, #260
+00d68     A7 AC 61 FC | 	wrlong	local01, fp
+00d6c     04 4F 85 F1 | 	sub	fp, #260
+00d70     A7 AC 01 FB | 	rdlong	local01, fp
+00d74     1D AC 45 F0 | 	shr	local01, #29
+00d78     01 AC 05 F5 | 	and	local01, #1
+00d7c     B4 4E 05 F1 | 	add	fp, #180
+00d80     A7 AC 61 FC | 	wrlong	local01, fp
+00d84     B4 4E 85 F1 | 	sub	fp, #180
+00d88     A7 AC 01 FB | 	rdlong	local01, fp
+00d8c     D6 AC E9 F8 | 	getbyte	local01, local01, #1
+00d90     60 4E 05 F1 | 	add	fp, #96
+00d94     A7 AC 61 FC | 	wrlong	local01, fp
+00d98     60 4E 85 F1 | 	sub	fp, #96
+00d9c     A7 AC 01 FB | 	rdlong	local01, fp
+00da0     D6 AC E1 F8 | 	getbyte	local01, local01, #0
+00da4     64 4E 05 F1 | 	add	fp, #100
+00da8     A7 AC 61 FC | 	wrlong	local01, fp
+00dac     00 AC 05 F6 | 	mov	local01, #0
+00db0     5C 4E 85 F1 | 	sub	fp, #92
+00db4     A7 AA 01 FB | 	rdlong	arg05, fp
+00db8     65 AA 0D F2 | 	cmp	arg05, #101 wz
+00dbc     01 AC 05 A6 |  if_e	mov	local01, #1
+00dc0     14 4E 05 F1 | 	add	fp, #20
+00dc4     A7 AC 61 FC | 	wrlong	local01, fp
+00dc8     98 4E 05 F1 | 	add	fp, #152
+00dcc     A7 AE 09 FB | 	rdlong	local02, fp wz
+00dd0     45 AC 05 56 |  if_ne	mov	local01, #69
+00dd4     65 AC 05 A6 |  if_e	mov	local01, #101
+00dd8     8C 4E 85 F1 | 	sub	fp, #140
+00ddc     A7 AC 61 FC | 	wrlong	local01, fp
+00de0     20 4E 85 F1 | 	sub	fp, #32
+00de4     A7 AC 01 FB | 	rdlong	local01, fp
+00de8     10 4E 85 F1 | 	sub	fp, #16
+00dec     61 AC 0D F2 | 	cmp	local01, #97 wz
+00df0     4C 00 90 5D |  if_ne	jmp	#LR__0103
+00df4     24 4E 05 F1 | 	add	fp, #36
+00df8     A7 02 68 FC | 	wrlong	#1, fp
+00dfc     98 4E 05 F1 | 	add	fp, #152
+00e00     A7 AE 09 FB | 	rdlong	local02, fp wz
+00e04     50 AC 05 56 |  if_ne	mov	local01, #80
+00e08     70 AC 05 A6 |  if_e	mov	local01, #112
+00e0c     8C 4E 85 F1 | 	sub	fp, #140
+00e10     A7 AC 61 FC | 	wrlong	local01, fp
+00e14     14 4E 85 F1 | 	sub	fp, #20
+00e18     A7 04 68 FC | 	wrlong	#2, fp
+00e1c     1C 4E 05 F1 | 	add	fp, #28
+00e20     A7 02 68 FC | 	wrlong	#1, fp
+00e24     84 4E 05 F1 | 	add	fp, #132
+00e28     A7 AE 09 FB | 	rdlong	local02, fp wz
+00e2c     58 AC 05 56 |  if_ne	mov	local01, #88
+00e30     78 AC 05 A6 |  if_e	mov	local01, #120
+00e34     7C 4E 85 F1 | 	sub	fp, #124
+00e38     A7 AC 61 FC | 	wrlong	local01, fp
+00e3c     40 4E 85 F1 | 	sub	fp, #64
+00e40                 | LR__0103
+00e40     10 4E 05 F1 | 	add	fp, #16
+00e44     A7 AC 01 FB | 	rdlong	local01, fp
+00e48     10 4E 85 F1 | 	sub	fp, #16
+00e4c     23 AC 0D F2 | 	cmp	local01, #35 wz
+00e50     3C 00 90 5D |  if_ne	jmp	#LR__0106
+00e54     48 4E 05 F1 | 	add	fp, #72
+00e58     A7 02 68 FC | 	wrlong	#1, fp
+00e5c     C8 4E 05 F1 | 	add	fp, #200
+00e60     A7 AC 09 FB | 	rdlong	local01, fp wz
+00e64     10 4F 85 F1 | 	sub	fp, #272
+00e68     18 00 90 AD |  if_e	jmp	#LR__0104
+00e6c     10 4E 05 F1 | 	add	fp, #16
+00e70     A7 CC 68 FC | 	wrlong	#102, fp
+00e74     00 4F 05 F1 | 	add	fp, #256
+00e78     A7 00 68 FC | 	wrlong	#0, fp
+00e7c     10 4F 85 F1 | 	sub	fp, #272
+00e80     0C 00 90 FD | 	jmp	#LR__0105
+00e84                 | LR__0104
+00e84     10 4F 05 F1 | 	add	fp, #272
+00e88     A7 02 68 FC | 	wrlong	#1, fp
+00e8c     10 4F 85 F1 | 	sub	fp, #272
+00e90                 | LR__0105
+00e90                 | LR__0106
+00e90     08 4E 05 F1 | 	add	fp, #8
+00e94     A7 AC 01 FB | 	rdlong	local01, fp
+00e98     1A AC 45 F0 | 	shr	local01, #26
+00e9c     03 AC 05 F5 | 	and	local01, #3
+00ea0     5C 4E 05 F1 | 	add	fp, #92
+00ea4     A7 AC 61 FC | 	wrlong	local01, fp
+00ea8     58 4E 85 F1 | 	sub	fp, #88
+00eac     A7 94 01 FB | 	rdlong	result1, fp
+00eb0     0C 4E 85 F1 | 	sub	fp, #12
+00eb4     1F 94 4D F0 | 	shr	result1, #31 wz
+00eb8     20 00 90 AD |  if_e	jmp	#LR__0107
+00ebc     2C 4E 05 F1 | 	add	fp, #44
+00ec0     A7 5A 68 FC | 	wrlong	#45, fp
+00ec4     20 4E 85 F1 | 	sub	fp, #32
+00ec8     A7 94 01 FB | 	rdlong	result1, fp
+00ecc     1F 94 E5 F4 | 	bitnot	result1, #31
+00ed0     A7 94 61 FC | 	wrlong	result1, fp
+00ed4     0C 4E 85 F1 | 	sub	fp, #12
+00ed8     3C 00 90 FD | 	jmp	#LR__0109
+00edc                 | LR__0107
+00edc     64 4E 05 F1 | 	add	fp, #100
+00ee0     A7 AC 01 FB | 	rdlong	local01, fp
+00ee4     64 4E 85 F1 | 	sub	fp, #100
+00ee8     01 AC 0D F2 | 	cmp	local01, #1 wz
+00eec     2C 4E 05 A1 |  if_e	add	fp, #44
+00ef0     A7 56 68 AC |  if_e	wrlong	#43, fp
+00ef4     2C 4E 85 A1 |  if_e	sub	fp, #44
+00ef8     1C 00 90 AD |  if_e	jmp	#LR__0108
+00efc     64 4E 05 F1 | 	add	fp, #100
+00f00     A7 AC 01 FB | 	rdlong	local01, fp
+00f04     64 4E 85 F1 | 	sub	fp, #100
+00f08     02 AC 0D F2 | 	cmp	local01, #2 wz
+00f0c     2C 4E 05 A1 |  if_e	add	fp, #44
+00f10     A7 40 68 AC |  if_e	wrlong	#32, fp
+00f14     2C 4E 85 A1 |  if_e	sub	fp, #44
+00f18                 | LR__0108
+00f18                 | LR__0109
+00f18     08 4E 05 F1 | 	add	fp, #8
+00f1c     A7 AC 01 FB | 	rdlong	local01, fp
+00f20     18 AC 45 F0 | 	shr	local01, #24
+00f24     03 AC 05 F5 | 	and	local01, #3
+00f28     3C 4E 05 F1 | 	add	fp, #60
+00f2c     A7 AC 61 FC | 	wrlong	local01, fp
+00f30     00 AC 05 F6 | 	mov	local01, #0
+00f34     18 4E 85 F1 | 	sub	fp, #24
+00f38     A7 B0 09 FB | 	rdlong	local03, fp wz
+00f3c     2C 4E 85 F1 | 	sub	fp, #44
+00f40     18 00 90 5D |  if_ne	jmp	#LR__0110
+00f44     1C 4E 05 F1 | 	add	fp, #28
+00f48     A7 B2 01 FB | 	rdlong	local04, fp
+00f4c     1C 4E 85 F1 | 	sub	fp, #28
+00f50     D9 B4 01 F6 | 	mov	local05, local04
+00f54     0A B4 0D F2 | 	cmp	local05, #10 wz
+00f58     04 00 90 AD |  if_e	jmp	#LR__0111
+00f5c                 | LR__0110
+00f5c     01 AC 65 F5 | 	xor	local01, #1
+00f60                 | LR__0111
+00f60     3C 4E 05 F1 | 	add	fp, #60
+00f64     A7 AC 61 FC | 	wrlong	local01, fp
+00f68     3C 4E 85 F1 | 	sub	fp, #60
+00f6c     00 AC 0D F2 | 	cmp	local01, #0 wz
+00f70     0C 01 90 AD |  if_e	jmp	#LR__0113
+00f74     44 4E 05 F1 | 	add	fp, #68
+00f78     A7 B4 01 FB | 	rdlong	local05, fp
+00f7c     44 4E 85 F1 | 	sub	fp, #68
+00f80     DA B0 01 F6 | 	mov	local03, local05
+00f84     02 B0 0D F2 | 	cmp	local03, #2 wz
+00f88     F4 00 90 5D |  if_ne	jmp	#LR__0113
+00f8c     0C 4F 05 F1 | 	add	fp, #268
+00f90     A7 B6 01 FB | 	rdlong	local06, fp
+00f94     0C 4F 85 F1 | 	sub	fp, #268
+00f98     DB B2 01 F6 | 	mov	local04, local06
+00f9c     02 B2 0D F2 | 	cmp	local04, #2 wz
+00fa0     DC 00 90 AD |  if_e	jmp	#LR__0113
+00fa4     C0 4E 05 F1 | 	add	fp, #192
+00fa8     A7 A2 01 FB | 	rdlong	arg01, fp
+00fac     94 4E 85 F1 | 	sub	fp, #148
+00fb0     A7 A4 01 FB | 	rdlong	arg02, fp
+00fb4     14 4E 05 F1 | 	add	fp, #20
+00fb8     A7 A6 01 FB | 	rdlong	arg03, fp
+00fbc     40 4E 85 F1 | 	sub	fp, #64
+00fc0     24 19 B0 FD | 	call	#__system__emitsign_0048
+00fc4     14 4F 05 F1 | 	add	fp, #276
+00fc8     A7 94 61 FC | 	wrlong	result1, fp
+00fcc     14 4F 85 F1 | 	sub	fp, #276
+00fd0     00 94 55 F2 | 	cmps	result1, #0 wc
+00fd4     14 4F 05 C1 |  if_b	add	fp, #276
+00fd8     A7 94 01 CB |  if_b	rdlong	result1, fp
+00fdc     14 4F 85 C1 |  if_b	sub	fp, #276
+00fe0     6C 0B 90 CD |  if_b	jmp	#LR__0163
+00fe4     C0 4E 05 F1 | 	add	fp, #192
+00fe8     A7 AC 01 FB | 	rdlong	local01, fp
+00fec     54 4E 05 F1 | 	add	fp, #84
+00ff0     A7 B4 01 FB | 	rdlong	local05, fp
+00ff4     DA B0 01 F6 | 	mov	local03, local05
+00ff8     DA AC 01 F1 | 	add	local01, local05
+00ffc     54 4E 85 F1 | 	sub	fp, #84
+01000     A7 AC 61 FC | 	wrlong	local01, fp
+01004     58 4E 85 F1 | 	sub	fp, #88
+01008     A7 AC 09 FB | 	rdlong	local01, fp wz
+0100c     68 4E 85 F1 | 	sub	fp, #104
+01010     60 00 90 AD |  if_e	jmp	#LR__0112
+01014     68 4E 05 F1 | 	add	fp, #104
+01018     A7 AC 01 FB | 	rdlong	local01, fp
+0101c     AC 4E 05 F1 | 	add	fp, #172
+01020     A7 B0 01 FB | 	rdlong	local03, fp
+01024     D8 AC 81 F1 | 	sub	local01, local03
+01028     AC 4E 85 F1 | 	sub	fp, #172
+0102c     A7 AC 61 FC | 	wrlong	local01, fp
+01030     68 4E 85 F1 | 	sub	fp, #104
+01034     00 AC 55 F2 | 	cmps	local01, #0 wc
+01038     68 4E 05 C1 |  if_b	add	fp, #104
+0103c     A7 00 68 CC |  if_b	wrlong	#0, fp
+01040     68 4E 85 C1 |  if_b	sub	fp, #104
+01044     08 4E 05 F1 | 	add	fp, #8
+01048     A7 AC 01 FB | 	rdlong	local01, fp
+0104c     E8 AC 05 F4 | 	bitl	local01, #232
+01050     A7 AC 61 FC | 	wrlong	local01, fp
+01054     60 4E 05 F1 | 	add	fp, #96
+01058     A7 B4 01 FB | 	rdlong	local05, fp
+0105c     DA B0 01 F6 | 	mov	local03, local05
+01060     08 B0 65 F0 | 	shl	local03, #8
+01064     D8 AC 41 F5 | 	or	local01, local03
+01068     60 4E 85 F1 | 	sub	fp, #96
+0106c     A7 AC 61 FC | 	wrlong	local01, fp
+01070     08 4E 85 F1 | 	sub	fp, #8
+01074                 | LR__0112
+01074     3C 4E 05 F1 | 	add	fp, #60
+01078     A7 00 68 FC | 	wrlong	#0, fp
+0107c     3C 4E 85 F1 | 	sub	fp, #60
+01080                 | LR__0113
+01080     0C 4E 05 F1 | 	add	fp, #12
+01084     A7 A2 01 FB | 	rdlong	arg01, fp
+01088     0C 4E 85 F1 | 	sub	fp, #12
+0108c     1C 11 B0 FD | 	call	#__system____builtin_ilogb
+01090     FF FF 3F FF 
+01094     FF 95 0D F2 | 	cmp	result1, ##2147483647 wz
+01098     50 00 90 5D |  if_ne	jmp	#LR__0115
+0109c     2C 4E 05 F1 | 	add	fp, #44
+010a0     A7 AC 09 FB | 	rdlong	local01, fp wz
+010a4     2C 4E 85 F1 | 	sub	fp, #44
+010a8     24 00 90 AD |  if_e	jmp	#LR__0114
+010ac     C0 4E 05 F1 | 	add	fp, #192
+010b0     A7 AE 01 FB | 	rdlong	local02, fp
+010b4     D7 B0 01 F6 | 	mov	local03, local02
+010b8     01 B0 05 F1 | 	add	local03, #1
+010bc     A7 B0 61 FC | 	wrlong	local03, fp
+010c0     94 4E 85 F1 | 	sub	fp, #148
+010c4     A7 B2 01 FB | 	rdlong	local04, fp
+010c8     2C 4E 85 F1 | 	sub	fp, #44
+010cc     D7 B2 41 FC | 	wrbyte	local04, local02
+010d0                 | LR__0114
+010d0     C0 4E 05 F1 | 	add	fp, #192
+010d4     A7 A2 01 FB | 	rdlong	arg01, fp
+010d8     C0 4E 85 F1 | 	sub	fp, #192
+010dc     16 00 00 FF 
+010e0     7C A5 05 F6 | 	mov	arg02, ##@LR__0430
+010e4     FC F8 BF FD | 	call	#__system____builtin_strcpy
+010e8     A4 08 90 FD | 	jmp	#LR__0151
+010ec                 | LR__0115
+010ec     0C 4E 05 F1 | 	add	fp, #12
+010f0     A7 AE 01 FB | 	rdlong	local02, fp
+010f4     0C 4E 85 F1 | 	sub	fp, #12
+010f8     D7 A2 01 F6 | 	mov	arg01, local02
+010fc     AC 10 B0 FD | 	call	#__system____builtin_ilogb
+01100     00 00 40 FF 
+01104     00 94 0D F2 | 	cmp	result1, ##-2147483648 wz
+01108     50 00 90 5D |  if_ne	jmp	#LR__0117
+0110c     2C 4E 05 F1 | 	add	fp, #44
+01110     A7 AC 09 FB | 	rdlong	local01, fp wz
+01114     2C 4E 85 F1 | 	sub	fp, #44
+01118     24 00 90 AD |  if_e	jmp	#LR__0116
+0111c     C0 4E 05 F1 | 	add	fp, #192
+01120     A7 AE 01 FB | 	rdlong	local02, fp
+01124     D7 B0 01 F6 | 	mov	local03, local02
+01128     01 B0 05 F1 | 	add	local03, #1
+0112c     A7 B0 61 FC | 	wrlong	local03, fp
+01130     94 4E 85 F1 | 	sub	fp, #148
+01134     A7 B2 01 FB | 	rdlong	local04, fp
+01138     2C 4E 85 F1 | 	sub	fp, #44
+0113c     D7 B2 41 FC | 	wrbyte	local04, local02
+01140                 | LR__0116
+01140     C0 4E 05 F1 | 	add	fp, #192
+01144     A7 A2 01 FB | 	rdlong	arg01, fp
+01148     C0 4E 85 F1 | 	sub	fp, #192
+0114c     16 00 00 FF 
+01150     80 A5 05 F6 | 	mov	arg02, ##@LR__0431
+01154     8C F8 BF FD | 	call	#__system____builtin_strcpy
+01158     34 08 90 FD | 	jmp	#LR__0151
+0115c                 | LR__0117
+0115c     10 4E 05 F1 | 	add	fp, #16
+01160     A7 AC 01 FB | 	rdlong	local01, fp
+01164     10 4E 85 F1 | 	sub	fp, #16
+01168     67 AC 0D F2 | 	cmp	local01, #103 wz
+0116c     10 4E 05 51 |  if_ne	add	fp, #16
+01170     A7 B0 01 5B |  if_ne	rdlong	local03, fp
+01174     10 4E 85 51 |  if_ne	sub	fp, #16
+01178     23 B0 0D 52 |  if_ne	cmp	local03, #35 wz
+0117c     94 01 90 5D |  if_ne	jmp	#LR__0122
+01180     0C 4E 05 F1 | 	add	fp, #12
+01184     A7 A2 01 FB | 	rdlong	arg01, fp
+01188     08 4E 05 F1 | 	add	fp, #8
+0118c     A7 A4 01 F6 | 	mov	arg02, fp
+01190     0C 4E 05 F1 | 	add	fp, #12
+01194     A7 A6 01 F6 | 	mov	arg03, fp
+01198     98 4E 05 F1 | 	add	fp, #152
+0119c     A7 A8 01 FB | 	rdlong	arg04, fp
+011a0     9C 4E 85 F1 | 	sub	fp, #156
+011a4     A7 AA 01 FB | 	rdlong	arg05, fp
+011a8     1C 4E 85 F1 | 	sub	fp, #28
+011ac     44 15 B0 FD | 	call	#__system__disassemble_0046
+011b0     10 4E 05 F1 | 	add	fp, #16
+011b4     A7 AC 01 FB | 	rdlong	local01, fp
+011b8     10 4E 85 F1 | 	sub	fp, #16
+011bc     23 AC 0D F2 | 	cmp	local01, #35 wz
+011c0     A0 00 90 5D |  if_ne	jmp	#LR__0119
+011c4     20 4E 05 F1 | 	add	fp, #32
+011c8     A7 AC 01 FB | 	rdlong	local01, fp
+011cc     98 4E 05 F1 | 	add	fp, #152
+011d0     A7 B0 01 FB | 	rdlong	local03, fp
+011d4     B8 4E 85 F1 | 	sub	fp, #184
+011d8     D8 AC 59 F2 | 	cmps	local01, local03 wcz
+011dc     24 4E 05 11 |  if_a	add	fp, #36
+011e0     A7 02 68 1C |  if_a	wrlong	#1, fp
+011e4     24 4E 85 11 |  if_a	sub	fp, #36
+011e8     A4 01 90 1D |  if_a	jmp	#LR__0125
+011ec     20 4E 05 F1 | 	add	fp, #32
+011f0     A7 AC 01 FB | 	rdlong	local01, fp
+011f4     20 4E 85 F1 | 	sub	fp, #32
+011f8     00 AC 55 F2 | 	cmps	local01, #0 wc
+011fc     2C 00 90 3D |  if_ae	jmp	#LR__0118
+01200     B8 4E 05 F1 | 	add	fp, #184
+01204     A7 AC 01 FB | 	rdlong	local01, fp
+01208     D6 AC 61 F6 | 	neg	local01, local01
+0120c     98 4E 85 F1 | 	sub	fp, #152
+01210     A7 B0 01 FB | 	rdlong	local03, fp
+01214     20 4E 85 F1 | 	sub	fp, #32
+01218     D6 B0 59 F2 | 	cmps	local03, local01 wcz
+0121c     24 4E 05 E1 |  if_be	add	fp, #36
+01220     A7 02 68 EC |  if_be	wrlong	#1, fp
+01224     24 4E 85 E1 |  if_be	sub	fp, #36
+01228     64 01 90 FD | 	jmp	#LR__0125
+0122c                 | LR__0118
+0122c     20 4E 05 F1 | 	add	fp, #32
+01230     A7 AC 01 FB | 	rdlong	local01, fp
+01234     20 4E 85 F1 | 	sub	fp, #32
+01238     01 AC 55 F2 | 	cmps	local01, #1 wc
+0123c     50 01 90 CD |  if_b	jmp	#LR__0125
+01240     B8 4E 05 F1 | 	add	fp, #184
+01244     A7 AC 01 FB | 	rdlong	local01, fp
+01248     98 4E 85 F1 | 	sub	fp, #152
+0124c     A7 B0 01 FB | 	rdlong	local03, fp
+01250     D8 AC 81 F1 | 	sub	local01, local03
+01254     98 4E 05 F1 | 	add	fp, #152
+01258     A7 AC 61 FC | 	wrlong	local01, fp
+0125c     B8 4E 85 F1 | 	sub	fp, #184
+01260     2C 01 90 FD | 	jmp	#LR__0125
+01264                 | LR__0119
+01264     00 AC 05 F6 | 	mov	local01, #0
+01268     08 4E 05 F1 | 	add	fp, #8
+0126c     A7 AE 01 FB | 	rdlong	local02, fp
+01270     1C AE 45 F0 | 	shr	local02, #28
+01274     01 AE 0D F5 | 	and	local02, #1 wz
+01278     01 AC 05 A6 |  if_e	mov	local01, #1
+0127c     2C 4E 05 F1 | 	add	fp, #44
+01280     A7 AC 61 FC | 	wrlong	local01, fp
+01284     14 4E 85 F1 | 	sub	fp, #20
+01288     A7 AC 01 FB | 	rdlong	local01, fp
+0128c     98 4E 05 F1 | 	add	fp, #152
+01290     A7 B0 01 FB | 	rdlong	local03, fp
+01294     B8 4E 85 F1 | 	sub	fp, #184
+01298     D8 AC 51 F2 | 	cmps	local01, local03 wc
+0129c     18 00 90 3D |  if_ae	jmp	#LR__0120
+012a0     20 4E 05 F1 | 	add	fp, #32
+012a4     A7 B2 01 FB | 	rdlong	local04, fp
+012a8     20 4E 85 F1 | 	sub	fp, #32
+012ac     FF FF 7F FF 
+012b0     FC B3 55 F2 | 	cmps	local04, ##-4 wc
+012b4     10 00 90 3D |  if_ae	jmp	#LR__0121
+012b8                 | LR__0120
+012b8     24 4E 05 F1 | 	add	fp, #36
+012bc     A7 02 68 FC | 	wrlong	#1, fp
+012c0     24 4E 85 F1 | 	sub	fp, #36
+012c4     C8 00 90 FD | 	jmp	#LR__0125
+012c8                 | LR__0121
+012c8     B8 4E 05 F1 | 	add	fp, #184
+012cc     A7 B2 01 FB | 	rdlong	local04, fp
+012d0     98 4E 85 F1 | 	sub	fp, #152
+012d4     A7 B0 01 FB | 	rdlong	local03, fp
+012d8     D8 B2 81 F1 | 	sub	local04, local03
+012dc     98 4E 05 F1 | 	add	fp, #152
+012e0     A7 B2 61 FC | 	wrlong	local04, fp
+012e4     AC 4E 85 F1 | 	sub	fp, #172
+012e8     A7 A2 01 FB | 	rdlong	arg01, fp
+012ec     08 4E 05 F1 | 	add	fp, #8
+012f0     A7 A4 01 F6 | 	mov	arg02, fp
+012f4     0C 4E 05 F1 | 	add	fp, #12
+012f8     A7 A6 01 F6 | 	mov	arg03, fp
+012fc     D9 A8 61 F6 | 	neg	arg04, local04
+01300     04 4E 85 F1 | 	sub	fp, #4
+01304     A7 AA 01 FB | 	rdlong	arg05, fp
+01308     1C 4E 85 F1 | 	sub	fp, #28
+0130c     E4 13 B0 FD | 	call	#__system__disassemble_0046
+01310     7C 00 90 FD | 	jmp	#LR__0125
+01314                 | LR__0122
+01314     24 4E 05 F1 | 	add	fp, #36
+01318     A7 AC 09 FB | 	rdlong	local01, fp wz
+0131c     24 4E 85 F1 | 	sub	fp, #36
+01320     34 00 90 AD |  if_e	jmp	#LR__0123
+01324     0C 4E 05 F1 | 	add	fp, #12
+01328     A7 A2 01 FB | 	rdlong	arg01, fp
+0132c     08 4E 05 F1 | 	add	fp, #8
+01330     A7 A4 01 F6 | 	mov	arg02, fp
+01334     0C 4E 05 F1 | 	add	fp, #12
+01338     A7 A6 01 F6 | 	mov	arg03, fp
+0133c     98 4E 05 F1 | 	add	fp, #152
+01340     A7 A8 01 FB | 	rdlong	arg04, fp
+01344     9C 4E 85 F1 | 	sub	fp, #156
+01348     A7 AA 01 FB | 	rdlong	arg05, fp
+0134c     1C 4E 85 F1 | 	sub	fp, #28
+01350     A0 13 B0 FD | 	call	#__system__disassemble_0046
+01354     38 00 90 FD | 	jmp	#LR__0124
+01358                 | LR__0123
+01358     0C 4E 05 F1 | 	add	fp, #12
+0135c     A7 A2 01 FB | 	rdlong	arg01, fp
+01360     08 4E 05 F1 | 	add	fp, #8
+01364     A7 A4 01 F6 | 	mov	arg02, fp
+01368     0C 4E 05 F1 | 	add	fp, #12
+0136c     A7 A6 01 F6 | 	mov	arg03, fp
+01370     98 4E 05 F1 | 	add	fp, #152
+01374     A7 B2 01 FB | 	rdlong	local04, fp
+01378     01 B2 05 F1 | 	add	local04, #1
+0137c     D9 A8 61 F6 | 	neg	arg04, local04
+01380     9C 4E 85 F1 | 	sub	fp, #156
+01384     A7 AA 01 FB | 	rdlong	arg05, fp
+01388     1C 4E 85 F1 | 	sub	fp, #28
+0138c     64 13 B0 FD | 	call	#__system__disassemble_0046
+01390                 | LR__0124
+01390                 | LR__0125
+01390     1C 4E 05 F1 | 	add	fp, #28
+01394     A7 AC 01 FB | 	rdlong	local01, fp
+01398     1C 4E 85 F1 | 	sub	fp, #28
+0139c     02 AC 0D F2 | 	cmp	local01, #2 wz
+013a0     4C 00 90 5D |  if_ne	jmp	#LR__0128
+013a4     1C 4E 05 F1 | 	add	fp, #28
+013a8     A7 20 68 FC | 	wrlong	#16, fp
+013ac     1C 4E 85 F1 | 	sub	fp, #28
+013b0                 | LR__0126
+013b0     14 4E 05 F1 | 	add	fp, #20
+013b4     A7 AC 09 FB | 	rdlong	local01, fp wz
+013b8     14 4E 85 F1 | 	sub	fp, #20
+013bc     30 00 90 AD |  if_e	jmp	#LR__0127
+013c0     14 4E 05 F1 | 	add	fp, #20
+013c4     A7 B0 01 FB | 	rdlong	local03, fp
+013c8     14 4E 85 F1 | 	sub	fp, #20
+013cc     00 80 00 FF 
+013d0     00 B0 15 F2 | 	cmp	local03, ##16777216 wc
+013d4     18 00 90 3D |  if_ae	jmp	#LR__0127
+013d8     14 4E 05 F1 | 	add	fp, #20
+013dc     A7 AC 01 FB | 	rdlong	local01, fp
+013e0     01 AC 65 F0 | 	shl	local01, #1
+013e4     A7 AC 61 FC | 	wrlong	local01, fp
+013e8     14 4E 85 F1 | 	sub	fp, #20
+013ec     C0 FF 9F FD | 	jmp	#LR__0126
+013f0                 | LR__0127
+013f0                 | LR__0128
+013f0     70 4E 05 F1 | 	add	fp, #112
+013f4     A7 A2 01 F6 | 	mov	arg01, fp
+013f8     5C 4E 85 F1 | 	sub	fp, #92
+013fc     A7 A4 01 FB | 	rdlong	arg02, fp
+01400     08 4E 05 F1 | 	add	fp, #8
+01404     A7 A6 01 FB | 	rdlong	arg03, fp
+01408     A0 4E 05 F1 | 	add	fp, #160
+0140c     A7 AA 01 FB | 	rdlong	arg05, fp
+01410     BC 4E 85 F1 | 	sub	fp, #188
+01414     01 A8 05 F6 | 	mov	arg04, #1
+01418     64 12 B0 FD | 	call	#__system___uitoa
+0141c     58 4E 05 F1 | 	add	fp, #88
+01420     A7 94 61 FC | 	wrlong	result1, fp
+01424     38 4E 85 F1 | 	sub	fp, #56
+01428     A7 AC 01 FB | 	rdlong	local01, fp
+0142c     20 4E 85 F1 | 	sub	fp, #32
+01430     00 AC 55 F2 | 	cmps	local01, #0 wc
+01434     50 00 90 3D |  if_ae	jmp	#LR__0129
+01438     60 4E 05 F1 | 	add	fp, #96
+0143c     A7 5A 68 FC | 	wrlong	#45, fp
+01440     50 4E 05 F1 | 	add	fp, #80
+01444     A7 A2 01 F6 | 	mov	arg01, fp
+01448     90 4E 85 F1 | 	sub	fp, #144
+0144c     A7 B0 01 FB | 	rdlong	local03, fp
+01450     D8 A4 61 F6 | 	neg	arg02, local03
+01454     18 4E 05 F1 | 	add	fp, #24
+01458     A7 A8 01 FB | 	rdlong	arg04, fp
+0145c     84 4E 05 F1 | 	add	fp, #132
+01460     A7 B6 01 FB | 	rdlong	local06, fp
+01464     BC 4E 85 F1 | 	sub	fp, #188
+01468     DB B2 01 F6 | 	mov	local04, local06
+0146c     0A A6 05 F6 | 	mov	arg03, #10
+01470     D9 AA 01 F6 | 	mov	arg05, local04
+01474     08 12 B0 FD | 	call	#__system___uitoa
+01478     5C 4E 05 F1 | 	add	fp, #92
+0147c     A7 94 61 FC | 	wrlong	result1, fp
+01480     5C 4E 85 F1 | 	sub	fp, #92
+01484     48 00 90 FD | 	jmp	#LR__0130
+01488                 | LR__0129
+01488     60 4E 05 F1 | 	add	fp, #96
+0148c     A7 56 68 FC | 	wrlong	#43, fp
+01490     50 4E 05 F1 | 	add	fp, #80
+01494     A7 A2 01 F6 | 	mov	arg01, fp
+01498     90 4E 85 F1 | 	sub	fp, #144
+0149c     A7 A4 01 FB | 	rdlong	arg02, fp
+014a0     18 4E 05 F1 | 	add	fp, #24
+014a4     A7 A8 01 FB | 	rdlong	arg04, fp
+014a8     84 4E 05 F1 | 	add	fp, #132
+014ac     A7 B6 01 FB | 	rdlong	local06, fp
+014b0     BC 4E 85 F1 | 	sub	fp, #188
+014b4     DB B2 01 F6 | 	mov	local04, local06
+014b8     0A A6 05 F6 | 	mov	arg03, #10
+014bc     D9 AA 01 F6 | 	mov	arg05, local04
+014c0     BC 11 B0 FD | 	call	#__system___uitoa
+014c4     5C 4E 05 F1 | 	add	fp, #92
+014c8     A7 94 61 FC | 	wrlong	result1, fp
+014cc     5C 4E 85 F1 | 	sub	fp, #92
+014d0                 | LR__0130
+014d0     24 4E 05 F1 | 	add	fp, #36
+014d4     A7 AC 09 FB | 	rdlong	local01, fp wz
+014d8     24 4E 85 F1 | 	sub	fp, #36
+014dc     2C 00 90 AD |  if_e	jmp	#LR__0131
+014e0     50 4E 05 F1 | 	add	fp, #80
+014e4     A7 00 68 FC | 	wrlong	#0, fp
+014e8     04 4E 85 F1 | 	sub	fp, #4
+014ec     A7 00 68 FC | 	wrlong	#0, fp
+014f0     6C 4E 05 F1 | 	add	fp, #108
+014f4     A7 AC 01 FB | 	rdlong	local01, fp
+014f8     01 AC 05 F1 | 	add	local01, #1
+014fc     64 4E 85 F1 | 	sub	fp, #100
+01500     A7 AC 61 FC | 	wrlong	local01, fp
+01504     54 4E 85 F1 | 	sub	fp, #84
+01508     88 00 90 FD | 	jmp	#LR__0134
+0150c                 | LR__0131
+0150c     20 4E 05 F1 | 	add	fp, #32
+01510     A7 AC 01 FB | 	rdlong	local01, fp
+01514     20 4E 85 F1 | 	sub	fp, #32
+01518     00 AC 55 F2 | 	cmps	local01, #0 wc
+0151c     40 00 90 3D |  if_ae	jmp	#LR__0132
+01520     20 4E 05 F1 | 	add	fp, #32
+01524     A7 AE 01 FB | 	rdlong	local02, fp
+01528     30 4E 05 F1 | 	add	fp, #48
+0152c     A7 AE 61 FC | 	wrlong	local02, fp
+01530     04 4E 85 F1 | 	sub	fp, #4
+01534     A7 AE 61 FC | 	wrlong	local02, fp
+01538     2C 4E 85 F1 | 	sub	fp, #44
+0153c     A7 AC 01 FB | 	rdlong	local01, fp
+01540     98 4E 05 F1 | 	add	fp, #152
+01544     A7 B0 01 FB | 	rdlong	local03, fp
+01548     D8 AC 01 F1 | 	add	local01, local03
+0154c     01 AC 05 F1 | 	add	local01, #1
+01550     64 4E 85 F1 | 	sub	fp, #100
+01554     A7 AC 61 FC | 	wrlong	local01, fp
+01558     54 4E 85 F1 | 	sub	fp, #84
+0155c     34 00 90 FD | 	jmp	#LR__0133
+01560                 | LR__0132
+01560     4C 4E 05 F1 | 	add	fp, #76
+01564     A7 00 68 FC | 	wrlong	#0, fp
+01568     2C 4E 85 F1 | 	sub	fp, #44
+0156c     A7 AC 01 FB | 	rdlong	local01, fp
+01570     30 4E 05 F1 | 	add	fp, #48
+01574     A7 AC 61 FC | 	wrlong	local01, fp
+01578     68 4E 05 F1 | 	add	fp, #104
+0157c     A7 B0 01 FB | 	rdlong	local03, fp
+01580     D8 AC 01 F1 | 	add	local01, local03
+01584     01 AC 05 F1 | 	add	local01, #1
+01588     64 4E 85 F1 | 	sub	fp, #100
+0158c     A7 AC 61 FC | 	wrlong	local01, fp
+01590     54 4E 85 F1 | 	sub	fp, #84
+01594                 | LR__0133
+01594                 | LR__0134
+01594     54 4E 05 F1 | 	add	fp, #84
+01598     A7 AC 01 FB | 	rdlong	local01, fp
+0159c     08 4E 85 F1 | 	sub	fp, #8
+015a0     A7 B0 01 FB | 	rdlong	local03, fp
+015a4     D8 AC 81 F1 | 	sub	local01, local03
+015a8     01 AC 05 F1 | 	add	local01, #1
+015ac     24 4E 85 F1 | 	sub	fp, #36
+015b0     A7 AC 61 FC | 	wrlong	local01, fp
+015b4     04 4E 05 F1 | 	add	fp, #4
+015b8     A7 AC 09 FB | 	rdlong	local01, fp wz
+015bc     2C 4E 85 F1 | 	sub	fp, #44
+015c0     28 4E 05 51 |  if_ne	add	fp, #40
+015c4     A7 B0 01 5B |  if_ne	rdlong	local03, fp
+015c8     01 B0 05 51 |  if_ne	add	local03, #1
+015cc     A7 B0 61 5C |  if_ne	wrlong	local03, fp
+015d0     28 4E 85 51 |  if_ne	sub	fp, #40
+015d4     1C 4E 05 F1 | 	add	fp, #28
+015d8     A7 AC 01 FB | 	rdlong	local01, fp
+015dc     1C 4E 85 F1 | 	sub	fp, #28
+015e0     10 AC 0D F2 | 	cmp	local01, #16 wz
+015e4     28 4E 05 A1 |  if_e	add	fp, #40
+015e8     A7 AC 01 AB |  if_e	rdlong	local01, fp
+015ec     02 AC 05 A1 |  if_e	add	local01, #2
+015f0     A7 AC 61 AC |  if_e	wrlong	local01, fp
+015f4     28 4E 85 A1 |  if_e	sub	fp, #40
+015f8     24 4E 05 F1 | 	add	fp, #36
+015fc     A7 AC 09 FB | 	rdlong	local01, fp wz
+01600     24 4E 85 F1 | 	sub	fp, #36
+01604     28 00 90 AD |  if_e	jmp	#LR__0135
+01608     28 4E 05 F1 | 	add	fp, #40
+0160c     A7 AC 01 FB | 	rdlong	local01, fp
+01610     02 B0 05 F6 | 	mov	local03, #2
+01614     34 4E 05 F1 | 	add	fp, #52
+01618     A7 B4 01 FB | 	rdlong	local05, fp
+0161c     DA B0 01 F1 | 	add	local03, local05
+01620     D8 AC 01 F1 | 	add	local01, local03
+01624     34 4E 85 F1 | 	sub	fp, #52
+01628     A7 AC 61 FC | 	wrlong	local01, fp
+0162c     28 4E 85 F1 | 	sub	fp, #40
+01630                 | LR__0135
+01630     28 4E 05 F1 | 	add	fp, #40
+01634     A7 AC 01 FB | 	rdlong	local01, fp
+01638     28 4E 85 F1 | 	sub	fp, #40
+0163c     41 AC 55 F2 | 	cmps	local01, #65 wc
+01640     01 94 65 36 |  if_ae	neg	result1, #1
+01644     08 05 90 3D |  if_ae	jmp	#LR__0163
+01648     3C 4E 05 F1 | 	add	fp, #60
+0164c     A7 AC 09 FB | 	rdlong	local01, fp wz
+01650     3C 4E 85 F1 | 	sub	fp, #60
+01654     60 00 90 AD |  if_e	jmp	#LR__0136
+01658     C0 4E 05 F1 | 	add	fp, #192
+0165c     A7 A2 01 FB | 	rdlong	arg01, fp
+01660     94 4E 85 F1 | 	sub	fp, #148
+01664     A7 A4 01 FB | 	rdlong	arg02, fp
+01668     14 4E 05 F1 | 	add	fp, #20
+0166c     A7 A6 01 FB | 	rdlong	arg03, fp
+01670     40 4E 85 F1 | 	sub	fp, #64
+01674     70 12 B0 FD | 	call	#__system__emitsign_0048
+01678     18 4F 05 F1 | 	add	fp, #280
+0167c     A7 94 61 FC | 	wrlong	result1, fp
+01680     18 4F 85 F1 | 	sub	fp, #280
+01684     00 94 55 F2 | 	cmps	result1, #0 wc
+01688     18 4F 05 C1 |  if_b	add	fp, #280
+0168c     A7 94 01 CB |  if_b	rdlong	result1, fp
+01690     18 4F 85 C1 |  if_b	sub	fp, #280
+01694     B8 04 90 CD |  if_b	jmp	#LR__0163
+01698     C0 4E 05 F1 | 	add	fp, #192
+0169c     A7 AC 01 FB | 	rdlong	local01, fp
+016a0     58 4E 05 F1 | 	add	fp, #88
+016a4     A7 B0 01 FB | 	rdlong	local03, fp
+016a8     D8 AC 01 F1 | 	add	local01, local03
+016ac     58 4E 85 F1 | 	sub	fp, #88
+016b0     A7 AC 61 FC | 	wrlong	local01, fp
+016b4     C0 4E 85 F1 | 	sub	fp, #192
+016b8                 | LR__0136
+016b8     4C 4E 05 F1 | 	add	fp, #76
+016bc     A7 AC 01 FB | 	rdlong	local01, fp
+016c0     34 4E 85 F1 | 	sub	fp, #52
+016c4     A7 AC 61 FC | 	wrlong	local01, fp
+016c8     18 4E 85 F1 | 	sub	fp, #24
+016cc     97 9E 48 FB | 	callpa	#(@LR__0142-@LR__0137)>>2,fcache_load_ptr_
+016d0                 | LR__0137
+016d0     18 4E 05 F1 | 	add	fp, #24
+016d4     A7 AE 01 FB | 	rdlong	local02, fp
+016d8     3C 4E 05 F1 | 	add	fp, #60
+016dc     A7 B4 01 FB | 	rdlong	local05, fp
+016e0     54 4E 85 F1 | 	sub	fp, #84
+016e4     DA AE 51 F2 | 	cmps	local02, local05 wc
+016e8     20 01 90 3D |  if_ae	jmp	#LR__0143
+016ec     18 4E 05 F1 | 	add	fp, #24
+016f0     A7 B6 01 FB | 	rdlong	local06, fp
+016f4     18 4E 85 F1 | 	sub	fp, #24
+016f8     00 B6 55 F2 | 	cmps	local06, #0 wc
+016fc     58 00 90 CD |  if_b	jmp	#LR__0138
+01700     18 4E 05 F1 | 	add	fp, #24
+01704     A7 B6 01 FB | 	rdlong	local06, fp
+01708     40 4E 05 F1 | 	add	fp, #64
+0170c     A7 B8 01 FB | 	rdlong	local07, fp
+01710     58 4E 85 F1 | 	sub	fp, #88
+01714     DC B6 51 F2 | 	cmps	local06, local07 wc
+01718     3C 00 90 3D |  if_ae	jmp	#LR__0138
+0171c     C0 4E 05 F1 | 	add	fp, #192
+01720     A7 BA 01 FB | 	rdlong	local08, fp
+01724     DD B8 01 F6 | 	mov	local07, local08
+01728     01 B8 05 F1 | 	add	local07, #1
+0172c     A7 B8 61 FC | 	wrlong	local07, fp
+01730     A8 4E 85 F1 | 	sub	fp, #168
+01734     A7 B8 01 FB | 	rdlong	local07, fp
+01738     DC BC 01 F6 | 	mov	local09, local07
+0173c     58 4E 05 F1 | 	add	fp, #88
+01740     A7 BE 01 F6 | 	mov	local10, fp
+01744     A7 BC 01 F1 | 	add	local09, fp
+01748     DE C0 C1 FA | 	rdbyte	local11, local09
+0174c     DD C0 41 FC | 	wrbyte	local11, local08
+01750     70 4E 85 F1 | 	sub	fp, #112
+01754     20 00 90 FD | 	jmp	#LR__0139
+01758                 | LR__0138
+01758     C0 4E 05 F1 | 	add	fp, #192
+0175c     A7 BA 01 FB | 	rdlong	local08, fp
+01760     DD BC 01 F6 | 	mov	local09, local08
+01764     01 BC 05 F1 | 	add	local09, #1
+01768     A7 BC 61 FC | 	wrlong	local09, fp
+0176c     C0 4E 85 F1 | 	sub	fp, #192
+01770     30 BC 05 F6 | 	mov	local09, #48
+01774     DD 60 48 FC | 	wrbyte	#48, local08
+01778                 | LR__0139
+01778     18 4E 05 F1 | 	add	fp, #24
+0177c     A7 B6 01 FB | 	rdlong	local06, fp
+01780     38 4E 05 F1 | 	add	fp, #56
+01784     A7 C2 01 FB | 	rdlong	local12, fp
+01788     50 4E 85 F1 | 	sub	fp, #80
+0178c     E1 B6 09 F2 | 	cmp	local06, local12 wz
+01790     5C 00 90 5D |  if_ne	jmp	#LR__0141
+01794     10 4F 05 F1 | 	add	fp, #272
+01798     A7 B8 01 FB | 	rdlong	local07, fp
+0179c     10 4F 85 F1 | 	sub	fp, #272
+017a0     DC BC 09 F6 | 	mov	local09, local07 wz
+017a4     28 00 90 5D |  if_ne	jmp	#LR__0140
+017a8     54 4E 05 F1 | 	add	fp, #84
+017ac     A7 C0 01 FB | 	rdlong	local11, fp
+017b0     E0 BE 01 F6 | 	mov	local10, local11
+017b4     01 BE 85 F1 | 	sub	local10, #1
+017b8     3C 4E 85 F1 | 	sub	fp, #60
+017bc     A7 C4 01 FB | 	rdlong	local13, fp
+017c0     18 4E 85 F1 | 	sub	fp, #24
+017c4     E2 C6 01 F6 | 	mov	local14, local13
+017c8     DF C6 51 F2 | 	cmps	local14, local10 wc
+017cc     20 00 90 3D |  if_ae	jmp	#LR__0141
+017d0                 | LR__0140
+017d0     C0 4E 05 F1 | 	add	fp, #192
+017d4     A7 BA 01 FB | 	rdlong	local08, fp
+017d8     DD C2 01 F6 | 	mov	local12, local08
+017dc     01 C2 05 F1 | 	add	local12, #1
+017e0     A7 C2 61 FC | 	wrlong	local12, fp
+017e4     C0 4E 85 F1 | 	sub	fp, #192
+017e8     2E BC 05 F6 | 	mov	local09, #46
+017ec     DD 5C 48 FC | 	wrbyte	#46, local08
+017f0                 | LR__0141
+017f0     18 4E 05 F1 | 	add	fp, #24
+017f4     A7 C8 01 FB | 	rdlong	local15, fp
+017f8     E4 C2 01 F6 | 	mov	local12, local15
+017fc     01 C2 05 F1 | 	add	local12, #1
+01800     A7 C2 61 FC | 	wrlong	local12, fp
+01804     18 4E 85 F1 | 	sub	fp, #24
+01808     C4 FE 9F FD | 	jmp	#LR__0137
+0180c                 | LR__0142
+0180c                 | LR__0143
+0180c     34 4E 05 F1 | 	add	fp, #52
+01810     A7 AC 09 FB | 	rdlong	local01, fp wz
+01814     34 4E 85 F1 | 	sub	fp, #52
+01818     A0 00 90 AD |  if_e	jmp	#LR__0147
+0181c     C0 4E 05 F1 | 	add	fp, #192
+01820     A7 AC 01 FB | 	rdlong	local01, fp
+01824     01 AC 85 F1 | 	sub	local01, #1
+01828     A7 AC 61 FC | 	wrlong	local01, fp
+0182c     C0 4E 85 F1 | 	sub	fp, #192
+01830     97 26 48 FB | 	callpa	#(@LR__0145-@LR__0144)>>2,fcache_load_ptr_
+01834                 | LR__0144
+01834     C0 4E 05 F1 | 	add	fp, #192
+01838     A7 AC 01 FB | 	rdlong	local01, fp
+0183c     04 4E 05 F1 | 	add	fp, #4
+01840     A7 B0 01 FB | 	rdlong	local03, fp
+01844     C4 4E 85 F1 | 	sub	fp, #196
+01848     D8 AC 59 F2 | 	cmps	local01, local03 wcz
+0184c     30 00 90 ED |  if_be	jmp	#LR__0146
+01850     C0 4E 05 F1 | 	add	fp, #192
+01854     A7 B6 01 FB | 	rdlong	local06, fp
+01858     C0 4E 85 F1 | 	sub	fp, #192
+0185c     DB B2 C1 FA | 	rdbyte	local04, local06
+01860     30 B2 0D F2 | 	cmp	local04, #48 wz
+01864     18 00 90 5D |  if_ne	jmp	#LR__0146
+01868     C0 4E 05 F1 | 	add	fp, #192
+0186c     A7 AC 01 FB | 	rdlong	local01, fp
+01870     01 AC 85 F1 | 	sub	local01, #1
+01874     A7 AC 61 FC | 	wrlong	local01, fp
+01878     C0 4E 85 F1 | 	sub	fp, #192
+0187c     B4 FF 9F FD | 	jmp	#LR__0144
+01880                 | LR__0145
+01880                 | LR__0146
+01880     C0 4E 05 F1 | 	add	fp, #192
+01884     A7 AE 01 FB | 	rdlong	local02, fp
+01888     C0 4E 85 F1 | 	sub	fp, #192
+0188c     D7 AC C1 FA | 	rdbyte	local01, local02
+01890     2E AC 0D F2 | 	cmp	local01, #46 wz
+01894     C0 4E 05 A1 |  if_e	add	fp, #192
+01898     A7 AC 01 AB |  if_e	rdlong	local01, fp
+0189c     01 AC 85 A1 |  if_e	sub	local01, #1
+018a0     A7 AC 61 AC |  if_e	wrlong	local01, fp
+018a4     C0 4E 85 A1 |  if_e	sub	fp, #192
+018a8     C0 4E 05 F1 | 	add	fp, #192
+018ac     A7 B0 01 FB | 	rdlong	local03, fp
+018b0     01 B0 05 F1 | 	add	local03, #1
+018b4     A7 B0 61 FC | 	wrlong	local03, fp
+018b8     C0 4E 85 F1 | 	sub	fp, #192
+018bc                 | LR__0147
+018bc     24 4E 05 F1 | 	add	fp, #36
+018c0     A7 AC 09 FB | 	rdlong	local01, fp wz
+018c4     24 4E 85 F1 | 	sub	fp, #36
+018c8     B4 00 90 AD |  if_e	jmp	#LR__0150
+018cc     C0 4E 05 F1 | 	add	fp, #192
+018d0     A7 AE 01 FB | 	rdlong	local02, fp
+018d4     D7 B0 01 F6 | 	mov	local03, local02
+018d8     01 B0 05 F1 | 	add	local03, #1
+018dc     A7 B0 61 FC | 	wrlong	local03, fp
+018e0     90 4E 85 F1 | 	sub	fp, #144
+018e4     A7 B2 01 FB | 	rdlong	local04, fp
+018e8     D7 B2 41 FC | 	wrbyte	local04, local02
+018ec     90 4E 05 F1 | 	add	fp, #144
+018f0     A7 AE 01 FB | 	rdlong	local02, fp
+018f4     D7 B0 01 F6 | 	mov	local03, local02
+018f8     01 B0 05 F1 | 	add	local03, #1
+018fc     A7 B0 61 FC | 	wrlong	local03, fp
+01900     60 4E 85 F1 | 	sub	fp, #96
+01904     A7 B2 01 FB | 	rdlong	local04, fp
+01908     D7 B2 41 FC | 	wrbyte	local04, local02
+0190c     48 4E 85 F1 | 	sub	fp, #72
+01910     A7 00 68 FC | 	wrlong	#0, fp
+01914     18 4E 85 F1 | 	sub	fp, #24
+01918                 | LR__0148
+01918     18 4E 05 F1 | 	add	fp, #24
+0191c     A7 AE 01 FB | 	rdlong	local02, fp
+01920     44 4E 05 F1 | 	add	fp, #68
+01924     A7 B4 01 FB | 	rdlong	local05, fp
+01928     5C 4E 85 F1 | 	sub	fp, #92
+0192c     DA AE 51 F2 | 	cmps	local02, local05 wc
+01930     4C 00 90 3D |  if_ae	jmp	#LR__0149
+01934     C0 4E 05 F1 | 	add	fp, #192
+01938     A7 BA 01 FB | 	rdlong	local08, fp
+0193c     DD C2 01 F6 | 	mov	local12, local08
+01940     01 C2 05 F1 | 	add	local12, #1
+01944     A7 C2 61 FC | 	wrlong	local12, fp
+01948     A8 4E 85 F1 | 	sub	fp, #168
+0194c     A7 B8 01 FB | 	rdlong	local07, fp
+01950     DC BC 01 F6 | 	mov	local09, local07
+01954     98 4E 05 F1 | 	add	fp, #152
+01958     A7 BE 01 F6 | 	mov	local10, fp
+0195c     A7 BC 01 F1 | 	add	local09, fp
+01960     DE C0 C1 FA | 	rdbyte	local11, local09
+01964     DD C0 41 FC | 	wrbyte	local11, local08
+01968     98 4E 85 F1 | 	sub	fp, #152
+0196c     A7 C2 01 FB | 	rdlong	local12, fp
+01970     01 C2 05 F1 | 	add	local12, #1
+01974     A7 C2 61 FC | 	wrlong	local12, fp
+01978     18 4E 85 F1 | 	sub	fp, #24
+0197c     98 FF 9F FD | 	jmp	#LR__0148
+01980                 | LR__0149
+01980                 | LR__0150
+01980     C0 4E 05 F1 | 	add	fp, #192
+01984     A7 AC 01 FB | 	rdlong	local01, fp
+01988     C0 4E 85 F1 | 	sub	fp, #192
+0198c     D6 00 48 FC | 	wrbyte	#0, local01
+01990                 | LR__0151
+01990     6C 4E 05 F1 | 	add	fp, #108
+01994     A7 AC 09 FB | 	rdlong	local01, fp wz
+01998     6C 4E 85 F1 | 	sub	fp, #108
+0199c     90 01 90 AD |  if_e	jmp	#LR__0162
+019a0     48 4E 05 F1 | 	add	fp, #72
+019a4     A7 B0 09 FB | 	rdlong	local03, fp wz
+019a8     48 4E 85 F1 | 	sub	fp, #72
+019ac     80 01 90 AD |  if_e	jmp	#LR__0162
+019b0     C4 4E 05 F1 | 	add	fp, #196
+019b4     A7 A2 01 FB | 	rdlong	arg01, fp
+019b8     C4 4E 85 F1 | 	sub	fp, #196
+019bc     D1 CA 01 F6 | 	mov	local16, arg01
+019c0     97 06 48 FB | 	callpa	#(@LR__0153-@LR__0152)>>2,fcache_load_ptr_
+019c4                 | LR__0152
+019c4     E5 94 C9 FA | 	rdbyte	result1, local16 wz
+019c8     01 CA 05 51 |  if_ne	add	local16, #1
+019cc     F4 FF 9F 5D |  if_ne	jmp	#LR__0152
+019d0                 | LR__0153
+019d0     D1 CA 81 F1 | 	sub	local16, arg01
+019d4     E5 B2 01 F6 | 	mov	local04, local16
+019d8     6C 4E 05 F1 | 	add	fp, #108
+019dc     A7 B6 01 FB | 	rdlong	local06, fp
+019e0     6C 4E 85 F1 | 	sub	fp, #108
+019e4     DB B2 59 F2 | 	cmps	local04, local06 wcz
+019e8     44 01 90 ED |  if_be	jmp	#LR__0162
+019ec     C4 4E 05 F1 | 	add	fp, #196
+019f0     A7 AC 01 FB | 	rdlong	local01, fp
+019f4     5C 4E 05 F1 | 	add	fp, #92
+019f8     A7 AC 61 FC | 	wrlong	local01, fp
+019fc     FC 4E 85 F1 | 	sub	fp, #252
+01a00     A7 AC 09 FB | 	rdlong	local01, fp wz
+01a04     24 4E 85 F1 | 	sub	fp, #36
+01a08     20 00 90 AD |  if_e	jmp	#LR__0154
+01a0c     B8 4E 05 F1 | 	add	fp, #184
+01a10     A7 00 68 FC | 	wrlong	#0, fp
+01a14     4C 4E 85 F1 | 	sub	fp, #76
+01a18     A7 AC 01 FB | 	rdlong	local01, fp
+01a1c     B0 4E 05 F1 | 	add	fp, #176
+01a20     A7 AC 61 FC | 	wrlong	local01, fp
+01a24     1C 4F 85 F1 | 	sub	fp, #284
+01a28     24 00 90 FD | 	jmp	#LR__0155
+01a2c                 | LR__0154
+01a2c     6C 4E 05 F1 | 	add	fp, #108
+01a30     A7 AC 01 FB | 	rdlong	local01, fp
+01a34     01 AC 85 F1 | 	sub	local01, #1
+01a38     4C 4E 05 F1 | 	add	fp, #76
+01a3c     A7 B0 01 FB | 	rdlong	local03, fp
+01a40     D8 AC 81 F1 | 	sub	local01, local03
+01a44     64 4E 05 F1 | 	add	fp, #100
+01a48     A7 AC 61 FC | 	wrlong	local01, fp
+01a4c     1C 4F 85 F1 | 	sub	fp, #284
+01a50                 | LR__0155
+01a50     97 20 48 FB | 	callpa	#(@LR__0157-@LR__0156)>>2,fcache_load_ptr_
+01a54                 | LR__0156
+01a54     1C 4F 05 F1 | 	add	fp, #284
+01a58     A7 AC 09 FB | 	rdlong	local01, fp wz
+01a5c     1C 4F 85 F1 | 	sub	fp, #284
+01a60     30 00 90 AD |  if_e	jmp	#LR__0158
+01a64     20 4F 05 F1 | 	add	fp, #288
+01a68     A7 AE 01 FB | 	rdlong	local02, fp
+01a6c     D7 B0 01 F6 | 	mov	local03, local02
+01a70     01 B0 05 F1 | 	add	local03, #1
+01a74     A7 B0 61 FC | 	wrlong	local03, fp
+01a78     D7 54 48 FC | 	wrbyte	#42, local02
+01a7c     04 4E 85 F1 | 	sub	fp, #4
+01a80     A7 AC 01 FB | 	rdlong	local01, fp
+01a84     01 AC 85 F1 | 	sub	local01, #1
+01a88     A7 AC 61 FC | 	wrlong	local01, fp
+01a8c     1C 4F 85 F1 | 	sub	fp, #284
+01a90     C0 FF 9F FD | 	jmp	#LR__0156
+01a94                 | LR__0157
+01a94                 | LR__0158
+01a94     B8 4E 05 F1 | 	add	fp, #184
+01a98     A7 AC 09 FB | 	rdlong	local01, fp wz
+01a9c     B8 4E 85 F1 | 	sub	fp, #184
+01aa0     70 00 90 AD |  if_e	jmp	#LR__0161
+01aa4     20 4F 05 F1 | 	add	fp, #288
+01aa8     A7 AE 01 FB | 	rdlong	local02, fp
+01aac     D7 B0 01 F6 | 	mov	local03, local02
+01ab0     01 B0 05 F1 | 	add	local03, #1
+01ab4     A7 B0 61 FC | 	wrlong	local03, fp
+01ab8     D7 5C 48 FC | 	wrbyte	#46, local02
+01abc     04 4E 85 F1 | 	sub	fp, #4
+01ac0     A7 00 68 FC | 	wrlong	#0, fp
+01ac4     1C 4F 85 F1 | 	sub	fp, #284
+01ac8                 | LR__0159
+01ac8     1C 4F 05 F1 | 	add	fp, #284
+01acc     A7 AE 01 FB | 	rdlong	local02, fp
+01ad0     64 4E 85 F1 | 	sub	fp, #100
+01ad4     A7 B4 01 FB | 	rdlong	local05, fp
+01ad8     B8 4E 85 F1 | 	sub	fp, #184
+01adc     DA AE 51 F2 | 	cmps	local02, local05 wc
+01ae0     30 00 90 3D |  if_ae	jmp	#LR__0160
+01ae4     20 4F 05 F1 | 	add	fp, #288
+01ae8     A7 BA 01 FB | 	rdlong	local08, fp
+01aec     DD C2 01 F6 | 	mov	local12, local08
+01af0     01 C2 05 F1 | 	add	local12, #1
+01af4     A7 C2 61 FC | 	wrlong	local12, fp
+01af8     DD 54 48 FC | 	wrbyte	#42, local08
+01afc     04 4E 85 F1 | 	sub	fp, #4
+01b00     A7 C2 01 FB | 	rdlong	local12, fp
+01b04     01 C2 05 F1 | 	add	local12, #1
+01b08     A7 C2 61 FC | 	wrlong	local12, fp
+01b0c     1C 4F 85 F1 | 	sub	fp, #284
+01b10     B4 FF 9F FD | 	jmp	#LR__0159
+01b14                 | LR__0160
+01b14                 | LR__0161
+01b14     20 4F 05 F1 | 	add	fp, #288
+01b18     A7 AE 01 FB | 	rdlong	local02, fp
+01b1c     D7 B0 01 F6 | 	mov	local03, local02
+01b20     01 B0 05 F1 | 	add	local03, #1
+01b24     A7 B0 61 FC | 	wrlong	local03, fp
+01b28     20 4F 85 F1 | 	sub	fp, #288
+01b2c     D7 00 48 FC | 	wrbyte	#0, local02
+01b30                 | LR__0162
+01b30     04 4E 05 F1 | 	add	fp, #4
+01b34     A7 A2 01 FB | 	rdlong	arg01, fp
+01b38     04 4E 05 F1 | 	add	fp, #4
+01b3c     A7 A4 01 FB | 	rdlong	arg02, fp
+01b40     BC 4E 05 F1 | 	add	fp, #188
+01b44     A7 A6 01 FB | 	rdlong	arg03, fp
+01b48     C4 4E 85 F1 | 	sub	fp, #196
+01b4c     F4 EF BF FD | 	call	#__system___fmtstr
+01b50                 | LR__0163
+01b50     A7 F0 03 F6 | 	mov	ptra, fp
+01b54     B2 00 A0 FD | 	call	#popregs_
+01b58                 | __system___fmtfloat_ret
+01b58     2D 00 64 FD | 	ret
+01b5c                 | 
+01b5c                 | __system___float_fromuns
+01b5c     D1 A6 09 F6 | 	mov	arg03, arg01 wz
+01b60     D3 94 01 A6 |  if_e	mov	result1, arg03
+01b64     24 00 90 AD |  if_e	jmp	#LR__0170
+01b68     D3 A4 91 F7 | 	encod	arg02, arg03 wc
+01b6c     01 A4 05 C1 |  if_b	add	arg02, #1
+01b70     01 A4 85 F1 | 	sub	arg02, #1
+01b74     1F A2 05 F6 | 	mov	arg01, #31
+01b78     D2 A2 81 F1 | 	sub	arg01, arg02
+01b7c     D1 A6 61 F0 | 	shl	arg03, arg01
+01b80     02 A6 45 F0 | 	shr	arg03, #2
+01b84     00 A2 05 F6 | 	mov	arg01, #0
+01b88     20 05 B0 FD | 	call	#__system___float_Pack
+01b8c                 | LR__0170
+01b8c                 | __system___float_fromuns_ret
+01b8c     2D 00 64 FD | 	ret
+01b90                 | 
+01b90                 | __system___float_mul
+01b90     0B 4A 05 F6 | 	mov	COUNT_, #11
+01b94     A8 00 A0 FD | 	call	#pushregs_
+01b98     D1 AC 01 F6 | 	mov	local01, arg01
+01b9c     D2 AE 01 F6 | 	mov	local02, arg02
+01ba0     D6 B0 01 F6 | 	mov	local03, local01
+01ba4     D8 B2 01 F6 | 	mov	local04, local03
+01ba8     16 B2 45 F7 | 	zerox	local04, #22
+01bac     D8 B4 01 F6 | 	mov	local05, local03
+01bb0     01 B4 65 F0 | 	shl	local05, #1
+01bb4     18 B4 45 F0 | 	shr	local05, #24
+01bb8     1F B0 45 F0 | 	shr	local03, #31
+01bbc     D7 94 01 F6 | 	mov	result1, local02
+01bc0     CA B6 01 F6 | 	mov	local06, result1
+01bc4     DB B8 01 F6 | 	mov	local07, local06
+01bc8     16 B8 45 F7 | 	zerox	local07, #22
+01bcc     DB BA 01 F6 | 	mov	local08, local06
+01bd0     01 BA 65 F0 | 	shl	local08, #1
+01bd4     18 BA 45 F0 | 	shr	local08, #24
+01bd8     1F B6 45 F0 | 	shr	local06, #31
+01bdc     DB B0 61 F5 | 	xor	local03, local06
+01be0     FF B4 0D F2 | 	cmp	local05, #255 wz
+01be4     90 00 90 AD |  if_e	jmp	#LR__0183
+01be8     FF BA 0D F2 | 	cmp	local08, #255 wz
+01bec     D8 00 90 AD |  if_e	jmp	#LR__0185
+01bf0     00 B4 0D F2 | 	cmp	local05, #0 wz
+01bf4     0C 01 90 AD |  if_e	jmp	#LR__0186
+01bf8     17 B2 25 F4 | 	bith	local04, #23
+01bfc                 | LR__0180
+01bfc     00 BA 0D F2 | 	cmp	local08, #0 wz
+01c00     44 01 90 AD |  if_e	jmp	#LR__0190
+01c04     17 B8 25 F4 | 	bith	local07, #23
+01c08                 | LR__0181
+01c08     D9 AE 01 F6 | 	mov	local02, local04
+01c0c     04 AE 65 F0 | 	shl	local02, #4
+01c10     DC B6 01 F6 | 	mov	local06, local07
+01c14     05 B6 65 F0 | 	shl	local06, #5
+01c18     DB AE 01 FD | 	qmul	local02, local06
+01c1c     DD B4 01 F1 | 	add	local05, local08
+01c20     FE B4 85 F1 | 	sub	local05, #254
+01c24     DA BC 01 F6 | 	mov	local09, local05
+01c28     04 B2 65 F0 | 	shl	local04, #4
+01c2c     05 B8 65 F0 | 	shl	local07, #5
+01c30     18 BE 61 FD | 	getqx	local10
+01c34     DC B2 01 FD | 	qmul	local04, local07
+01c38     19 C0 61 FD | 	getqy	local11
+01c3c     00 80 00 FF 
+01c40     00 C0 15 F2 | 	cmp	local11, ##16777216 wc
+01c44     18 00 90 CD |  if_b	jmp	#LR__0182
+01c48     01 BC 05 F1 | 	add	local09, #1
+01c4c     01 BE 45 F0 | 	shr	local10, #1
+01c50     E0 BA 01 F6 | 	mov	local08, local11
+01c54     1F BA 65 F0 | 	shl	local08, #31
+01c58     DD BE 41 F5 | 	or	local10, local08
+01c5c     01 C0 45 F0 | 	shr	local11, #1
+01c60                 | LR__0182
+01c60     E0 A2 01 F6 | 	mov	arg01, local11
+01c64     DF A4 01 F6 | 	mov	arg02, local10
+01c68     DE A6 01 F6 | 	mov	arg03, local09
+01c6c     D8 A8 01 F6 | 	mov	arg04, local03
+01c70     2C 0D B0 FD | 	call	#__system__pack_0134
+01c74     10 01 90 FD | 	jmp	#LR__0194
+01c78                 | LR__0183
+01c78     00 B2 0D F2 | 	cmp	local04, #0 wz
+01c7c     D6 94 01 56 |  if_ne	mov	result1, local01
+01c80     04 01 90 5D |  if_ne	jmp	#LR__0194
+01c84     FF BA 55 F2 | 	cmps	local08, #255 wc
+01c88     00 BA 0D C2 |  if_b	cmp	local08, #0 wz
+01c8c     00 B8 0D 82 |  if_c_and_z	cmp	local07, #0 wz
+01c90     18 00 90 4D |  if_c_and_nz	jmp	#LR__0184
+01c94     00 F8 3F CF 
+01c98     00 94 05 C6 |  if_b	mov	result1, ##2146435072
+01c9c     E8 00 90 CD |  if_b	jmp	#LR__0194
+01ca0     00 B8 0D F2 | 	cmp	local07, #0 wz
+01ca4     D7 94 01 56 |  if_ne	mov	result1, local02
+01ca8     DC 00 90 5D |  if_ne	jmp	#LR__0194
+01cac                 | LR__0184
+01cac     02 B0 45 F5 | 	or	local03, #2
+01cb0     00 A2 05 F6 | 	mov	arg01, #0
+01cb4     00 A4 05 F6 | 	mov	arg02, #0
+01cb8     DA A6 01 F6 | 	mov	arg03, local05
+01cbc     D8 A8 01 F6 | 	mov	arg04, local03
+01cc0     DC 0C B0 FD | 	call	#__system__pack_0134
+01cc4     C0 00 90 FD | 	jmp	#LR__0194
+01cc8                 | LR__0185
+01cc8     00 B4 0D F2 | 	cmp	local05, #0 wz
+01ccc     00 B2 0D A2 |  if_e	cmp	local04, #0 wz
+01cd0     00 F8 3F AF 
+01cd4     00 94 05 A6 |  if_e	mov	result1, ##2146435072
+01cd8     AC 00 90 AD |  if_e	jmp	#LR__0194
+01cdc     00 B8 0D F2 | 	cmp	local07, #0 wz
+01ce0     D7 94 01 56 |  if_ne	mov	result1, local02
+01ce4     A0 00 90 5D |  if_ne	jmp	#LR__0194
+01ce8     DD A6 01 F6 | 	mov	arg03, local08
+01cec     D8 A8 01 F6 | 	mov	arg04, local03
+01cf0     02 A8 45 F5 | 	or	arg04, #2
+01cf4     00 A2 05 F6 | 	mov	arg01, #0
+01cf8     00 A4 05 F6 | 	mov	arg02, #0
+01cfc     A0 0C B0 FD | 	call	#__system__pack_0134
+01d00     84 00 90 FD | 	jmp	#LR__0194
+01d04                 | LR__0186
+01d04     00 B2 0D F2 | 	cmp	local04, #0 wz
+01d08     20 00 90 AD |  if_e	jmp	#LR__0189
+01d0c     01 B2 65 F0 | 	shl	local04, #1
+01d10     97 0A 48 FB | 	callpa	#(@LR__0188-@LR__0187)>>2,fcache_load_ptr_
+01d14                 | LR__0187
+01d14     00 40 00 FF 
+01d18     00 B2 15 F2 | 	cmp	local04, ##8388608 wc
+01d1c     01 B4 85 C1 |  if_b	sub	local05, #1
+01d20     01 B2 65 C0 |  if_b	shl	local04, #1
+01d24     EC FF 9F CD |  if_b	jmp	#LR__0187
+01d28                 | LR__0188
+01d28     D0 FE 9F FD | 	jmp	#LR__0180
+01d2c                 | LR__0189
+01d2c     08 B0 45 F5 | 	or	local03, #8
+01d30     00 A2 05 F6 | 	mov	arg01, #0
+01d34     00 A4 05 F6 | 	mov	arg02, #0
+01d38     00 A6 05 F6 | 	mov	arg03, #0
+01d3c     D8 A8 01 F6 | 	mov	arg04, local03
+01d40     5C 0C B0 FD | 	call	#__system__pack_0134
+01d44     40 00 90 FD | 	jmp	#LR__0194
+01d48                 | LR__0190
+01d48     00 B8 0D F2 | 	cmp	local07, #0 wz
+01d4c     20 00 90 AD |  if_e	jmp	#LR__0193
+01d50     01 B8 65 F0 | 	shl	local07, #1
+01d54     97 0A 48 FB | 	callpa	#(@LR__0192-@LR__0191)>>2,fcache_load_ptr_
+01d58                 | LR__0191
+01d58     00 40 00 FF 
+01d5c     00 B8 15 F2 | 	cmp	local07, ##8388608 wc
+01d60     01 BA 85 C1 |  if_b	sub	local08, #1
+01d64     01 B8 65 C0 |  if_b	shl	local07, #1
+01d68     EC FF 9F CD |  if_b	jmp	#LR__0191
+01d6c                 | LR__0192
+01d6c     98 FE 9F FD | 	jmp	#LR__0181
+01d70                 | LR__0193
+01d70     08 B0 45 F5 | 	or	local03, #8
+01d74     00 A2 05 F6 | 	mov	arg01, #0
+01d78     00 A4 05 F6 | 	mov	arg02, #0
+01d7c     00 A6 05 F6 | 	mov	arg03, #0
+01d80     D8 A8 01 F6 | 	mov	arg04, local03
+01d84     18 0C B0 FD | 	call	#__system__pack_0134
+01d88                 | LR__0194
+01d88     A7 F0 03 F6 | 	mov	ptra, fp
+01d8c     B2 00 A0 FD | 	call	#popregs_
+01d90                 | __system___float_mul_ret
+01d90     2D 00 64 FD | 	ret
+01d94                 | 
+01d94                 | __system___float_div
+01d94     0E 4A 05 F6 | 	mov	COUNT_, #14
+01d98     A8 00 A0 FD | 	call	#pushregs_
+01d9c     D1 B0 01 F6 | 	mov	local03, arg01
+01da0     D2 B2 01 F6 | 	mov	local04, arg02
+01da4     D8 B4 01 F6 | 	mov	local05, local03
+01da8     DA B6 01 F6 | 	mov	local06, local05
+01dac     16 B6 45 F7 | 	zerox	local06, #22
+01db0     DA B8 01 F6 | 	mov	local07, local05
+01db4     01 B8 65 F0 | 	shl	local07, #1
+01db8     18 B8 45 F0 | 	shr	local07, #24
+01dbc     1F B4 45 F0 | 	shr	local05, #31
+01dc0     D9 94 01 F6 | 	mov	result1, local04
+01dc4     CA BA 01 F6 | 	mov	local08, result1
+01dc8     DD BC 01 F6 | 	mov	local09, local08
+01dcc     16 BC 45 F7 | 	zerox	local09, #22
+01dd0     DD BE 01 F6 | 	mov	local10, local08
+01dd4     01 BE 65 F0 | 	shl	local10, #1
+01dd8     18 BE 45 F0 | 	shr	local10, #24
+01ddc     1F BA 45 F0 | 	shr	local08, #31
+01de0     DD B4 61 F5 | 	xor	local05, local08
+01de4     FF B8 0D F2 | 	cmp	local07, #255 wz
+01de8     D4 00 90 AD |  if_e	jmp	#LR__0205
+01dec     FF BE 0D F2 | 	cmp	local10, #255 wz
+01df0     04 01 90 AD |  if_e	jmp	#LR__0206
+01df4     00 B8 0D F2 | 	cmp	local07, #0 wz
+01df8     24 01 90 AD |  if_e	jmp	#LR__0207
+01dfc     17 B6 25 F4 | 	bith	local06, #23
+01e00                 | LR__0200
+01e00     00 BE 0D F2 | 	cmp	local10, #0 wz
+01e04     70 01 90 AD |  if_e	jmp	#LR__0211
+01e08     17 BC 25 F4 | 	bith	local09, #23
+01e0c                 | LR__0201
+01e0c     DF B8 81 F1 | 	sub	local07, local10
+01e10     DC C0 01 F6 | 	mov	local11, local07
+01e14     DB A2 01 F6 | 	mov	arg01, local06
+01e18     02 A2 45 F0 | 	shr	arg01, #2
+01e1c     1E B6 65 F0 | 	shl	local06, #30
+01e20     DB A4 01 F6 | 	mov	arg02, local06
+01e24     DE A6 01 F6 | 	mov	arg03, local09
+01e28     28 A2 61 FD | 	setq	arg01
+01e2c     D3 A4 11 FD | 	qdiv	arg02, arg03
+01e30     00 C2 05 F6 | 	mov	local12, #0
+01e34     18 AC 61 FD | 	getqx	local01
+01e38     19 96 61 FD | 	getqy	result2
+01e3c     CB AE 01 F6 | 	mov	local02, result2
+01e40     D6 C4 01 F6 | 	mov	local13, local01
+01e44     00 AE 4D F2 | 	cmps	local02, #0 wz
+01e48     E2 C6 01 F6 | 	mov	local14, local13
+01e4c     19 C6 65 F0 | 	shl	local14, #25
+01e50     01 C2 05 56 |  if_ne	mov	local12, #1
+01e54     E1 C6 41 F5 | 	or	local14, local12
+01e58     07 C4 45 F0 | 	shr	local13, #7
+01e5c     00 80 00 FF 
+01e60     00 C4 15 F2 | 	cmp	local13, ##16777216 wc
+01e64     1C 00 90 CD |  if_b	jmp	#LR__0202
+01e68     01 C0 05 F1 | 	add	local11, #1
+01e6c     01 C6 45 F0 | 	shr	local14, #1
+01e70     E2 C2 01 F6 | 	mov	local12, local13
+01e74     1F C2 65 F0 | 	shl	local12, #31
+01e78     E1 C6 41 F5 | 	or	local14, local12
+01e7c     01 C4 45 F0 | 	shr	local13, #1
+01e80     24 00 90 FD | 	jmp	#LR__0204
+01e84                 | LR__0202
+01e84     00 40 00 FF 
+01e88     00 C4 15 F2 | 	cmp	local13, ##8388608 wc
+01e8c     18 00 90 3D |  if_ae	jmp	#LR__0203
+01e90     01 C0 85 F1 | 	sub	local11, #1
+01e94     01 C4 65 F0 | 	shl	local13, #1
+01e98     E3 C2 01 F6 | 	mov	local12, local14
+01e9c     1F C2 45 F0 | 	shr	local12, #31
+01ea0     E1 C4 41 F5 | 	or	local13, local12
+01ea4     01 C6 65 F0 | 	shl	local14, #1
+01ea8                 | LR__0203
+01ea8                 | LR__0204
+01ea8     E2 A2 01 F6 | 	mov	arg01, local13
+01eac     E3 A4 01 F6 | 	mov	arg02, local14
+01eb0     E0 A6 01 F6 | 	mov	arg03, local11
+01eb4     DA A8 01 F6 | 	mov	arg04, local05
+01eb8     E4 0A B0 FD | 	call	#__system__pack_0134
+01ebc     F8 00 90 FD | 	jmp	#LR__0215
+01ec0                 | LR__0205
+01ec0     00 B6 0D F2 | 	cmp	local06, #0 wz
+01ec4     D8 94 01 56 |  if_ne	mov	result1, local03
+01ec8     EC 00 90 5D |  if_ne	jmp	#LR__0215
+01ecc     FF BE 0D F2 | 	cmp	local10, #255 wz
+01ed0     00 F8 3F AF 
+01ed4     00 94 05 A6 |  if_e	mov	result1, ##2146435072
+01ed8     DC 00 90 AD |  if_e	jmp	#LR__0215
+01edc     02 B4 45 F5 | 	or	local05, #2
+01ee0     00 A2 05 F6 | 	mov	arg01, #0
+01ee4     00 A4 05 F6 | 	mov	arg02, #0
+01ee8     DC A6 01 F6 | 	mov	arg03, local07
+01eec     DA A8 01 F6 | 	mov	arg04, local05
+01ef0     AC 0A B0 FD | 	call	#__system__pack_0134
+01ef4     C0 00 90 FD | 	jmp	#LR__0215
+01ef8                 | LR__0206
+01ef8     00 BC 0D F2 | 	cmp	local09, #0 wz
+01efc     D9 94 01 56 |  if_ne	mov	result1, local04
+01f00     B4 00 90 5D |  if_ne	jmp	#LR__0215
+01f04     DA A8 01 F6 | 	mov	arg04, local05
+01f08     08 A8 45 F5 | 	or	arg04, #8
+01f0c     00 A2 05 F6 | 	mov	arg01, #0
+01f10     00 A4 05 F6 | 	mov	arg02, #0
+01f14     00 A6 05 F6 | 	mov	arg03, #0
+01f18     84 0A B0 FD | 	call	#__system__pack_0134
+01f1c     98 00 90 FD | 	jmp	#LR__0215
+01f20                 | LR__0207
+01f20     00 B6 0D F2 | 	cmp	local06, #0 wz
+01f24     20 00 90 AD |  if_e	jmp	#LR__0210
+01f28     01 B6 65 F0 | 	shl	local06, #1
+01f2c     97 0A 48 FB | 	callpa	#(@LR__0209-@LR__0208)>>2,fcache_load_ptr_
+01f30                 | LR__0208
+01f30     00 40 00 FF 
+01f34     00 B6 15 F2 | 	cmp	local06, ##8388608 wc
+01f38     01 B8 85 C1 |  if_b	sub	local07, #1
+01f3c     01 B6 65 C0 |  if_b	shl	local06, #1
+01f40     EC FF 9F CD |  if_b	jmp	#LR__0208
+01f44                 | LR__0209
+01f44     B8 FE 9F FD | 	jmp	#LR__0200
+01f48                 | LR__0210
+01f48     00 BE 0D F2 | 	cmp	local10, #0 wz
+01f4c     00 BC 0D A2 |  if_e	cmp	local09, #0 wz
+01f50     00 F8 3F AF 
+01f54     00 94 05 A6 |  if_e	mov	result1, ##2146435072
+01f58     5C 00 90 AD |  if_e	jmp	#LR__0215
+01f5c     DA A8 01 F6 | 	mov	arg04, local05
+01f60     08 A8 45 F5 | 	or	arg04, #8
+01f64     00 A2 05 F6 | 	mov	arg01, #0
+01f68     00 A4 05 F6 | 	mov	arg02, #0
+01f6c     00 A6 05 F6 | 	mov	arg03, #0
+01f70     2C 0A B0 FD | 	call	#__system__pack_0134
+01f74     40 00 90 FD | 	jmp	#LR__0215
+01f78                 | LR__0211
+01f78     00 BC 0D F2 | 	cmp	local09, #0 wz
+01f7c     20 00 90 AD |  if_e	jmp	#LR__0214
+01f80     01 BC 65 F0 | 	shl	local09, #1
+01f84     97 0A 48 FB | 	callpa	#(@LR__0213-@LR__0212)>>2,fcache_load_ptr_
+01f88                 | LR__0212
+01f88     00 40 00 FF 
+01f8c     00 BC 15 F2 | 	cmp	local09, ##8388608 wc
+01f90     01 BE 85 C1 |  if_b	sub	local10, #1
+01f94     01 BC 65 C0 |  if_b	shl	local09, #1
+01f98     EC FF 9F CD |  if_b	jmp	#LR__0212
+01f9c                 | LR__0213
+01f9c     6C FE 9F FD | 	jmp	#LR__0201
+01fa0                 | LR__0214
+01fa0     02 B4 45 F5 | 	or	local05, #2
+01fa4     00 A2 05 F6 | 	mov	arg01, #0
+01fa8     00 A4 05 F6 | 	mov	arg02, #0
+01fac     00 A6 05 F6 | 	mov	arg03, #0
+01fb0     DA A8 01 F6 | 	mov	arg04, local05
+01fb4     E8 09 B0 FD | 	call	#__system__pack_0134
+01fb8                 | LR__0215
+01fb8     A7 F0 03 F6 | 	mov	ptra, fp
+01fbc     B2 00 A0 FD | 	call	#popregs_
+01fc0                 | __system___float_div_ret
+01fc0     2D 00 64 FD | 	ret
+01fc4                 | 
+01fc4                 | __system___float_cmp
+01fc4     00 C0 3F FF 
+01fc8     01 A2 55 F2 | 	cmps	arg01, ##2139095041 wc
+01fcc     00 C0 3F CF 
+01fd0     01 A4 55 C2 |  if_b	cmps	arg02, ##2139095041 wc
+01fd4     D3 94 01 36 |  if_ae	mov	result1, arg03
+01fd8     78 00 90 3D |  if_ae	jmp	#__system___float_cmp_ret
+01fdc     00 C0 7F FF 
+01fe0     01 A2 15 F2 | 	cmp	arg01, ##-8388607 wc
+01fe4     00 C0 7F CF 
+01fe8     01 A2 15 C2 |  if_b	cmp	arg01, ##-8388607 wc
+01fec     D3 94 01 36 |  if_ae	mov	result1, arg03
+01ff0     60 00 90 3D |  if_ae	jmp	#__system___float_cmp_ret
+01ff4     00 A2 55 F2 | 	cmps	arg01, #0 wc
+01ff8     2C 00 90 3D |  if_ae	jmp	#LR__0220
+01ffc     00 A4 55 F2 | 	cmps	arg02, #0 wc
+02000     D2 94 01 C6 |  if_b	mov	result1, arg02
+02004     D1 94 81 C1 |  if_b	sub	result1, arg01
+02008     48 00 90 CD |  if_b	jmp	#__system___float_cmp_ret
+0200c     00 A4 0D F2 | 	cmp	arg02, #0 wz
+02010     00 00 40 AF 
+02014     00 A2 0D A2 |  if_e	cmp	arg01, ##-2147483648 wz
+02018     00 94 05 A6 |  if_e	mov	result1, #0
+0201c     34 00 90 AD |  if_e	jmp	#__system___float_cmp_ret
+02020     01 94 65 F6 | 	neg	result1, #1
+02024     2C 00 90 FD | 	jmp	#__system___float_cmp_ret
+02028                 | LR__0220
+02028     00 A4 55 F2 | 	cmps	arg02, #0 wc
+0202c     1C 00 90 3D |  if_ae	jmp	#LR__0221
+02030     00 A2 0D F2 | 	cmp	arg01, #0 wz
+02034     00 00 40 AF 
+02038     00 A4 0D A2 |  if_e	cmp	arg02, ##-2147483648 wz
+0203c     00 94 05 A6 |  if_e	mov	result1, #0
+02040     10 00 90 AD |  if_e	jmp	#__system___float_cmp_ret
+02044     01 94 05 F6 | 	mov	result1, #1
+02048     08 00 90 FD | 	jmp	#__system___float_cmp_ret
+0204c                 | LR__0221
+0204c     D2 A2 81 F1 | 	sub	arg01, arg02
+02050     D1 94 01 F6 | 	mov	result1, arg01
+02054                 | __system___float_cmp_ret
+02054     2D 00 64 FD | 	ret
+02058                 | 
+02058                 | __system___float_Unpack
+02058     D1 9A 01 F6 | 	mov	_var01, arg01
+0205c     1F 9A 45 F0 | 	shr	_var01, #31
+02060     D1 9C 01 F6 | 	mov	_var02, arg01
+02064     01 9C 65 F0 | 	shl	_var02, #1
+02068     18 9C 4D F0 | 	shr	_var02, #24 wz
+0206c     17 A3 05 F4 | 	bitl	arg01, #279
+02070     06 A2 65 50 |  if_ne	shl	arg01, #6
+02074     1D A2 25 54 |  if_ne	bith	arg01, #29
+02078     1C 00 90 5D |  if_ne	jmp	#LR__0230
+0207c     D1 9E 91 F7 | 	encod	_var03, arg01 wc
+02080     01 9E 05 C1 |  if_b	add	_var03, #1
+02084     17 9E 85 F1 | 	sub	_var03, #23
+02088     CF 9C 01 F6 | 	mov	_var02, _var03
+0208c     07 96 05 F6 | 	mov	result2, #7
+02090     CF 96 81 F1 | 	sub	result2, _var03
+02094     CB A2 61 F0 | 	shl	arg01, result2
+02098                 | LR__0230
+02098     7F 9C 85 F1 | 	sub	_var02, #127
+0209c     D1 98 01 F6 | 	mov	result3, arg01
+020a0     CD 94 01 F6 | 	mov	result1, _var01
+020a4     CE 96 01 F6 | 	mov	result2, _var02
+020a8                 | __system___float_Unpack_ret
+020a8     2D 00 64 FD | 	ret
+020ac                 | 
+020ac                 | __system___float_Pack
+020ac     00 9A 05 F6 | 	mov	_var01, #0
+020b0     00 A6 0D F2 | 	cmp	arg03, #0 wz
+020b4     8C 00 90 AD |  if_e	jmp	#LR__0241
+020b8     D3 9C 91 F7 | 	encod	_var02, arg03 wc
+020bc     01 9C 05 C1 |  if_b	add	_var02, #1
+020c0     21 9A 05 F6 | 	mov	_var01, #33
+020c4     CE 9A 81 F1 | 	sub	_var01, _var02
+020c8     CD A6 61 F0 | 	shl	arg03, _var01
+020cc     03 9C 05 F6 | 	mov	_var02, #3
+020d0     CD 9C 81 F1 | 	sub	_var02, _var01
+020d4     CE A4 01 F1 | 	add	arg02, _var02
+020d8     D2 9E 01 F6 | 	mov	_var03, arg02
+020dc     00 A7 05 F1 | 	add	arg03, #256
+020e0     D3 9C 01 F6 | 	mov	_var02, arg03
+020e4     FF 9C 2D F5 | 	andn	_var02, #255 wz
+020e8     01 9E 05 A1 |  if_e	add	_var03, #1
+020ec     7F 9E 05 F1 | 	add	_var03, #127
+020f0     FF FF 7F FF 
+020f4     E9 9F 45 F3 | 	fges	_var03, ##-23
+020f8     FF 9E 65 F3 | 	fles	_var03, #255
+020fc     01 9E 55 F2 | 	cmps	_var03, #1 wc
+02100     1C 00 90 3D |  if_ae	jmp	#LR__0240
+02104     01 A6 45 F0 | 	shr	arg03, #1
+02108     1F 9C C5 F9 | 	decod	_var02, #31
+0210c     D3 9C 01 F1 | 	add	_var02, arg03
+02110     CF 9E 61 F6 | 	neg	_var03, _var03
+02114     CF 9C 41 F0 | 	shr	_var02, _var03
+02118     CE A6 01 F6 | 	mov	arg03, _var02
+0211c     00 9E 05 F6 | 	mov	_var03, #0
+02120                 | LR__0240
+02120     D1 94 01 F6 | 	mov	result1, arg01
+02124     1F 94 65 F0 | 	shl	result1, #31
+02128     CF 9C 01 F6 | 	mov	_var02, _var03
+0212c     17 9C 65 F0 | 	shl	_var02, #23
+02130     CE 94 41 F5 | 	or	result1, _var02
+02134     D3 A0 01 F6 | 	mov	_var04, arg03
+02138     09 A0 45 F0 | 	shr	_var04, #9
+0213c     D0 94 41 F5 | 	or	result1, _var04
+02140     04 00 90 FD | 	jmp	#__system___float_Pack_ret
+02144                 | LR__0241
+02144     CD 94 01 F6 | 	mov	result1, _var01
+02148                 | __system___float_Pack_ret
+02148     2D 00 64 FD | 	ret
+0214c                 | 
+0214c                 | __system___basic_print_float
+0214c     05 4A 05 F6 | 	mov	COUNT_, #5
+02150     A8 00 A0 FD | 	call	#pushregs_
+02154     D1 AC 01 F6 | 	mov	local01, arg01
+02158     D2 AE 01 F6 | 	mov	local02, arg02
+0215c     D3 B0 09 F6 | 	mov	local03, arg03 wz
+02160     D4 B2 01 F6 | 	mov	local04, arg04
+02164     14 00 90 5D |  if_ne	jmp	#LR__0250
+02168     23 B2 0D F2 | 	cmp	local04, #35 wz
+0216c     80 02 10 AF 
+02170     00 B4 05 A6 |  if_e	mov	local05, ##537198592
+02174     1D B4 C5 59 |  if_ne	decod	local05, #29
+02178     DA B0 01 F6 | 	mov	local03, local05
+0217c                 | LR__0250
+0217c     D6 A2 01 F6 | 	mov	arg01, local01
+02180     94 07 B0 FD | 	call	#__system___gettxfunc
+02184     CA B4 09 F6 | 	mov	local05, result1 wz
+02188     00 94 05 A6 |  if_e	mov	result1, #0
+0218c     DA A2 01 56 |  if_ne	mov	arg01, local05
+02190     D8 A4 01 56 |  if_ne	mov	arg02, local03
+02194     D7 A6 01 56 |  if_ne	mov	arg03, local02
+02198     D9 A8 01 56 |  if_ne	mov	arg04, local04
+0219c     90 EA BF 5D |  if_ne	call	#__system___fmtfloat
+021a0     A7 F0 03 F6 | 	mov	ptra, fp
+021a4     B2 00 A0 FD | 	call	#popregs_
+021a8                 | __system___basic_print_float_ret
+021a8     2D 00 64 FD | 	ret
+021ac                 | 
+021ac                 | __system____builtin_ilogb
+021ac     A8 FE BF FD | 	call	#__system___float_Unpack
+021b0     00 98 0D F2 | 	cmp	result3, #0 wz
+021b4     00 00 40 AF 
+021b8     01 94 05 A6 |  if_e	mov	result1, ##-2147483647
+021bc     24 00 90 AD |  if_e	jmp	#LR__0261
+021c0     80 96 0D F2 | 	cmp	result2, #128 wz
+021c4     18 00 90 5D |  if_ne	jmp	#LR__0260
+021c8     00 00 10 FF 
+021cc     00 98 0D F2 | 	cmp	result3, ##536870912 wz
+021d0     1E 94 CD A9 |  if_e	bmask	result1, #30
+021d4     0C 00 90 AD |  if_e	jmp	#LR__0261
+021d8     1F 94 C5 F9 | 	decod	result1, #31
+021dc     04 00 90 FD | 	jmp	#LR__0261
+021e0                 | LR__0260
+021e0     CB 94 01 F6 | 	mov	result1, result2
+021e4                 | LR__0261
+021e4                 | __system____builtin_ilogb_ret
+021e4     2D 00 64 FD | 	ret
+021e8                 | 
+021e8                 | __system___float_pow_n
+021e8     05 4A 05 F6 | 	mov	COUNT_, #5
+021ec     A8 00 A0 FD | 	call	#pushregs_
+021f0     D1 AC 01 F6 | 	mov	local01, arg01
+021f4     D2 AE 01 F6 | 	mov	local02, arg02
+021f8     D3 B0 01 F6 | 	mov	local03, arg03
+021fc     00 B0 55 F2 | 	cmps	local03, #0 wc
+02200     18 00 90 3D |  if_ae	jmp	#LR__0270
+02204     01 B2 05 F6 | 	mov	local04, #1
+02208     D8 B0 61 F6 | 	neg	local03, local03
+0220c     00 B0 55 F2 | 	cmps	local03, #0 wc
+02210     00 94 05 C6 |  if_b	mov	result1, #0
+02214     94 00 90 CD |  if_b	jmp	#LR__0278
+02218     04 00 90 FD | 	jmp	#LR__0271
+0221c                 | LR__0270
+0221c     00 B2 05 F6 | 	mov	local04, #0
+02220                 | LR__0271
+02220     00 C0 1F FF 
+02224     00 B4 05 F6 | 	mov	local05, ##1065353216
+02228                 | LR__0272
+02228     01 B0 55 F2 | 	cmps	local03, #1 wc
+0222c     30 00 90 CD |  if_b	jmp	#LR__0274
+02230     01 B0 CD F7 | 	test	local03, #1 wz
+02234     10 00 90 AD |  if_e	jmp	#LR__0273
+02238     DA A2 01 F6 | 	mov	arg01, local05
+0223c     D7 A4 01 F6 | 	mov	arg02, local02
+02240     4C F9 BF FD | 	call	#__system___float_mul
+02244     CA B4 01 F6 | 	mov	local05, result1
+02248                 | LR__0273
+02248     01 B0 C5 F0 | 	sar	local03, #1
+0224c     D7 A2 01 F6 | 	mov	arg01, local02
+02250     D7 A4 01 F6 | 	mov	arg02, local02
+02254     38 F9 BF FD | 	call	#__system___float_mul
+02258     CA AE 01 F6 | 	mov	local02, result1
+0225c     C8 FF 9F FD | 	jmp	#LR__0272
+02260                 | LR__0274
+02260     00 B2 0D F2 | 	cmp	local04, #0 wz
+02264     14 00 90 AD |  if_e	jmp	#LR__0275
+02268     D6 A2 01 F6 | 	mov	arg01, local01
+0226c     DA A4 01 F6 | 	mov	arg02, local05
+02270     20 FB BF FD | 	call	#__system___float_div
+02274     CA B4 01 F6 | 	mov	local05, result1
+02278     2C 00 90 FD | 	jmp	#LR__0277
+0227c                 | LR__0275
+0227c     D6 A2 01 F6 | 	mov	arg01, local01
+02280     00 C0 1F FF 
+02284     00 A4 05 F6 | 	mov	arg02, ##1065353216
+02288     01 A6 05 F6 | 	mov	arg03, #1
+0228c     34 FD BF FD | 	call	#__system___float_cmp
+02290     00 94 0D F2 | 	cmp	result1, #0 wz
+02294     10 00 90 AD |  if_e	jmp	#LR__0276
+02298     D6 A2 01 F6 | 	mov	arg01, local01
+0229c     DA A4 01 F6 | 	mov	arg02, local05
+022a0     EC F8 BF FD | 	call	#__system___float_mul
+022a4     CA B4 01 F6 | 	mov	local05, result1
+022a8                 | LR__0276
+022a8                 | LR__0277
+022a8     DA 94 01 F6 | 	mov	result1, local05
+022ac                 | LR__0278
+022ac     A7 F0 03 F6 | 	mov	ptra, fp
+022b0     B2 00 A0 FD | 	call	#popregs_
+022b4                 | __system___float_pow_n_ret
+022b4     2D 00 64 FD | 	ret
+022b8                 | 
+022b8                 | __system____default_getc
+022b8     03 4A 05 F6 | 	mov	COUNT_, #3
+022bc     A8 00 A0 FD | 	call	#pushregs_
+022c0     D1 AC 01 F6 | 	mov	local01, arg01
+022c4     D6 AE 01 FB | 	rdlong	local02, local01
+022c8     08 AE 05 F1 | 	add	local02, #8
+022cc     D7 B0 01 FB | 	rdlong	local03, local02
+022d0     02 B0 CD F7 | 	test	local03, #2 wz
+022d4     D6 A2 01 56 |  if_ne	mov	arg01, local01
+022d8     00 01 B0 5D |  if_ne	call	#__system____default_flush
+022dc     D7 B0 01 FB | 	rdlong	local03, local02
+022e0     01 B0 45 F5 | 	or	local03, #1
+022e4     D7 B0 61 FC | 	wrlong	local03, local02
+022e8     08 AE 85 F1 | 	sub	local02, #8
+022ec     D7 B0 09 FB | 	rdlong	local03, local02 wz
+022f0     0C 00 90 5D |  if_ne	jmp	#LR__0280
+022f4     D6 A2 01 F6 | 	mov	arg01, local01
+022f8     0C 08 B0 FD | 	call	#__system____default_filbuf
+022fc     CA B0 01 F6 | 	mov	local03, result1
+02300                 | LR__0280
+02300     01 B0 55 F2 | 	cmps	local03, #1 wc
+02304     01 94 65 C6 |  if_b	neg	result1, #1
+02308     1C 00 90 CD |  if_b	jmp	#LR__0281
+0230c     01 B0 85 F1 | 	sub	local03, #1
+02310     D7 B0 61 FC | 	wrlong	local03, local02
+02314     04 AE 05 F1 | 	add	local02, #4
+02318     D7 B0 01 FB | 	rdlong	local03, local02
+0231c     D8 94 C1 FA | 	rdbyte	result1, local03
+02320     01 B0 05 F1 | 	add	local03, #1
+02324     D7 B0 61 FC | 	wrlong	local03, local02
+02328                 | LR__0281
+02328     A7 F0 03 F6 | 	mov	ptra, fp
+0232c     B2 00 A0 FD | 	call	#popregs_
+02330                 | __system____default_getc_ret
+02330     2D 00 64 FD | 	ret
+02334                 | 
+02334                 | __system____default_putc
+02334     06 4A 05 F6 | 	mov	COUNT_, #6
+02338     A8 00 A0 FD | 	call	#pushregs_
+0233c     D1 AC 01 F6 | 	mov	local01, arg01
+02340     D2 AE 01 F6 | 	mov	local02, arg02
+02344     D7 B0 01 FB | 	rdlong	local03, local02
+02348     08 B0 05 F1 | 	add	local03, #8
+0234c     D8 94 01 FB | 	rdlong	result1, local03
+02350     01 94 CD F7 | 	test	result1, #1 wz
+02354     D7 A2 01 56 |  if_ne	mov	arg01, local02
+02358     80 00 B0 5D |  if_ne	call	#__system____default_flush
+0235c     D8 B2 01 FB | 	rdlong	local04, local03
+02360     02 B2 45 F5 | 	or	local04, #2
+02364     D8 B2 61 FC | 	wrlong	local04, local03
+02368     08 B0 85 F1 | 	sub	local03, #8
+0236c     D8 B4 01 FB | 	rdlong	local05, local03
+02370     10 B0 05 F1 | 	add	local03, #16
+02374     D8 A4 01 FB | 	rdlong	arg02, local03
+02378     10 B0 85 F1 | 	sub	local03, #16
+0237c     DA 94 01 F6 | 	mov	result1, local05
+02380     D2 94 01 F1 | 	add	result1, arg02
+02384     CA AC 41 FC | 	wrbyte	local01, result1
+02388     D6 AC E1 F8 | 	getbyte	local01, local01, #0
+0238c     01 B4 05 F1 | 	add	local05, #1
+02390     D8 B4 61 FC | 	wrlong	local05, local03
+02394     06 AE 05 F1 | 	add	local02, #6
+02398     D7 B6 E9 FA | 	rdword	local06, local02 wz
+0239c     06 AE 85 F1 | 	sub	local02, #6
+023a0     0C B0 05 51 |  if_ne	add	local03, #12
+023a4     D8 B2 01 5B |  if_ne	rdlong	local04, local03
+023a8     D9 B4 09 52 |  if_ne	cmp	local05, local04 wz
+023ac     0C 00 90 AD |  if_e	jmp	#LR__0290
+023b0     0A AC 0D F2 | 	cmp	local01, #10 wz
+023b4     01 B6 0D A2 |  if_e	cmp	local06, #1 wz
+023b8     10 00 90 5D |  if_ne	jmp	#LR__0291
+023bc                 | LR__0290
+023bc     D7 A2 01 F6 | 	mov	arg01, local02
+023c0     18 00 B0 FD | 	call	#__system____default_flush
+023c4     00 94 0D F2 | 	cmp	result1, #0 wz
+023c8     01 AC 65 56 |  if_ne	neg	local01, #1
+023cc                 | LR__0291
+023cc     D6 94 01 F6 | 	mov	result1, local01
+023d0     A7 F0 03 F6 | 	mov	ptra, fp
+023d4     B2 00 A0 FD | 	call	#popregs_
+023d8                 | __system____default_putc_ret
+023d8     2D 00 64 FD | 	ret
+023dc                 | 
+023dc                 | __system____default_flush
+023dc     06 4A 05 F6 | 	mov	COUNT_, #6
+023e0     A8 00 A0 FD | 	call	#pushregs_
+023e4     D1 AC 01 F6 | 	mov	local01, arg01
+023e8     D6 AE 01 FB | 	rdlong	local02, local01
+023ec     D7 B0 01 FB | 	rdlong	local03, local02
+023f0     08 AE 05 F1 | 	add	local02, #8
+023f4     D7 94 01 FB | 	rdlong	result1, local02
+023f8     08 AE 85 F1 | 	sub	local02, #8
+023fc     02 94 CD F7 | 	test	result1, #2 wz
+02400     D0 00 90 AD |  if_e	jmp	#LR__0302
+02404     01 B0 55 F2 | 	cmps	local03, #1 wc
+02408     20 01 90 CD |  if_b	jmp	#LR__0304
+0240c     08 AC 05 F1 | 	add	local01, #8
+02410     D6 94 01 FB | 	rdlong	result1, local01
+02414     08 AC 85 F1 | 	sub	local01, #8
+02418     40 94 CD F7 | 	test	result1, #64 wz
+0241c     68 00 90 AD |  if_e	jmp	#LR__0301
+02420     08 AC 05 F1 | 	add	local01, #8
+02424     D6 A6 01 FB | 	rdlong	arg03, local01
+02428     08 AC 85 F1 | 	sub	local01, #8
+0242c     80 A6 CD F7 | 	test	arg03, #128 wz
+02430     54 00 90 AD |  if_e	jmp	#LR__0300
+02434     30 AC 05 F1 | 	add	local01, #48
+02438     D6 B2 01 FB | 	rdlong	local04, local01
+0243c     D9 B4 01 F6 | 	mov	local05, local04
+02440     30 AC 85 F1 | 	sub	local01, #48
+02444     13 B4 45 F7 | 	zerox	local05, #19
+02448     14 B2 45 F0 | 	shr	local04, #20
+0244c     02 B2 65 F0 | 	shl	local04, #2
+02450     C4 B2 01 F1 | 	add	local04, __methods__
+02454     D9 B2 01 FB | 	rdlong	local04, local04
+02458     D6 A2 01 F6 | 	mov	arg01, local01
+0245c     00 A4 05 F6 | 	mov	arg02, #0
+02460     02 A6 05 F6 | 	mov	arg03, #2
+02464     C7 B6 01 F6 | 	mov	local06, objptr
+02468     DA 8E 01 F6 | 	mov	objptr, local05
+0246c     2D B2 61 FD | 	call	local04
+02470     DB 8E 01 F6 | 	mov	objptr, local06
+02474     08 AC 05 F1 | 	add	local01, #8
+02478     D6 B6 01 FB | 	rdlong	local06, local01
+0247c     80 B6 25 F5 | 	andn	local06, #128
+02480     D6 B6 61 FC | 	wrlong	local06, local01
+02484     08 AC 85 F1 | 	sub	local01, #8
+02488                 | LR__0300
+02488                 | LR__0301
+02488     18 AC 05 F1 | 	add	local01, #24
+0248c     D6 B2 01 FB | 	rdlong	local04, local01
+02490     D9 B4 01 F6 | 	mov	local05, local04
+02494     18 AC 85 F1 | 	sub	local01, #24
+02498     13 B4 45 F7 | 	zerox	local05, #19
+0249c     14 B2 45 F0 | 	shr	local04, #20
+024a0     02 B2 65 F0 | 	shl	local04, #2
+024a4     C4 B2 01 F1 | 	add	local04, __methods__
+024a8     D9 B2 01 FB | 	rdlong	local04, local04
+024ac     10 AE 05 F1 | 	add	local02, #16
+024b0     D7 A4 01 FB | 	rdlong	arg02, local02
+024b4     10 AE 85 F1 | 	sub	local02, #16
+024b8     D6 A2 01 F6 | 	mov	arg01, local01
+024bc     D8 A6 01 F6 | 	mov	arg03, local03
+024c0     C7 B6 01 F6 | 	mov	local06, objptr
+024c4     DA 8E 01 F6 | 	mov	objptr, local05
+024c8     2D B2 61 FD | 	call	local04
+024cc     DB 8E 01 F6 | 	mov	objptr, local06
+024d0     58 00 90 FD | 	jmp	#LR__0304
+024d4                 | LR__0302
+024d4     08 AE 05 F1 | 	add	local02, #8
+024d8     D7 B6 01 FB | 	rdlong	local06, local02
+024dc     08 AE 85 F1 | 	sub	local02, #8
+024e0     01 B6 CD F7 | 	test	local06, #1 wz
+024e4     00 B0 0D 52 |  if_ne	cmp	local03, #0 wz
+024e8     40 00 90 AD |  if_e	jmp	#LR__0303
+024ec     30 AC 05 F1 | 	add	local01, #48
+024f0     D6 B2 01 FB | 	rdlong	local04, local01
+024f4     D9 B4 01 F6 | 	mov	local05, local04
+024f8     30 AC 85 F1 | 	sub	local01, #48
+024fc     13 B4 45 F7 | 	zerox	local05, #19
+02500     14 B2 45 F0 | 	shr	local04, #20
+02504     02 B2 65 F0 | 	shl	local04, #2
+02508     C4 B2 01 F1 | 	add	local04, __methods__
+0250c     D9 B2 01 FB | 	rdlong	local04, local04
+02510     D6 A2 01 F6 | 	mov	arg01, local01
+02514     D8 A4 61 F6 | 	neg	arg02, local03
+02518     01 A6 05 F6 | 	mov	arg03, #1
+0251c     C7 B6 01 F6 | 	mov	local06, objptr
+02520     DA 8E 01 F6 | 	mov	objptr, local05
+02524     2D B2 61 FD | 	call	local04
+02528     DB 8E 01 F6 | 	mov	objptr, local06
+0252c                 | LR__0303
+0252c                 | LR__0304
+0252c     D7 00 68 FC | 	wrlong	#0, local02
+02530     04 AE 05 F1 | 	add	local02, #4
+02534     D7 00 68 FC | 	wrlong	#0, local02
+02538     04 AE 05 F1 | 	add	local02, #4
+0253c     D7 00 68 FC | 	wrlong	#0, local02
+02540     00 94 05 F6 | 	mov	result1, #0
+02544     A7 F0 03 F6 | 	mov	ptra, fp
+02548     B2 00 A0 FD | 	call	#popregs_
+0254c                 | __system____default_flush_ret
+0254c     2D 00 64 FD | 	ret
+02550                 | 
+02550                 | __system____getftab
+02550     0A A2 15 F2 | 	cmp	arg01, #10 wc
+02554     34 A2 05 CD |  if_b	qmul	arg01, #52
+02558     00 94 05 36 |  if_ae	mov	result1, #0
+0255c     28 90 05 C1 |  if_b	add	ptr___system__dat__, #40
+02560     18 94 61 CD |  if_b	getqx	result1
+02564     C8 94 01 C1 |  if_b	add	result1, ptr___system__dat__
+02568     28 90 85 C1 |  if_b	sub	ptr___system__dat__, #40
+0256c                 | __system____getftab_ret
+0256c     2D 00 64 FD | 	ret
+02570                 | 
+02570                 | __system___strrev
+02570     D1 9A C9 FA | 	rdbyte	_var01, arg01 wz
+02574     3C 00 90 AD |  if_e	jmp	#__system___strrev_ret
+02578     D1 9C 01 F6 | 	mov	_var02, arg01
+0257c     97 1A 48 FB | 	callpa	#(@LR__0312-@LR__0310)>>2,fcache_load_ptr_
+02580                 | LR__0310
+02580     CE 9A C9 FA | 	rdbyte	_var01, _var02 wz
+02584     01 9C 05 51 |  if_ne	add	_var02, #1
+02588     F4 FF 9F 5D |  if_ne	jmp	#LR__0310
+0258c     01 9C 85 F1 | 	sub	_var02, #1
+02590                 | LR__0311
+02590     D1 9C 59 F2 | 	cmps	_var02, arg01 wcz
+02594     1C 00 90 ED |  if_be	jmp	#LR__0313
+02598     D1 9A C1 FA | 	rdbyte	_var01, arg01
+0259c     CE 9E C1 FA | 	rdbyte	_var03, _var02
+025a0     D1 9E 41 FC | 	wrbyte	_var03, arg01
+025a4     CE 9A 41 FC | 	wrbyte	_var01, _var02
+025a8     01 A2 05 F1 | 	add	arg01, #1
+025ac     01 9C 85 F1 | 	sub	_var02, #1
+025b0     DC FF 9F FD | 	jmp	#LR__0311
+025b4                 | LR__0312
+025b4                 | LR__0313
+025b4                 | __system___strrev_ret
+025b4     2D 00 64 FD | 	ret
+025b8                 | 
+025b8                 | __system___fmtpad
+025b8     06 4A 05 F6 | 	mov	COUNT_, #6
+025bc     A8 00 A0 FD | 	call	#pushregs_
+025c0     D1 AC 01 F6 | 	mov	local01, arg01
+025c4     D2 AE 01 F6 | 	mov	local02, arg02
+025c8     D3 B0 01 F6 | 	mov	local03, arg03
+025cc     D7 A2 E9 F8 | 	getbyte	arg01, local02, #1
+025d0     16 AE 45 F0 | 	shr	local02, #22
+025d4     03 AE 0D F5 | 	and	local02, #3 wz
+025d8     00 B2 05 F6 | 	mov	local04, #0
+025dc     01 AE 05 A6 |  if_e	mov	local02, #1
+025e0     D4 AE C9 F7 | 	test	local02, arg04 wz
+025e4     00 94 05 A6 |  if_e	mov	result1, #0
+025e8     88 00 90 AD |  if_e	jmp	#LR__0323
+025ec     D1 B0 C1 F2 | 	subr	local03, arg01
+025f0     01 B0 55 F2 | 	cmps	local03, #1 wc
+025f4     00 94 05 C6 |  if_b	mov	result1, #0
+025f8     78 00 90 CD |  if_b	jmp	#LR__0323
+025fc     03 AE 0D F2 | 	cmp	local02, #3 wz
+02600     18 00 90 5D |  if_ne	jmp	#LR__0320
+02604     01 A8 0D F2 | 	cmp	arg04, #1 wz
+02608     6E AE 61 FD | 	wrz	local02
+0260c     D7 B0 01 F1 | 	add	local03, local02
+02610     D8 B0 51 F6 | 	abs	local03, local03 wc
+02614     01 B0 45 F0 | 	shr	local03, #1
+02618     D8 B0 81 F6 | 	negc	local03, local03
+0261c                 | LR__0320
+0261c     01 B0 55 F2 | 	cmps	local03, #1 wc
+02620     4C 00 90 CD |  if_b	jmp	#LR__0322
+02624     D8 B4 01 F6 | 	mov	local05, local03
+02628                 | LR__0321
+02628     D6 AE 01 F6 | 	mov	local02, local01
+0262c     D6 B6 01 F6 | 	mov	local06, local01
+02630     13 AE 45 F7 | 	zerox	local02, #19
+02634     14 B6 45 F0 | 	shr	local06, #20
+02638     02 B6 65 F0 | 	shl	local06, #2
+0263c     C4 B6 01 F1 | 	add	local06, __methods__
+02640     DB B6 01 FB | 	rdlong	local06, local06
+02644     20 A2 05 F6 | 	mov	arg01, #32
+02648     C7 B0 01 F6 | 	mov	local03, objptr
+0264c     D7 8E 01 F6 | 	mov	objptr, local02
+02650     2D B6 61 FD | 	call	local06
+02654     D8 8E 01 F6 | 	mov	objptr, local03
+02658     CA B6 01 F6 | 	mov	local06, result1
+0265c     00 B6 55 F2 | 	cmps	local06, #0 wc
+02660     DB 94 01 C6 |  if_b	mov	result1, local06
+02664     0C 00 90 CD |  if_b	jmp	#LR__0323
+02668     DB B2 01 F1 | 	add	local04, local06
+0266c     EE B5 6D FB | 	djnz	local05, #LR__0321
+02670                 | LR__0322
+02670     D9 94 01 F6 | 	mov	result1, local04
+02674                 | LR__0323
+02674     A7 F0 03 F6 | 	mov	ptra, fp
+02678     B2 00 A0 FD | 	call	#popregs_
+0267c                 | __system___fmtpad_ret
+0267c     2D 00 64 FD | 	ret
+02680                 | 
+02680                 | __system___uitoa
+02680     04 4A 05 F6 | 	mov	COUNT_, #4
+02684     A8 00 A0 FD | 	call	#pushregs_
+02688     D1 AC 01 F6 | 	mov	local01, arg01
+0268c     00 AA 4D F2 | 	cmps	arg05, #0 wz
+02690     D6 AA 01 F6 | 	mov	arg05, local01
+02694     00 AE 05 F6 | 	mov	local02, #0
+02698     37 B0 05 56 |  if_ne	mov	local03, #55
+0269c     57 B0 05 A6 |  if_e	mov	local03, #87
+026a0                 | LR__0330
+026a0     D3 A4 11 FD | 	qdiv	arg02, arg03
+026a4     19 B2 61 FD | 	getqy	local04
+026a8     D3 A4 11 FD | 	qdiv	arg02, arg03
+026ac     0A B2 15 F2 | 	cmp	local04, #10 wc
+026b0     30 B2 05 C1 |  if_b	add	local04, #48
+026b4     D8 B2 01 31 |  if_ae	add	local04, local03
+026b8     D5 B2 41 FC | 	wrbyte	local04, arg05
+026bc     01 AA 05 F1 | 	add	arg05, #1
+026c0     01 AE 05 F1 | 	add	local02, #1
+026c4     18 A4 61 FD | 	getqx	arg02
+026c8     00 A4 0D F2 | 	cmp	arg02, #0 wz
+026cc     D0 FF 9F 5D |  if_ne	jmp	#LR__0330
+026d0     D4 AE 11 F2 | 	cmp	local02, arg04 wc
+026d4     C8 FF 9F CD |  if_b	jmp	#LR__0330
+026d8     D5 00 48 FC | 	wrbyte	#0, arg05
+026dc     D6 A2 01 F6 | 	mov	arg01, local01
+026e0     8C FE BF FD | 	call	#__system___strrev
+026e4     D7 94 01 F6 | 	mov	result1, local02
+026e8     A7 F0 03 F6 | 	mov	ptra, fp
+026ec     B2 00 A0 FD | 	call	#popregs_
+026f0                 | __system___uitoa_ret
+026f0     2D 00 64 FD | 	ret
+026f4                 | 
+026f4                 | __system__disassemble_0046
+026f4     10 4A 05 F6 | 	mov	COUNT_, #16
+026f8     A8 00 A0 FD | 	call	#pushregs_
+026fc     D1 AC 01 F6 | 	mov	local01, arg01
+02700     D2 AE 01 F6 | 	mov	local02, arg02
+02704     D3 B0 01 F6 | 	mov	local03, arg03
+02708     D4 B2 01 F6 | 	mov	local04, arg04
+0270c     D5 B4 01 F6 | 	mov	local05, arg05
+02710     DA A2 51 F6 | 	abs	arg01, local05 wc
+02714     1F B6 C5 C9 |  if_b	decod	local06, #31
+02718     00 B6 05 36 |  if_ae	mov	local06, #0
+0271c     3C F4 BF FD | 	call	#__system___float_fromuns
+02720     DB 94 61 F5 | 	xor	result1, local06
+02724     CA B8 01 F6 | 	mov	local07, result1
+02728     00 BA 05 F6 | 	mov	local08, #0
+0272c     D6 A2 01 F6 | 	mov	arg01, local01
+02730     00 A4 05 F6 | 	mov	arg02, #0
+02734     01 A6 05 F6 | 	mov	arg03, #1
+02738     88 F8 BF FD | 	call	#__system___float_cmp
+0273c     00 94 0D F2 | 	cmp	result1, #0 wz
+02740     00 BC 05 A6 |  if_e	mov	local09, #0
+02744     D7 00 68 AC |  if_e	wrlong	#0, local02
+02748     D8 BC 61 AC |  if_e	wrlong	local09, local03
+0274c     8C 01 90 AD |  if_e	jmp	#LR__0352
+02750     D6 A2 01 F6 | 	mov	arg01, local01
+02754     54 FA BF FD | 	call	#__system____builtin_ilogb
+02758     CA BE 01 F6 | 	mov	local10, result1
+0275c     0A B4 0D F2 | 	cmp	local05, #10 wz
+02760     24 00 90 5D |  if_ne	jmp	#LR__0340
+02764     DF BC 01 F6 | 	mov	local09, local10
+02768     01 BC 65 F0 | 	shl	local09, #1
+0276c     DF BC 01 F1 | 	add	local09, local10
+02770     DE BE 51 F6 | 	abs	local10, local09 wc
+02774     0A BE 15 FD | 	qdiv	local10, #10
+02778     09 C0 05 F6 | 	mov	local11, #9
+0277c     18 BE 61 FD | 	getqx	local10
+02780     DF BE 81 F6 | 	negc	local10, local10
+02784     04 00 90 FD | 	jmp	#LR__0341
+02788                 | LR__0340
+02788     18 C0 05 F6 | 	mov	local11, #24
+0278c                 | LR__0341
+0278c                 | LR__0342
+0278c     08 BA 55 F2 | 	cmps	local08, #8 wc
+02790     01 BA 05 F1 | 	add	local08, #1
+02794     60 00 90 3D |  if_ae	jmp	#LR__0343
+02798     00 C0 1F FF 
+0279c     00 A2 05 F6 | 	mov	arg01, ##1065353216
+027a0     DC A4 01 F6 | 	mov	arg02, local07
+027a4     DF A6 01 F6 | 	mov	arg03, local10
+027a8     3C FA BF FD | 	call	#__system___float_pow_n
+027ac     CA A4 01 F6 | 	mov	arg02, result1
+027b0     D6 A2 01 F6 | 	mov	arg01, local01
+027b4     DC F5 BF FD | 	call	#__system___float_div
+027b8     CA C2 01 F6 | 	mov	local12, result1
+027bc     E1 A2 01 F6 | 	mov	arg01, local12
+027c0     00 C0 1F FF 
+027c4     00 A4 05 F6 | 	mov	arg02, ##1065353216
+027c8     01 A6 05 F6 | 	mov	arg03, #1
+027cc     F4 F7 BF FD | 	call	#__system___float_cmp
+027d0     00 94 55 F2 | 	cmps	result1, #0 wc
+027d4     01 BE 85 C1 |  if_b	sub	local10, #1
+027d8     B0 FF 9F CD |  if_b	jmp	#LR__0342
+027dc     DC A4 01 F6 | 	mov	arg02, local07
+027e0     E1 A2 01 F6 | 	mov	arg01, local12
+027e4     01 A6 65 F6 | 	neg	arg03, #1
+027e8     D8 F7 BF FD | 	call	#__system___float_cmp
+027ec     00 94 55 F2 | 	cmps	result1, #0 wc
+027f0     01 BE 05 31 |  if_ae	add	local10, #1
+027f4     94 FF 9F 3D |  if_ae	jmp	#LR__0342
+027f8                 | LR__0343
+027f8     E1 A2 01 F6 | 	mov	arg01, local12
+027fc     AC F9 BF FD | 	call	#__system____builtin_ilogb
+02800     CA C4 01 F6 | 	mov	local13, result1
+02804     E1 C6 01 F6 | 	mov	local14, local12
+02808     17 C7 05 F4 | 	bitl	local14, #279
+0280c     17 C6 25 F4 | 	bith	local14, #23
+02810     E2 C6 61 F0 | 	shl	local14, local13
+02814     02 B4 0D F2 | 	cmp	local05, #2 wz
+02818     02 B2 65 A0 |  if_e	shl	local04, #2
+0281c     00 C8 05 F6 | 	mov	local15, #0
+02820     00 B2 55 F2 | 	cmps	local04, #0 wc
+02824     10 00 90 3D |  if_ae	jmp	#LR__0344
+02828     DF B2 C1 F2 | 	subr	local04, local10
+0282c     00 B2 55 F2 | 	cmps	local04, #0 wc
+02830     A0 00 90 CD |  if_b	jmp	#LR__0351
+02834     04 00 90 FD | 	jmp	#LR__0345
+02838                 | LR__0344
+02838     01 B2 05 F1 | 	add	local04, #1
+0283c                 | LR__0345
+0283c     E0 B2 79 F3 | 	fles	local04, local11 wcz
+02840     01 CA 05 F6 | 	mov	local16, #1
+02844     97 22 48 FB | 	callpa	#(@LR__0347-@LR__0346)>>2,fcache_load_ptr_
+02848                 | LR__0346
+02848     00 40 00 FF 
+0284c     00 C8 15 F2 | 	cmp	local15, ##8388608 wc
+02850     38 00 90 3D |  if_ae	jmp	#LR__0348
+02854     01 B2 55 F2 | 	cmps	local04, #1 wc
+02858     01 B2 85 F1 | 	sub	local04, #1
+0285c     2C 00 90 CD |  if_b	jmp	#LR__0348
+02860     DA C8 01 FD | 	qmul	local15, local05
+02864     E3 C4 01 F6 | 	mov	local13, local14
+02868     17 C4 45 F0 | 	shr	local13, #23
+0286c     17 C7 05 F4 | 	bitl	local14, #279
+02870     18 C8 61 FD | 	getqx	local15
+02874     DA CA 01 FD | 	qmul	local16, local05
+02878     18 CA 61 FD | 	getqx	local16
+0287c     DA C6 01 FD | 	qmul	local14, local05
+02880     E2 C8 01 F1 | 	add	local15, local13
+02884     18 C6 61 FD | 	getqx	local14
+02888     BC FF 9F FD | 	jmp	#LR__0346
+0288c                 | LR__0347
+0288c                 | LR__0348
+0288c     DA BC 01 F6 | 	mov	local09, local05
+02890     17 BC 65 F0 | 	shl	local09, #23
+02894     DE C4 51 F6 | 	abs	local13, local09 wc
+02898     01 C4 45 F0 | 	shr	local13, #1
+0289c     E2 C4 81 F6 | 	negc	local13, local13
+028a0     E2 C6 19 F2 | 	cmp	local14, local13 wcz
+028a4     20 00 90 1D |  if_a	jmp	#LR__0349
+028a8     17 B4 65 F0 | 	shl	local05, #23
+028ac     DA C4 51 F6 | 	abs	local13, local05 wc
+028b0     01 C4 45 F0 | 	shr	local13, #1
+028b4     E2 C4 81 F6 | 	negc	local13, local13
+028b8     E2 C6 09 F2 | 	cmp	local14, local13 wz
+028bc     14 00 90 5D |  if_ne	jmp	#LR__0350
+028c0     01 C8 CD F7 | 	test	local15, #1 wz
+028c4     0C 00 90 AD |  if_e	jmp	#LR__0350
+028c8                 | LR__0349
+028c8     01 C8 05 F1 | 	add	local15, #1
+028cc     E5 C8 09 F2 | 	cmp	local15, local16 wz
+028d0     01 BE 05 A1 |  if_e	add	local10, #1
+028d4                 | LR__0350
+028d4                 | LR__0351
+028d4     D7 C8 61 FC | 	wrlong	local15, local02
+028d8     D8 BE 61 FC | 	wrlong	local10, local03
+028dc                 | LR__0352
+028dc     A7 F0 03 F6 | 	mov	ptra, fp
+028e0     B2 00 A0 FD | 	call	#popregs_
+028e4                 | __system__disassemble_0046_ret
+028e4     2D 00 64 FD | 	ret
+028e8                 | 
+028e8                 | __system__emitsign_0048
+028e8     00 94 05 F6 | 	mov	result1, #0
+028ec     00 A4 0D F2 | 	cmp	arg02, #0 wz
+028f0     D1 9A 01 56 |  if_ne	mov	_var01, arg01
+028f4     01 A2 05 51 |  if_ne	add	arg01, #1
+028f8     CD A4 41 5C |  if_ne	wrbyte	arg02, _var01
+028fc     01 94 05 56 |  if_ne	mov	result1, #1
+02900     00 A6 0D F2 | 	cmp	arg03, #0 wz
+02904     D1 60 48 5C |  if_ne	wrbyte	#48, arg01
+02908     01 A2 05 51 |  if_ne	add	arg01, #1
+0290c     D1 A6 41 5C |  if_ne	wrbyte	arg03, arg01
+02910     02 94 05 51 |  if_ne	add	result1, #2
+02914                 | __system__emitsign_0048_ret
+02914     2D 00 64 FD | 	ret
+02918                 | 
+02918                 | __system___gettxfunc
+02918     01 4A 05 F6 | 	mov	COUNT_, #1
+0291c     A8 00 A0 FD | 	call	#pushregs_
+02920     2C FC BF FD | 	call	#__system____getftab
+02924     CA AC 09 F6 | 	mov	local01, result1 wz
+02928     10 00 90 AD |  if_e	jmp	#LR__0360
+0292c     08 AC 05 F1 | 	add	local01, #8
+02930     D6 A4 09 FB | 	rdlong	arg02, local01 wz
+02934     08 AC 85 F1 | 	sub	local01, #8
+02938     08 00 90 5D |  if_ne	jmp	#LR__0361
+0293c                 | LR__0360
+0293c     00 94 05 F6 | 	mov	result1, #0
+02940     08 00 90 FD | 	jmp	#LR__0362
+02944                 | LR__0361
+02944     34 AC 25 F4 | 	bith	local01, #52
+02948     D6 94 01 F6 | 	mov	result1, local01
+0294c                 | LR__0362
+0294c     A7 F0 03 F6 | 	mov	ptra, fp
+02950     B2 00 A0 FD | 	call	#popregs_
+02954                 | __system___gettxfunc_ret
+02954     2D 00 64 FD | 	ret
+02958                 | 
+02958                 | __system___getiolock_0088
+02958     01 4A 05 F6 | 	mov	COUNT_, #1
+0295c     A8 00 A0 FD | 	call	#pushregs_
+02960     EC FB BF FD | 	call	#__system____getftab
+02964     CA AC 09 F6 | 	mov	local01, result1 wz
+02968     10 00 90 AD |  if_e	jmp	#LR__0370
+0296c     08 AC 05 F1 | 	add	local01, #8
+02970     D6 94 09 FB | 	rdlong	result1, local01 wz
+02974     08 AC 85 F1 | 	sub	local01, #8
+02978     10 00 90 5D |  if_ne	jmp	#LR__0371
+0297c                 | LR__0370
+0297c     24 90 05 F1 | 	add	ptr___system__dat__, #36
+02980     C8 94 01 F6 | 	mov	result1, ptr___system__dat__
+02984     24 90 85 F1 | 	sub	ptr___system__dat__, #36
+02988     08 00 90 FD | 	jmp	#LR__0372
+0298c                 | LR__0371
+0298c     0C AC 05 F1 | 	add	local01, #12
+02990     D6 94 01 F6 | 	mov	result1, local01
+02994                 | LR__0372
+02994     A7 F0 03 F6 | 	mov	ptra, fp
+02998     B2 00 A0 FD | 	call	#popregs_
+0299c                 | __system___getiolock_0088_ret
+0299c     2D 00 64 FD | 	ret
+029a0                 | 
+029a0                 | __system__pack_0134
+029a0     D1 9A 01 F6 | 	mov	_var01, arg01
+029a4     7F A6 05 F1 | 	add	arg03, #127
+029a8     04 A8 CD F7 | 	test	arg04, #4 wz
+029ac     10 00 90 AD |  if_e	jmp	#LR__0380
+029b0     00 9A 0D F2 | 	cmp	_var01, #0 wz
+029b4     16 9A C5 A9 |  if_e	decod	_var01, #22
+029b8     F7 9A 25 F4 | 	bith	_var01, #247
+029bc     B4 00 90 FD | 	jmp	#LR__0389
+029c0                 | LR__0380
+029c0     02 A8 CD F7 | 	test	arg04, #2 wz
+029c4     00 C0 3F 5F 
+029c8     00 9A 05 56 |  if_ne	mov	_var01, ##2139095040
+029cc     00 A4 05 56 |  if_ne	mov	arg02, #0
+029d0     A0 00 90 5D |  if_ne	jmp	#LR__0388
+029d4     08 A8 CD F7 | 	test	arg04, #8 wz
+029d8     00 9A 05 56 |  if_ne	mov	_var01, #0
+029dc     94 00 90 5D |  if_ne	jmp	#LR__0387
+029e0     FF A6 55 F2 | 	cmps	arg03, #255 wc
+029e4     00 C0 3F 3F 
+029e8     00 9A 05 36 |  if_ae	mov	_var01, ##2139095040
+029ec     00 A4 05 36 |  if_ae	mov	arg02, #0
+029f0     80 00 90 3D |  if_ae	jmp	#LR__0386
+029f4     01 A6 55 F2 | 	cmps	arg03, #1 wc
+029f8     6C 00 90 3D |  if_ae	jmp	#LR__0384
+029fc     01 A4 45 F0 | 	shr	arg02, #1
+02a00     CD 9C 01 F6 | 	mov	_var02, _var01
+02a04     01 9C 05 F5 | 	and	_var02, #1
+02a08     1F 9C 65 F0 | 	shl	_var02, #31
+02a0c     CE A4 41 F5 | 	or	arg02, _var02
+02a10     01 9A 45 F0 | 	shr	_var01, #1
+02a14     97 1E 48 FB | 	callpa	#(@LR__0382-@LR__0381)>>2,fcache_load_ptr_
+02a18                 | LR__0381
+02a18     00 A6 55 F2 | 	cmps	arg03, #0 wc
+02a1c     34 00 90 3D |  if_ae	jmp	#LR__0383
+02a20     00 9A 0D F2 | 	cmp	_var01, #0 wz
+02a24     2C 00 90 AD |  if_e	jmp	#LR__0383
+02a28     D2 A2 01 F6 | 	mov	arg01, arg02
+02a2c     01 A2 05 F5 | 	and	arg01, #1
+02a30     01 A6 05 F1 | 	add	arg03, #1
+02a34     01 A4 45 F0 | 	shr	arg02, #1
+02a38     CD 9C 01 F6 | 	mov	_var02, _var01
+02a3c     01 9C 05 F5 | 	and	_var02, #1
+02a40     1F 9C 65 F0 | 	shl	_var02, #31
+02a44     CE A4 41 F5 | 	or	arg02, _var02
+02a48     D1 A4 41 F5 | 	or	arg02, arg01
+02a4c     01 9A 45 F0 | 	shr	_var01, #1
+02a50     C4 FF 9F FD | 	jmp	#LR__0381
+02a54                 | LR__0382
+02a54                 | LR__0383
+02a54     00 A6 55 F2 | 	cmps	arg03, #0 wc
+02a58     18 00 90 3D |  if_ae	jmp	#LR__0385
+02a5c     00 A4 0D F2 | 	cmp	arg02, #0 wz
+02a60     6F A4 61 FD | 	wrnz	arg02
+02a64     0C 00 90 FD | 	jmp	#LR__0385
+02a68                 | LR__0384
+02a68     17 9B 05 F4 | 	bitl	_var01, #279
+02a6c     17 A6 65 F0 | 	shl	arg03, #23
+02a70     D3 9A 41 F5 | 	or	_var01, arg03
+02a74                 | LR__0385
+02a74                 | LR__0386
+02a74                 | LR__0387
+02a74                 | LR__0388
+02a74                 | LR__0389
+02a74     01 9A CD F7 | 	test	_var01, #1 wz
+02a78     01 A4 45 55 |  if_ne	or	arg02, #1
+02a7c     D2 A6 01 F6 | 	mov	arg03, arg02
+02a80     00 9C 05 F6 | 	mov	_var02, #0
+02a84     FF FF 3F FF 
+02a88     FF A5 05 F1 | 	add	arg02, ##2147483647
+02a8c     D3 A4 11 F2 | 	cmp	arg02, arg03 wc
+02a90     01 9C 05 C6 |  if_b	mov	_var02, #1
+02a94     CE 9A 01 F1 | 	add	_var01, _var02
+02a98     01 A8 CD F7 | 	test	arg04, #1 wz
+02a9c     1F 9A 25 54 |  if_ne	bith	_var01, #31
+02aa0     CD 94 01 F6 | 	mov	result1, _var01
+02aa4                 | __system__pack_0134_ret
+02aa4     2D 00 64 FD | 	ret
+02aa8                 | 
+02aa8                 | __system___rxtxioctl_0184
+02aa8     00 A5 0D F2 | 	cmp	arg02, #256 wz
+02aac     0C 00 90 AD |  if_e	jmp	#LR__0390
+02ab0     01 A5 0D F2 | 	cmp	arg02, #257 wz
+02ab4     1C 00 90 AD |  if_e	jmp	#LR__0391
+02ab8     30 00 90 FD | 	jmp	#LR__0392
+02abc                 | LR__0390
+02abc     08 90 05 F1 | 	add	ptr___system__dat__, #8
+02ac0     C8 94 01 FB | 	rdlong	result1, ptr___system__dat__
+02ac4     08 90 85 F1 | 	sub	ptr___system__dat__, #8
+02ac8     D3 94 61 FC | 	wrlong	result1, arg03
+02acc     00 94 05 F6 | 	mov	result1, #0
+02ad0     28 00 90 FD | 	jmp	#LR__0393
+02ad4                 | LR__0391
+02ad4     D3 A2 01 FB | 	rdlong	arg01, arg03
+02ad8     08 90 05 F1 | 	add	ptr___system__dat__, #8
+02adc     C8 A2 61 FC | 	wrlong	arg01, ptr___system__dat__
+02ae0     08 90 85 F1 | 	sub	ptr___system__dat__, #8
+02ae4     00 94 05 F6 | 	mov	result1, #0
+02ae8     10 00 90 FD | 	jmp	#LR__0393
+02aec                 | LR__0392
+02aec     20 90 05 F1 | 	add	ptr___system__dat__, #32
+02af0     C8 14 68 FC | 	wrlong	#10, ptr___system__dat__
+02af4     20 90 85 F1 | 	sub	ptr___system__dat__, #32
+02af8     01 94 65 F6 | 	neg	result1, #1
+02afc                 | LR__0393
+02afc                 | __system___rxtxioctl_0184_ret
+02afc     2D 00 64 FD | 	ret
+02b00                 | 
+02b00                 | __system____dummy_flush_0185
+02b00     00 94 05 F6 | 	mov	result1, #0
+02b04                 | __system____dummy_flush_0185_ret
+02b04     2D 00 64 FD | 	ret
+02b08                 | 
+02b08                 | __system____default_filbuf
+02b08     04 4A 05 F6 | 	mov	COUNT_, #4
+02b0c     A8 00 A0 FD | 	call	#pushregs_
+02b10     D1 AC 01 F6 | 	mov	local01, arg01
+02b14     D6 AE 01 FB | 	rdlong	local02, local01
+02b18     0C AE 05 F1 | 	add	local02, #12
+02b1c     D7 94 09 FB | 	rdlong	result1, local02 wz
+02b20     0C AE 85 F1 | 	sub	local02, #12
+02b24     20 00 90 5D |  if_ne	jmp	#LR__0400
+02b28     14 AE 05 F1 | 	add	local02, #20
+02b2c     D7 94 01 F6 | 	mov	result1, local02
+02b30     04 AE 85 F1 | 	sub	local02, #4
+02b34     D7 94 61 FC | 	wrlong	result1, local02
+02b38     04 AE 85 F1 | 	sub	local02, #4
+02b3c     02 00 80 FF 
+02b40     D7 00 68 FC | 	wrlong	##1024, local02
+02b44     0C AE 85 F1 | 	sub	local02, #12
+02b48                 | LR__0400
+02b48     14 AC 05 F1 | 	add	local01, #20
+02b4c     D6 B0 01 FB | 	rdlong	local03, local01
+02b50     D8 B2 01 F6 | 	mov	local04, local03
+02b54     14 AC 85 F1 | 	sub	local01, #20
+02b58     13 B2 45 F7 | 	zerox	local04, #19
+02b5c     14 B0 45 F0 | 	shr	local03, #20
+02b60     02 B0 65 F0 | 	shl	local03, #2
+02b64     C4 B0 01 F1 | 	add	local03, __methods__
+02b68     D8 B0 01 FB | 	rdlong	local03, local03
+02b6c     10 AE 05 F1 | 	add	local02, #16
+02b70     D7 A4 01 FB | 	rdlong	arg02, local02
+02b74     04 AE 85 F1 | 	sub	local02, #4
+02b78     D7 A6 01 FB | 	rdlong	arg03, local02
+02b7c     0C AE 85 F1 | 	sub	local02, #12
+02b80     D6 A2 01 F6 | 	mov	arg01, local01
+02b84     C7 AC 01 F6 | 	mov	local01, objptr
+02b88     D9 8E 01 F6 | 	mov	objptr, local04
+02b8c     2D B0 61 FD | 	call	local03
+02b90     D6 8E 01 F6 | 	mov	objptr, local01
+02b94     CA B2 01 F6 | 	mov	local04, result1
+02b98     00 B2 55 F2 | 	cmps	local04, #0 wc
+02b9c     01 94 65 C6 |  if_b	neg	result1, #1
+02ba0     28 00 90 CD |  if_b	jmp	#LR__0401
+02ba4     D7 B2 61 FC | 	wrlong	local04, local02
+02ba8     10 AE 05 F1 | 	add	local02, #16
+02bac     D7 B0 01 FB | 	rdlong	local03, local02
+02bb0     0C AE 85 F1 | 	sub	local02, #12
+02bb4     D7 B0 61 FC | 	wrlong	local03, local02
+02bb8     04 AE 05 F1 | 	add	local02, #4
+02bbc     D7 B0 01 FB | 	rdlong	local03, local02
+02bc0     01 B0 45 F5 | 	or	local03, #1
+02bc4     D7 B0 61 FC | 	wrlong	local03, local02
+02bc8     D9 94 01 F6 | 	mov	result1, local04
+02bcc                 | LR__0401
+02bcc     A7 F0 03 F6 | 	mov	ptra, fp
+02bd0     B2 00 A0 FD | 	call	#popregs_
+02bd4                 | __system____default_filbuf_ret
+02bd4     2D 00 64 FD | 	ret
+02bd8                 | 
+02bd8                 | __struct__s_vfs_file_t_putchar
+02bd8     04 4A 05 F6 | 	mov	COUNT_, #4
+02bdc     A8 00 A0 FD | 	call	#pushregs_
+02be0     1C 8E 05 F1 | 	add	objptr, #28
+02be4     C7 AC 09 FB | 	rdlong	local01, objptr wz
+02be8     1C 8E 85 F1 | 	sub	objptr, #28
+02bec     00 94 05 A6 |  if_e	mov	result1, #0
+02bf0     48 00 90 AD |  if_e	jmp	#LR__0410
+02bf4     1C 8E 05 F1 | 	add	objptr, #28
+02bf8     C7 AE 01 FB | 	rdlong	local02, objptr
+02bfc     D7 B0 01 F6 | 	mov	local03, local02
+02c00     1C 8E 85 F1 | 	sub	objptr, #28
+02c04     13 B0 45 F7 | 	zerox	local03, #19
+02c08     14 AE 45 F0 | 	shr	local02, #20
+02c0c     02 AE 65 F0 | 	shl	local02, #2
+02c10     C4 AE 01 F1 | 	add	local02, __methods__
+02c14     D7 AE 01 FB | 	rdlong	local02, local02
+02c18     C7 A4 01 F6 | 	mov	arg02, objptr
+02c1c     C7 B2 01 F6 | 	mov	local04, objptr
+02c20     D8 8E 01 F6 | 	mov	objptr, local03
+02c24     2D AE 61 FD | 	call	local02
+02c28     D9 8E 01 F6 | 	mov	objptr, local04
+02c2c                 | '     return (i < 0) ? 0 : 1;
+02c2c     00 94 55 F2 | 	cmps	result1, #0 wc
+02c30     00 AC 05 C6 |  if_b	mov	local01, #0
+02c34     01 AC 05 36 |  if_ae	mov	local01, #1
+02c38     D6 94 01 F6 | 	mov	result1, local01
+02c3c                 | LR__0410
+02c3c     A7 F0 03 F6 | 	mov	ptra, fp
+02c40     B2 00 A0 FD | 	call	#popregs_
+02c44                 | __struct__s_vfs_file_t_putchar_ret
+02c44     2D 00 64 FD | 	ret
+02c48                 | 
+02c48                 | __struct__s_vfs_file_t_getchar
+02c48     03 4A 05 F6 | 	mov	COUNT_, #3
+02c4c     A8 00 A0 FD | 	call	#pushregs_
+02c50     20 8E 05 F1 | 	add	objptr, #32
+02c54     C7 A2 09 FB | 	rdlong	arg01, objptr wz
+02c58     20 8E 85 F1 | 	sub	objptr, #32
+02c5c     01 94 65 A6 |  if_e	neg	result1, #1
+02c60     38 00 90 AD |  if_e	jmp	#LR__0420
+02c64                 | '     return getcf(__this);
+02c64     20 8E 05 F1 | 	add	objptr, #32
+02c68     C7 AC 01 FB | 	rdlong	local01, objptr
+02c6c     D6 AE 01 F6 | 	mov	local02, local01
+02c70     20 8E 85 F1 | 	sub	objptr, #32
+02c74     13 AE 45 F7 | 	zerox	local02, #19
+02c78     14 AC 45 F0 | 	shr	local01, #20
+02c7c     02 AC 65 F0 | 	shl	local01, #2
+02c80     C4 AC 01 F1 | 	add	local01, __methods__
+02c84     D6 AC 01 FB | 	rdlong	local01, local01
+02c88     C7 A2 01 F6 | 	mov	arg01, objptr
+02c8c     C7 B0 01 F6 | 	mov	local03, objptr
+02c90     D7 8E 01 F6 | 	mov	objptr, local02
+02c94     2D AC 61 FD | 	call	local01
+02c98     D8 8E 01 F6 | 	mov	objptr, local03
+02c9c                 | LR__0420
+02c9c     A7 F0 03 F6 | 	mov	ptra, fp
+02ca0     B2 00 A0 FD | 	call	#popregs_
+02ca4                 | __struct__s_vfs_file_t_getchar_ret
+02ca4     2D 00 64 FD | 	ret
+02ca8                 | 
+02ca8                 | __struct___bas_wrap_sender_tx
+02ca8     03 4A 05 F6 | 	mov	COUNT_, #3
+02cac     A8 00 A0 FD | 	call	#pushregs_
+02cb0     C7 AC 01 FB | 	rdlong	local01, objptr
+02cb4     D6 AE 01 F6 | 	mov	local02, local01
+02cb8     13 AC 45 F7 | 	zerox	local01, #19
+02cbc     14 AE 45 F0 | 	shr	local02, #20
+02cc0     02 AE 65 F0 | 	shl	local02, #2
+02cc4     C4 AE 01 F1 | 	add	local02, __methods__
+02cc8     D7 AE 01 FB | 	rdlong	local02, local02
+02ccc     C7 B0 01 F6 | 	mov	local03, objptr
+02cd0     D6 8E 01 F6 | 	mov	objptr, local01
+02cd4     2D AE 61 FD | 	call	local02
+02cd8     D8 8E 01 F6 | 	mov	objptr, local03
+02cdc     01 94 05 F6 | 	mov	result1, #1
+02ce0     A7 F0 03 F6 | 	mov	ptra, fp
+02ce4     B2 00 A0 FD | 	call	#popregs_
+02ce8                 | __struct___bas_wrap_sender_tx_ret
+02ce8     2D 00 64 FD | 	ret
+02cec                 | 
+02cec                 | __struct___bas_wrap_sender_rx
+02cec     03 4A 05 F6 | 	mov	COUNT_, #3
+02cf0     A8 00 A0 FD | 	call	#pushregs_
+02cf4     04 8E 05 F1 | 	add	objptr, #4
+02cf8     C7 AC 01 FB | 	rdlong	local01, objptr
+02cfc     D6 AE 01 F6 | 	mov	local02, local01
+02d00     04 8E 85 F1 | 	sub	objptr, #4
+02d04     13 AE 45 F7 | 	zerox	local02, #19
+02d08     14 AC 45 F0 | 	shr	local01, #20
+02d0c     02 AC 65 F0 | 	shl	local01, #2
+02d10     C4 AC 01 F1 | 	add	local01, __methods__
+02d14     D6 AC 01 FB | 	rdlong	local01, local01
+02d18     C7 B0 01 F6 | 	mov	local03, objptr
+02d1c     D7 8E 01 F6 | 	mov	objptr, local02
+02d20     2D AC 61 FD | 	call	local01
+02d24     D8 8E 01 F6 | 	mov	objptr, local03
+02d28     A7 F0 03 F6 | 	mov	ptra, fp
+02d2c     B2 00 A0 FD | 	call	#popregs_
+02d30                 | __struct___bas_wrap_sender_rx_ret
+02d30     2D 00 64 FD | 	ret
+02d34                 | 
+02d34                 | __struct___bas_wrap_sender_close
+02d34     03 4A 05 F6 | 	mov	COUNT_, #3
+02d38     A8 00 A0 FD | 	call	#pushregs_
+02d3c     08 8E 05 F1 | 	add	objptr, #8
+02d40     C7 AC 01 FB | 	rdlong	local01, objptr
+02d44     D6 AE 01 F6 | 	mov	local02, local01
+02d48     08 8E 85 F1 | 	sub	objptr, #8
+02d4c     13 AE 45 F7 | 	zerox	local02, #19
+02d50     14 AC 45 F0 | 	shr	local01, #20
+02d54     02 AC 65 F0 | 	shl	local01, #2
+02d58     C4 AC 01 F1 | 	add	local01, __methods__
+02d5c     D6 AC 01 FB | 	rdlong	local01, local01
+02d60     C7 B0 01 F6 | 	mov	local03, objptr
+02d64     D7 8E 01 F6 | 	mov	objptr, local02
+02d68     2D AC 61 FD | 	call	local01
+02d6c     D8 8E 01 F6 | 	mov	objptr, local03
+02d70     A7 F0 03 F6 | 	mov	ptra, fp
+02d74     B2 00 A0 FD | 	call	#popregs_
+02d78                 | __struct___bas_wrap_sender_close_ret
+02d78     2D 00 64 FD | 	ret
+02d7c                 | 
+02d7c                 | LR__0430
+02d7c     69 6E 66    | 	byte	"inf"
+02d7f     00          | 	byte	0
+02d80                 | LR__0431
+02d80     6E 61 6E    | 	byte	"nan"
+02d83     00          | 	byte	0
+02d84                 | 	alignl
+02d84                 | __system__dat_
+02d84     00 00 00 00 
+02d88     00 00 00 00 | 	byte	$00[8]
+02d8c     03 00 00 00 
+02d90     00 00 00 00 
+02d94     00 00 00 00 
+02d98     00 00 00 00 | 	byte	$03, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02d9c     00 00 00 00 
+02da0     00 00 00 00 
+02da4     00 00 00 00 
+02da8     00 00 00 00 
+02dac     00 00 00 00 
+02db0     00 00 00 00 | 	byte	$00[24]
+02db4     05 00 00 00 
+02db8     00 00 00 00 
+02dbc     00 00 00 00 
+02dc0     00 00 00 00 | 	byte	$05, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02dc4     00 00 00 00 | 	byte	$00, $00, $00, $00
+02dc8     00 00 80 00 | 	long	(8 {__system___tx})<<20
+02dcc     00 00 90 00 | 	long	(9 {__system___rx})<<20
+02dd0     00 00 00 00 | 	byte	$00, $00, $00, $00
+02dd4     00 00 A0 00 | 	long	(10 {__system___rxtxioctl_0184})<<20
+02dd8     00 00 B0 00 | 	long	(11 {__system____dummy_flush_0185})<<20
+02ddc     00 00 00 00 
+02de0     00 00 00 00 | 	byte	$00[8]
+02de4     01 00 00 00 
+02de8     06 00 00 00 
+02dec     00 00 00 00 
+02df0     00 00 00 00 | 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02df4     00 00 00 00 
+02df8     00 00 00 00 | 	byte	$00, $00, $00, $00, $00, $00, $00, $00
+02dfc     00 00 80 00 | 	long	(8 {__system___tx})<<20
+02e00     00 00 90 00 | 	long	(9 {__system___rx})<<20
+02e04     00 00 00 00 | 	byte	$00, $00, $00, $00
+02e08     00 00 A0 00 | 	long	(10 {__system___rxtxioctl_0184})<<20
+02e0c     00 00 B0 00 | 	long	(11 {__system____dummy_flush_0185})<<20
+02e10     00 00 00 00 
+02e14     00 00 00 00 | 	byte	$00[8]
+02e18     01 00 00 00 
+02e1c     06 00 00 00 
+02e20     00 00 00 00 
+02e24     00 00 00 00 | 	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02e28     00 00 00 00 
+02e2c     00 00 00 00 | 	byte	$00, $00, $00, $00, $00, $00, $00, $00
+02e30     00 00 80 00 | 	long	(8 {__system___tx})<<20
+02e34     00 00 90 00 | 	long	(9 {__system___rx})<<20
+02e38     00 00 00 00 | 	byte	$00, $00, $00, $00
+02e3c     00 00 A0 00 | 	long	(10 {__system___rxtxioctl_0184})<<20
+02e40     00 00 B0 00 | 	long	(11 {__system____dummy_flush_0185})<<20
+02e44     00 00 00 00 
+      ...             
+02fac     00 00 00 00 
+02fb0     00 00 00 00 | 	byte	$00[368]
+02fb4                 | __methodtable__
+02fb4     A8 2C 00 00 | 	long	@__struct___bas_wrap_sender_tx
+02fb8     EC 2C 00 00 | 	long	@__struct___bas_wrap_sender_rx
+02fbc     34 2D 00 00 | 	long	@__struct___bas_wrap_sender_close
+02fc0     D8 2B 00 00 | 	long	@__struct__s_vfs_file_t_putchar
+02fc4     48 2C 00 00 | 	long	@__struct__s_vfs_file_t_getchar
+02fc8     34 23 00 00 | 	long	@__system____default_putc
+02fcc     B8 22 00 00 | 	long	@__system____default_getc
+02fd0     DC 23 00 00 | 	long	@__system____default_flush
+02fd4     30 0A 00 00 | 	long	@__system___tx
+02fd8     70 0A 00 00 | 	long	@__system___rx
+02fdc     A8 2A 00 00 | 	long	@__system___rxtxioctl_0184
+02fe0     00 2B 00 00 | 	long	@__system____dummy_flush_0185
+02fe4                 | objmem
+02fe4     00 00 00 00 
+02fe8     00 00 00 00 | 	long	0[2]
+02fec                 | stackspace
+02fec     00 00 00 00 | 	long	0[1]
+02ff0 0cd             | 	org	COG_BSS_START
+02ff0 0cd             | _var01
+02ff0 0cd             | 	res	1
+02ff0 0ce             | _var02
+02ff0 0ce             | 	res	1
+02ff0 0cf             | _var03
+02ff0 0cf             | 	res	1
+02ff0 0d0             | _var04
+02ff0 0d0             | 	res	1
+02ff0 0d1             | arg01
+02ff0 0d1             | 	res	1
+02ff0 0d2             | arg02
+02ff0 0d2             | 	res	1
+02ff0 0d3             | arg03
+02ff0 0d3             | 	res	1
+02ff0 0d4             | arg04
+02ff0 0d4             | 	res	1
+02ff0 0d5             | arg05
+02ff0 0d5             | 	res	1
+02ff0 0d6             | local01
+02ff0 0d6             | 	res	1
+02ff0 0d7             | local02
+02ff0 0d7             | 	res	1
+02ff0 0d8             | local03
+02ff0 0d8             | 	res	1
+02ff0 0d9             | local04
+02ff0 0d9             | 	res	1
+02ff0 0da             | local05
+02ff0 0da             | 	res	1
+02ff0 0db             | local06
+02ff0 0db             | 	res	1
+02ff0 0dc             | local07
+02ff0 0dc             | 	res	1
+02ff0 0dd             | local08
+02ff0 0dd             | 	res	1
+02ff0 0de             | local09
+02ff0 0de             | 	res	1
+02ff0 0df             | local10
+02ff0 0df             | 	res	1
+02ff0 0e0             | local11
+02ff0 0e0             | 	res	1
+02ff0 0e1             | local12
+02ff0 0e1             | 	res	1
+02ff0 0e2             | local13
+02ff0 0e2             | 	res	1
+02ff0 0e3             | local14
+02ff0 0e3             | 	res	1
+02ff0 0e4             | local15
+02ff0 0e4             | 	res	1
+02ff0 0e5             | local16
+02ff0 0e5             | 	res	1
+02ff0 0e6             | muldiva_
+02ff0 0e6             | 	res	1
+02ff0 0e7             | muldivb_
+02ff0 0e7             | 	res	1
+02ff0 0e8             | 	fit	480
+02ff0 0e8             | 
