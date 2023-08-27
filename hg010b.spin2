@@ -373,6 +373,10 @@ pub setspriteptr(num,ptr)
 long[@spr1ptr+12*num]:=ptr
 
 pub setspritepos(num,x,y)
+if y>601
+  y:=601
+if x>1024
+  x:=1024
 word[@spr1ptr+12*num+4]:=x
 word[@spr1ptr+12*num+6]:=y
 

@@ -2283,7 +2283,7 @@ do
   endif
 runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, time="; tt
 runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
-loop until runptr=$7FFF_FFFF orelse (kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C)
+loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
   ''do whatever kbm.peek_latest_key()=$106 
 if runheader(5)<>$7FFF_FFFF then 
   if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
@@ -2291,6 +2291,12 @@ if runheader(5)<>$7FFF_FFFF then
 endif
 inrun=0
 end sub
+
+
+
+
+
+
 
 sub do_defenv
 dim a,d,s,r,numpar,i,j,par,channel,wptr  as integer

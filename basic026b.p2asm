@@ -11355,7 +11355,7 @@ _do_run
 	sub	objptr, ##5824
 '   psram.read1(varptr(runheader),runptr,24)  
 '   return
-	jmp	#LR__0946
+	jmp	#LR__0947
 LR__0940
 	add	objptr, ##62368
 	wrlong	#1, objptr
@@ -11376,7 +11376,7 @@ LR__0940
  if_e	add	objptr, ##62368
  if_e	wrlong	#0, objptr
  if_e	sub	objptr, ##62368
- if_e	jmp	#LR__0946
+ if_e	jmp	#LR__0947
 ' do 
 LR__0941
 '   if runptr<>oldrunptr then
@@ -11441,7 +11441,7 @@ LR__0942
 	rdlong	local01, objptr
 	sub	objptr, ##62356
 	cmp	local01, ##2147483647 wz
- if_e	jmp	#LR__0943
+ if_e	jmp	#LR__0944
 	mov	arg01, #224
 	call	#_usbnew_spin2_keystate
 	cmp	result1, #0 wz
@@ -11455,19 +11455,20 @@ LR__0943
 	call	#_usbnew_spin2_keystate
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0941
+LR__0944
 '   ''do whatever kbm.peek_latest_key()=$106 
 ' if runheader(5)<>$7FFF_FFFF then 
 	add	objptr, ##62392
 	rdlong	local01, objptr
 	sub	objptr, ##62392
 	cmp	local01, ##2147483647 wz
- if_e	jmp	#LR__0945
+ if_e	jmp	#LR__0946
 '   if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
 	add	objptr, ##62404
 	rdlong	local01, objptr
 	sub	objptr, ##62404
 	cmp	local01, #1 wz
- if_ne	jmp	#LR__0944
+ if_ne	jmp	#LR__0945
 	add	objptr, ##63080
 	rdlong	arg02, objptr
 	sub	objptr, #4
@@ -11480,7 +11481,7 @@ LR__0943
 	call	#_audio096_spin2_play
 	sub	objptr, ##5824
 	call	#_usbnew_spin2_get_key
-LR__0944
+LR__0945
 '   print "Stopped at line ";runheader(0)
 	mov	arg01, #0
 	call	#__system___getiolock_0474
@@ -11504,16 +11505,22 @@ LR__0944
 	mov	arg01, #0
 	call	#__system___getiolock_0474
 	wrlong	#0, result1
-LR__0945
+LR__0946
 	add	objptr, ##62368
 	wrlong	#0, objptr
 	sub	objptr, ##62368
-LR__0946
+LR__0947
 	mov	ptra, fp
 	call	#popregs_
 _do_run_ret
 	ret
 
+' 
+' 
+' 
+' 
+' 
+' 
 ' 
 ' sub do_defenv
 _do_defenv
@@ -27630,6 +27637,14 @@ _hg010b_spin2_setspriteptr_ret
 ' 
 ' pub setspritepos(num,x,y)
 _hg010b_spin2_setspritepos
+' if y>601
+	cmps	arg03, ##602 wc
+'   y:=601
+ if_ae	mov	arg03, ##601
+' if x>1024
+	cmps	arg02, ##1025 wc
+'   x:=1024
+ if_ae	decod	arg02, #10
 ' word[@spr1ptr+12*num+4]:=x
 	add	objptr, #269
 	mov	_var01, objptr
