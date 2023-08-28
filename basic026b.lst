@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/basic026b.p2asm"
+00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/basic026b.p2asm"
 00000                 | con
 00000                 | 	_clkfreq = 337000000
 00000                 | 	_clkmode = 21844219
@@ -1435,7 +1435,7 @@
 0157c     26 00 00 FF 
 01580     E0 E4 05 F1 | 	add	objptr, ##19680
 01584     F2 28 62 FC | 	wrlong	local06, objptr
-01588                 | '   if ((s1$=">" orelse s1$=">" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
+01588                 | '   if ((s1$=">" orelse s1$="<" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
 01588     04 E4 85 F1 | 	sub	objptr, #4
 0158c     F2 12 02 FB | 	rdlong	arg01, objptr
 01590     7B 00 00 FF 
@@ -7101,7 +7101,7 @@
 061f0     01 1E 56 F2 | 	cmps	local01, #1 wc
 061f4     50 FF 9F 3D |  if_ae	jmp	#LR__0546
 061f8                 | LR__0548
-061f8                 | ' ' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+061f8                 | ' '  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 061f8                 | ' return err
 061f8     13 FB 01 F6 | 	mov	result1, local05
 061fc     A7 F0 03 F6 | 	mov	ptra, fp
@@ -52552,7 +52552,7 @@
 2b94f     3E          | 	byte	">"
 2b950     00          | 	byte	0
 2b951                 | LR__4605
-2b951     3E          | 	byte	">"
+2b951     3C          | 	byte	"<"
 2b952     00          | 	byte	0
 2b953                 | LR__4606
 2b953     2B          | 	byte	"+"

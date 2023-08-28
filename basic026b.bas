@@ -649,7 +649,7 @@ i=0 : do
  
 i=0 : do
   let s1$=lparts(i).part$ : let s2$=lparts(i+1).part$
-  if ((s1$=">" orelse s1$=">" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
+  if ((s1$=">" orelse s1$="<" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
     lparts(i).part$=s1$+s2$
     for j=i+1 to k : lparts(j)=lparts(j+1) : next j
    i-=1 : k-=1 ' do not move i if concatenated
@@ -1331,7 +1331,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
-' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1414,8 +1414,8 @@ t1.result.uresult=j: t1.result_type=fun_assign
 compiledline(lineptr)=t1:  lineptr+=1 
  if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end
 
-' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
-'print "at exit lineptr=",lineptr
+ ' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
+''print "at exit lineptr=",lineptr
 end sub
 
 ' ------------------ compile the line that is calling a command 

@@ -1260,7 +1260,7 @@ LR__0065
 	rdlong	local06, local09
 	add	objptr, ##19680
 	wrlong	local06, objptr
-'   if ((s1$=">" orelse s1$=">" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
+'   if ((s1$=">" orelse s1$="<" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
 	sub	objptr, #4
 	rdlong	arg01, objptr
 	sub	objptr, ##63180
@@ -6172,7 +6172,7 @@ LR__0547
 	cmps	local01, #1 wc
  if_ae	jmp	#LR__0546
 LR__0548
-' ' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+' '  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 ' return err
 	mov	result1, local05
 	mov	ptra, fp
@@ -48779,7 +48779,7 @@ LR__4604
 	byte	">"
 	byte	0
 LR__4605
-	byte	">"
+	byte	"<"
 	byte	0
 LR__4606
 	byte	"+"
