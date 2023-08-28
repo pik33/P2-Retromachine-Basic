@@ -30,7 +30,7 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.26"
+const ver$="P2 Retromachine BASIC version 0.26b"
 const ver=26
 '' ------------------------------- Keyboard constants
 
@@ -379,6 +379,7 @@ dim trig_coeff as single
 dim trig_coeff2 as single
 dim linenum as ulong
 dim suspoints(7) as ushort
+dim loadname as string
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
@@ -422,6 +423,8 @@ position 2*editor_spaces,4 : print "Ready"
 'hubset( %1_000001__00_0001_1010__1111_1011)
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 
+loadname="noname.bas"
+
 'paula.play(0,@samplebuf(0,0),88200,16484,0,2048)
 
 'base2:=@channel1[0]+64*channel
@@ -457,7 +460,7 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 
 do
 waitvbl
-paula.stop(6)
+paula.stop(7)
 
 '' Do key repeat
 
@@ -1723,8 +1726,8 @@ fortop+=1
 'i=-1: do: i+=1 : loop until fortable(i).varnum= -1 orelse i>= maxfor
 'if i> maxfor then printerror(36) : return
 t1=pop() : fortable(fortop).varnum=t1.result.iresult
-t1=pop() : fortable(fortop).stepval=t1.result.iresult
-t1=pop() : fortable(fortop).endval=t1.result.iresult
+t1=pop() : fortable(fortop).stepval=converttoint(t1)
+t1=pop() : fortable(fortop).endval=converttoint(t1)
 if compiledline(lineptr_e).result_type=token_end then
 ' end of line after for, set the pointer to the start of the next line
 fortable(fortop).lineptr=runptr
@@ -1745,6 +1748,7 @@ dim varnum as integer
 
 t1=pop() :varnum=t1.result.uresult
 if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
+if variables(varnum).vartype=result_float then variables(varnum).vartype=result_int : variables(varnum).value.iresult=round(variables(varnum).value.fresult)
 variables(varnum).value.iresult+=fortable(fortop).stepval 
 if fortable(fortop).stepval>=0 then
   if variables(varnum).value.iresult>fortable(fortop).endval then fortop-=1 : return ' do nothing 
@@ -2442,7 +2446,7 @@ if wave<8 then
   dpoke base2+24,20 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
   dpoke base2+26,skip ' todo: use skip to make accurate sample rate
 else
-  dpoke base2+24,round(1316406/freq)  : print 1316406/freq
+  dpoke base2+24,round(1316406/freq) 
   dpoke base2+26,256
 endif 
 'dpoke base2+28,$4000_0000
@@ -4016,20 +4020,22 @@ end sub
 
 sub do_dir
 dim filename as string
+dim px,py as integer
 chdir("/sd/bas")       ' set working directory
 print "Working directory: "; currentdir$ 
-
+px=0:
 filename=dir$("*", fbDirectory)
 while filename <> "" and filename <> nil
-  print "[dir] ";filename
+  print "[dir] ";filename; : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
   filename = dir$()      ' continue scan
 
    
 end while
-
+print
+px=0: py=v.getcursory()
 filename = dir$("*", fbNormal )  ' start scan for all files and directories
 do while filename <> "" and filename <> nil
-  print filename
+  print filename; : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
   filename = dir$()      ' continue scan
     if v.getcursory()=34 then    'bug, after first break, cursory is always 35
     print "-----more, press any key";
@@ -4037,7 +4043,7 @@ do while filename <> "" and filename <> nil
     loop while kbm.get_key()<>0
     do
     loop while kbm.get_key()=0
-      if keyclick=1 then paula.play(7,keyclick_spl,44100,16384,spl_len) 
+      if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
     position 0,35: print "                             ";: position 4,35  
   endif  
 loop

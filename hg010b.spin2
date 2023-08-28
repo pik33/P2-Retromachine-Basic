@@ -808,6 +808,14 @@ return cursor_x
 pub getcursory():y
 return cursor_y
 
+pub setcursorx(x)
+cursor_x:=x
+setspritepos(17,4*cursor_x,16*cursor_y )
+
+pub setcursory(y) 
+cursor_y:=y
+setspritepos(17,4*cursor_x,16*cursor_y )
+
 '*************************************************************************
 '                                                                        *
 '  VBlank functions                                                      *
