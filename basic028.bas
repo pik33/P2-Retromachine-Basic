@@ -2398,13 +2398,7 @@ sub do_play
 
 ' play channel : play 440 Hz with waveform(channel) and envelope(channel) with max volume
 ' play channel, freq: play freq with waveform(channel and envleope(channel) 
-' play channel, freq, volume
-' play channel, freq, volume, waveform
-' play channel, freq, volume, waveform, envelope
-' play channel, freq, volume, waveform, envelope, length
-' play channel, freq, volume, waveform, envelope, length, wait
-' play channel, freq, volume, waveform, envelope, length, wait, pan
-' play channel, freq, volume, waveform, envelope, length, wait, pan, sus
+' play channel, freq, wait, volume, waveform, envelope, length, pan, sus
 
 
 'channel: int, 0..7
@@ -2432,11 +2426,11 @@ for i=numpar to 1 step -1
 next i
 if params(0)<0 then channel=0 else channel=round(params(0))
 if params(1)<0 then freq=channels(channel).freq else freq=params(1) : channels(channel).freq=freq
-if params(2)<0 orelse params(2)>16.384 then vol=channels(channel).vol else vol=params(2) : channels(channel).vol=vol
-if params(3)<0 orelse params(3)>8.0 then wave=channels(channel).wave else wave=round(params(3)) : channels(channel).wave=wave
-if params(4)<0 orelse params(4)>8.0 then env=channels(channel).env else env=round(params(4)) : channels(channel).env=env
-if params(5)<0 orelse params(5)>1000.0 then slen=channels(channel).length else slen=params(5) : channels(channel).length=slen
-if params(6)<0 orelse params(6)>10000.0 then delay=channels(channel).delay else delay=round(params(6)) : channels(channel).delay=delay
+if params(3)<0 orelse params(3)>16.384 then vol=channels(channel).vol else vol=params(3) : channels(channel).vol=vol
+if params(4)<0 orelse params(4)>8.0 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
+if params(5)<0 orelse params(5)>8.0 then env=channels(channel).env else env=round(params(5)) : channels(channel).env=env
+if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else slen=params(6) : channels(channel).length=slen
+if params(2)<0 orelse params(2)>10000.0 then delay=channels(channel).delay else delay=round(params(2)) : channels(channel).delay=delay
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
 
