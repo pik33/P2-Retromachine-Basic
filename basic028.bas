@@ -3,7 +3,7 @@
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
-
+' todo!!!!!! new clears filename to noname.bas!!!
 
 const HEAPSIZE=192000
 '#define PSRAM4
