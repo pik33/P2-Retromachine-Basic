@@ -208,16 +208,16 @@ const token_fre=156
 const token_inkey=157
 const token_abs=158
 
-const token_chr=159
+ const token_chr=159
 const token_val=160
 const token_str=161
-const token_bin=162
-const token_hex=163
-const token_left=164
-const token_right=165
-const token_mid=166
-const token_asc=167
-const token_len=168
+ const token_bin=162
+ const token_hex=163
+ const token_left=164
+ const token_right=165
+ const token_mid=166
+ const token_asc=167
+ const token_len=168
 
 
 

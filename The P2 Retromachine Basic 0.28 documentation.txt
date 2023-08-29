@@ -1,6 +1,6 @@
 The P2 Retromachine Basic
 
-Version 0.28 - Pre-beta
+Version 0.27 - Alpha
 -------------------------
 
 The P2 Retromachine Basic is a Basic interpreter for a Propeller 2 platform with an external RAM. Currently tested/developed versions work on P2-EC32 
@@ -10,7 +10,7 @@ The goal is to make the Propeller 2 platform a fully independent computer that c
 
 The power of a retro style Basic interpreter is that you can make a powerful program in a very short code, in a short time. 
 
-Version 0.28 is an pre-beta stage. Several functions still has to be added, and the code has to be debugged and cleaned. Still a lot can change in the future versions.
+Version 0.25 is an alpha stage. It has limited set of functions, there are bugs in it, and is in a rapid development process that means a lot can change in the future versions.
 
 The current version of the interpreter needs a digital video accessory board at P0, AV accessory board at P8 and a serial host accessory board at P16.
 
@@ -24,7 +24,7 @@ Prepare the SD card: if not in FAT32 format, format it as FAT32. Create 'bin', '
 Place your precompiled binary files that you want to use with a P2 in 'bin' directory. Copy 'media' directory (with 's' and 'h' dirs inside) from the repository to the SD
 The interpreter will load and save Basic programs from 'bas' directory. There is an 'examples' folder in the repository: you can copy these examples there.
 
-Connect the DV accessory (with a HDMI type socket) to the Pin 0 bank. Connect a monitor to the DV accessory board with a HDMI cable. The generated digital video is 1024x600 at 8 bpp and 50 Hz. It was 1024x576 in previous versions.
+Connect the DV accessory (with a HDMI type socket) to the Pin 0 bank. Connect a monitor to the DV accessory board with a HDMI cable. The generated digital video is 1024x576 at 8 bpp and 50 Hz. 
 Connect the AV accessory (with a VGA socket) to the Pin 8 bank, Connect an amplifier or headphones to the headphone output of the AV board.
 Connect the serial host accessory (with 2 USB Type A sockets) to the Pin 16 bank. Connect a hub to the upper USB port on a serial host accessory. Connect a keyboard, a mouse and a joystick to the hub.
 
@@ -55,29 +55,12 @@ To delete the program from memory and start a new one, use 'new'.
 Any compiled P2 binary file saved on an SD card can be executed from within the interpreter using 'brun'. That allows to have a collection of P2 binary programs on the SD card and call them when needed.
 The default directory for binary files is /sd/bin
 
-Version 0.28 introduces a new, full screen edit mode. The cursor can be moved with arrows, home, end, pgup and pgdn.
-After pressing Enter, the interpreter tries to interpret the line, on ehich there is a cursor.
-That allows to list a fragment of code and edit it directly on this listing without a need of rewriting a full line. The innediate lines can be also edited this way and entered again.
-The arrows move the cursor. PgUp moves the cursor to the first line and doesn't change its horizontal position PgDn moves the cursor to the last line.
-Home moves the sursor to the editing start, that is set as 2 characters from the right; End moves the cursor to the last non-space chaaracter in the line
-Insert changes the mode from inserting (narrow cursor) or overwriting (a cursor that is full character size)
-
-
-
 Variables:
 ----------
 
 There are several types of variables available in the P2 Retromachine Basic.
 
 A standard variable is created by using it. Assigning a value to the variable determines its type. Suffixes like #,!,$ are optional and are simply a part of a variable name. Use them for compatibility with other Basic interpreters and compilers, and to make reading the program easier. A string variable name should end with '$' and a floating point variable name should end with '!' 
-
-Variable type can be changed at any time, so this code
-
-10 a=200
-20 a=str$(a)
-30 print a+"q"
-
-will execute without errors and print '200q'
 
 A variable can be
 
@@ -88,21 +71,13 @@ A variable can be
 
 These variables are kept in the HUB RAM
 
-A variable type can be changed at any time, so this code
-
-10 a=200
-20 a=str$(a)
-30 print a+"q"
-
-will execute without errors and print '200q'
-
 To define an array or a typed variable, use 'dim' instruction.
 
 dim varname(size1,size2,size3)
 
 An array can have up to 3 dimensions.
 
-If no type is given, an untyped array is created. Every element of the array can be of a different type and its type can be changed at any time by assigning to it. Such arrays are kept in the PSRAM and need 12 bytes per element.
+If no type is given, an untyped array is created. Every element of the array can be of a different type. Such arrays are kept in the PSRAM and need 12 bytes per element.
 
 To save the memory space, a typed array can be declared:
 
@@ -120,12 +95,7 @@ dim a as integer
 
 declares a typed variable that is placed in the PSRAM - in the  reality, this is an one-element array, that has an array header (16 bytes) before the variable itself. 
 
-There is no checking while assigning to these variables. Assigning a string to an integer array elemrnt will assign a pointer to the string, assigning the float will end with its binary representation:
-
-10 dim a(10)
-20 a(2)=1.0
-30 ?a(2)
-will output 1065353216, that is $3F800000
+Arrays and typed variables are very fresh, experimental and buggy feature in the current version.
 
 Operators:
 ----------
@@ -336,16 +306,13 @@ Commands (shortcuts):
 Alphabetically sorted
 
 abs(x)					if x is negative, multiply by -1, else left intact
-asc(string)				returns ASCII code of the first character in the string
 acos(x)					returns the inverse cosine 
 adr(var) (or addr or varptr)		returns the address of the variable (= a pointer) in the memory
 asin(x)					returns the inverse sine
 atn(x)					returns the inverse tangent
 beep frequency, time (b.)  		generates the square vave at frequency in Hz for the time in ms
-bin$(value,length)			returns a string that is a binary representation of the argument, in 'length' digits Length is optimal
 box x1,y1,x2,y2				draws a filled rectangle from x1,y1 to x2,y2
 brun filename  (br.) 			loads and executes a binary file compiled for a P2 by anything
-chr$(value)				returns a one-character string that represents a given ASCII code
 circle x,y,r (ci.)			draws the empty circle with the center at x,y and radius r
 click on/off or 1/0     		switches the keyboard click on and off 
 cls 					clears the screen
@@ -372,18 +339,14 @@ getenvsustain(slot)			gets the sustain point set by defenv, to use with setsusta
 getnotevalue(midinote)			returns the frequency of the MIDI note in Hz
 getpixel(x,y)			        returns the color of the pixel at screen position x,y. The function returns the bacgkround pixel color even if there is a sprite drawn over this pixel.
 goto line (g.)				jumps to the line
-hex$(value)                             returns a string that is a hexadecimal representation of the argument, in 'length' digits Length is optimal, 8 used if not provided
 if					with 'then' and 'else' controls the program flow
 ink colornum (i.)			sets the color of the characters to print
 inkey$					returns one-character string of the last pressed key, or "" if no key pressed
 int					converts anything, including strings if doable, to integer
-left$(string,num)			returns first num characters of the string
-len(string)				returns the length of the string
 list startline, endline (l.)		outputs the code on the screen form startline to endline. If no endline specified, the program will be listed to the end. 
 load "filename" (lo.)	         	loads a Basic program from the file. May be used in format load filename - without ""
 lpeek(x)				returns a 32-bit unsigned value from the memory at address x
 lpoke x,val				writes a 32-bit unsigned val to the memory at address x
-mid$(string,pos,amount)			returns amount character of tthe string starting from pos. The base position is 1
 mode modenum (m.)			sets "look and feel" of the interpreter. 0 - Atari style, 1 - PC amber, 2 - PC green, 3 - PC white, 4 - Atari ST mono 
 					Names can be used instead of numbers: 'atari', pc_amber", 'pc_green', 'pc_white', 'st'
 mouse on/off or 1/0			switches the mouse pointer on and off
@@ -411,7 +374,6 @@ print (?)				outputs to the screen and moves the cursor to the new line if , or 
 rad					switches trigonometric functions to radians
 rdpin pin				returns the smartpin output register value, notifies the smart pin
 release channel				makes the envelope in the audio channel to continue to the end. 
-right$(string,num)			returns last num characters of the string
 rnd(value)				returns a random value. If no arguments, it is a 32-bit unsigned integer. If integer or float parameter is given, it returns integer or float that is less than,0 the parameter.
 rqpin pin				returns the smartpin output register value, does not notify the smart pin
 run					starts the program. You can use "run" inside the program to restart it.
@@ -428,9 +390,7 @@ sprite spritenum,x,y (sp.)		move the sprite number sprite# (from 0 to 15
 sqr(x)					returns the square root of x
 stick(joynum)				returns the position of a digital joystick
 strig(joynum)				returns the button state of a digital jystick
-str$(value)				converts a value to a string. 
 tan(x)					returns a tangent of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
-val(string)				convert a string to a number. If it can, it returns an integer, if not, returns a single. If failed, returns 0
 waitms time				waits "time" miliseconds. Doesn't have any upper limits as it creates an internal loop when time>5000 ms
 waitclock (wc.)				waits for the internal 5 ms/200Hz clock tick. The clock is vblank synchronized so there is 1 vblank for 4 ticks
 waitvbl	(wv.)				waits for the screen vertical blank. Use to synchronize the program with the screen refresh
@@ -441,11 +401,7 @@ wypin pin				writes to the Y register of the smart pin
 Changelog:
 ------------
 
-0.28:
-Enhanced screen editor
-String related functions added: asc,chr$,len,mid$,left$,right$,str$,bin$,hex$,val
-
-0.27:
+0.27
 
 Math function added: abs
 Added poke,dpoke,lpoke,peek,dpeek,lpeek,adr,fre,inkey$
