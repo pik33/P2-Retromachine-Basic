@@ -987,7 +987,7 @@ repeat i from 584 to 599
 
 pub scrollup2(start=0, end=600 , amount=16) | i
 	
-repeat i from 4 to 599 
+repeat i from 4 to 579 
   ram.read1($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
   ram.write($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
 

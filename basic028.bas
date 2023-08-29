@@ -491,7 +491,13 @@ if key3<>0 then
   endif
  
  
-  if key4>0 andalso key4<127 andalso v.cursor_x<254 then line$+=chr$(key4): v.putchar(key4)
+  if key4>0 andalso key4<127 andalso v.cursor_x<254 then 
+    if do_insert then
+      for i=  v.textbuf_ptr+128*v.cursor_y+127 to v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) step -1 : pspoke i,pspeek(i-1) : next i 
+      let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+    endif
+    v.putchar(key4)
+  endif  
   if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): paula.stop(7) 'end of line reached
  
   if key4=key_enter then 
@@ -509,8 +515,24 @@ if key3<>0 then
   key4=key3 and 255
   'tab
   if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)
-  if key4 = 43 andalso v.cursor_x<240 then let x=(v.cursor_x mod 16)/2: for i=x to 7: line$+=" " :  v.write (" ") : next i  
- 
+  if key4 = 43 andalso v.cursor_x<240 then v.setcursorx((v.cursor_x+8) and $F8)  
+ ' tab43 del 76 home74 end 77 pgup=75 pgdn 78
+  if key4=77 then i=127 : do: 
+    if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then v.setcursorx(2*i) : exit loop 
+    i=i-1
+  loop until i=editor_spaces
+  if i=editor_spaces then v.setcursorx(2*editor_spaces)
+  
+  
+  if key4=74 then v.setcursorx(editor_spaces*2)
+  if key4=75 then v.setcursory(0)
+  if key4=78 then v.setcursory(36) ' todo: parameter instead 36
+  
+  if key4=76 then 'del
+    for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
+    let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+  endif
+   
   'backspace
   if key4 = 42 then 
       if v.cursor_x>editor_spaces*2 then 
