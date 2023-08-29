@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/programowanie/p2-retromachine/Propeller/Basic/hg010b.p2asm"
+00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/hg010b.p2asm"
 00000                 | con
 00000                 | 	_clkfreq = 336956522
 00000                 | 	_clkmode = 28772091
@@ -139,7 +139,7 @@
 00698 0a5             | objptr
 00698 0a5 AC 06 00 00 | 	long	@objmem
 0069c 0a6             | ptr_stackspace_
-0069c 0a6 64 09 00 00 | 	long	@stackspace
+0069c 0a6 78 1D 00 00 | 	long	@stackspace
 006a0 0a7             | result1
 006a0 0a7 00 00 00 00 | 	long	0
 006a4 0a8             | COG_BSS_START
@@ -164,18 +164,18 @@
 006ac                 | objmem
 006ac     00 00 00 00 
       ...             
-0095c     00 00 00 00 
-00960     00 00 00 00 | 	long	0[174]
-00964                 | stackspace
-00964     00 00 00 00 | 	long	0[1]
-00968 0a8             | 	org	COG_BSS_START
-00968 0a8             | arg01
-00968 0a8             | 	res	1
-00968 0a9             | arg02
-00968 0a9             | 	res	1
-00968 0aa             | arg03
-00968 0aa             | 	res	1
-00968 0ab             | arg04
-00968 0ab             | 	res	1
-00968 0ac             | 	fit	480
-00968 0ac             | 
+01d70     00 00 00 00 
+01d74     00 00 00 00 | 	long	0[1459]
+01d78                 | stackspace
+01d78     00 00 00 00 | 	long	0[1]
+01d7c 0a8             | 	org	COG_BSS_START
+01d7c 0a8             | arg01
+01d7c 0a8             | 	res	1
+01d7c 0a9             | arg02
+01d7c 0a9             | 	res	1
+01d7c 0aa             | arg03
+01d7c 0aa             | 	res	1
+01d7c 0ab             | arg04
+01d7c 0ab             | 	res	1
+01d7c 0ac             | 	fit	480
+01d7c 0ac             | 

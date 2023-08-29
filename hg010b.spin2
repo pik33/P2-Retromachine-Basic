@@ -78,7 +78,7 @@
 '-----------------------------------------------------------------------------------------------------------------------
 
 ' Available standard graphic modes:
-'   - 1024x576@50 Hz borderless 8bpp
+'   - 1024x600@50 Hz borderless 8bpp
 
 '  The display list
 
@@ -129,6 +129,7 @@ timingsxxt      =  $70810000   ' streamer imm->pins
 var
 
 long buf_ptr           'initial main buffer pointer
+long textbuf_ptr	' auxiliary text buffer for Basic
 long font_ptr          'initial font definition pointer
 long border_ptr        'border colors buffer pointer
 long cursor_ptr        'cursor position pointer
@@ -199,6 +200,9 @@ long leading_spaces
 long fillstack[1280]
 long fillptr
 long fillmax
+long cursorcolor
+long cursorshape
+
 obj
 ram: "psram.spin2"
 
@@ -214,19 +218,11 @@ pub dummy()
 
 '****************************************************************************************************************
 '                                                                                                             	*
-'Start the driver with graphics mode 'mode' at pins 'base'                            		rev 20220320 	*
+'Start the driver  at pins 'base'                            					rev 20230829 	*
 '                                                                                                            	*
-' mode - mode #, see below											*
 ' base - HDMI base pin												*
 ' mb - PSRAM mailbox pointer, 0 if no PSRAM									*
 '														*
-'' mode number: :  %p_tn_bb_cc_vv_hh										*
-'' set bit #15 for custom timings														*
-'' p - 1 - psram, 0 - hub											*
-'' t - 1 - graphics, 0 - text											*
-'' n - 1 - 60 Hz,  0 - 50 Hz 											*
-'' hh - h.zoom, vv-v.zoom, cc-color depth if graphic, unused in text,						*
-'' bb - borders, 00-wide, 01 medium, 10 no border, 11 no border, extended resolution (1024x576/896x496)		*
 '														*
 '****************************************************************************************************************
 
@@ -297,17 +293,27 @@ repeat i from 112 to 127
 setspriteptr(17,@cursor)
 setspritesize(17,8,16)
 setspritepos(17,0,0)
+cursorshape:=14
+cursorcolor:=color
 
- 
-pub setcursorcolor(color) |i
+pub setcursorshape(shape) | i
 
-
-repeat i from 0 to 111
+cursorshape:=shape
+repeat i from 0 to (8*cursorshape)-1
   cursor[i]:=0
-repeat i from 112 to 127
-  cursor[i]:=color  
- 
+repeat i from 8*cursorshape to 127
+  cursor[i]:=cursorcolor
 
+pub setcursorcolor(color) | i
+
+cursorcolor:=color
+repeat i from 0 to (8*cursorshape)-1
+  cursor[i]:=0
+repeat i from 8*cursorshape to 127
+  cursor[i]:=cursorcolor
+  
+  
+  
 pub setmode() | i', 'xzoom, yzoom, azoom
 
 
@@ -316,7 +322,7 @@ dl_ptr:=@emptydl[0]
 if cog>0 
    waitvbl(1)						    	' if the driver is active, wait for vblank to set the new mode and DL	
 xres:=1024
-yres:=576  
+yres:=600
 ppl:=(timings[3])
 cpl:=timings[7]<<1                                      	' now cpl is longs per line
 cpl1:=cpl '' todo remove
@@ -330,6 +336,7 @@ lines:=timings[11]
 t_lines:=lines/16
 buflen:=cpl*lines						' framebuffer length in longs
 buf_ptr:=$2000000-4*buflen                          	     	' todo: get a PSRAM real himem 
+textbuf_ptr:=buf_ptr-t_lines*timings[7]
 mode_ptr:=@timings						' set pointers to timings
 graphmode:=1024+512+192+48							' det global variable
 makedl(graphmode)							' make a DL for the mode
@@ -343,7 +350,7 @@ st_lines:=t_lines
 ppl:=ppl/xzoom  
 s_ppl:=ppl
 waitms(20)							' wait 
-
+ram.fill(textbuf_ptr,32,buf_ptr-textbuf_ptr,0,1)
 
 '****************************************************************************************************************
 '                                                                                                             	*
@@ -800,7 +807,7 @@ pub setcursorpos(x,y)
 
 cursor_x:=x
 cursor_y:=y
-setspritepos(17,4*cursor_x,16*cursor_y )
+setspritepos(17,4*cursor_x,16*cursor_y+4 )
 
 pub getcursorx():x
 return cursor_x
@@ -810,11 +817,11 @@ return cursor_y
 
 pub setcursorx(x)
 cursor_x:=x
-setspritepos(17,4*cursor_x,16*cursor_y )
+setspritepos(17,4*cursor_x,16*cursor_y+4 )
 
 pub setcursory(y) 
 cursor_y:=y
-setspritepos(17,4*cursor_x,16*cursor_y )
+setspritepos(17,4*cursor_x,16*cursor_y+4)
 
 '*************************************************************************
 '                                                                        *
@@ -907,10 +914,11 @@ pub cls(fc,bc)   :c,i
 
 c:=bc
 ram.fill(s_buf_ptr,c,4*buflen,0,1)  
+ram.fill(textbuf_ptr,32,buf_ptr-textbuf_ptr,0,1)
 setwritecolors(fc,bc)
 cursor_x:=0
 cursor_y:=0
-setspritepos(17,4*cursor_x,16*cursor_y )
+setspritepos(17,4*cursor_x,16*cursor_y+4 )
 setcursorcolor(fc)
 
 ''---------- Output a char at the cursor position, move the cursor 
@@ -923,30 +931,33 @@ if achar==9
   cursor_x:=(cursor_x& %11110000)+16
   
 if (achar<>9) && (achar<>10) 
-  putcharxycgf(cursor_x,16*cursor_y,achar,write_color,write_background)
+  putcharxycgf(cursor_x,16*cursor_y+4,achar,write_color,write_background)
+  ram.fill(textbuf_ptr+(timings[7]*cursor_y+(cursor_x>>1)),achar,1,0,1)
   cursor_x+=2
 
 if cursor_x>=256
   cursor_x:=0
   cursor_y+=1
   if cursor_y>st_lines-1
-    scrollup()
+    scrollup2()
     cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y )
+setspritepos(17,4*cursor_x,16*cursor_y+4 )
     
 ''---------- Output a char at the cursor position, move the cursor, don't react for tab or lf 
 
 pub putchar2(achar) | c,x,y,l,newcpl
 
-putcharxycgf(cursor_x,16*cursor_y,achar,write_color,write_background)
+putcharxycgf(cursor_x,16*cursor_y+4,achar,write_color,write_background)
+ram.fill(textbuf_ptr+(timings[7]*cursor_y+(cursor_x>>1)),achar,1,0,1)
+
 cursor_x+=2
 if cursor_x>=256
   cursor_x:=0
   cursor_y+=1
   if cursor_y>st_lines-1
-    scrollup()
+    scrollup2()
     cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y ) 
+setspritepos(17,4*cursor_x,16*cursor_y+4 ) 
 ''--------- Output a string at the cursor position, move the cursor  
 
 pub write(text) | iii,c,ncx,ncy
@@ -963,20 +974,39 @@ crlf
 
 ''-----------  Scroll the screen one line up
 
-pub scrollup(start=0, end=576 , amount=16) | i
+pub scrollup(start=0, end=600 , amount=16) | i
 	
-repeat i from 0 to 559 
+repeat i from 0 to 583 
   ram.read1($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
   ram.write($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
 
-repeat i from 560 to 575
+repeat i from 584 to 599
    fastline(0,1023,i,write_background)   
+   
+' a version for text scrolling in Basic shifted 4 lines down
+
+pub scrollup2(start=0, end=600 , amount=16) | i
+	
+repeat i from 4 to 599 
+  ram.read1($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
+  ram.write($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
+
+repeat i from 580 to 599
+   fastline(0,1023,i,write_background)   
+repeat i from 0 to 3
+   fastline(0,1023,i,write_background)      
+
+repeat i from 0 to 35
+  ram.read1($80000-4096-1024-s_debug, textbuf_ptr+(i+1)*timings[7], timings[7])
+  ram.write($80000-4096-1024-s_debug, textbuf_ptr+i*timings[7], timings[7])
+repeat i from 0 to timings[7]-1
+  ram.fill(textbuf_ptr+(36*timings[7]+i),32,1,0,1) 
  
 ''----------- Scroll the screen one line down 
 
 pub scrolldown() | i
 
-repeat i from 559 to 0
+repeat i from 583 to 0
   ram.read1($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
   ram.write($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
 
@@ -990,9 +1020,9 @@ pub crlf()
 cursor_x:=leading_spaces*2
 cursor_y+=1
 if cursor_y>st_lines-1
-  scrollup()
+  scrollup2()
   cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y )  
+setspritepos(17,4*cursor_x,16*cursor_y+4 )  
 ''---------- Backspace. Move the cursor back, clear a character
 
 pub bksp()
@@ -1003,7 +1033,7 @@ if cursor_x==255
   cursor_y-=1
   if cursor_y==255
     cursor_y:=0
-    scrollup()
+    scrollup2()
 setspritepos(17,4*cursor_x,16*cursor_y )  
 
 outtextxycg(cursor_x,cursor_y,string(" "),write_color,write_background)
@@ -1160,7 +1190,8 @@ ataripalette   file "ataripalettep2.def"
 '**********************************************************************************
 
 '                      bf.hs, hs,  bf.vis  visible, up p., vsync, down p.,  cpl, total lines, clock,       hubset                                scanlines  ud bord mode reserved
-timings         long   16,    80,  12,      1024,   8,     4,     8,        128, 576,         336956522,   %1_101101__11_0000_0110__1111_1011,   576,        0,     192, 0, 0
+timings         long   8,     60,  8,       1024,   7,     4,     1,        128, 600,         336956522,   %1_101101__11_0000_0110__1111_1011,   600,        0,     192, 0, 0
+'timings        long   16,    80,  12,      1024,   8,     4,     8,        128, 576,         336956522,   %1_101101__11_0000_0110__1111_1011,   576,        0,     192, 0, 0
 vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
 
 

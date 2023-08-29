@@ -148,7 +148,7 @@ _dummy_ret
 hubexit
 	jmp	#cogexit
 objmem
-	long	0[174]
+	long	0[1459]
 stackspace
 	long	0[1]
 	org	COG_BSS_START

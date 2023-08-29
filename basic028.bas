@@ -30,7 +30,7 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.27"
+const ver$="P2 Retromachine BASIC version 0.28"
 const ver=27
 '' ------------------------------- Keyboard constants
 
@@ -380,7 +380,7 @@ dim trig_coeff2 as single
 dim linenum as ulong
 dim suspoints(7) as ushort
 dim loadname as string
-
+dim do_insert as integer
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -391,11 +391,11 @@ audiocog,base=paula.start(0,0,0)
 waitms(50)
 dpoke base+20,16384
 usbcog=kbm.start()
-kbm.mouse_set_limits(1023,575)
+kbm.mouse_set_limits(1023,599)
 kbm.mouse_set_outptr(varptr(v.spr1ptr)+16*12+4)
 v.setspriteptr(16,@mouse)
 v.setspritesize(16,32,32) 
-kbm.mouse_move(512,288)
+kbm.mouse_move(512,300)
 housekeeper_cog=cpu(housekeeper(),@housekeeper_stack(0)) : hkcnt=0
 editor_spaces=2
 paper=147: ink=154 : font=4
@@ -418,12 +418,14 @@ chdir "/sd/bas"
 currentdir$="/sd/bas"
 
 position 2*editor_spaces,1 : print ver$
-free$=decuns$(v.buf_ptr)+" BASIC bytes free" : print free$
+free$=decuns$(memtop-programptr)+" BASIC bytes free" : print free$
 position 2*editor_spaces,4 : print "Ready"
 'hubset( %1_000001__00_0001_1010__1111_1011)
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 
 loadname="noname.bas"
+do_insert=-1
+
 
 'paula.play(0,@samplebuf(0,0),88200,16484,0,2048)
 
@@ -488,28 +490,66 @@ if key3<>0 then
     endif
   endif
  
+ 
   if key4>0 andalso key4<127 andalso v.cursor_x<254 then line$+=chr$(key4): v.putchar(key4)
   if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): paula.stop(7) 'end of line reached
  
+  if key4=key_enter then 
+
+''      interpret: line$="" :let t1=getct()-t1 :rpt=0: rptcnt=0
+    line$="" : for i=editor_spaces to 127
+       let ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
+        line$=line$+chr$(ch)
+         next i
+    
+        v.crlf() 
+        interpret: line$="" : rpt=0 : rptcnt=0
+    endif 
+  
+  key4=key3 and 255
   'tab
-  if (key3 and 255) = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)
-  if (key3 and 255) = 43 andalso v.cursor_x<240 then let x=(v.cursor_x mod 16)/2: for i=x to 7: line$+=" " :  v.write (" ") : next i  
+  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)
+  if key4 = 43 andalso v.cursor_x<240 then let x=(v.cursor_x mod 16)/2: for i=x to 7: line$+=" " :  v.write (" ") : next i  
  
   'backspace
-  if (key3 and 255) = 42 then 
-      if v.cursor_x>4 then 
-        line$=left$(line$,len(line$)-1): position v.cursor_x-2,v.cursor_y: v.putchar(32) : position v.cursor_x-2,v.cursor_y
+  if key4 = 42 then 
+      if v.cursor_x>editor_spaces*2 then 
+         position v.cursor_x-2,v.cursor_y
+         for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
+         let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+ 
       else
          line$="" : v.cursor_x=4
       endif   
    endif   
+     if key4= 82 then 
+      let cy=v.getcursory()-1 : if cy<0 then cy=0 
+      v.setcursory(cy)
+   endif   
+   if key4= 81 then
+     let cy=v.getcursory()+1 : if cy>36  then cy=36
+     v.setcursory(cy)
+   endif
+   if key4= 80 then
+     let cx=v.getcursorx()-2 
+     if cx<editor_spaces then cx=editor_spaces
+     v.setcursorx(cx)
+     endif
+   if key4= 79 then
+     let cx=v.getcursorx()+2 
+     if cx>254  then cx=254 
+     v.setcursorx(cx)
+   endif
+  ' print key3 and 255
    
+   if key4=73 then ' ins
+     do_insert=not do_insert 
+     if do_insert then v.setcursorshape(14) else  v.setcursorshape(0)
+
+   endif
  ' To do: arrows and DEL; use textscreen array to implement fullscreen editing
  
-  if key4=key_enter then 
-    v.crlf() 
-      interpret: line$="" :let t1=getct()-t1 :rpt=0: rptcnt=0
-    endif 
+
 
   key3=0 
   endif
@@ -579,7 +619,7 @@ dim err as integer
 
 ' ---------------------------------------------------  Pass 1: Split the line to parts, detect and concatenate strings
 
-fullline$=line$: cont=-1  : linenum=0 : lineptr=0 : err=0
+fullline$=trim$(line$): cont=-1  : linenum=0 : lineptr=0 : err=0
 
 108 for i=0 to 125: separators(i)=0 :next i
 for i=0 to 125: lparts(i).part$="": lparts(i).token=0: next i
@@ -710,9 +750,9 @@ let lp$=lparts(addptr).part$
 
 ' process the case when simple load or save is called without ""
 
-if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") andalso lparts(addptr+1).token=token_name then 
+if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") then 
   if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
+  if lparts(addptr+1).part$="off" then   lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
 endif									
 if (lp$="mode" orelse lp$="m.") then 
   if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0"  
@@ -2610,13 +2650,14 @@ lineptr=0
 programptr=0 : stringptr=0
 lastline=0 : lastlineptr=-1 :fortop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
-for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i))
+for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
+next i
 trig_coeff=1.0 : trig_coeff2=1.0
-memtop=v.buf_ptr
+memtop=v.textbuf_ptr
 v.setspritesize(17,8,16)
 v.setspritesize(16,32,32)
+loadname="noname.bas"
 init_audio
-next i
 end sub
 
 '----------------------- goto
@@ -3792,6 +3833,7 @@ select case t1.result.iresult
    case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
 end select
 nostalgic_mode=t1.result.iresult
+free$=decuns$(memtop-programptr)+" BASIC bytes free"
 v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
 end sub
 
