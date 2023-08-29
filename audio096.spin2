@@ -113,8 +113,11 @@ else
 word[base2+20]:=vol
 word[base2+24]:= 1316406/splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-long[base2+28]:=$40000000
-long[base2+8]:=sample+$C0000000 
+long[base2+32]:=0    
+long[base2+36]:=0    
+long[base2+40]:=0    
+long[base2+44]:=0    
+long[base2+8]:=sample+$C0000000     
     
 pub playtoend8(channel,sample,splfreq,vol,len) |base2,i
 

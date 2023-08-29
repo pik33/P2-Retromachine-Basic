@@ -206,10 +206,18 @@ const token_lpeek=154
 const token_adr=155
 const token_fre=156
 const token_inkey=157
-
 const token_abs=158
 
-
+const token_chr=159
+const token_val=160
+const token_str=161
+const token_bin=162
+const token_hex=163
+const token_left=164
+const token_right=165
+const token_mid=166
+const token_asc=167
+const token_len=168
 
 
 
@@ -426,35 +434,6 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
 
-
-'paula.play(0,@samplebuf(0,0),88200,16484,0,2048)
-
-'base2:=@channel1[0]+64*channel
-'long[base2+8]:=sample+$C0000000 
-'long[base2+12]:= len
-'if loop >=0 
-'  long[base2+16]:= loop
-'else
-'  long[base2+16]:= len+2
-'word[base2+20]:=vol
-'word[base2+24]:= 3546911/splfreq 
-'word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-'long[base2+28]:=$40000000
-
-'lpoke base+8,varptr(samplebuf(0,0))+$C000_0000 
-'lpoke base+16,2048
-'lpoke base+12,0
-'dpoke base+20,16383
-'dpoke base+22,8192
-'dpoke base+24,60
-'dpoke base+26,256 ' todo: use skip to make accurate sample rate
-'dpoke base+28,$4000_0000
-'lpoke base+32,0 
-'lpoke base+36, 0
-'lpoke base+40,25600' speed
-'lpoke base+44,1023 'len
-
-'do: position 0,0 : print lpeek(base+32): loop 
 
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
@@ -1074,9 +1053,11 @@ select case s
   case "acos"		: return token_acos
   case "adr"		: return token_adr
   case "addr"		: return token_adr
-  case "varptr"		: return token_adr
+  case "asc"		: return token_asc
   case "asin"		: return token_asin
   case "atn"		: return token_atn
+  case "bin$"		: return token_bin
+  case "chr$"		: return token_chr
   case "cos"		: return token_cos
   case "dpeek"		: return token_dpeek
   case "fre"		: return token_fre
@@ -1085,8 +1066,12 @@ select case s
   case "getenvsustain"	: return token_getenvsustain
   case "getnotevalue"	: return token_getnotevalue
   case "gettime"       	: return token_gettime
+  case "hex$"		: return token_hex
   case "inkey$"		: return token_inkey
+  case "left$"		: return token_left
+  case "len"		: return token_len
   case "lpeek"		: return token_lpeek
+  case "mid$"		: return token_mid
   case "mousek"        	: return token_mousek
   case "mousew"        	: return token_mousew
   case "mousex"        	: return token_mousex
@@ -1094,14 +1079,19 @@ select case s
   case "peek"		: return token_peek
   case "pinread"     	: return token_pinread
   case "rdpin"	    	: return token_rdpin
+  case "right$"		: return token_right
   case "rqpin"	     	: return token_rqpin
   case "rnd"           	: return token_rnd
   case "sin"       	: return token_sin
   case "sqr"		: return token_sqr
   case "stick"       	: return token_stick
   case "strig"       	: return token_strig
+  case "str$"		: return token_str
   case "tan"		: return token_tan
+  case "val"		: return token_val
+  case "varptr"		: return token_adr
   case else		: return 0
+
 end select
 end function  
 
@@ -1979,6 +1969,8 @@ select case op
     if m=-1 then t1.result.iresult=m*val%(lparts(ct).part$): t1.result_type=result_int ' todo token_int64
     compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_integer
+    if left$(lparts(ct).part$,1)="$" then lparts(ct).part$="&h"+right$(lparts(ct).part$,len(lparts(ct).part$)-1)
+    if left$(lparts(ct).part$,1)="%" then lparts(ct).part$="&b"+right$(lparts(ct).part$,len(lparts(ct).part$)-1)
     t1.result.iresult=m*val%(lparts(ct).part$)
     t1.result_type=result_int  
     compiledline(lineptr)=t1: lineptr+=1 :ct+=1
@@ -3270,24 +3262,24 @@ end sub
 
 ' -------------------   convert a variable on the top of stack to integer
 
-sub do_converttoint
+'sub do_converttoint'
 
-dim t1 as expr_result 
-dim a1,r as integer
-t1=pop() 
-select case t1.result_type
-  case result_int: a1=t1.result.iresult : r=result_int
-  case result_uint: a1=t1.result.uresult : r=result_int
-  case result_float: a1=round(t1.result.fresult) : r=result_int
-  case result_string: a1=val(t1.result.sresult) :r=result_int
-  case result_string2: a1=val(convertstring(t1.result.uresult)) :r=result_int
-  case result_error: a1=0: r=t1.result.uresult
-  case else : a1=0 : r=1
+'dim t1 as expr_result 
+'dim a1,r as integer
+'t1=pop() 
+'select case t1.result_type
+'  case result_int: a1=t1.result.iresult : r=result_int
+'  case result_uint: a1=t1.result.uresult : r=result_int
+'  case result_float: a1=round(t1.result.fresult) : r=result_int
+'  case result_string: a1=val(t1.result.sresult) :r=result_int
+'  case result_string2: a1=val(convertstring(t1.result.uresult)) :r=result_int
+'  case result_error: a1=0: r=t1.result.uresult
+'  case else : a1=0 : r=1
 
-end select
-t1.result.iresult=a1 : t1.result_type=r : push t1 
+'end select
+'t1.result.iresult=a1 : t1.result_type=r : push t1 
 
-end sub
+'end sub
 
 function converttoint (t1 as expr_result) as integer
 
@@ -3368,6 +3360,152 @@ if numpar>1 orelse numpar=0 then print "sin: "; : printerror(39) : return
 t1=pop()
 t1.result.fresult=sin(trig_coeff*converttofloat(t1))
 t1.result_type=result_float   
+push t1  
+end sub
+
+
+sub do_mid
+
+dim t1 as expr_result
+dim numpar,arg1,arg2 as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>3  then print "mid$: "; : printerror(39) : return
+t1=pop() : arg2=converttoint(t1)
+t1=pop() : arg1=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "mid$: "; : printerror(15) : return 
+t1.result.sresult=mid$(t1.result.sresult,arg1,arg2)
+push t1  
+end sub
+
+sub do_right
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2  then print "right$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "right$: "; : printerror(15) : return 
+t1.result.sresult=right$(t1.result.sresult,arg)
+push t1  
+end sub
+
+sub do_left
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2  then print "left$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "left$: "; : printerror(15) : return 
+t1.result.sresult=left$(t1.result.sresult,arg)
+push t1  
+end sub
+
+sub do_asc
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "asc: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "asc: "; : printerror(15) : return 
+t1.result.iresult=asc(t1.result.sresult)
+t1.result_type=result_int
+push t1  
+end sub
+
+sub do_len
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "len: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "len: "; : printerror(15) : return 
+t1.result.iresult=len(t1.result.sresult)
+t1.result_type=result_int
+push t1  
+end sub
+
+sub do_chr
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "chr$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1.result.sresult=chr$(arg)
+t1.result_type=result_string
+push t1  
+end sub
+
+sub do_val
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+dim ival as integer
+dim fval as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "val: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "val: "; : printerror(15) : return 
+if left$(t1.result.sresult,1)="$" then t1.result.sresult="&h"+right$(t1.result.sresult,len(t1.result.sresult)-1)
+if left$(t1.result.sresult,1)="%" then t1.result.sresult="&b"+right$(t1.result.sresult,len(t1.result.sresult)-1)
+fval=val(t1.result.sresult)
+ival=val%(t1.result.sresult)
+if fval=ival then
+  t1.result.iresult=ival
+  t1.result_type=result_int
+else
+  if fval=0 andalso ival<>0 then
+    t1.result.iresult=ival
+    t1.result_type=result_int
+  else  
+    t1.result.fresult=fval
+    t1.result_type=result_float  
+  endif  
+endif
+  
+push t1  
+end sub
+
+
+sub do_hex
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>2 orelse numpar=0 then print "hex$: "; : printerror(39) : return
+if numpar=2 then t1=pop() : num=converttoint(t1) else num=8
+t1=pop() : arg=converttoint(t1)
+
+t1.result.sresult=hex$(arg,num)
+t1.result_type=result_string
+push t1  
+end sub
+
+sub do_bin
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>2 orelse numpar=0 then print "bin$: "; : printerror(39) : return
+if numpar=2 then t1=pop() : num=converttoint(t1) else num=0
+t1=pop() : arg=converttoint(t1)
+t1.result.sresult=bin$(arg,num)
+t1.result_type=result_string
 push t1  
 end sub
 
@@ -4340,7 +4478,7 @@ commands(token_error)=@do_error
 commands(token_fast_goto)=@do_fast_goto
 commands(token_find_goto)=@do_find_goto
 commands(token_slow_goto)=@do_slow_goto
-commands(fun_converttoint)=@do_converttoint 
+commands(fun_converttoint)=@do_nothing
 commands(token_csave)=@test_csave
 commands(token_save)=@do_save
 commands(token_load)=@do_load
@@ -4429,6 +4567,15 @@ commands(token_getnotevalue)=@do_getnotevalue
 commands(fun_getaddr)=@do_getaddr
 commands(token_inkey)=@do_inkey
 commands(token_abs)=@do_abs
+commands(token_hex)=@do_hex
+commands(token_bin)=@do_bin
+commands(token_val)=@do_val
+commands(token_chr)=@do_chr
+commands(token_asc)=@do_asc
+commands(token_left)=@do_left
+commands(token_right)=@do_right
+commands(token_mid)=@do_mid
+commands(token_len)=@do_len
 
 
 end sub
