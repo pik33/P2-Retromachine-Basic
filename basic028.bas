@@ -218,6 +218,10 @@ const token_str=161
  const token_mid=166
  const token_asc=167
  const token_len=168
+ const token_gosub=169
+ const token_return=170
+ const token_progend=171
+ const token_pop=172
 
 
 
@@ -259,9 +263,10 @@ const array_double=10+256
 const array_string=11+256
 
 ' -----------------------------max number of variables and stack depth
-const maxvars=1023       
+const maxvars=1024       
 const maxstack=512
-const maxfor=128
+const maxfor=64
+const maxgosub=64
 dim samplebuf(7,1023) as short
 dim envbuf(7,255) as ushort
 declare envbuf8 alias envbuf as ubyte(7,512)
@@ -304,6 +309,10 @@ class for_entry
   dim endval as integer
 end class  
 
+class gosub_entry
+  dim lineptr as ulong ' line that will be executed after next
+  dim cmdptr as ulong  ' command# in this line
+end class 
 
 class audiochannel
   dim freq as single
@@ -363,6 +372,7 @@ dim stringtable(maxvars) as string
 dim stringptr as integer
 dim currentdir$ as string
 dim fortable(maxfor) as for_entry
+dim gosubtable(maxgosub) as gosub_entry
 
 dim sample(255) as ubyte ' for csave
 dim block(1023) as ubyte ' for csave
@@ -370,7 +380,7 @@ dim blockptr as ulong
 dim runptr,runptr2,oldrunptr as ulong
 dim inrun as ulong
 dim runheader as ulong(5)
-dim fortop as integer
+dim fortop,gosubtop as integer
 dim free$ as string
 dim keyclick as integer
 dim housekeeper_cog as integer
@@ -976,6 +986,7 @@ select case s
   case "draw"        	: return token_draw
   case "dr."        	: return token_draw
   case "else"	     	: return token_else
+  case "end"		: return token_progend
   case "fcircle"     	: return token_fcircle
   case "fc."     	: return token_fcircle
   case "fill"        	: return token_fill
@@ -985,6 +996,7 @@ select case s
   case "f."	     	: return token_for  
   case "frame"       	: return token_frame
   case "fr."       	: return token_frame
+  case "gosub"		: return token_gosub
   case "goto"	     	: return token_fast_goto
   case "g."	     	: return token_fast_goto
   case "if"	     	: return token_if
@@ -1003,7 +1015,7 @@ select case s
   case "next"	     	: return token_next
   case "n."	     	: return token_next
   case "paper"	     	: return token_paper
-  case "p."	     	: return token_paper
+  case "pa."	     	: return token_paper
   case "pinfloat"	: return token_pinfloat
   case "pinhi"		: return token_pinhi
   case "pinlo"		: return token_pinlo
@@ -1011,15 +1023,18 @@ select case s
   case "pintoggle"	: return token_pintoggle
   case "pinwrite"    	: return token_pinwrite
   case "play"	     	: return token_play
+  case "p."	     	: return token_play
   case "plot"        	: return token_plot
   case "pl."        	: return token_plot
   case "poke"		: return token_poke
+  case "pop"		: return token_pop
   case "position"	: return token_position
   case "pos."   	: return token_position
   case "print"       	: return token_print
   case "?"       	: return token_print
   case "rad"		: return token_rad
   case "release"	: return token_release
+  case "return"		: return token_return
   case "run"	     	: return token_run
   case "save"	     	: return token_save
   case "s."	     	: return token_save
@@ -1330,7 +1345,9 @@ vars=0
   case token_dpoke	: compile_fun_2p
   case token_draw     	: err=compile_fun_2p()   
   case token_else    	: compile_else() : goto 450
+  case token_progend	: compile_nothing ' end command
   case token_fast_goto  : if linetype>0 then compile_goto() : goto 450 else printerror(25) : goto 450
+  case token_gosub      : compile_gosub() : goto 450 
   case token_fcircle  	: err=compile_fun_3p()  
   case token_fill	: err=compile_fun_4p()
   case token_font	: err=compile_fun_1p()
@@ -1356,10 +1373,12 @@ vars=0
   case token_play     	: vars=compile_fun_varp()   
   case token_plot     	: err=compile_fun_2p()   
   case token_poke	: err=compile_fun_2p()
+  case token_pop	: compile_nothing
   case token_position	: err=compile_fun_2p()
   case token_print    	: err=compile_print()  : goto 450
   case token_rad	: compile_nothing()
   case token_release	: compile_fun_1p()
+  case token_return:	: compile_nothing()
   case token_run      	: vars=compile_fun_varp()   
   case token_save    	: vars=compile_fun_varp()  
   case token_setdelay   : err=compile_fun_2p()
@@ -1769,6 +1788,23 @@ return 0
 end function
 
 
+sub do_gosub()
+' on the stack: varnum, step, endval
+
+dim t1 as expr_result
+dim i as integer
+gosubtop+=1
+if compiledline(lineptr_e+1).result_type=token_end then
+' there is token_goto after gosub, and then end. set the pointer to the start of the next line
+  gosubtable(gosubtop).lineptr=runptr
+  gosubtable(gosubtop).cmdptr=0
+else
+  gosubtable(gosubtop).lineptr=oldrunptr
+  gosubtable(gosubtop).cmdptr=lineptr_e+2
+endif
+end sub
+
+
 sub do_for()
 ' on the stack: varnum, step, endval
 
@@ -1782,16 +1818,29 @@ t1=pop() : fortable(fortop).stepval=converttoint(t1)
 t1=pop() : fortable(fortop).endval=converttoint(t1)
 if compiledline(lineptr_e).result_type=token_end then
 ' end of line after for, set the pointer to the start of the next line
-fortable(fortop).lineptr=runptr
-fortable(fortop).cmdptr=0
+  fortable(fortop).lineptr=runptr
+  fortable(fortop).cmdptr=0
 else
-fortable(fortop).lineptr=oldrunptr
-fortable(fortop).cmdptr=lineptr_e+1
+  fortable(fortop).lineptr=oldrunptr
+  fortable(fortop).cmdptr=lineptr_e+1
 'fortop=i ' to speedup next
 endif
 end sub
 
 ' now do_next todo
+
+sub do_return()
+if gosubtop>0 then
+  runptr=gosubtable(gosubtop).lineptr
+  runptr2=gosubtable(gosubtop).cmdptr
+  lineptr_e=lineptr-1
+  gosubtop -=1 
+endif   
+end sub
+
+sub do_pop()
+if gosubtop>0 then  gosubtop -=1 
+end sub
 
 sub do_next()
 
@@ -1842,12 +1891,19 @@ end function
 ' do_for: push its own pointer, varnum, step, end on the for stack. var init is already compiled before
 ' do_next: find the entry with the varnum. Add step to varnum. Compare to the end. If step>0, check >, else check <. If not end, goto forptr (how?) 
 
+function compile_gosub() as ulong
+
+compiledline(lineptr).result_type=token_gosub
+lineptr+=1
+compile_goto()
+return 0
+end function
 
 function compile_goto( ) as ulong
 
 dim gotoline, gotoptr,oldgotoptr as integer
 dim gotoheader as ulong(5)
-
+dim t3 as expr_result
 if lparts(ct).token=token_decimal andalso lparts(ct+1).token=token_end then 
 
   gotoline=val%(lparts(ct).part$) 
@@ -1874,7 +1930,8 @@ if lparts(ct).token=token_decimal andalso lparts(ct+1).token=token_end then
   endif  
   lineptr+=1
 else
-   print "We have a slow goto, todo  "
+   expr()
+   t3.result_type=token_slow_goto : t3.result.uresult=0 : compiledline(lineptr)=t3:  lineptr+=1  
 endif
 ' if not, there is a slow goto. Call converttoint to get an int value from expression, then do_slow_goto
 ' Do_slow_goto searches a line pointer list to find the linenum and pointer, then do the goto  
@@ -2326,6 +2383,11 @@ endif
   print "Loaded ";currentdir$+"/"+loadname
 end sub
 
+sub do_end
+lineptr_e=lineptr-1
+runptr=$7FFF_FFFF
+end sub
+
 '----------------- Run the program 
 
 '' line header: linenum major, linenum minor, list start, list length, prev ptr, next ptr
@@ -2356,7 +2418,7 @@ runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, t
 runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
 loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
   ''do whatever kbm.peek_latest_key()=$106 
-if runheader(5)<>$7FFF_FFFF then 
+if runptr<>$7FFF_FFFF then 
   if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
   print "Stopped at line ";runheader(0)
 endif
@@ -2662,7 +2724,7 @@ programstart=0 :runptr=0 : runptr2=0
 stackpointer=0
 lineptr=0 
 programptr=0 : stringptr=0
-lastline=0 : lastlineptr=-1 :fortop=0
+lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
 for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
 next i
@@ -2720,6 +2782,25 @@ if gotoheader(0)=gotoline then
 end sub
 
 sub do_slow_goto
+
+dim gotoline,gotoptr,oldgotoptr as integer
+dim gotoheader(5) as ulong
+dim t1 as expr_result
+
+t1=pop() : gotoline=converttoint(t1)
+gotoptr=programstart
+do
+  psram.read1(varptr(gotoheader),gotoptr,24)  : 
+  if gotoheader(0)<>$FFFFFFFF then
+    oldgotoptr=gotoptr
+    gotoptr=gotoheader(5)
+  endif
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+if gotoheader(0)=gotoline then  
+   runptr=oldgotoptr
+   lineptr_e=lineptr-1
+  if runheader(5)=$7FFF_FFFF  then runheader(5)=0 
+  endif
 end sub
 
 '----------------------- Error processing
@@ -4576,6 +4657,10 @@ commands(token_left)=@do_left
 commands(token_right)=@do_right
 commands(token_mid)=@do_mid
 commands(token_len)=@do_len
+commands(token_gosub)=@do_gosub
+commands(token_return)=@do_return
+commands(token_progend)=@do_end
+commands(token_pop)=@do_pop
 
 
 end sub
