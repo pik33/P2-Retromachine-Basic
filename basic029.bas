@@ -2422,8 +2422,7 @@ runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted 
 loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
   ''do whatever kbm.peek_latest_key()=$106 
 if runptr<>$7FFF_FFFF then 
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
-  print "Stopped at line ";runheader(0)
+    print "Stopped at line ";runheader(0)
 endif
 inrun=0
 v.setspritesize(17,8,16)

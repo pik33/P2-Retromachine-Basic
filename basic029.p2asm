@@ -11992,32 +11992,32 @@ _do_run
 	mov	COUNT_, #1
 	call	#pushregs_
 	add	objptr, ##54400
-	rdlong	arg06, objptr
-	mov	arg04, arg06
-	shl	arg04, #1
-	add	arg04, arg06
-	shl	arg04, #2
+	rdlong	arg04, objptr
+	mov	arg03, arg04
+	shl	arg03, #1
+	add	arg03, arg04
+	shl	arg03, #2
 	sub	objptr, ##1540
-	add	arg04, objptr
-	rdlong	arg05, arg04
+	add	arg03, objptr
+	rdlong	arg02, arg03
 ' numpar=compiledline(lineptr_e).result.uresult
 ' if numpar=1 then do_load ' todo also run linenum so check the param
-	cmp	arg05, #1 wz
+	cmp	arg02, #1 wz
 	sub	objptr, ##52860
  if_e	call	#_do_load
 	add	objptr, ##54404
-	rdlong	arg06, objptr
+	rdlong	arg04, objptr
 	add	objptr, ##7224
-	wrlong	arg06, objptr
+	wrlong	arg04, objptr
 	add	objptr, #4
 	wrlong	#0, objptr
 	add	objptr, #4
 	wrlong	##-1, objptr
 ' if inrun>0 then 
 	add	objptr, #4
-	rdlong	arg06, objptr
+	rdlong	arg04, objptr
 	sub	objptr, ##61640
-	cmp	arg06, #1 wc
+	cmp	arg04, #1 wc
  if_b	jmp	#LR__1000
 	add	objptr, ##61644
 	mov	arg01, objptr
@@ -12029,7 +12029,7 @@ _do_run
 	sub	objptr, ##5836
 '   psram.read1(varptr(runheader),runptr,24)  
 '   return
-	jmp	#LR__1007
+	jmp	#LR__1006
 LR__1000
 	add	objptr, ##61640
 	wrlong	#1, objptr
@@ -12050,16 +12050,16 @@ LR__1000
  if_e	add	objptr, ##61640
  if_e	wrlong	#0, objptr
  if_e	sub	objptr, ##61640
- if_e	jmp	#LR__1007
+ if_e	jmp	#LR__1006
 ' do 
 LR__1001
 '   if runptr<>oldrunptr then
 	add	objptr, ##61628
 	rdlong	local01, objptr
 	add	objptr, #8
-	rdlong	arg06, objptr
+	rdlong	arg04, objptr
 	sub	objptr, ##61636
-	cmp	local01, arg06 wz
+	cmp	local01, arg04 wz
  if_e	jmp	#LR__1002
 	add	objptr, ##61644
 	mov	arg01, objptr
@@ -12086,11 +12086,11 @@ LR__1001
 	add	objptr, ##55816
 	rdlong	local01, objptr
 	sub	objptr, #24
-	rdlong	arg03, objptr
-	sub	local01, arg03
+	rdlong	result1, objptr
+	sub	local01, result1
 	sub	objptr, ##9816
-	rdlong	arg03, objptr
-	qdiv	local01, arg03
+	rdlong	result1, objptr
+	qdiv	local01, result1
 	add	objptr, ##2584
 	getqx	local01
 	sub	local01, #3
@@ -12136,27 +12136,8 @@ LR__1004
 	rdlong	local01, objptr
 	sub	objptr, ##61628
 	cmp	local01, ##2147483647 wz
- if_e	jmp	#LR__1006
-'   if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)  : kbm.get_key ' eat ctrl-c
-	add	objptr, ##61680
-	rdlong	local01, objptr
-	sub	objptr, ##61680
-	cmp	local01, #1 wz
- if_ne	jmp	#LR__1005
-	add	objptr, ##62356
-	rdlong	arg02, objptr
-	sub	objptr, #4
-	rdlong	arg05, objptr
-	mov	arg01, #7
-	mov	arg03, ##44100
-	decod	arg04, #12
-	neg	arg06, #1
-	sub	objptr, ##56516
-	call	#_audio096_spin2_play
-	sub	objptr, ##5836
-	call	#_usbnew_spin2_get_key
-LR__1005
-'   print "Stopped at line ";runheader(0)
+ if_e	jmp	#LR__1005
+'     print "Stopped at line ";runheader(0)
 	mov	arg01, #0
 	call	#__system___getiolock_0484
 	mov	arg01, result1
@@ -12179,7 +12160,7 @@ LR__1005
 	mov	arg01, #0
 	call	#__system___getiolock_0484
 	wrlong	#0, result1
-LR__1006
+LR__1005
 	add	objptr, ##61640
 	wrlong	#0, objptr
 	sub	objptr, ##61640
@@ -12191,7 +12172,7 @@ LR__1006
 	mov	arg02, #32
 	mov	arg03, #32
 	call	#_hg010b_spin2_setspritesize
-LR__1007
+LR__1006
 	mov	ptra, fp
 	call	#popregs_
 _do_run_ret
