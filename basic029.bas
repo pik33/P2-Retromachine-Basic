@@ -267,11 +267,15 @@ const maxvars=1024
 const maxstack=512
 const maxfor=64
 const maxgosub=64
-dim samplebuf(7,1023) as short
+
+const memlo=$80000
+
+'dim samplebuf(7,1023) as short
 dim envbuf(7,255) as ushort
 declare envbuf8 alias envbuf as ubyte(7,512)
 dim notetable(11) as single
 dim notenames(11) as string
+dim noteperiods(11) as integer
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
 ''-----------------------------------------------------------------------------------------
@@ -405,7 +409,7 @@ dim do_insert as integer
 
 startpsram
 startvideo
-audiocog,base=paula.start(0,0,0)
+audiocog,base=paula.start(mbox,0,$7F700)
 waitms(50)
 dpoke base+20,16384
 usbcog=kbm.start()
@@ -482,7 +486,7 @@ if key3<>0 then
  
   if key4>0 andalso key4<127 andalso v.cursor_x<254 then 
     if do_insert then
-      for i=  v.textbuf_ptr+128*v.cursor_y+127 to v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) step -1 : pspoke i,pspeek(i-1) : next i 
+      for i=  v.textbuf_ptr+128*v.cursor_y+127 to v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2)+1 step -1 : pspoke i,pspeek(i-1) : next i 
       let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
     endif
     v.putchar(key4)
@@ -1207,8 +1211,8 @@ if header(0)<>aline then return -1
 pslpoke(lineptr2,$FFFF_FFFF) ' flag the deleted line
 
 if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  ' this is one and only line in the program
-  programstart=0 : programptr=0 : lastline=0 : lastlineptr=-1 
-  pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF : runptr=0 : runptr2=0
+  programstart=memlo : programptr=memlo : lastline=0 : lastlineptr=-1 
+  pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF : runptr=memlo : runptr2=memlo
 endif
 
 if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' this is the last, and not first, line of the program
@@ -1304,7 +1308,7 @@ end function
 sub add_line_at_end(aline) 
 
 lastline=aline: ucompiledline(4)=lastlineptr : pslpoke(lastlineptr+20,programptr) : lastlineptr=programptr : ucompiledline(5)=$7FFF_FFFF 
-if programptr=0 then ucompiledline(4)=$FFFFFFFF ' that is the first line
+if programptr=memlo then ucompiledline(4)=$FFFFFFFF ' that is the first line
 save_line
 pslpoke(programptr,$FFFFFFFF) ' write end flag ' is it eeded at all here? 
 
@@ -2473,7 +2477,7 @@ if numpar=2 then
     get #9,17,envbuf8(channel,0),256
     for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
     close #9
-                                                                    '  for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
+    envbuf(channel,255)=0                                                                   '  for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
     return
   else
     if wptr < ($80000 - 2048) then 
@@ -2481,6 +2485,7 @@ if numpar=2 then
     else
       for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i) : next i
     endif
+    envbuf(channel,255)=0
     return   
   endif
 endif  
@@ -2504,13 +2509,13 @@ if numpar=5 then    'simple adsr
   for i=(a+d) to 255 : envbuf(channel,i)=round(aa): aa=aa-dr : if aa<0.0 then aa=0.0
   next i
   envbuf(channel,255)=0
-  for i=0 to 255 : print envbuf(channel,i), : next i
+ ' for i=0 to 255 : print envbuf(channel,i), : next i
  endif
   
   
   
-
-                                                               '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
+  envbuf(channel,255)=0
+'   for i=0 to 255 : print envbuf(channel,i), : next i                                                            '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
 end sub
 
 
@@ -2559,24 +2564,23 @@ ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
 base2=base+64*channel
 skip=round(freq*3.9827219) 
-if wave <8 then 
-  lpoke base2+8,varptr(samplebuf(wave,0))+$C000_0000 
+if wave <32 then 
+  lpoke base2+8,2048*wave+$C000_0000 
 else
   lpoke base2+8,$C800_0000 
 endif
-  
 lpoke base2+16,2048
 lpoke base2+12,0
 dpoke base2+20,ivol 
 dpoke base2+22,ipan 
-if wave<8 then
+if wave<32 then
   dpoke base2+24,20 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
   dpoke base2+26,skip ' todo: use skip to make accurate sample rate
 else
   dpoke base2+24,round(1316406/freq) 
   dpoke base2+26,256
 endif 
-'dpoke base2+28,$4000_0000
+lpoke base2+28,$0000_0000
 lpoke base2+32,0 
 if env=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(env,0))
 lpoke base2+40,speed' speed
@@ -2603,6 +2607,7 @@ dim even,odd, max,spl,qqq as single
 dim t1 as expr_result
 dim s as string
 dim harm(15) as single
+dim sample as short
 
 numpar=compiledline(lineptr_e).result.uresult
 
@@ -2629,29 +2634,25 @@ if numpar=2 then
     
   if s<>"" then 
     t1=pop()
-    channel=converttoint(t1) 
+    channel=converttoint(t1) : if channel>31 then return
     close #9 : open "/sd/media/s/"+s for input as #9
     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-    get #9,17,samplebuf(channel,0),1024
+    for i=0 to 1024 : get #9,17+2*i,sample,1 : psdpoke 2048*channel+2*i, sample : next i
     close #9
                                                                        'for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
     return
   else
     if wptr < ($80000 - 2048) then 
-      for i=0 to 1023: samplebuf(channel,i)=dpeek(wptr+2*i): next i
+      for i=0 to 1023: psdpoke 2048*channel+2*i,dpeek(wptr+2*i): next i
     else
-      for i=0 to 1023 : samplebuf(channel,i)=psdpeek(wptr+2*i) : next i
+      for i=0 to 1023 : psdpoke 2048*channel+2*i,psdpeek(wptr+2*i) : next i
     endif
     return 
   endif
   
-  par=converttoint(t1)  : print par
-  t1=pop()
-  channel=converttoint(t1)  
-  if par=0 then for i=0 to 1023: samplebuf(channel,i)=round(32600*sin(1.0/512*3.14159265359*i)) : next i
-                                                                           '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
+                                                                        '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
   return
-  ' todo caser and generate sid waves
+ 
 endif
 for i=0 to 15 : harm(i)=0: next i  
 for i=numpar to 2 step -1 
@@ -2659,8 +2660,7 @@ for i=numpar to 2 step -1
   harm(i-2)=converttofloat(t1) 
 next i
 t1=pop()
-channel=converttoint(t1) : print channel
-for j=0 to 1023: samplebuf(channel, i) =0 : next j
+channel=converttoint(t1) : : if channel>31 then return
 max=0
 if harm(0)<0 then
   even=abs(harm(0))
@@ -2680,7 +2680,7 @@ if harm(0)>=0 then ' synthesize with harmonics
   for i=0 to 1023
     spl=0
     for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j ':' print spl
-    samplebuf(channel,i)=round(spl)
+    psdpoke 2048*channel+2*i, round(spl)
   next i  
 endif 
 
@@ -2704,7 +2704,7 @@ if numpar=2 then t1=pop() : endline=converttoint(t1) : t1=pop() : startline=conv
 
 
 print
-let listptr=programstart
+let listptr=programstart 
 do 
   psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
   
@@ -2722,12 +2722,12 @@ end sub
 
 sub do_new
 
-pslpoke(0,$FFFFFFFF)
+pslpoke(memlo,$FFFFFFFF)
 varnum=0
-programstart=0 :runptr=0 : runptr2=0
+programstart=memlo :runptr=memlo : runptr2=memlo
 stackpointer=0
 lineptr=0 
-programptr=0 : stringptr=0
+programptr=memlo : stringptr=0
 lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
 for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
@@ -3882,7 +3882,7 @@ end function
 '' ----------------------------- Clear the screen
 
 sub do_cls
-cls(ink,paper): plot_color=ink: print
+cls(ink,paper): plot_color=ink
 end sub
 
 '' ----------------------------- Set a color # from the palette to plot/draw
@@ -4676,14 +4676,28 @@ dim i,j as integer
 dim a as single
 'v.cls(147,154)
 dim k as single : k=1.0
-for i=0 to 1023 : samplebuf(0,i)=round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
-for i=0 to 511  : samplebuf(1,i)= -32512+127*i: samplebuf(1,512+i)=-samplebuf(1,i) : next i   		' 1 : triangle 
-for i=0 to 1023 : samplebuf(2,i)= -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
-for i=0 to 127  : samplebuf(3,i)= -32600 : next i : for i=128 to 1023 : samplebuf(3,i) =32600 : next i 	' 3 pulse 12.5%
-for i=0 to 511  : samplebuf(4,i)= -32600 : next i : for i=512 to 1023 : samplebuf(4,i) =32600 : next i 	' 4 square
-for i=0 to 255  : samplebuf(5,i)= -32600 : next i : for i=256 to 1023 : samplebuf(5,i) =32600 : next i 	' 5 pulse 25%
-for i=0 to 1023 : samplebuf(6,i)= dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
-for i=0 to 1023 : samplebuf(7,i)= dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
+'for i=0 to 1023 : samplebuf(0,i)=round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
+'for i=0 to 511  : samplebuf(1,i)= -32512+127*i: samplebuf(1,512+i)=-samplebuf(1,i) : next i   		' 1 : triangle 
+'for i=0 to 1023 : samplebuf(2,i)= -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
+'for i=0 to 127  : samplebuf(3,i)= -32600 : next i : for i=128 to 1023 : samplebuf(3,i) =32600 : next i 	' 3 pulse 12.5%
+'for i=0 to 511  : samplebuf(4,i)= -32600 : next i : for i=512 to 1023 : samplebuf(4,i) =32600 : next i 	' 4 square
+'for i=0 to 255  : samplebuf(5,i)= -32600 : next i : for i=256 to 1023 : samplebuf(5,i) =32600 : next i 	' 5 pulse 25%
+'for i=0 to 1023 : samplebuf(6,i)= dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
+'for i=0 to 1023 : samplebuf(7,i)= dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
+for i=0 to 1023 : psdpoke       2*i,round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
+for i=0 to 511  : psdpoke  2048+2*i, -32512+127*i: psdpoke 2048+2*(512+i),32512-127*i : next i   		' 1 : triangle 
+for i=0 to 1023 : psdpoke  4096+2*i, -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
+for i=0 to 127  : psdpoke  6144+2*i, -32600 : next i : for i=128 to 1023 :  psdpoke 6144+2*i, 32600 : next i 	' 3 pulse 12.5%
+                  psdpoke  6144,0 : psdpoke 6144+128,0
+for i=0 to 511  : psdpoke  8192+2*i, -32600 : next i : for i=512 to 1023 :  psdpoke 8192+2*i, 32600 : next i 	' 4 square
+                  psdpoke  8192,0 : psdpoke 8192+512,0
+for i=0 to 255  : psdpoke 10240+2*i, -32600 : next i : for i=256 to 1023 : psdpoke 10240+2*i, 32600 : next i 	' 5 pulse 25%
+                  psdpoke 10240,0 : psdpoke 10240+256,0
+for i=12288 to 61436 step 4 : pslpoke i,0 : next i 
+for i=0 to 1023 : psdpoke 61440+2*i, dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
+for i=0 to 1023 : psdpoke 63488+2*i, dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
+
+
 for i=0 to 255 : envbuf(0,i)=65280-256*i : next i							' instant attack, linear release	
 for i=0 to 255 : envbuf(1,i)=round(65280.0*k) : k=k*0.975 :  next i : envbuf(1,255)=0			' instant attack, log release
 for i=0 to 254 : envbuf(2,i)=65280 : next i : envbuf(2,255)=0						' instant attack, instant release
@@ -4710,6 +4724,8 @@ for i=0 to 7
  ' lpoke base+64*i+28,$80000100 : waitms(2) : lpoke base+28,$40000000  
 next i
 a=6.875 : for i=1 to 3 : a=a*(2.0^(1.0/12.0)) : next i : for i=0 to 11 : notetable(i) = a : a=a*(2.0^(1.0/12.0)) : next i
+noteperiods(0)=424 : noteperiods(1)=400 : noteperiods(2)=377 : noteperiods(3)=356 :  noteperiods(4)=336 :  noteperiods(5)=317
+noteperiods(6)=300 : noteperiods(7)=283 : noteperiods(8)=267 : noteperiods(9)=252 : noteperiods(10)=238 : noteperiods(11)=224
  suspoints(7)=128	
  suspoints(6)=128	
 end sub
@@ -4795,7 +4811,7 @@ mbox=psram.getMailbox(0)
 end sub
 
 sub startaudio
-audiocog,base=paula.start(mbox,$75A00,$7A400)
+audiocog,base=paula.start(mbox,0,$7F700)
 end sub 
 
 sub stopaudio

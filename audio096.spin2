@@ -78,7 +78,7 @@ mailboxaddr:=mbox
 scope_ptr:=scope
 cache_ptr:=cache
 base:=@channel1[0]
-
+long[$40]:=mbox
 repeat iii from 0 to 7
   long[base+64*iii]:=0
   long[base+64*iii+4]:=0
@@ -93,6 +93,7 @@ repeat iii from 0 to 7
   long[base+64*iii+36]:=0
   long[base+64*iii+40]:=0
   long[base+64*iii+44]:=0
+  long[base+64*iii+28]:=0
   
 cog:=coginit(16,@audio,@mailboxaddr)
 waitms(100)
@@ -113,6 +114,7 @@ else
 word[base2+20]:=vol
 word[base2+24]:= 1316406/splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+long[base2+28]:=$40000000    
 long[base2+32]:=0    
 long[base2+36]:=0    
 long[base2+40]:=0    
@@ -129,7 +131,7 @@ long[base2+16]:= len+1
 word[base2+20]:=vol
 word[base2+24]:= 1316406 /splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-long[base2+28]:=$40000000
+'long[base2+28]:=$40000000
 repeat 
   i:=long[base2]
 until (i >>8) >=len
@@ -149,7 +151,7 @@ else
 word[base2+20]:=vol
 word[base2+24]:= 1316406 /splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-long[base2+28]:=$40000000
+'long[base2+28]:=$40000000
 
     
 pub stop(channel) 'silence it
@@ -169,7 +171,7 @@ audio       org     0
             rdlong  mailbox2, ptra++     ' get start address of all mailboxes
             rdlong  scbase, ptra++       ' get start address of scope buffer
             rdlong  hubptr, ptra++       ' get start address of PSRAM cache
-
+ wrlong mailbox2,#$40
             cogid   pa                   ' compute cogid
             mul     pa, #12              ' and mailbox spacing
             add     mailbox2, pa         ' add offset to find this COG's mailbox
