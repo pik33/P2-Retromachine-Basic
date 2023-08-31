@@ -30,7 +30,7 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.29"
+const ver$="P2 Retromachine BASIC version 0.29b"
 const ver=29
 '' ------------------------------- Keyboard constants
 
@@ -222,6 +222,7 @@ const token_str=161
  const token_return=170
  const token_progend=171
  const token_pop=172
+ const token_log=173
 
 
 
@@ -1092,6 +1093,7 @@ select case s
   case "inkey$"		: return token_inkey
   case "left$"		: return token_left
   case "len"		: return token_len
+  case "log"		: return token_log
   case "lpeek"		: return token_lpeek
   case "mid$"		: return token_mid
   case "mousek"        	: return token_mousek
@@ -2535,11 +2537,11 @@ sub do_play
 
 'samplefreq 1 316 406.25
 
-dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus as integer
+dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period as integer
 dim params(8) as single
 dim t1 as expr_result
 dim speed_coeff, freq,pan ,vol,slen as single
-speed_coeff=815.6614449376854599406528189911
+speed_coeff=815.6614449376854599406528189911*(95.0/256.0)
 
 for i=0 to 8 : params(i)=-2.0 : next i
 'params(0)=0: params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0 : 
@@ -2559,11 +2561,19 @@ if params(2)<0 orelse params(2)>10000.0 then delay=channels(channel).delay else 
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
 
+
+lfreq=int(log(freq)/log(2))
+skip=round(2^(lfreq+5))
+if skip>32768 then i=skip/32768: skip=32768 else i=1
+period=round((3546895/freq)/(i*(2^(13-lfreq))))
+ 
+  
+'print period,skip
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
 base2=base+64*channel
-skip=round(freq*3.9827219) 
+'skip=round(freq*3.9827219) 
 if wave <32 then 
   lpoke base2+8,2048*wave+$C000_0000 
 else
@@ -2574,10 +2584,10 @@ lpoke base2+12,0
 dpoke base2+20,ivol 
 dpoke base2+22,ipan 
 if wave<32 then
-  dpoke base2+24,20 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
+  dpoke base2+24,period 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
   dpoke base2+26,skip ' todo: use skip to make accurate sample rate
 else
-  dpoke base2+24,round(1316406/freq) 
+  dpoke base2+24,round(3546895/freq) 
   dpoke base2+26,256
 endif 
 lpoke base2+28,$0000_0000
@@ -3740,7 +3750,28 @@ push t1
  
 end sub
 
+sub do_log
 
+dim t1  as expr_result
+dim numpar as ulong
+dim base as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=0 orelse numpar>2 then print "log: "; : printerror(39) : return
+
+if numpar=2 then 
+  t1=pop()
+  base=log(converttofloat(t1))
+else
+  base=1.0
+endif
+t1=pop()
+t1.result.fresult=log(converttofloat(t1))/base
+t1.result_type=result_float
+push t1
+
+ 
+end sub
 
 sub do_defsprite
 dim t1,t2,t3,t4,t5 as expr_result 
@@ -4665,6 +4696,7 @@ commands(token_gosub)=@do_gosub
 commands(token_return)=@do_return
 commands(token_progend)=@do_end
 commands(token_pop)=@do_pop
+commands(token_log)=@do_log
 
 
 end sub
@@ -4688,11 +4720,8 @@ for i=0 to 1023 : psdpoke       2*i,round(32600*sin(i*3.1415926535/512.0)) : nex
 for i=0 to 511  : psdpoke  2048+2*i, -32512+127*i: psdpoke 2048+2*(512+i),32512-127*i : next i   		' 1 : triangle 
 for i=0 to 1023 : psdpoke  4096+2*i, -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
 for i=0 to 127  : psdpoke  6144+2*i, -32600 : next i : for i=128 to 1023 :  psdpoke 6144+2*i, 32600 : next i 	' 3 pulse 12.5%
-                  psdpoke  6144,0 : psdpoke 6144+128,0
 for i=0 to 511  : psdpoke  8192+2*i, -32600 : next i : for i=512 to 1023 :  psdpoke 8192+2*i, 32600 : next i 	' 4 square
-                  psdpoke  8192,0 : psdpoke 8192+512,0
 for i=0 to 255  : psdpoke 10240+2*i, -32600 : next i : for i=256 to 1023 : psdpoke 10240+2*i, 32600 : next i 	' 5 pulse 25%
-                  psdpoke 10240,0 : psdpoke 10240+256,0
 for i=12288 to 61436 step 4 : pslpoke i,0 : next i 
 for i=0 to 1023 : psdpoke 61440+2*i, dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
 for i=0 to 1023 : psdpoke 63488+2*i, dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
