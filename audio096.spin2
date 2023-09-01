@@ -129,7 +129,7 @@ long[base2+8]:=sample+$40000000
 long[base2+12]:= len
 long[base2+16]:= len+1
 word[base2+20]:=vol
-word[base2+24]:= 1316406 /splfreq 
+word[base2+24]:= 3546895/splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
 'long[base2+28]:=$40000000
 repeat 
@@ -149,7 +149,7 @@ else
   long[base2+12]:= len
   long[base2+16]:= len+1
 word[base2+20]:=vol
-word[base2+24]:= 1316406 /splfreq 
+word[base2+24]:= 3546895 /splfreq 
 word[base2+26]:=256 ' todo: use skip to make accurate sample rate
 'long[base2+28]:=$40000000
 

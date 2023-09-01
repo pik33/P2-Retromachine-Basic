@@ -10,7 +10,7 @@ const HEAPSIZE=192000
 #define PSRAM16
 
 #ifdef PSRAM16
-const _clkfreq = 337000000
+const _clkfreq = 340500000
 dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
 #endif
@@ -208,6 +208,7 @@ const token_fre=156
 const token_inkey=157
 const token_abs=158
 
+
  const token_chr=159
 const token_val=160
 const token_str=161
@@ -224,7 +225,11 @@ const token_str=161
  const token_pop=172
  const token_log=173
 
-
+const token_changefreq=174
+const token_changevol=175
+const token_changewave=176
+const token_changepan=177
+const token_shutup=178
 
 
 
@@ -974,6 +979,14 @@ select case s
   case "box"         	: return token_box
   case "brun"	     	: return token_brun
   case "br."	     	: return token_brun
+  case "changefreq"	: return token_changefreq
+  case "cf."		: return token_changefreq
+  case "changepan"	: return token_changepan
+  case "cp."		: return token_changepan
+  case "changevol"	: return token_changevol
+  case "cv."		: return token_changevol
+  case "changewave"	: return token_changewave
+  case "cw."		: return token_changewave
   case "circle"      	: return token_circle
   case "ci."      	: return token_circle
   case "click"	     	: return token_click
@@ -1047,16 +1060,26 @@ select case s
   case "save"	     	: return token_save
   case "s."	     	: return token_save
   case "setdelay"	: return token_setdelay 
+  case "sd."		: return token_setdelay 
   case "setenv"		: return token_setenv
+  case "se."		: return token_setenv
   case "setlen"		: return token_setlen  
+  case "sl."		: return token_setlen  
   case "setpan"		: return token_setpan
+  case "sp"		: return token_setpan
   case "setsustain"	: return token_setsustain
+  case "ss."		: return token_setsustain
   case "setvol" 	: return token_setvol
+  case "sv." 		: return token_setvol
   case "setwave"	: return token_setwave
+  case "sw."		: return token_setwave
+  case "setwav"	        : return token_setwave
+  case "shutup"		: return token_shutup
+  case "sh."		: return token_shutup
   case "sound"	     	: return token_play 
   case "so."	     	: return token_play 
   case "sprite"	     	: return token_sprite  
-  case "sp."	     	: return token_sprite  
+  case "spr."	     	: return token_sprite  
   case "then"	     	: return token_then
   case "waitms"	     	: return token_waitms
   case "waitclock"   	: return token_waitclock
@@ -1344,6 +1367,10 @@ vars=0
   case token_cls      	: compile_nothing()                    'no params, do nothing, only add a command to the line, but case needs something to do after 
   case token_color    	: err=compile_fun_1p()  
   case token_csave    	: vars=compile_fun_varp()  
+  case token_changefreq	: vars=compile_fun_varp()  
+  case token_changewave	: vars=compile_fun_varp()  
+  case token_changevol 	: vars=compile_fun_varp()  
+  case token_changepan  : vars=compile_fun_varp()  
   case token_cursor	: err=compile_fun_1p()
   case token_defenv     : vars=compile_fun_varp()   
   case token_defsnd     : vars=compile_fun_varp()   
@@ -1397,6 +1424,7 @@ vars=0
   case token_setsustain	: err=compile_fun_2p()
   case token_setvol 	: err=compile_fun_2p()
   case token_setwave 	: err=compile_fun_2p()
+  case token_shutup	: vars=compile_fun_varp()
   case token_sprite	: err=compile_fun_3p()
   case token_waitclock  : compile_nothing()
   case token_waitms    	: err=compile_fun_1p()
@@ -1414,7 +1442,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
-'  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+ '  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -2220,22 +2248,22 @@ sub csave_block(address as ulong)
 ' we enter it at the state of playing 1 kHz header tone
 
 for i=0 to 63 step 2
-  do: loop until lpeek(base+32*7)>32768
+  do: loop until lpeek(base+64*7)>32768
   q=lpeek(address+4*i)
      for bit=0 to 31
       if (q and (1 shl bit)) then sample(4*bit)=127: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=128 else sample(4*bit)=128: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=127
     next bit  
-  do: loop until lpeek(base+32*7)<32768
+  do: loop until lpeek(base+64*7)<32768
   q=lpeek(address+4+4*i)
      for bit=0 to 31
       if (q and (1 shl bit)) then sample(128+4*bit)=127: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=128 else sample(128+4*bit)=128: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=127
     next bit  
 next i
-do: loop until lpeek(base+32*7)>32768
+do: loop until lpeek(base+64*7)>32768
 for i=0 to 127: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
 next i
 
-do: loop until lpeek(base+32*7)<32768
+do: loop until lpeek(base+64*7)<32768
 for i=128 to 255: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
 next i
 end sub
@@ -2291,15 +2319,17 @@ csave_addtoblock($72,0): csave_addtoblock($62,0): csave_addtoblock($73,0): csave
 
 saveptr=programstart
 do
+
   psram.read1(varptr(header(0)),saveptr,24)
   psram.read1(varptr(linebuf(0)),header(2),header(3))  
   csave_addtoblock(header(3),0) ' that's always <255
-  for i=0 to header(3)-1: csave_addtoblock(linebuf(i),0)    :next i
+  for i=0 to header(3)-1: csave_addtoblock(linebuf(i),0)  :next i
   saveptr=header(5)
 loop until header(5)=$7FFFFFFF
+
 csave_addtoblock(0,1)
-'waitms(500)
-dpoke base+7*32+20,0
+
+dpoke base+7*64+20,0
 end sub
 
 ' ----------------- Save the program
@@ -2551,7 +2581,7 @@ for i=numpar to 1 step -1
   t1=pop() 
   params(i-1)=converttofloat(t1) 
 next i
-if params(0)<0 then channel=0 else channel=round(params(0))
+if params(0)<0 then channel=0 else channel=round(params(0)) mod 8
 if params(1)<0 then freq=channels(channel).freq else freq=params(1) : channels(channel).freq=freq
 if params(3)<0 orelse params(3)>16.384 then vol=channels(channel).vol else vol=params(3) : channels(channel).vol=vol
 if params(4)<0 orelse params(4)>8.0 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
@@ -2600,6 +2630,77 @@ if delay>0 then waitms(delay) ' : print "wait "; round(params(6)) : l
 'lpoke bASE+7*64+20,0
 'do: position(0,0): print dpeek(base+4),dpeek(base+4+64),dpeek(base+4+128),dpeek(base+4+192),dpeek(base+4+256),dpeek(base+4+320)," ",lpeek(base+4+384);"           ",dpeek(base+4+448) : loop
 end sub
+
+sub do_changevol
+dim t1 as expr_result
+dim channel,vol as integer
+t1=pop()
+vol=round(converttofloat(t1)*1000) mod 16384
+t1=pop()
+channel=converttoint(t1) mod 8
+dpoke base+64*channel+20,vol
+end sub
+
+sub do_changepan
+dim t1 as expr_result
+dim channel,pan as integer
+t1=pop()
+pan=8192+round(8192*converttofloat(t1)) 
+if pan<0 then pan=0
+if pan>16384 then pan=16384
+t1=pop()
+channel=converttoint(t1) mod 8
+dpoke base+64*channel+22,pan
+end sub
+
+sub do_changefreq
+dim t1 as expr_result
+dim channel,lfreq,skip,i,period as integer
+dim ps as ulong
+dim freq as single
+t1=pop()
+
+freq=converttofloat(t1)
+lfreq=int(log(freq)/log(2))
+skip=round(2^(lfreq+5))
+if skip>32768 then i=skip/32768: skip=32768 else i=1
+period=round((3546895/freq)/(i*(2^(13-lfreq))))
+t1=pop()
+channel=converttoint(t1) mod 8
+ps=skip shl 16+period
+lpoke base+64*channel+24,ps
+end sub
+
+sub do_changewav
+dim t1 as expr_result
+dim channel,wave as integer
+t1=pop()
+wave=converttoint(t1)
+if wave<0 then wave=0
+t1=pop()
+channel=converttoint(t1) mod 8
+if wave <32 then 
+  lpoke base+64*channel+8,2048*wave+$C000_0000 
+else
+  lpoke base+64*channel+8,$C800_0000 
+endif
+end sub
+
+
+sub do_shutup
+dim t1 as expr_result
+dim channel,i,numpar as integer
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=0 then
+  for i=0 to 7 : dpoke base+64*i+20,0 : next i
+else   
+  t1=pop()
+  channel=converttoint(t1) mod 8
+  dpoke base+64*channel+20,0
+endif  
+end sub
+
 
 sub do_release
 
@@ -2733,7 +2834,7 @@ end sub
 sub do_new
 
 pslpoke(memlo,$FFFFFFFF)
-varnum=0
+varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: next i
 programstart=memlo :runptr=memlo : runptr2=memlo
 stackpointer=0
 lineptr=0 
@@ -2850,11 +2951,9 @@ dim varnum,i,numpar,arrptr,arrtype,esize,arridx as ulong
 dim arrid as ulong(2)
 
 varnum=compiledline(lineptr_e).result.uresult ' numpar is in twowords(1), pop numpar 
-
 if variables(varnum).vartype<array_no_type then 
   t1=pop() 
-'print "In do_assign value to assign=";t1.result.uresult, "type to assign=";t1.result_type  
-   variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type 
+  variables(varnum).value=t1.result : variables(varnum).vartype=t1.result_type 
   if variables(varnum).vartype<>result_string2 then return
   variables(varnum).value.sresult=convertstring(variables(varnum).value.uresult)
   variables(varnum).vartype=result_string
@@ -2889,7 +2988,7 @@ select case arrtype
       case array_float		: pslpoke(arridx,t1.result.uresult)
       case array_double         : pslpoke(arridx,t1.result.uresult)
       case array_string	        : pslpoke(arridx,t1.result.uresult)
-      case else		: printerror(47) : return
+      case else		: printerror(50) : return
     end select
  
 
@@ -4697,6 +4796,11 @@ commands(token_return)=@do_return
 commands(token_progend)=@do_end
 commands(token_pop)=@do_pop
 commands(token_log)=@do_log
+commands(token_changevol)=@do_changevol
+commands(token_changewave)=@do_changewav
+commands(token_changepan)=@do_changepan
+commands(token_changefreq)=@do_changefreq
+commands(token_shutup)=@do_shutup
 
 
 end sub
@@ -4824,6 +4928,7 @@ errors$(46)="Variable name expected"
 errors$(47)="Type name expected"
 errors$(48)="Type not supported yet"
 errors$(49)="Array index out of range"
+errors$(50)="Bad type while assigning to array"
 
 end sub
         
