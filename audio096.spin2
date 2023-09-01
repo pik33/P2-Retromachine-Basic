@@ -178,10 +178,10 @@ audio       org     0
             mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
 
             mov     ptrb,#0              ' A tail pointer for the buffer
-            wrpin   dac,#left            ' Noise dither DACs at clk/95
-            wxpin   #95,#left       	 ' Set initial DACs sample rate. It is now controlled via a register by the main program
-            wrpin   dac,#right
-            wxpin   #95,#right    
+            wrpin   dac2,#left            ' Noise dither DACs at clk/95
+            wxpin   #256,#left       	 ' Set initial DACs sample rate. It is now controlled via a register by the main program
+            wrpin   dac2,#right
+            wxpin   #256,#right    
             dirh    #left addpins 1
             setse1  #%001<<6 + left      ' Set the event - DAC empty
             mov     ijmp1,#isr1          ' Init the interrupt
@@ -375,10 +375,14 @@ p403        setq    #1                         	' write new pointer and sample v
             cmp     dt0,#0 wz                ' now push dt0 samples to the buffer
     if_z    jmp     #loop1
             mov     qq,dt0
-  
-p301        alts    ptrb,#511                ' checking if the buffer is full - Wuerfel_21's magic stuff
+
+    
+            
+p301        rol     dropper,#1 wc
+    if_nc   jmp     #p399
+p398        alts    ptrb,#511                ' checking if the buffer is full - Wuerfel_21's magic stuff
             cmpr    front, #0-0 wcz
-    if_e    jmp     #p301    
+    if_e    jmp     #p398   
 		
 	    cmp     scbase,#0 wz
     if_z    jmp     #p302	   
@@ -393,7 +397,7 @@ p301        alts    ptrb,#511                ' checking if the buffer is full - 
 			    
 p302        wrlut   oldsample, front        ' if there is a free slot, put the sample into the buffer
             incmod  front, ##511
-            djnz    qq,#p301
+p399        djnz    qq,#p301
             
             jmp     #loop            'loop
 
@@ -574,6 +578,8 @@ envlo long 0
 envs1 long 0
 envs2 long 0
 noise0 long 0
+dropper long %10010010_10010010_10010010_10010010
+'dropper long %11111111_11111111_11111111_11111110
 '-----------------------------------------------------------------------------------------
 '------ PASM driver ends here ------------------------------------------------------------
 '----------------------------------------------------------------------------------------- 
