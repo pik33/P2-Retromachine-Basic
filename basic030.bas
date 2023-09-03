@@ -395,8 +395,8 @@ dim lineptr_e as integer
 dim programstart as ulong
 dim lastline as ulong
 dim lastlineptr as ulong
-dim stringtable(maxvars) as string
-dim stringptr as integer
+'dim stringtable(maxvars) as string
+'dim stringptr as integer
 dim currentdir$ as string
 dim fortable(maxfor) as for_entry
 dim gosubtable(maxgosub) as gosub_entry
@@ -554,7 +554,7 @@ if key3<>0 then
   if key4=74 then v.setcursorx(editor_spaces*2)													' home
   if key4=75 then v.setcursory(0)														' pgup
   if key4=78 then v.setcursory(36) 														' pgdn, todo: parameter instead 36
-  if key4=76 then 																'del
+  if key4=76 then 																' del
     for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
     let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
   endif
@@ -654,70 +654,67 @@ end sub
 
 sub interpret
  
-dim i,j,k,q 
+dim i,j,k,q,d,b1,b2,b3,addptr,dot as integer 
 dim result as expr_result
 dim etype as integer
 dim separators(125)
 dim note_val as single
 dim err as integer
+dim c$,p$,s1$,s2$,lp$ as string
 
-' -------------------------    Pass 1: Split the line to parts, strip unneded case, lowercase parts, detect and concatenate strings
+' -------------------------    Pass 1: Split the line to parts, strip unneded spaces, lowercase parts, detect and concatenate strings
 
-fullline$=trim$(line$): cont=-2  : linenum=0 : lineptr=0 : err=0
+fullline$=trim$(line$): cont=-1  : linenum=0 : lineptr=0 : err=0
 
-108 for i=0 to 125: separators(i)=0 :next i
+108 
+for i=0 to 125: separators(i)=0 :next i
 for i=0 to 125: lparts(i).part$="": lparts(i).token=0: next i
 
 ' 1a : extract the first command, split the line to first command and the rest
 
 line$=trim$(line$):let d$="" : let l=len(line$) 
-if l=0 then goto 101
-let d=0
-' before we split the line, we have to find colons that are inside a string,,,,
+if l=0 then goto 101					' empty line,  nothing to do except print "ready"
+d=0							' before we split the line, we have to find colons that are inside a string, 
 for i=1 to len(line$)
-
-  if mid$(line$,i,1)="""" andalso d=0 then 
-    let d=1
+  if mid$(line$,i,1)="""" andalso d=0 then 		' they are inside a string if there is an odd number of " before :
+    d=1
   else if mid$(line$,i,1)="""" andalso d=1 then 
-    let d=0
+    d=0
   endif
 lparts(i).token=d  
- next i 
-i=1: do until (mid$(line$,i,1)=":" andalso lparts(i).token=0)  orelse i>=l : i=i+1 : loop
+next i 
+i=1: do until (mid$(line$,i,1)=":" andalso lparts(i).token=0)  orelse i>=l : i=i+1 : loop 		' find the first : that is not in a string
+if i<l then let rest$=trim$(right$(line$,len(line$)-i)):line$=trim$(left$(line$,i-1)) else rest$="" 	' and separate the part of the line before the first : from the rest
 
-'let d=instr(1,line$,":"): if d>0 andalso d<len(line$) andalso lparts(d).token=0  then let rest$=trim$(right$(line$,len(line$)-d)):line$=trim$(left$(line$,d-1)) else rest$=""  
-if i<l then let rest$=trim$(right$(line$,len(line$)-i)):line$=trim$(left$(line$,i-1)) else rest$="" 
-'print "line$=";line$
-'print "rest$=";rest$
-
-
-if cont=-2 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not last part
-if cont=-2 andalso rest$="" then cont=3 : goto 107		' this is the first AND last part
-if cont=4 andalso rest$<>"" then cont=1 : goto 107		' this is not the first and not the last part
-if cont=4 andalso rest$="" then cont=2 : goto 107		' this is the last, and not the first, part
+if cont=-1 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not the last part
+if cont=-1 andalso rest$= "" then cont=3 : goto 107		' this is the first AND the last part
+if cont=4  andalso rest$<>"" then cont=1 : goto 107		' this is not the first and not the last part
+if cont=4  andalso rest$= "" then cont=2 : goto 107		' this is the last, and not the first, part
 
 ' 1b: find separators
 
 107
 separators(0)=0
-i=0: j=1 : do: i+=1 : let c$=mid$(line$,i,1) 
-if isseparator(c$) then separators(j)=i: j+=1 
-loop until i>l:separators(j)=i
+i=0: j=1
+do: 
+  i+=1 : c$=mid$(line$,i,1) : if isseparator(c$) then separators(j)=i: j+=1 
+loop until i>l
+separators(j)=i
 
 ' 1c : split the command to parts
 
 let k=0
 for i=0 to j-1 
-  let p1=separators(i): let p2=separators(i+1)' : print p1,p2
-  if p1>0 then let p$=mid$(line$,p1,1):  if   p$<>"" then lparts(k).part$=p$ : k+=1 
-  let p$=mid$(line$,p1+1,p2-p1-1)  : if   p$<>"" then lparts(k).part$=p$ : k+=1 
+  let p1=separators(i) : let p2=separators(i+1)' : print p1,p2
+  if p1>0 then let p$=mid$(line$,p1,1) : if p$<>"" then lparts(k).part$=p$ : k+=1 
+  p$=mid$(line$,p1+1,p2-p1-1) : if p$<>"" then lparts(k).part$=p$ : k+=1 
 next i
 
-' first part has to be a line number, if not, add 0 
+' 1d  : first part has to have a line number, if not, add 0 for the immediate line
 
 if (cont=0 orelse cont=3) andalso (not isdec(lparts(0).part$))  then for i=k to 1 step -1: lparts(i)=lparts(i-1) : next i: lparts(0).part$="0" : k+=1
 
-' 1d : find strings
+' 1e : find strings
 
 i=0
 do
@@ -726,31 +723,34 @@ do
   if p$<>"""" then k+=1:i+=1
 109 loop until i>=k
 
-' 1e : concatenate strings if "" detected between
+' 1f : concatenate strings if "" detected between
  
-i=0 : do
- if right$(lparts(i).part$,1)="""" andalso left$(lparts(i+1).part$,1)=""""  then 
-   lparts(i).part$=lparts(i).part$+right$(lparts(i+1).part$,len(lparts(i+1).part$)-1)
-   for j=i+1 to k: lparts(j)=lparts(j+1): next j  
-   i-=1 : k-=1 ' do not move i if concatenated
- endif
- i+=1 : loop until i>=k 
+i=0
+do
+  if right$(lparts(i).part$,1)="""" andalso left$(lparts(i+1).part$,1)=""""  then 
+    lparts(i).part$=lparts(i).part$+right$(lparts(i+1).part$,len(lparts(i+1).part$)-1)
+    for j=i+1 to k: lparts(j)=lparts(j+1): next j  
+    i-=1 : k-=1 ' do not move i if concatenated
+  endif
+  i+=1 
+loop until i>=k 
  
-' 1e2: concatenate >=, <=, ++, --, +=, *=, -=, /=, ^=, <>
+' 1g: concatenate >=, <=, ++, --, +=, *=, -=, /=, ^=, <>
  
-i=0 : do
-  let s1$=lparts(i).part$ : let s2$=lparts(i+1).part$
+i=0 
+do
+  s1$=lparts(i).part$ : s2$=lparts(i+1).part$
   if ((s1$=">" orelse s1$="<" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
     lparts(i).part$=s1$+s2$
     for j=i+1 to k : lparts(j)=lparts(j+1) : next j
-   i-=1 : k-=1 ' do not move i if concatenated
- endif
- i+=1 : loop until i>=k  
+    i-=1 : k-=1 	' do not move i if concatenated
+  endif
+  i+=1 
+loop until i>=k  
  
-' 1f : now remove parts that are spaces
+' 1h : now remove parts that are spaces
 
 for i=0 to k: lparts(i).part$=trim$(lparts(i).part$): next i
-
 i=0
 do 
   if len(lparts(i).part$)=0 then 
@@ -760,69 +760,68 @@ do
       if i>0 then i-=1 
     endif  
   endif
- i+=1: loop until i>k-1
+  i+=1
+loop until i>k-1
 
-' 1g: lowercase all that is not a string
+' 1i: lowercase all that is not a string
 
 for j=0 to k-1
   if left$(lparts(j).part$,1)<>"""" orelse right$(lparts(j).part$,1)<>"""" then lparts(j).part$=lcase$(lparts(j).part$) 
 next j
 
-'                                                         for i=0 to k-1 : print lparts(i).part$,: next i : print
-
-for i=0 to k: lparts(i).token=-1: next i
-
 '-------------------------------------------------------- Pass 2: Tokenize the line
 
-if len(lparts(0).part$)=0 then goto 101				' empty line, nothing to do
+for i=0 to k: lparts(i).token=-1: next i					' initialize all tokens to -1=invalid
 
-
-if isdec(lparts(0).part$) then let addptr=1 else let addptr=0
-let lp$=lparts(addptr).part$ 
-' abbreviated command has to be at the position addptr so let split it .. maybe also tokenize this here in the future
-let dot=instr(1,lparts(addptr).part$,".")
-if dot>0 andalso dot<len(lparts(addptr).part$) then 
+if isdec(lparts(0).part$) then addptr=1 else addptr=0				' check if the abbreviated command are on the line start, or after linenum, 'then' or 'else'
+if lparts(0).part$="else" then addptr=1 					' else is always the first
+i=0 : do 
+  if lparts(i).part$="then" then exit loop 					' try to find 'then'
+  i=i+1 
+loop until i>k
+if i<k then addptr=i+1								' then found
+lp$=lparts(addptr).part$ 						      
+dot=instr(addptr,lparts(addptr).part$,".")					' find a dot	
+if dot>0 andalso dot<len(lparts(addptr).part$) then 				' split the part
   k+=1
   for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
   lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-dot)
   lparts(addptr).part$=left$(lparts(addptr).part$,dot)
 endif  
-if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then
+if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then ' ? is abbreviation of print, but it has no dots, so it has to be treated here
   k+=1
   for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
   lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-1)
   lparts(addptr).part$="?"
 endif  
 
-let lp$=lparts(addptr).part$ 
+lp$=lparts(addptr).part$ 
 
-' process the case when simple load or save is called without ""
+' process mouse/cursor/click on/off
 
 if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") then 
-  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(addptr+1).token=token_decimal
-  if lparts(addptr+1).part$="off" then   lparts(addptr+1).part$="0" :lparts(addptr+1).token=token_decimal
-endif									
+  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(2).token=token_decimal
+  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(2).token=token_decimal
+endif		
+		
+' process text constant for 'mode' - TO DO all predefined constants should have # before				
+
 if (lp$="mode" orelse lp$="m.") then 
-  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0"  
+  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0"       
   if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1"  
   if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2"  
   if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3"  
   if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4"  
 endif
 
-
-
-
-
-
-' 2a find part types 
+' find part types 
 
 for i=0 to k-1
-lparts(i).token=isseparator(lparts(i).part$): if lparts(i).token>0 then goto 102
-lparts(i).token=isoperator(lparts(i).part$): if lparts(i).token>0 then goto 102
-lparts(i).token=isassign(lparts(i).part$) : if lparts(i).token>0 then goto 102
-lparts(i).token=iscommand(lparts(i).part$): if lparts(i).token>0 then goto 102
-lparts(i).token=isfunction(lparts(i).part$): if lparts(i).token>0 then goto 102
+lparts(i).token=isseparator(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isoperator(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isassign(lparts(i).part$) 	: if lparts(i).token>0 then goto 102
+lparts(i).token=iscommand(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isfunction(lparts(i).part$)	: if lparts(i).token>0 then goto 102
 lparts(i).token=isnotename(lparts(i).part$) 
 if lparts(i).token>0 then 
   note_val=getnoteval(lparts(i).token)
@@ -830,68 +829,74 @@ if lparts(i).token>0 then
   lparts(i).token=token_float
   goto 102
 endif
-lparts(i).token=ischannel(lparts(i).part$)  : if lparts(i).token>0 then lparts(i).part$=right$(lparts(i).part$,1) : lparts(i).token=token_channel : goto 102
 
-let b1=isnum(lparts(i).part$):let b2=isint(lparts(i).part$):let b3=isdec(lparts(i).part$)
-if b1 andalso b2 andalso b3 then lparts(i).token=token_decimal : goto 102 					' pure decimal for line num
-if b1 andalso b2 andalso (not b3) then lparts(i).token=token_integer : goto 102 				' integer
-if b1 andalso (not b2) andalso (not b3) then lparts(i).token=token_float :goto 102 				' float
+' if it is #channel, make it a number from 0 to 9 while setting a token_channel
+
+lparts(i).token=ischannel(lparts(i).part$) : if lparts(i).token>0 then lparts(i).part$=right$(lparts(i).part$,1) : lparts(i).token=token_channel : goto 102
+lparts(i).token=isconstant(lparts(i).part$) : if lparts(i).token>0 then lparts(i).part$=str$(lparts(i).token) : lparts(i).token=token_integer : goto 102
+
+b1=isnum(lparts(i).part$) : b2=isint(lparts(i).part$) : b3=isdec(lparts(i).part$)
+if b1 andalso b2 andalso b3 then lparts(i).token=token_decimal 			: goto 102 	' pure decimal for line num
+if b1 andalso b2 andalso (not b3) then lparts(i).token=token_integer 		: goto 102 	' integer
+if b1 andalso (not b2) andalso (not b3) then lparts(i).token=token_float 	: goto 102 	' float
 
 if isstring(lparts(i).part$) then 
-    lparts(i).token=token_string : lparts(i).part$=mid$(lparts(i).part$,2,len(lparts(i).part$)-2) :goto 102	' string, get rid of ""!
-    stringtable(stringptr)=lparts(i).part$ : stringptr+=1							' and protect it from disappearing
+  lparts(i).token=token_string : lparts(i).part$=mid$(lparts(i).part$,2,len(lparts(i).part$)-2) :goto 102	' string, get rid of ""!
 endif
 if isname(lparts(i).part$) then lparts(i).token=token_name : goto 102						' name
 102 next i 
 
 lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 
- '                                      					 	for i=0 to k: print lparts(i).token,lparts(i).part$ : next i
+' process the case when simple load or save is called without "". This cannot be done earlier, as tokens has to be known                                    					 
  
 if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="lo." orelse lp$="s." orelse lp$="br." orelse lp$="enter" orelse lp$="e.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
 
-' abbreviated command has to be at the position addptr
+' determine a type of the line and compile it
 
-
-
-'2b determine a type of the line
-
-'for i=0 to k: print lparts(i).part$: next i : print cont
 if isdec(lparts(0).part$) then linenum=val%(lparts(0).part$)
-if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto 104
+if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto 104   ' this was an empty numbered line, delete it
 
-if (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  
-  err= compile(linenum,0,cont) : 'print "called compile with cont=";cont, "line$=";line$,"linenum=";linenum
+if (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  		' first part, commans
+  err=compile(linenum,0,cont) 
   if err<>0 then printerror(err): goto 104
   if rest$<>"" then  line$=rest$ : cont=4 : goto 108 else goto 104
 endif
       							
-if (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 
-  err= compile(linenum,0,cont) ': print "called compile with cont=";cont, "line$=";line$
+if (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 		' not a first part, command
+  err=compile(linenum,0,cont) 
   if err<>0 then printerror(err): goto 104
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  	
 endif
 							 
-if (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  
-  compile_assign(linenum,0,cont)': print "called compile_assign with cont=";cont, "line$=";line$
+if (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  		' first part, assign
+  compile_assign(linenum,0,cont)
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104
 endif
     							 
-if (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 
-  compile_assign(linenum,0,cont) ': print "called compile_assign with cont=";cont, "line$=";line$
-  if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								'<-- TODO: add a line to a program
+if (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 		' not a first part, assign
+  compile_assign(linenum,0,cont) 
+  if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								 
 endif
 
-
-104 if linenum=0 then 
+104 if linenum=0 then 								' line 0 is for immediate execution
   execute_line(2)
 101 v.writeln("") : v.writeln("Ready") 
 endif
 
 end sub
 
+'---------------------------------------------------------------------------------------------------------------------
+'
+'                          END OF TOKENIZER MAIN CODE
+'
+'---------------------------------------------------------------------------------------------------------------------
 
-'------------------------------ Helper functions for the tokenizer -------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------
+'-------------------- Helper functions for the tokenizer -------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------
+
+' Check if the part is an operator, return a token or 0 if not found
 
 function isoperator(s as string) as ubyte
 
@@ -910,7 +915,7 @@ select case s
   case "^"   : return token_power
   case "not" : return token_not
   case "@"   : return token_at
-  case "="   : return token_eq ' the compiler then will determine what type is to assign
+  case "="   : return token_eq 
   case ">="  : return token_ge   
   case "<="  : return token_le  
   case "<"   : return token_lt   
@@ -918,12 +923,11 @@ select case s
   case "<>"   : return token_ne 
   case "++"   : return token_inc 
   case "--"   : return token_dec 
-
-
   case else  : return 0 
 end select
 end function
 
+' Check if the part is a channel#, return a token or 0 if not found
 
 function ischannel(s as string) as ulong
 
@@ -935,7 +939,10 @@ if right$(s,1)<"0" orelse right$(s,1)>"9" then return 0
 return token_channel+val(right$(s,1))
 end function
 
-function isconstant(s as string) as ulong
+' Check if the part is a predefined constant, return a constant or 0 if not found
+' todo: add spin2/pasm constants for pin control
+
+function isconstant(s as string) as integer
 
 select case s
   case "#read" 		: return 1
@@ -944,6 +951,8 @@ select case s
   case else		: return 0
 end select
 end function  
+
+' Check if the part is a predefined music note name, return a token or 0 if not found
 
 function isnotename(s as string) as ulong
 
@@ -976,13 +985,14 @@ return token
 
 end function
 
+' Check if the part is a separator, return a token or 0 if not found
 
 function isseparator(s as string) as ubyte
 
 select case s
   case "+"   : return token_plus
   case "-"   : return token_minus
-  case "="   : return token_eq ' the compiler then will determine what type is to assign
+  case "="   : return token_eq 
   case ","   : return token_comma
   case "*"   : return token_mul
   case "/"   : return token_fdiv
@@ -999,6 +1009,9 @@ select case s
 end select
 end function
 
+' Check if the part is an assign, return a token or 0 if not found
+' TO DO - add -=, +=, *=, /=, ++, --
+
 function isassign(s as string) as ubyte
 
 select case s
@@ -1011,6 +1024,7 @@ select case s
 end select
 end function
 
+' Check if the part is a command than doesn't return a value, return a token or 0 if not found
 
 function iscommand(s as string) as ubyte
 
@@ -1140,6 +1154,8 @@ select case s
 end select
 end function
 
+' Check if the part is a function than returns a value, return a token or 0 if not found
+
 function isfunction(s as string) as ubyte
 
 select case s
@@ -1209,19 +1225,25 @@ endif
 return true
 end function  
 
-function isnum(s as string) as boolean
+function isnum(s as string) as boolean ' todo : bins have only 1 and 0 in them
 
-dim i,l,m$,ds,es
+dim i,l,m$,ds,es,hex,b
+
 ds=0: es=0
 l=len(s): if l=0 then return false
 m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"." andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
 if m$="." then ds=1
+if m$="$" then hex=1 else hex=0
 if l>1 then 
   for i=2 to l
-    m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." andalso m$<>"E" andalso m$<>"e" andalso m$<>"-" then return false
+    m$=mid$(s,i,1) : b=false
+    if m$>="0" andalso m$<="9" then b=true  
+    if m$="_" orelse m$="." orelse m$="E" orelse m$="e" orelse m$="-" then b=true 
+    if hex=1 andalso m$>="a" andalso m$<="f" then b=true
+    if not b then return false
     if m$="-" andalso lcase$(mid$(s,i-1,1))<>"e" then return false
     if m$="." then ds+=1: if ds>1 then return false
-    if m$="E" orelse m$="e" then es+=1: if es>1 then return false
+    if m$="E" orelse m$="e" then es+=1: if hex=0 andalso es>1 then return false
   next i
 endif
 return true
@@ -1229,14 +1251,16 @@ end function
   
 function isint(s as string) as boolean
 
-dim i,l,m$,ds,es
+dim i,l,m$,ds,es,hex
 
 l=len(s): if l=0 then return false
 m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
-
+if m$="$" then hex=1 else hex=0
 if l>1 then 
   for i=2 to l
-    m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
+    m$=mid$(s,i,1) 
+    if hex=0 andalso (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
+    if hex=1 andalso (m$<"0" orelse m$>"9") andalso (m$<"a" orelse m$>"f") andalso m$<>"_"  then return false
   next i
 endif
 return true
@@ -1501,6 +1525,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
 'print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'print "In compile_immediate:" : for i=0 to lineptr: print ucompiledline(i): next i
 return err
 end function
 
@@ -1942,7 +1967,7 @@ end sub
 sub do_next()
 
 dim t1 as expr_result
-dim varnum , linenum as integer
+dim varnum as integer
 
 t1=pop() :varnum=t1.result.uresult
 if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
@@ -1953,17 +1978,14 @@ if fortable(fortop).stepval>=0 then
 else
   if variables(varnum).value.iresult<fortable(fortop).endval then fortop -=1 : return ' do nothing 
 endif
-' if not returned, goto pointer
-linenum=ucompiledline(0)
-if linenum>0 then
+' if not returned, goto pointer 
+if inrun>0 andalso runptr<>fortable(fortop).lineptr then
   runptr=fortable(fortop).lineptr
   runptr2=fortable(fortop).cmdptr
-  lineptr_e=lineptr-1 
+  lineptr_e=lineptr-1
 else
   lineptr_e=fortable(fortop).cmdptr-1
-endif   
-'runheader(5)=0
-' todo: detect for at the same line and don't reload
+endif  
 end sub
 
 
@@ -2266,7 +2288,6 @@ function execute_line (astart=0 as integer) as integer
 '' This executes a line either in immediate mode or loaded from PSRAM in the program executing mode
 
 dim cmd as asub
-
 runptr2=0
 for lineptr_e=astart to lineptr-1
 cmd=commands(compiledline(lineptr_e).result_type and 255)
@@ -2525,8 +2546,8 @@ do
     lineptr=((runheader(2)-runptr)/compiledslot)-3  					' : let tt=getct()-tt :: print "computed lineptr, time="; tt ' todo: keep the line ptr
     oldrunptr=runptr	 	 							' : let tt=getct()-tt :  print "got a new header, time="; tt
   endif
-runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, time="; tt
-runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
+  runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, time="; tt
+  runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
 loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
   ''do whatever kbm.peek_latest_key()=$106 
 if runptr<>$7FFF_FFFF then 
@@ -2910,7 +2931,8 @@ varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: ne
 programstart=memlo :runptr=memlo : runptr2=memlo
 stackpointer=0
 lineptr=0 
-programptr=memlo : stringptr=0
+programptr=memlo ': stringptr=0
+
 lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
 for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
