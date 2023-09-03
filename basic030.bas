@@ -1,9 +1,8 @@
 ' A Retromachine Basic interpreter
-' v. 0.29 pre-beta - 20230827
+' v. 0.30 pre-beta - 20230903
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
-' todo!!!!!! new clears filename to noname.bas!!!
 
 const HEAPSIZE=192000
 '#define PSRAM4
@@ -15,11 +14,13 @@ dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
 #endif
 
-#ifdef PSRAM4
-const _clkfreq = 337000000
-dim v as class using "hg009-4.spin2"
-dim psram as class using "psram4.spin2"
-#endif
+'' this version doesn't support 4 bit: video driver needs synchroonizing. To do after reaching a beta phase
+
+'#ifdef PSRAM4
+'const _clkfreq = 340500000
+'dim v as class using "hg009-4.spin2"
+'dim psram as class using "psram4.spin2"
+'#endif
 
 dim kbm as class using "usbnew.spin2"
 dim paula as class using "audio096.spin2"
@@ -30,8 +31,9 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.29b"
-const ver=29
+const ver$="P2 Retromachine BASIC version 0.30"
+const ver=30
+
 '' ------------------------------- Keyboard constants
 
 const   key_enter=141    
@@ -79,9 +81,7 @@ const token_ear=19
 const token_rpar=20
 const token_lpar=21
 const token_colon=22
-
-const fun_getvar=17  ' at runtime, reuse non-function tokens with functions that have no compile time tokens
-
+const fun_getvar=17  		' at runtime, reuse non-function tokens with functions that have no compile time tokens
 const fun_getaddr=18
 const fun_getfvar=19
 const fun_getsvar=20
@@ -92,9 +92,7 @@ const fun_assign_i=23
 const fun_assign_u=24
 const fun_assign_f=25
 const fun_assign_s=26
-
 const token_eq=27
- 
 const fun_pushi=28
 const fun_pushu=29
 const fun_pushf=30
@@ -105,7 +103,6 @@ const print_mod_semicolon=34
 const token_linenum_major=35
 const token_linenum_minor=36
 const token_nextline_ptr=37
-
 const token_le=38
 const token_ge=39
 const token_inc=40
@@ -113,6 +110,7 @@ const token_dec=41
 const token_ne=42
 const fun_pushs2=43
 const token_channel=44
+
 const token_cls=64
 const token_new=65
 const token_plot=66
@@ -208,45 +206,45 @@ const token_adr=155
 const token_fre=156
 const token_inkey=157
 const token_abs=158
-
-
- const token_chr=159
+const token_chr=159
 const token_val=160
 const token_str=161
- const token_bin=162
- const token_hex=163
- const token_left=164
- const token_right=165
- const token_mid=166
- const token_asc=167
- const token_len=168
- const token_gosub=169
- const token_return=170
- const token_progend=171
- const token_pop=172
- const token_log=173
-
+const token_bin=162
+const token_hex=163
+const token_left=164
+const token_right=165
+const token_mid=166
+const token_asc=167
+const token_len=168
+const token_gosub=169
+const token_return=170
+const token_progend=171
+const token_pop=172
+const token_log=173
 const token_changefreq=174
 const token_changevol=175
 const token_changewave=176
 const token_changepan=177
 const token_shutup=178
-
-const token_open=179	' todo
-const token_close=180	'todo
+const token_open=179	
+const token_close=180
 const token_input=181	'todo
 const token_read=182	'todo
 const token_data=183	'todo
 const token_cload=184	'todo
 const token_blit=185	'todo
 const token_playsample=186 'todo ps. channel,pointer,freq or #period ,vol,lstart,lend
-const token_get=187	'todo
-const token_put=188	'todo
+const token_get=187	 
+const token_put=188	 
 const token_enter=189	 
 const token_rem=190	
 const token_round=191	
 const token_coginit=192 'todo
 const token_on=193	'todo
+const token_delete=194  'todo
+const token_cd=195      'todo
+const token_copy=196    'todo
+const token_framebuf=197'todo
 
 const token_error=255
 const token_end=510
@@ -259,9 +257,9 @@ const token_name=516
 const token_notename=768
 
  
-' ----------------------------- Expression results/variable types 
+' ----------------------------- Expression results/variable types. Variable type encodes its own push function in the compiled line
 
-const result_int=fun_pushi      ' variable type encodes its own push function in the compiled line
+const result_int=fun_pushi      	
 const result_uint=fun_pushu
 const result_float=fun_pushf
 const result_string=fun_pushs
@@ -270,7 +268,7 @@ const result_array=token_dim
 const result_error=token_error
 const result_channel=token_channel
 
-' --------------------------- Arrays
+' ---------------------------- Arrays
 
 const array_no_type=0+256
 const array_byte=1+256
@@ -285,20 +283,22 @@ const array_float=9+256
 const array_double=10+256
 const array_string=11+256
 
-' -----------------------------max number of variables and stack depth
+' ----------------------------  max number of variables and stack depth
 const maxvars=1024       
 const maxstack=512
 const maxfor=64
 const maxgosub=64
 
+'----------------------------- Basic program starts here
 const memlo=$80000
 
-'dim samplebuf(7,1023) as short
-dim envbuf(7,255) as ushort
-declare envbuf8 alias envbuf as ubyte(7,512)
-dim notetable(11) as single
-dim notenames(11) as string
-dim noteperiods(11) as integer
+'----------------------------- Audio stuff
+
+dim envbuf(7,255) as ushort			' envelope buffer
+declare envbuf8 alias envbuf as ubyte(7,512)	' the same for 8-bit access
+dim notetable(11) as single			' one octave note frequencies		' 
+dim noteperiods(11) as integer			' Paula periods for notes, one octave
+
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
 ''-----------------------------------------------------------------------------------------
@@ -313,8 +313,8 @@ union aresult			' one long for all result types (until I implement double and in
   dim uresult as ulong
   dim sresult as string
   dim fresult as double
-  dim ulresult as ulongint       ' make an 8 byte placeholder for in64 and double
-  dim twowords(1) as ulong	 ' and allow single word access to it
+  dim ulresult as ulongint     	' make an 8 byte placeholder for in64 and double
+  dim twowords(1) as ulong 	' and allow single word access to it
 end union
   
 class expr_result		' general variable, not only expression result :) 
@@ -322,34 +322,34 @@ class expr_result		' general variable, not only expression result :)
   dim result_type as ulong  
 end class
 
-class variable
+class variable			' variable table enttry
   dim name as string
   dim value as aresult
   dim vartype as ulong
 end class  
 
-class for_entry
-  dim lineptr as ulong ' line that will be executed after next
-  dim cmdptr as ulong  ' command# in this line
-  dim varnum as integer  ' variable to modify and check
+class for_entry			' for-next loop table entry
+  dim lineptr as ulong 		' line that will be executed after next
+  dim cmdptr as ulong  		' pointer to a command in this line
+  dim varnum as integer  	' variable to modify and check
   dim stepval as integer
   dim endval as integer
 end class  
 
-class gosub_entry
-  dim lineptr as ulong ' line that will be executed after next
-  dim cmdptr as ulong  ' command# in this line
+class gosub_entry		' gosub stack entry
+  dim lineptr as ulong 		' line that will be executed after next
+  dim cmdptr as ulong  		' command# in this line
 end class 
 
-class audiochannel
-  dim freq as single
-  dim wave as ubyte
-  dim env as ubyte
-  dim delay as ushort
-  dim length as single
-  dim vol as single
-  dim pan as single
-  dim sus as ushort
+class audiochannel		' a set of predefined values for audio channels
+  dim freq as single		' frequency
+  dim wave as ubyte		' waveform #
+  dim env as ubyte		' envelope #
+  dim delay as ushort		' delay in ms
+  dim length as single		' length in seconds
+  dim vol as single		' volume (1/1000, 0.0..16.384)
+  dim pan as single		' -1.0 left, 1.0 right
+  dim sus as ushort		' sustain point on the envelope
 end class
 
 type parts as part(125)         ' parts to split the line into, line has 125 chars max
@@ -370,7 +370,7 @@ dim mbox as ulong
 dim ansibuf(3) as ubyte
 dim line$ as string
 dim fullline$ as string
-dim cont as ulong
+dim cont as integer
 
 dim plot_color,plot_x,plot_y as integer
 dim editor_spaces as integer
@@ -405,7 +405,7 @@ dim sample(255) as ubyte ' for csave
 dim block(1023) as ubyte ' for csave and get/put
 dim blockptr as ulong
 dim runptr,runptr2,oldrunptr as ulong
-dim getres(9) as integer ' det  funcion result  for channel
+dim getres(9) as integer ' det  function result  for channel
 dim inrun as ulong
 dim runheader as ulong(5)
 dim fortop,gosubtop as integer
@@ -427,6 +427,7 @@ dim linenum as ulong
 dim suspoints(7) as ushort
 dim loadname as string
 dim do_insert as integer
+
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -448,68 +449,77 @@ paper=147: ink=154 : font=4
 plot_color=ink : plot_x=0: plot_y=0
 keyclick=1 : nostalgic_mode=0 : keyclick_spl=@atari_spl : spl_len=1694
 compiledslot=sizeof(test)
-
 init_commands
 init_error_strings
 init_audio
 do_new
-
-
 cls(ink, paper)
 v.setfontfamily(font) 				' use ST Mono font
 v.setleadingspaces(2)
 mount "/sd", _vfs_open_sdcard()
 chdir "/sd/bas"
-
 currentdir$="/sd/bas"
-
 position 2*editor_spaces,1 : print ver$
 free$=decuns$(memtop-programptr)+" BASIC bytes free" : print free$
 position 2*editor_spaces,4 : print "Ready"
-'hubset( %1_000001__00_0001_1010__1111_1011)
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
-
 loadname="noname.bas"
 do_insert=-1
-
 
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
 
 do
-waitvbl
-paula.stop(7)
+  waitvbl
+  line$=edit()
+  interpret: line$="" 
+loop
 
+'-------------------------------------------------------------------------------------------------------- 
+'------------------------------------ MAIN LOOP END -----------------------------------------------------
+'--------------------------------------------------------------------------------------------------------
+
+''-------------------------------------------------------------------------------------------------------
+'                     A full screen editor for programming and entering data
+''-------------------------------------------------------------------------------------------------------
+
+function edit() as string
+
+dim key,key2,key3,key4,rpt,rptcnt,ch,cy,cx as ulong
+dim line$ as string
+rpt=0 : rptcnt=0 : key=0 : key2=0 : key3=0 : key4=0 
+do
+waitvbl
 '' Do key repeat
 
 let key=kbm.get_key() 
 let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
 if key>0 andalso key<4 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): paula.stop(7)
-if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then let key2=key : let rpt=1 : let key3=key2
-if key>$80000000 then let rptcnt=0 : let rpt=0
+if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
+if key>$80000000 then rptcnt=0 : rpt=0
 if key=0 andalso rpt=1 then rptcnt+=1
 if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 
+'' there is a key pressed and it needs to be processed
 
 if key3<>0 then
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
-  let key4=scantochar(key3) 
-  if leds and 2 = 2 then 
-    if key4>96 andalso key4<123 then
+  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
+  let key4=scantochar(key3)          
+  if leds and 2 = 2 then 						' caps lock
+    if key4>96 andalso key4<123 then                 
       key4-=32
     else if key4>64 andalso key4<91 then 
       key4+=32
-    else if key4>22 andalso key4<32 then 
-      key4-=9
-    else if key4>13 andalso key4<23 then 
+    else if key4>22 andalso key4<32 then 				' 2x9 slots from #13 to #31 for intenational chars. 
+      key4-=9								' ST type font used has Polish characters there
+    else if key4>13 andalso key4<23 then 				
       key4+=39
     endif
   endif
  
- 
-  if key4>0 andalso key4<127 andalso v.cursor_x<254 then 
-    if do_insert then
+  if key4>0 andalso key4<127 andalso v.cursor_x<254 then		' put the char on the screen 
+    if do_insert then							' move the characters right
       for i=  v.textbuf_ptr+128*v.cursor_y+127 to v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2)+1 step -1 : pspoke i,pspeek(i-1) : next i 
       let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
     endif
@@ -517,24 +527,22 @@ if key3<>0 then
   endif  
   if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): paula.stop(7) 'end of line reached
  
-  if key4=key_enter then 
-
-''      interpret: line$="" :let t1=getct()-t1 :rpt=0: rptcnt=0
-    line$="" : for i=editor_spaces to 127
-       let ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
-        line$=line$+chr$(ch)
-         next i
-    
-        v.crlf() 
-        interpret: line$="" : rpt=0 : rptcnt=0
+  if key4=key_enter then 						' get the line from the  screen and return it
+    line$="" 
+    for i=editor_spaces to 127
+      ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
+      line$=line$+chr$(ch)
+    next i
+    v.crlf() 
+    return  line$
     endif 
   
+  ' process tab, bksp, arrows, pgup/down, home,end
+  
   key4=key3 and 255
-  'tab
-  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)
-  if key4 = 43 andalso v.cursor_x<240 then v.setcursorx((v.cursor_x+8) and $F8)  
- ' tab43 del 76 home74 end 77 pgup=75 pgdn 78
-  if key4=77 then i=127 : do: 
+  
+  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)  	' tab
+  if key4=77 then i=127 : do: 															' end
     if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then 
       if i<127 then v.setcursorx(2*i+2) else v.setcursorx(254)
       exit loop
@@ -542,65 +550,59 @@ if key3<>0 then
     i=i-1
   loop until i=editor_spaces
   if i=editor_spaces then v.setcursorx(2*editor_spaces)
-  
-  
-  if key4=74 then v.setcursorx(editor_spaces*2)
-  if key4=75 then v.setcursory(0)
-  if key4=78 then v.setcursory(36) ' todo: parameter instead 36
-  
-  if key4=76 then 'del
+    
+  if key4=74 then v.setcursorx(editor_spaces*2)													' home
+  if key4=75 then v.setcursory(0)														' pgup
+  if key4=78 then v.setcursory(36) 														' pgdn, todo: parameter instead 36
+  if key4=76 then 																'del
     for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
     let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
   endif
-   
-  'backspace
-  if key4 = 42 then 
-      if v.cursor_x>editor_spaces*2 then 
-         position v.cursor_x-2,v.cursor_y
-         for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
-         let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
- 
-      else
-         line$="" : v.cursor_x=4
-      endif   
-   endif   
-     if key4= 82 then 
-      let cy=v.getcursory()-1 : if cy<0 then cy=0 
-      v.setcursory(cy)
-   endif   
-   if key4= 81 then
-     let cy=v.getcursory()+1 : if cy>36  then cy=36
-     v.setcursory(cy)
-   endif
-   if key4= 80 then
-     let cx=v.getcursorx()-2 
-     if cx<editor_spaces then cx=editor_spaces
-     v.setcursorx(cx)
-     endif
-   if key4= 79 then
-     let cx=v.getcursorx()+2 
-     if cx>254  then cx=254 
-     v.setcursorx(cx)
-   endif
-  ' print key3 and 255
-   
-   if key4=73 then ' ins
-     do_insert=not do_insert 
-     if do_insert then v.setcursorshape(14) else  v.setcursorshape(0)
 
-   endif
- ' To do: arrows and DEL; use textscreen array to implement fullscreen editing
- 
+  if key4 = 42 then  'backspace
+    if v.cursor_x>editor_spaces*2 then 
+      position v.cursor_x-2,v.cursor_y
+      for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
+      let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+    else
+      line$="" : v.cursor_x=4
+    endif   
+  endif   
 
-
-  key3=0 
+  if key4=82 then 						' arrow up
+    let cy=v.getcursory()-1 : if cy<0 then cy=0 
+    v.setcursory(cy)
+  endif   
+  if key4=81 then						' arrow down,  todo: remove hardcoded 36
+   let cy=v.getcursory()+1 : if cy>36  then cy=36
+   v.setcursory(cy)
+  endif
+  if key4=80 then
+    cx=v.getcursorx()-2 					' arrow left
+    if cx<editor_spaces then cx=editor_spaces			
+    v.setcursorx(cx)
+  endif
+  if key4=79 then						' arrow right
+    cx=v.getcursorx()+2 
+    if cx>254  then cx=254 
+    v.setcursorx(cx)
   endif
 
+  if key4=73 then 						' ins
+    do_insert=not do_insert 
+    if do_insert then v.setcursorshape(14) else  v.setcursorshape(0)
+  endif
+key3=0 
+endif
 loop
+end function
 
-
-
-'----------------------------------- this is the end of the main loop ------------------------------------------------------------------
+''-----------------------------------------------------------------------------------------------------------
+' 					A housekeepeer.
+' A deedicated cog that is intended to do things in the background, for example tracking GUI elements
+' or playing audio tracks in  the background.  In the current version it reads the mouse pointer and
+' a digital joystick position. It also implements a 200 Hz clock that's ticks are synchronized with vblanks 
+''-----------------------------------------------------------------------------------------------------------
 
 sub housekeeper
 
@@ -612,45 +614,45 @@ do
 loop
 end sub
 
+'----------------------------------------------------------------------------------------------------------
+' gethdi is called from the houseekeeper to read HDI related values
+'----------------------------------------------------------------------------------------------------------
 
 sub gethdi
 dim  dummy,i,j,x,y as ulong
 
-  mousex,mousey=kbm.mouse_xy()
-  dummy,mousew=kbm.mouse_scroll()
-  mousek=kbm.mouse_buttons()
-  
-  i=0:
-  for j=0 to 6
-    if kbm.hidpad_id(j)>0 then
-      x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1)
-      x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
-      strig(i)=kbm.hidpad_buttons(j) 
-      i=i+1
-    endif
-  next j  
+mousex,mousey=kbm.mouse_xy()
+dummy,mousew=kbm.mouse_scroll()
+mousek=kbm.mouse_buttons()
+i=0:
+for j=0 to 6
+  if kbm.hidpad_id(j)>0 then
+    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1)
+    x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
+    strig(i)=kbm.hidpad_buttons(j) 
+    i=i+1
+  endif
+next j  
 for j=i to 6 : stick(j)=0 : strig(j)=0 : next j 
-''' sticks:
-'''''                   5     6     7
-'''''			9    10    11
-'''''		       13    14    15
+
+'joystick positions:
+'	                5     6     7
+'			9    10    11
+'		       13    14    15
 end sub
 
-sub waitclock
+'-------------------------------------------------------------------------------------------------------------
+'---------------------------------- Housekeeper stuff ends here ----------------------------------------------
+'-------------------------------------------------------------------------------------------------------------
 
-dim c as ulong
-c=hkcnt
-do: loop until hkcnt<>c
-end sub
-
-'---------------------------------------------------------------------------------------------------------------------------------------
-'----------------------------------- The line interpreter/tokenizer --------------------------------------------------------------------
-'---------------------------------------------------------------------------------------------------------------------------------------
-
+'-------------------------------------------------------------------------------------------------------------
+'
+'                                     LINE INTERPRETER/TOKENIZER
+'
+'-------------------------------------------------------------------------------------------------------------
 
 
 sub interpret
-
  
 dim i,j,k,q 
 dim result as expr_result
@@ -659,9 +661,9 @@ dim separators(125)
 dim note_val as single
 dim err as integer
 
-' ---------------------------------------------------  Pass 1: Split the line to parts, detect and concatenate strings
+' -------------------------    Pass 1: Split the line to parts, strip unneded case, lowercase parts, detect and concatenate strings
 
-fullline$=trim$(line$): cont=-1  : linenum=0 : lineptr=0 : err=0
+fullline$=trim$(line$): cont=-2  : linenum=0 : lineptr=0 : err=0
 
 108 for i=0 to 125: separators(i)=0 :next i
 for i=0 to 125: lparts(i).part$="": lparts(i).token=0: next i
@@ -689,10 +691,10 @@ if i<l then let rest$=trim$(right$(line$,len(line$)-i)):line$=trim$(left$(line$,
 'print "rest$=";rest$
 
 
-if cont=-1 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not last part
-if cont=-1 andalso rest$="" then cont=3 : goto 107		' this is the first AND last part
+if cont=-2 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not last part
+if cont=-2 andalso rest$="" then cont=3 : goto 107		' this is the first AND last part
 if cont=4 andalso rest$<>"" then cont=1 : goto 107		' this is not the first and not the last part
-if cont=4 andalso rest$="" then cont=2 :goto 107		' this is the last, and not the first, part
+if cont=4 andalso rest$="" then cont=2 : goto 107		' this is the last, and not the first, part
 
 ' 1b: find separators
 
@@ -710,6 +712,10 @@ for i=0 to j-1
   if p1>0 then let p$=mid$(line$,p1,1):  if   p$<>"" then lparts(k).part$=p$ : k+=1 
   let p$=mid$(line$,p1+1,p2-p1-1)  : if   p$<>"" then lparts(k).part$=p$ : k+=1 
 next i
+
+' first part has to be a line number, if not, add 0 
+
+if (cont=0 orelse cont=3) andalso (not isdec(lparts(0).part$))  then for i=k to 1 step -1: lparts(i)=lparts(i-1) : next i: lparts(0).part$="0" : k+=1
 
 ' 1d : find strings
 
@@ -849,44 +855,40 @@ if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="
 
 
 '2b determine a type of the line
-if isdec(lparts(0).part$) then linenum=val%(lparts(0).part$)
 
+'for i=0 to k: print lparts(i).part$: next i : print cont
+if isdec(lparts(0).part$) then linenum=val%(lparts(0).part$)
 if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto 104
 
-if linenum>0  andalso (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  
-  err= compile(linenum,0,cont) ': print "called compile with cont=";cont, "line$=";line$
+if (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  
+  err= compile(linenum,0,cont) : 'print "called compile with cont=";cont, "line$=";line$,"linenum=";linenum
   if err<>0 then printerror(err): goto 104
   if rest$<>"" then  line$=rest$ : cont=4 : goto 108 else goto 104
 endif
       							
-if linenum>0 andalso (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 
+if (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 
   err= compile(linenum,0,cont) ': print "called compile with cont=";cont, "line$=";line$
   if err<>0 then printerror(err): goto 104
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  	
 endif
 							 
-if linenum>0 andalso (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  
+if (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  
   compile_assign(linenum,0,cont)': print "called compile_assign with cont=";cont, "line$=";line$
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104
 endif
     							 
-if linenum>0 andalso (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 
+if (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 
   compile_assign(linenum,0,cont) ': print "called compile_assign with cont=";cont, "line$=";line$
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								'<-- TODO: add a line to a program
 endif
 
-if lparts(0).token=token_name andalso lparts(1).token=token_eq then compile_assign(0) : goto 103    					' assign a variable
-if lparts(0).token=token_name andalso lparts(1).token=token_rpar then print " User functions and arrays not yet implemented" : goto 101
 
-' if we are here, this is not a program line to add, so try to execute this
-
-err=compile(0) : '' execute(0) ' print "  this is a command to execute"  ''' param=line to compile
-103  'for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, : next i
-if err=0 then execute_line() else printerror(err)
-if rest$<>"" then line$=rest$:  goto 108 
-
+104 if linenum=0 then 
+  execute_line(2)
 101 v.writeln("") : v.writeln("Ready") 
-104 end sub
+endif
+
+end sub
 
 
 '------------------------------ Helper functions for the tokenizer -------------------------------------------
@@ -1495,10 +1497,10 @@ vars=0
 end select
 
 t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr+=1
-450 if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
+450 if linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end ' end token if the last part or imm
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
- '  print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1579,9 +1581,9 @@ t1.result.uresult=j: t1.result_type=fun_assign
 
 
 compiledline(lineptr)=t1:  lineptr+=1 
- if linetype=0 orelse linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end
+ if linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end
 
- ' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
+' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
 ''print "at exit lineptr=",lineptr
 end sub
 
@@ -1593,8 +1595,8 @@ dim err as integer
 'line header: num major, num minor,list start, list length, prev, next. That implements 2-way list of program lines 
 ' num_minor bit 31: the line is goto target. If deleted, a proper record(s) has to be added to goto list
  
-'  print "called compile with line= "; alinemajor;" and cont= "; cont 
-if alinemajor=0 then err=compile_immediate(0) : return err  
+' print "called compile with line= "; alinemajor;" and cont= "; cont 
+'if alinemajor=0 then err=compile_immediate(0) : return err  
 
 ucompiledline(0)=alinemajor
 ucompiledline(1)=alineminor
@@ -1606,7 +1608,7 @@ ucompiledline(1)=alineminor
 ' 3 - this is the ome and only part
 
 err=compile_immediate(cont+1) 
-if err=0 then
+if err=0 andalso alinemajor>0 then
   if cont=3 orelse cont=2 then 
     if alinemajor >lastline then 
       add_line_at_end(alinemajor)
@@ -1625,21 +1627,23 @@ end function
 sub compile_assign (alinemajor as ulong, alineminor=0 as ulong, cont=0 as ulong)  
 
 '  print "called compile_assign  with line= "; alinemajor;" and cont= "; cont 
-if alinemajor=0 then compile_immediate_assign(0) : return  
+'if alinemajor=0 then compile_immediate_assign(0) : return  
 
 ucompiledline(0)=alinemajor
 ucompiledline(1)=alineminor
 
 compile_immediate_assign(cont+1) 
 
-if cont=3 orelse cont=2 then 
-  if alinemajor >lastline then 
-    add_line_at_end(alinemajor)
-  else
-    deleteline(alinemajor)  
-    if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor)   
-  endif 
-endif 
+if alinemajor>0 then
+  if cont=3 orelse cont=2 then 
+    if alinemajor >lastline then 
+      add_line_at_end(alinemajor)
+    else
+      deleteline(alinemajor)  
+      if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor)   
+    endif 
+  endif
+endif   
 end sub
 
 ' --------------- Helper compile functions 
@@ -1728,7 +1732,7 @@ dim t1 as expr_result
 t1.result.uresult=0 : t1.result_type=result_uint
 if lparts(ct).token=token_end then t1.result_type=print_mod_empty: compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1 :return 0 	'print without parameters
 do
-  expr()  : print "In compile_print token= "; lparts(ct).token; " part$= "; lparts(ct).part$ :
+  expr()  ': print "In compile_print token= "; lparts(ct).token; " part$= "; lparts(ct).part$ :
   if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
   if lparts(ct).token=token_semicolon then  t1.result_type=print_mod_semicolon : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
   if lparts(ct).token=token_end then t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
@@ -1938,7 +1942,7 @@ end sub
 sub do_next()
 
 dim t1 as expr_result
-dim varnum as integer
+dim varnum , linenum as integer
 
 t1=pop() :varnum=t1.result.uresult
 if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
@@ -1950,9 +1954,14 @@ else
   if variables(varnum).value.iresult<fortable(fortop).endval then fortop -=1 : return ' do nothing 
 endif
 ' if not returned, goto pointer
-runptr=fortable(fortop).lineptr
-runptr2=fortable(fortop).cmdptr
-lineptr_e=lineptr-1
+linenum=ucompiledline(0)
+if linenum>0 then
+  runptr=fortable(fortop).lineptr
+  runptr2=fortable(fortop).cmdptr
+  lineptr_e=lineptr-1 
+else
+  lineptr_e=fortable(fortop).cmdptr-1
+endif   
 'runheader(5)=0
 ' todo: detect for at the same line and don't reload
 end sub
@@ -2241,26 +2250,38 @@ end sub
 '--------------------------------------------- End of expression evaluator --------------------------------------------------------------
 '----------------------------------------------------------------------------------------------------------------------------------------
 
+
 '----------------------------------------------------------------------------------------------------------------------------------------
-'--------------------------------------------- Runtime functions ------------------------------------------------------------------------ 
+'                                                                                                                                       -
+'                                              RUNTIME STARTS HERE                                                                      - 
+'                                                                                                                                       -
 '----------------------------------------------------------------------------------------------------------------------------------------
+
+'---------------------------------------------------------------------------------------------------------------------------------------
+'----------------------------------------- A main execute line function ----------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------
 
 function execute_line (astart=0 as integer) as integer
 
 '' This executes a line either in immediate mode or loaded from PSRAM in the program executing mode
 
 dim cmd as asub
+
 runptr2=0
 for lineptr_e=astart to lineptr-1
-'print lineptr_e,compiledline(lineptr_e).result_type
-'if compiledline(lineptr_e).result_type>255 then printerror(31): return ' this should never happen and it is an interpreter error. Added to debug
-''let tt=getct()
 cmd=commands(compiledline(lineptr_e).result_type and 255)
 cmd
-''let tt=getct()-tt: print compiledline(lineptr_e).result_type, tt
 next lineptr_e
 return runptr2
 end function
+
+
+sub waitclock
+
+dim c as ulong
+c=hkcnt
+do: loop until hkcnt<>c
+end sub
 
 
 ' ------------------- pop and push functions called by do_xxx functions to pop arguments and push results
@@ -3604,30 +3625,6 @@ end sub
 
 
 
-' -------------------   convert a variable on the top of stack to integer
-
-'sub do_converttoint'
-
-'dim t1 as expr_result 
-'dim a1,r as integer
-'t1=pop() 
-'select case t1.result_type
-'  case result_int: a1=t1.result.iresult : r=result_int
-'  case result_uint: a1=t1.result.uresult : r=result_int
-'  case result_float: a1=round(t1.result.fresult) : r=result_int
-'  case result_string: a1=val(t1.result.sresult) :r=result_int
-'  case result_string2: a1=val(convertstring(t1.result.uresult)) :r=result_int
-'  case result_error: a1=0: r=t1.result.uresult
-'  case else : a1=0 : r=1
-
-'end select
-'t1.result.iresult=a1 : t1.result_type=r : push t1 
-
-'end sub
-
-
-
-
 function converttoint (t1 as expr_result) as integer 
 
 select case t1.result_type
@@ -4598,35 +4595,68 @@ sub do_waitclock
 waitclock
 end sub
 
+
+
 sub do_dir
 dim filename as string
-dim px,py as integer
+dim px,py,i,j,n,swapped as integer
+dim filelist(128) as string
+
 chdir("/sd/bas")       ' set working directory
 print "Working directory: "; currentdir$ 
-px=0:
+px=0
+for i=0 to 127: filelist(i)="" : next i
 filename=dir$("*", fbDirectory)
-while filename <> "" and filename <> nil
-  print "[dir] ";filename; : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+n=0
+while filename <> "" andalso filename <> nil andalso n<128
+  filename="[dir] "+filename
+  filelist(n)=filename
+  n=n+1
   filename = dir$()      ' continue scan
-
-   
 end while
+' now sort this
+
+for i =0 to n-1
+  swapped=false
+  for j=0 to n-i-2
+    if filelist(j) > filelist(j+1) then
+      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
+      swapped=true
+    endif
+  next j
+if not swapped then exit for
+next i
+for i=0 to n-1
+  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+next i  
+if n>=128  then print "More than 128 entries found: clean your directory"
 print
+n=0
+
 px=0: py=v.getcursory()
+
 filename = dir$("*", fbNormal )  ' start scan for all files and directories
-do while filename <> "" and filename <> nil
-  print filename; : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+do while filename <> "" andalso filename <> nil andalso n<128
+  filelist(n)=filename: n=n+1 
   filename = dir$()      ' continue scan
-    if v.getcursory()=34 then    'bug, after first break, cursory is always 35
-    print "-----more, press any key";
-    do 
-    loop while kbm.get_key()<>0
-    do
-    loop while kbm.get_key()=0
-      if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
-    position 0,35: print "                             ";: position 4,35  
-  endif  
 loop
+
+for i =0 to n-1
+  swapped=false
+  for j=0 to n-i-2
+    if filelist(j) > filelist(j+1) then
+      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
+      swapped=true
+    endif
+  next j
+if not swapped then exit for
+next i
+for i=0 to n-1
+  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+next i  
+if n>=128  then print "More than 128 entries found: clean your directory"
+print
+
 end sub
 
 sub do_if
