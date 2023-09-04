@@ -1,5 +1,5 @@
 ' A Retromachine Basic interpreter
-' v. 0.30 pre-beta - 20230903
+' v. 0.31 pre-beta - 20230903
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
@@ -31,8 +31,8 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.30"
-const ver=30
+const ver$="P2 Retromachine BASIC version 0.31"
+const ver=31
 
 '' ------------------------------- Keyboard constants
 

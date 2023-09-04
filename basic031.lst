@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/basic030.p2asm"
+00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/basic031.p2asm"
 00000                 | con
 00000                 | 	_clkfreq = 340500000
 00000                 | 	_clkmode = 27175163
@@ -10,7 +10,7 @@
 00000                 | 	fbDirectory = 16
 00000                 | 	fbArchive = 32
 00000                 | 	fbNormal = 33
-00000                 | 	ver = 30
+00000                 | 	ver = 31
 00000                 | 	key_enter = 141
 00000                 | 	key_escape = 155
 00000                 | 	key_backspace = 136
@@ -63221,7 +63221,7 @@
 343bc 023 43 20 76 65 
 343c0 024 72 73 69 6F 
 343c4 025 6E 20 30 2E | 	byte	$42, $41, $53, $49, $43, $20, $76, $65, $72, $73, $69, $6f, $6e, $20, $30, $2e
-343c8 026 33 30 00 00 | 	byte	$33, $30, $00, $00
+343c8 026 33 31 00 00 | 	byte	$33, $31, $00, $00
 343cc 027             | 	alignl
 343cc 027             | _hg010b_spin2_dat_
 343cc 027             | 
