@@ -2694,7 +2694,7 @@ next i
 if params(0)<0 then channel=0 else channel=round(params(0)) mod 8
 if params(1)<0 then freq=channels(channel).freq else freq=params(1) : channels(channel).freq=freq
 if params(3)<0 orelse params(3)>16.384 then vol=channels(channel).vol else vol=params(3) : channels(channel).vol=vol
-if params(4)<0 orelse params(4)>8.0 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
+if params(4)<0 orelse params(4)>32 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
 if params(5)<0 orelse params(5)>8.0 then env=channels(channel).env else env=round(params(5)) : channels(channel).env=env
 if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else slen=params(6) : channels(channel).length=slen
 if params(2)<0 orelse params(2)>10000.0 then delay=channels(channel).delay else delay=round(params(2)) : channels(channel).delay=delay
@@ -2778,7 +2778,14 @@ period=round((3546895/freq)/(i*(2^(13-lfreq))))
 t1=pop()
 channel=converttoint(t1) mod 8
 ps=skip shl 16+period
-lpoke base+64*channel+24,ps
+if channels(channel).wave<32 then 
+  lpoke base+64*channel+24,ps
+else
+  dpoke base+64*channel+24,round(3546895/freq) 
+  dpoke base+64*channel+26,256
+endif 
+
+
 end sub
 
 sub do_changewav

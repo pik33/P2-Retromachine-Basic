@@ -14556,7 +14556,7 @@ LR__1157
 	wrlong	local04, local03
 	sub	objptr, ##10552
 LR__1158
-' if params(4)<0 orelse params(4)>8.0 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
+' if params(4)<0 orelse params(4)>32 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
 	add	fp, #72
 	rdlong	arg01, fp
 	sub	fp, #72
@@ -14568,7 +14568,7 @@ LR__1158
 	add	fp, #72
 	rdlong	arg01, fp
 	sub	fp, #72
-	mov	arg02, ##1090519040
+	mov	arg02, ##1107296256
 	neg	arg03, #1
 	call	#__system___float_cmp
 	cmps	result1, #1 wc
@@ -15430,23 +15430,70 @@ LR__1191
 	add	fp, #12
 	wrlong	local03, fp
 	add	fp, #8
-	rdlong	arg02, fp
-	shl	arg02, #16
+	rdlong	local01, fp
+	shl	local01, #16
 	add	fp, #8
 	rdlong	local04, fp
-	add	arg02, local04
+	add	local01, local04
 	add	fp, #4
-	wrlong	arg02, fp
+	wrlong	local01, fp
+' if channels(channel).wave<32 then 
+	sub	fp, #20
+	rdlong	local04, fp
+	sub	fp, #12
+	mov	local03, local04
+	shl	local03, #1
+	add	local03, local04
+	shl	local03, #3
+	add	objptr, ##10552
+	add	local03, objptr
+	add	local03, #4
+	rdbyte	local01, local03
+	cmp	local01, #32 wc
+	sub	objptr, ##10552
+ if_ae	jmp	#LR__1192
 	add	objptr, ##28176
 	rdlong	arg01, objptr
 	sub	objptr, ##28176
-	sub	fp, #20
+	add	fp, #12
 	rdlong	local04, fp
 	shl	local04, #6
 	add	arg01, local04
 	add	arg01, #24
-	sub	fp, #12
+	add	fp, #20
+	rdlong	arg02, fp
+	sub	fp, #32
 	wrlong	arg02, arg01
+	jmp	#LR__1193
+LR__1192
+	add	objptr, ##28176
+	rdlong	local01, objptr
+	sub	objptr, ##28176
+	add	fp, #12
+	rdlong	local04, fp
+	shl	local04, #6
+	add	local01, local04
+	add	local01, #24
+	add	fp, #24
+	rdlong	arg02, fp
+	sub	fp, #36
+	mov	arg01, ##1247312956
+	call	#__system___float_div
+	mov	arg01, result1
+	mov	arg02, #1
+	call	#__system___float_tointeger
+	wrword	result1, local01
+	add	objptr, ##28176
+	rdlong	arg01, objptr
+	sub	objptr, ##28176
+	add	fp, #12
+	rdlong	local04, fp
+	sub	fp, #12
+	shl	local04, #6
+	add	arg01, local04
+	add	arg01, #26
+	wrword	#256, arg01
+LR__1193
 	mov	ptra, fp
 	call	#popregs_
 _do_changefreq_ret
