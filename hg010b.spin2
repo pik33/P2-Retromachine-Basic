@@ -1,6 +1,6 @@
 '********************************************************************************************
 ' Displaylisted PSRAM HDMI for P2 Retromachine
-' Version 0.09 alpha - 20230526
+' Version 0.10 alpha - 20230904
 ' 1 cog graphics with or without border, with sprites, 8bpp
 ' (c) 2012-2023 Piotr Kardasz pik33@o2.pl
 ' MIT license
@@ -1004,14 +1004,20 @@ repeat i from 0 to timings[7]-1
  
 ''----------- Scroll the screen one line down 
 
-pub scrolldown() | i
+pub scrolldown(start=0) | i
 
-repeat i from 583 to 0
+repeat i from 579 to (start*16)+4
   ram.read1($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
   ram.write($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
 
-repeat i from 0 to 15
-   fastline(0,1023,i,write_background)      
+repeat i from (start*16)+4 to (start*16)+19
+   fastline(0,1023,i,write_background)    
+   
+repeat i from 35 to start
+  ram.read1($80000-4096-1024-s_debug, textbuf_ptr+(i*128), 128)
+  ram.write($80000-4096-1024-s_debug, textbuf_ptr+(i+1)*128,128)
+repeat i from 0 to 127
+  ram.fill((textbuf_ptr+start*128+i),32,1,0,1)      
 
 ''----------- Set cursor at the first character in a new line, scroll if needed 
 

@@ -533,6 +533,7 @@ if key3<>0 then
       ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
       line$=line$+chr$(ch)
     next i
+    if v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
     v.crlf() 
     return  line$
     endif 
@@ -779,9 +780,9 @@ i=0 : do
   if lparts(i).part$="then" then exit loop 					' try to find 'then'
   i=i+1 
 loop until i>k
-if i<k then addptr=i+1								' then found
-lp$=lparts(addptr).part$ 						      
-dot=instr(addptr,lparts(addptr).part$,".")					' find a dot	
+if i<k then addptr=i+1	 							' then found
+lp$=lparts(addptr).part$ 
+dot=instr(1,lparts(addptr).part$,".")						' find a dot	
 if dot>0 andalso dot<len(lparts(addptr).part$) then 				' split the part
   k+=1
   for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
@@ -1208,38 +1209,44 @@ select case s
 end select
 end function  
 
+' Check if the part is a name
+
 function isname(s as string) as boolean
 
-' name can be (_a)(1a_.)($%!)
-
-dim i,l,m$ 
+dim i,l as integer
+dim m$ as string
  
 l=len(s): if l=0 then return false
 m$=mid$(s,1,1) : if (m$<"a" orelse m$>"z")  andalso m$<>"_" then return false
 if l>2 then 
   for i=2 to l
-    m$=mid$(s,i,1) : if (i<l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." then return false
+    m$=mid$(s,i,1) : if (i<l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." then return false 
     if (i=l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"$" andalso m$<>"%" andalso m$<>"!" then return false
   next i
 endif
 return true
 end function  
 
-function isnum(s as string) as boolean ' todo : bins have only 1 and 0 in them
+' Check if the part is a number.  
 
-dim i,l,m$,ds,es,hex,b
+function isnum(s as string) as boolean 
+
+dim i,l,ds,es,hex,bin,b as integer
+dim m$ as string
 
 ds=0: es=0
 l=len(s): if l=0 then return false
 m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"." andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
 if m$="." then ds=1
 if m$="$" then hex=1 else hex=0
+if m$="%" then bin=1 else bin=0
 if l>1 then 
   for i=2 to l
     m$=mid$(s,i,1) : b=false
     if m$>="0" andalso m$<="9" then b=true  
     if m$="_" orelse m$="." orelse m$="E" orelse m$="e" orelse m$="-" then b=true 
     if hex=1 andalso m$>="a" andalso m$<="f" then b=true
+    if bin=1 andalso (m$<"0" orelse m$>"1") andalso m$<>"_" then return false
     if not b then return false
     if m$="-" andalso lcase$(mid$(s,i-1,1))<>"e" then return false
     if m$="." then ds+=1: if ds>1 then return false
@@ -1247,24 +1254,31 @@ if l>1 then
   next i
 endif
 return true
-end function  
+end function    
+  
+' Check if the part is an integer number.    
   
 function isint(s as string) as boolean
 
-dim i,l,m$,ds,es,hex
+dim i,l,ds,es,hex,bin as integer
+dim m$ as string
 
 l=len(s): if l=0 then return false
 m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
 if m$="$" then hex=1 else hex=0
+if m$="%" then bin=1 else bin=0
 if l>1 then 
   for i=2 to l
     m$=mid$(s,i,1) 
     if hex=0 andalso (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
     if hex=1 andalso (m$<"0" orelse m$>"9") andalso (m$<"a" orelse m$>"f") andalso m$<>"_"  then return false
+    if bin=1 andalso (m$<"0" orelse m$>"1") andalso m$<>"_"  then return false
   next i
 endif
 return true
 end function  
+
+' Check if the part is a positive decimal number.  
 
 function isdec(s as string) as boolean
 
@@ -1277,15 +1291,26 @@ for i=1 to l
 return true
 end function 
 
+' Check if the part is a string.  
+
 function isstring(s as string) as boolean
 if left$(s,1)="""" andalso right$(s,1)="""" then return true else return false
 end function
 
+'---------------------------------------------------------------------------------------------------------------------------------------
 '--------------------- The end of interpreter/tokenizer functions ----------------------------------------------------------------------
 '---------------------------------------------------------------------------------------------------------------------------------------
 
 '---------------------------------------------------------------------------------------------------------------------------------------
-'----------------------Reverse Polish notation precompiler -----------------------------------------------------------------------------
+'
+'               		REVERSE POLISH NOTATION PRECOMPILER
+'
+' A precompiler gets the tokenized line at the input, and outputs the precompiled line that uses the reverse Polish notation.
+' That means the operation is done by firs placing the arguments on the stack, and then do the operation on a top of this stack.
+' The expression a=b*(c+d) is translated to push c, push d, add, push b, mul, push variable#, assign
+' If the precompiled line has a number that is >0, then it is added to the program and saved in the PSRAM using the 2-way list structure
+' If the line number=0, it is not saved, and instead it is immediately executed in the "interpret" function
+' 
 '---------------------------------------------------------------------------------------------------------------------------------------
 
 '----- delete a line from a program
