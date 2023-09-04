@@ -760,7 +760,7 @@ LR__0018
 '  
 '   if key4=key_enter then 						' get the line from the  screen and return it
 	cmp	local11, #141 wz
- if_ne	jmp	#LR__0021
+ if_ne	jmp	#LR__0022
 	mov	local22, ##@LR__5037
 '     line$="" 
 '     for i=editor_spaces to 127
@@ -788,38 +788,43 @@ LR__0019
 	add	local14, #1
 	jmp	#LR__0019
 LR__0020
-'     if v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
+'     if do_insert andalso v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
+	add	objptr, ##41944
+	rdlong	local06, objptr wz
+	sub	objptr, ##41944
+ if_e	jmp	#LR__0021
 	add	objptr, #62
-	rdbyte	local06, objptr
+	rdbyte	local07, objptr
 	sub	objptr, #62
-	cmp	local06, #35 wc
+	cmp	local07, #35 wc
  if_b	add	objptr, #62
  if_b	rdbyte	arg01, objptr
  if_b	sub	objptr, #62
  if_b	add	arg01, #1
  if_b	call	#_hg010b_spin2_scrolldown
+LR__0021
 	call	#_hg010b_spin2_crlf
 '     v.crlf() 
 '     return  line$
 	mov	result1, local22
-	jmp	#LR__0048
-LR__0021
+	jmp	#LR__0049
+LR__0022
 	getbyte	local11, local04, #0
 '   
 '   if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)  	' tab
 	cmp	local11, #43 wz
- if_ne	jmp	#LR__0022
+ if_ne	jmp	#LR__0023
 	add	objptr, #60
 	rdword	local06, objptr
 	sub	objptr, #60
 	cmp	local06, #240 wc
- if_b	jmp	#LR__0022
+ if_b	jmp	#LR__0023
 	add	objptr, ##41232
 	rdlong	local08, objptr
 	sub	objptr, ##41232
 	mov	local07, local08
 	cmp	local07, #1 wz
- if_ne	jmp	#LR__0022
+ if_ne	jmp	#LR__0023
 	add	ptr__dat__, ##2216
 	mov	arg02, ptr__dat__
 	sub	ptr__dat__, ##2216
@@ -841,12 +846,12 @@ LR__0021
 	add	objptr, ##5836
 	call	#_audio096_spin2_stop
 	sub	objptr, ##5836
-LR__0022
+LR__0023
 '   if key4=77 then i=127 : do: 															' end
 	cmp	local11, #77 wz
- if_ne	jmp	#LR__0027
+ if_ne	jmp	#LR__0028
 	mov	local14, #127
-LR__0023
+LR__0024
 '     if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then 
 	add	objptr, #62
 	rdbyte	local09, objptr
@@ -863,49 +868,35 @@ LR__0023
 	call	#_pspeek
 	getbyte	local06, result1, #0
 	cmp	local06, #32 wz
- if_e	jmp	#LR__0025
+ if_e	jmp	#LR__0026
 '       if i<127 then v.setcursorx(2*i+2) else v.setcursorx(254)
 	cmps	local14, #127 wc
- if_ae	jmp	#LR__0024
+ if_ae	jmp	#LR__0025
 	mov	local07, local14
 	shl	local07, #1
 	mov	arg01, local07
 	add	arg01, #2
 	call	#_hg010b_spin2_setcursorx
-	jmp	#LR__0026
-LR__0024
+	jmp	#LR__0027
+LR__0025
 	mov	arg01, #254
 	call	#_hg010b_spin2_setcursorx
-	jmp	#LR__0026
-LR__0025
+	jmp	#LR__0027
+LR__0026
 	sub	local14, #1
 	add	objptr, ##28212
 	rdlong	local06, objptr
 	sub	objptr, ##28212
 	cmp	local14, local06 wz
- if_ne	jmp	#LR__0023
-LR__0026
+ if_ne	jmp	#LR__0024
 LR__0027
+LR__0028
 '   if i=editor_spaces then v.setcursorx(2*editor_spaces)
 	add	objptr, ##28212
 	rdlong	local12, objptr
 	sub	objptr, ##28212
 	mov	local06, local12
 	cmp	local14, local06 wz
- if_ne	jmp	#LR__0028
-	add	objptr, ##28212
-	rdlong	local08, objptr
-	sub	objptr, ##28212
-	mov	local07, local08
-	mov	local12, local07
-	shl	local12, #1
-	mov	local06, local12
-	mov	arg01, local06
-	call	#_hg010b_spin2_setcursorx
-LR__0028
-'     
-'   if key4=74 then v.setcursorx(editor_spaces*2)													' home
-	cmp	local11, #74 wz
  if_ne	jmp	#LR__0029
 	add	objptr, ##28212
 	rdlong	local08, objptr
@@ -917,6 +908,20 @@ LR__0028
 	mov	arg01, local06
 	call	#_hg010b_spin2_setcursorx
 LR__0029
+'     
+'   if key4=74 then v.setcursorx(editor_spaces*2)													' home
+	cmp	local11, #74 wz
+ if_ne	jmp	#LR__0030
+	add	objptr, ##28212
+	rdlong	local08, objptr
+	sub	objptr, ##28212
+	mov	local07, local08
+	mov	local12, local07
+	shl	local12, #1
+	mov	local06, local12
+	mov	arg01, local06
+	call	#_hg010b_spin2_setcursorx
+LR__0030
 '   if key4=75 then v.setcursory(0)														' pgup
 	cmp	local11, #75 wz
  if_e	mov	local06, #0
@@ -929,7 +934,7 @@ LR__0029
  if_e	call	#_hg010b_spin2_setcursory
 '   if key4=76 then 																' del
 	cmp	local11, #76 wz
- if_ne	jmp	#LR__0034
+ if_ne	jmp	#LR__0035
 '     for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
 	add	objptr, #62
 	rdbyte	local07, objptr
@@ -949,9 +954,9 @@ LR__0029
 	sub	objptr, #60
 	add	local23, local07
 	add	local23, #128
-LR__0030
+LR__0031
 	cmps	local14, local23 wc
- if_ae	jmp	#LR__0031
+ if_ae	jmp	#LR__0032
 	mov	arg01, local14
 	add	arg01, #1
 	call	#_pspeek
@@ -959,8 +964,8 @@ LR__0030
 	mov	arg01, local14
 	call	#_pspoke
 	add	local14, #1
-	jmp	#LR__0030
-LR__0031
+	jmp	#LR__0031
+LR__0032
 	add	objptr, #62
 	rdbyte	local09, objptr
 	mul	local09, #128
@@ -996,9 +1001,9 @@ LR__0031
 	mov	local24, local08
 	add	local24, local07
 	add	local24, #128
-LR__0032
+LR__0033
 	cmps	local14, local24 wc
- if_ae	jmp	#LR__0033
+ if_ae	jmp	#LR__0034
 	add	objptr, #60
 	rdword	local06, objptr
 	add	objptr, ##41896
@@ -1034,13 +1039,13 @@ LR__0032
 	mov	local12, local14
 	add	local12, #1
 	mov	local14, local12
-	jmp	#LR__0032
-LR__0033
+	jmp	#LR__0033
 LR__0034
+LR__0035
 ' 
 '   if key4 = 42 then  'backspace
 	cmp	local11, #42 wz
- if_ne	jmp	#LR__0040
+ if_ne	jmp	#LR__0041
 '     if v.cursor_x>editor_spaces*2 then 
 	add	objptr, #60
 	rdword	local12, objptr
@@ -1052,7 +1057,7 @@ LR__0034
 	mov	local07, local08
 	shl	local07, #1
 	cmps	local06, local07 wcz
- if_be	jmp	#LR__0038
+ if_be	jmp	#LR__0039
 	add	objptr, #60
 	rdword	arg01, objptr
 	sub	arg01, #2
@@ -1080,9 +1085,9 @@ LR__0034
 	sub	objptr, #60
 	add	local25, local07
 	add	local25, #128
-LR__0035
+LR__0036
 	cmps	local14, local25 wc
- if_ae	jmp	#LR__0036
+ if_ae	jmp	#LR__0037
 	mov	arg01, local14
 	add	arg01, #1
 	call	#_pspeek
@@ -1090,8 +1095,8 @@ LR__0035
 	mov	arg01, local14
 	call	#_pspoke
 	add	local14, #1
-	jmp	#LR__0035
-LR__0036
+	jmp	#LR__0036
+LR__0037
 	add	objptr, #62
 	rdbyte	local09, objptr
 	mul	local09, #128
@@ -1127,9 +1132,9 @@ LR__0036
 	mov	local26, local08
 	add	local26, local07
 	add	local26, #128
-LR__0037
+LR__0038
 	cmps	local14, local26 wc
- if_ae	jmp	#LR__0039
+ if_ae	jmp	#LR__0040
 	add	objptr, #60
 	rdword	local06, objptr
 	add	objptr, ##41896
@@ -1165,19 +1170,19 @@ LR__0037
 	mov	local12, local14
 	add	local12, #1
 	mov	local14, local12
-	jmp	#LR__0037
-LR__0038
+	jmp	#LR__0038
+LR__0039
 	mov	local22, ##@LR__5038
 	mov	local06, #4
 	add	objptr, #60
 	wrword	#4, objptr
 	sub	objptr, #60
-LR__0039
 LR__0040
+LR__0041
 ' 
 '   if key4=82 then 						' arrow up
 	cmp	local11, #82 wz
- if_ne	jmp	#LR__0041
+ if_ne	jmp	#LR__0042
 ' return cursor_y
 	add	objptr, #62
 	rdbyte	local12, objptr
@@ -1187,10 +1192,10 @@ LR__0040
 	mov	local06, local27
 	mov	arg01, local06
 	call	#_hg010b_spin2_setcursory
-LR__0041
+LR__0042
 '   if key4=81 then						' arrow down,  todo: remove hardcoded 36
 	cmp	local11, #81 wz
- if_ne	jmp	#LR__0042
+ if_ne	jmp	#LR__0043
 ' return cursor_y
 	add	objptr, #62
 	rdbyte	local12, objptr
@@ -1201,10 +1206,10 @@ LR__0041
 	mov	local06, local27
 	mov	arg01, local06
 	call	#_hg010b_spin2_setcursory
-LR__0042
+LR__0043
 '   if key4=80 then
 	cmp	local11, #80 wz
- if_ne	jmp	#LR__0043
+ if_ne	jmp	#LR__0044
 ' return cursor_x
 	add	objptr, #60
 	rdword	local28, objptr
@@ -1221,10 +1226,10 @@ LR__0042
 	mov	local06, local28
 	mov	arg01, local06
 	call	#_hg010b_spin2_setcursorx
-LR__0043
+LR__0044
 '   if key4=79 then						' arrow right
 	cmp	local11, #79 wz
- if_ne	jmp	#LR__0044
+ if_ne	jmp	#LR__0045
 ' return cursor_x
 	add	objptr, #60
 	rdword	local28, objptr
@@ -1236,11 +1241,11 @@ LR__0043
 	mov	local06, local28
 	mov	arg01, local06
 	call	#_hg010b_spin2_setcursorx
-LR__0044
+LR__0045
 ' 
 '   if key4=73 then 						' ins
 	cmp	local11, #73 wz
- if_ne	jmp	#LR__0047
+ if_ne	jmp	#LR__0048
 	add	objptr, ##41944
 	rdlong	local06, objptr
 	not	local12, local06
@@ -1248,20 +1253,20 @@ LR__0044
 '     if do_insert then v.setcursorshape(14) else  v.setcursorshape(0)
 	sub	objptr, ##41944
 	cmp	local12, #0 wz
- if_e	jmp	#LR__0045
+ if_e	jmp	#LR__0046
 	mov	local06, #14
 	mov	arg01, #14
 	call	#_hg010b_spin2_setcursorshape
-	jmp	#LR__0046
-LR__0045
+	jmp	#LR__0047
+LR__0046
 	mov	local06, #0
 	mov	arg01, #0
 	call	#_hg010b_spin2_setcursorshape
-LR__0046
 LR__0047
+LR__0048
 	mov	local04, #0
 	jmp	#LR__0001
-LR__0048
+LR__0049
 	mov	ptra, fp
 	call	#popregs_
 _edit_ret
@@ -6523,11 +6528,15 @@ _isstring_ret
 ' ' 
 ' '---------------------------------------------------------------------------------------------------------------------------------------
 ' 
+' '---------------------------------------------------------------------------------------------------------------------------------------
+' ' Helper functions to manage program lines
+' '---------------------------------------------------------------------------------------------------------------------------------------
+' 
 ' '----- delete a line from a program
 ' 
 ' function deleteline(aline as ulong) as integer
 _deleteline
-	mov	COUNT_, #3
+	mov	COUNT_, #2
 	call	#pushregs_
 	add	ptra, #44
 	add	fp, #4
@@ -6538,9 +6547,7 @@ _deleteline
 	wrlong	local01, fp
 	sub	fp, #16
 ' 
-' 
 ' searchptr=programstart
-' 
 ' do
 	sub	objptr, ##32184
 LR__0560
@@ -6571,34 +6578,31 @@ LR__0560
  if_b	cmp	local02, ##2147483647 wz
  if_c_and_nz	jmp	#LR__0560
 	sub	objptr, ##5836
-' 
-' 
-' if header(0)<>aline then return -1
+' if header(0)<>aline then return -1						' if not =, then there is no line, return
 	add	fp, #20
 	rdlong	local01, fp
 	sub	fp, #16
-	rdlong	local03, fp
+	rdlong	local02, fp
 	sub	fp, #4
-	cmp	local01, local03 wz
+	cmp	local01, local02 wz
  if_ne	neg	result1, #1
- if_ne	jmp	#LR__0566
+ if_ne	jmp	#LR__0565
 	add	fp, #8
 	rdlong	arg01, fp
 	sub	fp, #8
 	neg	arg02, #1
 	call	#_pslpoke
+' pslpoke(lineptr2,$FFFF_FFFF) 							' flag the deleted line
 ' 
-' pslpoke(lineptr2,$FFFF_FFFF) ' flag the deleted line
-' 
-' if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  ' this is one and only line in the program
+' if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  			' this is one and only line in the program
 	add	fp, #40
 	rdlong	local01, fp
 	sub	fp, #40
 	cmp	local01, ##2147483647 wz
  if_e	add	fp, #36
- if_e	rdlong	local03, fp
+ if_e	rdlong	local02, fp
  if_e	sub	fp, #36
- if_e	cmp	local03, ##-1 wz
+ if_e	cmp	local02, ##-1 wz
  if_ne	jmp	#LR__0561
 	add	objptr, ##38020
 	wrlong	##524288, objptr
@@ -6625,16 +6629,16 @@ LR__0560
 	sub	objptr, ##41144
 LR__0561
 ' 
-' if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' this is the last, and not first, line of the program
+' if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' this is the last, and not first, line of the program
 	add	fp, #40
 	rdlong	local01, fp
 	sub	fp, #40
 	cmp	local01, ##2147483647 wz
  if_ne	jmp	#LR__0562
 	add	fp, #36
-	rdlong	local03, fp
+	rdlong	local02, fp
 	sub	fp, #36
-	cmp	local03, ##-1 wz
+	cmp	local02, ##-1 wz
  if_e	jmp	#LR__0562
 	add	fp, #36
 	rdlong	arg01, fp
@@ -6653,24 +6657,24 @@ LR__0561
 	add	objptr, ##38024
 	wrlong	result1, objptr
 	sub	objptr, ##38024
-'   pslpoke(header(4)+20,$7FFF_FFFF) ' unlink the previous line
-'   lastlineptr=header(4)            ' keep last line pointer to avoid searching while sequentially adding a new line
+'   pslpoke(header(4)+20,$7FFF_FFFF) 						' unlink the previous line
+'   lastlineptr=header(4)           						' keep the last line pointer to avoid searching while sequentially adding a new line
 '   lastline=pslpeek(header(4))
 '   return 0
 	mov	result1, #0
-	jmp	#LR__0566
+	jmp	#LR__0565
 LR__0562
 ' 
-' if header(5)<>$7FFF_FFFF andalso header(4)=$FFFF_FFFF then ' this is the first line, but not the last
+' if header(5)<>$7FFF_FFFF andalso header(4)=$FFFF_FFFF then 			' this is the first line, but not the last
 	add	fp, #40
 	rdlong	local01, fp
 	sub	fp, #40
 	cmp	local01, ##2147483647 wz
  if_e	jmp	#LR__0563
 	add	fp, #36
-	rdlong	local03, fp
+	rdlong	local02, fp
 	sub	fp, #36
-	cmp	local03, ##-1 wz
+	cmp	local02, ##-1 wz
  if_ne	jmp	#LR__0563
 	add	fp, #40
 	rdlong	arg01, fp
@@ -6686,21 +6690,21 @@ LR__0562
 	sub	objptr, ##38020
 ' '   print "deleted first line"
 '   pslpoke(header(5)+16,$FFFF_FFFF) 
-'   programstart=header(5) ' adjust the program start to point on the first new line
+'   programstart=header(5) 							' adjust the program start to point on the first new line
 '   return 0
 	mov	result1, #0
-	jmp	#LR__0566
+	jmp	#LR__0565
 LR__0563
 ' 
-' if header(5)<>$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' the line is not first and not last
+' if header(5)<>$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' the line is not first and not last
 	add	fp, #40
 	rdlong	local01, fp
 	sub	fp, #40
 	cmp	local01, ##2147483647 wz
  if_ne	add	fp, #36
- if_ne	rdlong	local03, fp
+ if_ne	rdlong	local02, fp
  if_ne	sub	fp, #36
- if_ne	cmp	local03, ##-1 wz
+ if_ne	cmp	local02, ##-1 wz
  if_e	jmp	#LR__0564
 	add	fp, #40
 	rdlong	arg01, fp
@@ -6720,62 +6724,17 @@ LR__0563
 '    pslpoke(header(4)+20, header(5))
 '    return 0
 	mov	result1, #0
-	jmp	#LR__0566
+	jmp	#LR__0565
 LR__0564
-	add	fp, #16
-	rdlong	local01, fp
-	sub	fp, #8
-	wrlong	local01, fp
-	add	objptr, ##38020
-	rdlong	local01, objptr
-	add	fp, #8
-	wrlong	local01, fp
-	sub	fp, #16
-' 
-' 
-' 
-' ' now find if the deleted line was a target for goto and replace fast_goto with find_goto
-' 
-' lineptr2=searchptr
-' searchptr=programstart
-' 
-' do
-	sub	objptr, ##32184
-LR__0565
-	add	fp, #20
-	mov	arg01, fp
-	sub	fp, #4
-	rdlong	arg02, fp
-	sub	fp, #16
-	mov	arg03, #24
-	call	#_psram_spin2_read1
-	add	fp, #16
-	rdlong	local01, fp
-	sub	fp, #8
-	wrlong	local01, fp
-	add	fp, #32
-	rdlong	local01, fp
-	sub	fp, #24
-	wrlong	local01, fp
-	add	fp, #4
-	rdlong	local01, fp
-	sub	fp, #16
-	rdlong	local03, fp
-	sub	fp, #4
-	cmp	local01, local03 wc
- if_b	add	fp, #40
- if_b	rdlong	local02, fp
- if_b	sub	fp, #40
- if_b	cmp	local02, ##2147483647 wz
- if_c_and_nz	jmp	#LR__0565
-	sub	objptr, ##5836
 	mov	result1, #0
-LR__0566
+LR__0565
 	mov	ptra, fp
 	call	#popregs_
 _deleteline_ret
 	ret
 
+' 
+' '----- Save a line to the PSRAM. Called from insertline and add_line_at_end
 ' 
 ' sub save_line
 _save_line
@@ -6838,6 +6797,7 @@ _save_line_ret
 	ret
 
 ' 
+' '----- Insert a new line into the middle of the program
 ' 
 ' function insertline(aline as ulong) as integer
 _insertline
@@ -6883,7 +6843,7 @@ LR__0580
  if_c_and_nz	jmp	#LR__0580
 	sub	objptr, ##5836
 ' 
-' if header(0)=aline then return -1 ' delete it first
+' if header(0)=aline then return -1 				' delete it first
 	add	fp, #16
 	rdlong	local01, fp
 	sub	fp, #12
@@ -6892,7 +6852,7 @@ LR__0580
 	cmp	local01, local02 wz
  if_e	neg	result1, #1
  if_e	jmp	#LR__0583
-' if header(0)<aline then return -2 ' end of program reached
+' if header(0)<aline then return -2 				' end of program reached
 	add	fp, #16
 	rdlong	local01, fp
 	sub	fp, #12
@@ -6902,7 +6862,7 @@ LR__0580
  if_b	neg	result1, #2
  if_b	jmp	#LR__0583
 ' 
-' if  header(4)=$FFFF_FFFF then ' this is one first line in the program so the inserted line will be new first
+' if  header(4)=$FFFF_FFFF then 					' this is the first line in the program so the inserted line will be new first
 	add	fp, #32
 	rdlong	local01, fp
 	sub	fp, #32
@@ -6939,7 +6899,7 @@ LR__0580
 	jmp	#LR__0583
 LR__0581
 ' 
-' if header(4)<>$FFFF_FFFF then ' this is not first line of the program. It doesn't matter if it is last as we will insert it before
+' if header(4)<>$FFFF_FFFF then 					' this is not first line of the program. It doesn't matter if it is last as we will insert a new line before
 	add	fp, #32
 	rdlong	local01, fp
 	sub	fp, #32
@@ -6986,6 +6946,8 @@ _insertline_ret
 	ret
 
 ' 
+' '----- Adds a new line at the end of the program
+' 
 ' sub add_line_at_end(aline) 
 _add_line_at_end
 	add	objptr, ##38024
@@ -7026,6 +6988,13 @@ _add_line_at_end
 _add_line_at_end_ret
 	ret
 
+' 
+' '--------------------------------------------------------------------------------------------------------------------------
+' '---------------------------------- End of helper functions ---------------------------------------------------------------
+' '--------------------------------------------------------------------------------------------------------------------------
+' 
+' 
+' 
 ' 
 ' function compile_immediate(linetype as ulong) as integer
 _compile_immediate
@@ -13049,14 +13018,14 @@ _do_save_ret
 ' 
 ' sub do_enter
 _do_enter
-	mov	arg01, #1
+	mov	arg01, ##1234
 	call	#_do_load
 _do_enter_ret
 	ret
 
 ' 
 ' 
-' sub do_load(mode=0)
+' sub do_load(amode=0 as integer)   ' here amode = 2, why?
 _do_load
 	mov	COUNT_, #1
 	call	#pushregs_
@@ -13128,9 +13097,10 @@ LR__1092
 	sub	fp, #12
 	cmp	local01, #31 wz
  if_ne	jmp	#LR__1098
-'   if mode=0 then do_new
-	rdlong	local01, fp wz
- if_e	call	#_do_new
+'   if amode<>1234 then do_new
+	rdlong	local01, fp
+	cmp	local01, ##1234 wz
+ if_ne	call	#_do_new
 '   if t1.result.sresult="" then t1.result.sresult=loadname else loadname=t1.result.sresult
 	add	fp, #4
 	rdlong	arg01, fp

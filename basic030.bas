@@ -533,7 +533,7 @@ if key3<>0 then
       ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
       line$=line$+chr$(ch)
     next i
-    if v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
+    if do_insert andalso v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
     v.crlf() 
     return  line$
     endif 
@@ -1313,6 +1313,10 @@ end function
 ' 
 '---------------------------------------------------------------------------------------------------------------------------------------
 
+'---------------------------------------------------------------------------------------------------------------------------------------
+' Helper functions to manage program lines
+'---------------------------------------------------------------------------------------------------------------------------------------
+
 '----- delete a line from a program
 
 function deleteline(aline as ulong) as integer
@@ -1320,61 +1324,42 @@ function deleteline(aline as ulong) as integer
 dim lineptr2,oldsearchptr,searchptr as ulong
 dim header as ulong(5) 
 
-
 searchptr=programstart
-
 do
   psram.read1(varptr(header),searchptr,24)
   lineptr2=searchptr
   searchptr=header(5)
-loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  ' we have a line that number is >= new line
+loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  			' we have a line that number is >= new line
+if header(0)<>aline then return -1						' if not =, then there is no line, return
+pslpoke(lineptr2,$FFFF_FFFF) 							' flag the deleted line
 
-
-if header(0)<>aline then return -1
-
-pslpoke(lineptr2,$FFFF_FFFF) ' flag the deleted line
-
-if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  ' this is one and only line in the program
+if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  			' this is one and only line in the program
   programstart=memlo : programptr=memlo : lastline=0 : lastlineptr=-1 
   pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF : runptr=memlo : runptr2=memlo
 endif
 
-if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' this is the last, and not first, line of the program
-  pslpoke(header(4)+20,$7FFF_FFFF) ' unlink the previous line
-  lastlineptr=header(4)            ' keep last line pointer to avoid searching while sequentially adding a new line
+if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' this is the last, and not first, line of the program
+  pslpoke(header(4)+20,$7FFF_FFFF) 						' unlink the previous line
+  lastlineptr=header(4)           						' keep the last line pointer to avoid searching while sequentially adding a new line
   lastline=pslpeek(header(4))
   return 0
 endif   
 
-if header(5)<>$7FFF_FFFF andalso header(4)=$FFFF_FFFF then ' this is the first line, but not the last
+if header(5)<>$7FFF_FFFF andalso header(4)=$FFFF_FFFF then 			' this is the first line, but not the last
 '   print "deleted first line"
   pslpoke(header(5)+16,$FFFF_FFFF) 
-  programstart=header(5) ' adjust the program start to point on the first new line
+  programstart=header(5) 							' adjust the program start to point on the first new line
   return 0
 endif
 
-if header(5)<>$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then ' the line is not first and not last
+if header(5)<>$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' the line is not first and not last
    pslpoke(header(5)+16,header(4))  
    pslpoke(header(4)+20, header(5))
    return 0
 endif   
-
-
-
-' now find if the deleted line was a target for goto and replace fast_goto with find_goto
-
-lineptr2=searchptr
-searchptr=programstart
-
-do
-  psram.read1(varptr(header),searchptr,24)
-  lineptr2=searchptr
-  searchptr=header(5)
-loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  ' we have a line that number is >= new line
-
-
-
 end function
+
+'----- Save a line to the PSRAM. Called from insertline and add_line_at_end
 
 sub save_line
 
@@ -1385,14 +1370,12 @@ llength2=len (fullline$): if llength2 mod 4 <>0 then llength2=4*((llength2/4)+1)
 llength3=llength+llength2
 ucompiledline(2)=programptr+llength
 ucompiledline(3)=llength2 
-
 psram.write(varptr(compiledline),programptr,llength)
 psram.write(lpeek(varptr(fullline$)),programptr+llength,llength2)
 programptr+=llength3
-
-
 end sub
 
+'----- Insert a new line into the middle of the program
 
 function insertline(aline as ulong) as integer
    
@@ -1405,12 +1388,12 @@ do
   psram.read1(varptr(header),searchptr,24)
   lineptr2=searchptr
   searchptr=header(5)
-loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  ' we have a line that number is >= new line
+loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  	' we have a line that number is >= new line
 
-if header(0)=aline then return -1 ' delete it first
-if header(0)<aline then return -2 ' end of program reached
+if header(0)=aline then return -1 				' delete it first
+if header(0)<aline then return -2 				' end of program reached
 
-if  header(4)=$FFFF_FFFF then ' this is one first line in the program so the inserted line will be new first
+if  header(4)=$FFFF_FFFF then 					' this is the first line in the program so the inserted line will be new first
   programstart=programptr
   pslpoke(lineptr2+16,programptr)
   ucompiledline(4)=$FFFF_FFFF
@@ -1419,7 +1402,7 @@ if  header(4)=$FFFF_FFFF then ' this is one first line in the program so the ins
   return 0
 endif
 
-if header(4)<>$FFFF_FFFF then ' this is not first line of the program. It doesn't matter if it is last as we will insert it before
+if header(4)<>$FFFF_FFFF then 					' this is not first line of the program. It doesn't matter if it is last as we will insert a new line before
   ucompiledline(4)=header(4)
   ucompiledline(5)=lineptr2
   pslpoke(lineptr2+16,programptr)
@@ -1429,14 +1412,22 @@ if header(4)<>$FFFF_FFFF then ' this is not first line of the program. It doesn'
 endif  
 end function
 
+'----- Adds a new line at the end of the program
+
 sub add_line_at_end(aline) 
 
 lastline=aline: ucompiledline(4)=lastlineptr : pslpoke(lastlineptr+20,programptr) : lastlineptr=programptr : ucompiledline(5)=$7FFF_FFFF 
 if programptr=memlo then ucompiledline(4)=$FFFFFFFF ' that is the first line
 save_line
 pslpoke(programptr,$FFFFFFFF) ' write end flag ' is it eeded at all here? 
-
 end sub
+
+'--------------------------------------------------------------------------------------------------------------------------
+'---------------------------------- End of helper functions ---------------------------------------------------------------
+'--------------------------------------------------------------------------------------------------------------------------
+
+
+
 
 function compile_immediate(linetype as ulong) as integer
 
@@ -2499,11 +2490,12 @@ end sub
 'lo todo: errors while loading
 
 sub do_enter
-do_load(1)
+do_load(1234)
 end sub
 
 
-sub do_load(mode=0)
+sub do_load(amode=0 as integer)   ' here amode = 2, why?
+
 dim t1 as expr_result
 dim i, r, amount,numpar as integer
 dim header,linelength as ulong
@@ -2515,7 +2507,7 @@ if numpar>0 then t1=pop() else t1.result.sresult=loadname : t1.result_type=resul
 'print "popped "; t1.result.uresult, t1.result_type
 if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string ': print t1.result.sresult
 if t1.result_type=result_string then
-  if mode=0 then do_new
+  if amode<>1234 then do_new
   if t1.result.sresult="" then t1.result.sresult=loadname else loadname=t1.result.sresult
   close #9: open currentdir$+"/"+t1.result.sresult for input as #9
   r=geterr() 
