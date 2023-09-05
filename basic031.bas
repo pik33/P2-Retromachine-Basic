@@ -1298,6 +1298,19 @@ function isstring(s as string) as boolean
 if left$(s,1)="""" andalso right$(s,1)="""" then return true else return false
 end function
 
+' getnoteval. Returns the frequency of note token
+
+function getnoteval(token) as single
+
+dim note,noteexp as integer
+dim notebase,a as single
+
+note = token-token_notename 
+notebase=notetable(note mod 12) 
+noteexp=1+(note/12) 
+return (2.0^noteexp)*notebase
+end function
+
 '---------------------------------------------------------------------------------------------------------------------------------------
 '--------------------- The end of interpreter/tokenizer functions ----------------------------------------------------------------------
 '---------------------------------------------------------------------------------------------------------------------------------------
@@ -2354,6 +2367,169 @@ end sub
 '--------------------------------------- Runtime functions ------------------------------------------------------------------------------
 '----------------------------------------------------------------------------------------------------------------------------------------
 
+'-------------------- abs
+
+sub do_abs
+
+dim t1 as expr_result
+
+t1=pop()
+if t1.result_type=result_int then 
+  t1.result.iresult=abs(t1.result.iresult)
+'uresult is always positive
+else if t1.result_type=result_float then 
+  t1.result.fresult=abs(t1.result.fresult)
+else 
+  t1.result_type=result_error : t1.result.uresult=40
+endif
+push t1
+end sub
+
+'-------------------- acos
+
+sub do_acos
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "acos: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=acos(converttofloat(t1))*trig_coeff2
+t1.result_type=result_float   
+push t1  
+end sub
+
+'-------------------- asc
+
+sub do_asc
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "asc: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "asc: "; : printerror(15) : return 
+t1.result.iresult=asc(t1.result.sresult)
+t1.result_type=result_int
+push t1  
+end sub
+
+'-------------------- asin
+
+sub do_asin
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "asin: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=asin(converttofloat(t1))*trig_coeff2
+t1.result_type=result_float   
+push t1  
+end sub
+
+'-------------------- atn
+
+sub do_atn
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "atn: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=atan(converttofloat(t1))*trig_coeff2
+t1.result_type=result_float   
+push t1  
+end sub
+
+'-------------------- beep
+
+sub do_beep
+
+dim t1,t2 as expr_result
+dim freq as ulong
+dim sample(1) as ubyte
+
+t2=pop()
+t1=pop()
+if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
+sample(0)=127: sample(1)=128
+paula.play8(7,varptr(sample),freq*2,16384,2,0)
+push t2
+do_waitms
+paula.stop(7)
+end sub
+
+'-------------------- bin$
+
+sub do_bin
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>2 orelse numpar=0 then print "bin$: "; : printerror(39) : return
+if numpar=2 then t1=pop() : num=converttoint(t1) else num=0
+t1=pop() : arg=converttoint(t1)
+t1.result.sresult=bin$(arg,num)
+t1.result_type=result_string
+push t1  
+end sub
+
+'-------------------- box
+
+sub do_box
+dim t1,t2,t3,t4 as expr_result 
+
+t4=pop()
+t3=pop()
+t2=pop()
+t1=pop()
+if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) andalso (t4.result_type=result_int orelse t4.result_type=result_uint) then
+   v.box(t1.result.iresult,t2.result.iresult,t3.result.iresult,t4.result.iresult,plot_color) : return
+else
+   v.box(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
+endif   
+end sub
+
+'-------------------- brun
+
+sub do_brun
+
+dim t1 as expr_result
+dim pos,r,psramptr as integer
+dim filename, fullfilename as string
+
+t1=pop() 
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
+if t1.result_type=result_string then
+  filename=t1.result.sresult
+  if left$(filename,1)="/" then 
+    fullfilename=filename
+  else
+    fullfilename="/sd/bin/"+filename  
+  endif  
+  open fullfilename for input as #9
+  r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
+  let pos=1: let r=0 : let psramptr=0
+  do
+    get #9,pos,block(0),1024,r : pos+=r	
+    psram.write(varptr(block(0)),psramptr,1024)	
+    psramptr+=r   									' move the buffer to the RAM and update RAM position. Todo: this can be done all at once
+  loop until r<>1024  orelse psramptr>=$7C000  					        ' do until eof or memory full
+  cpustop(audiocog)									' stop all driver cogs except PSRAM
+  cpustop(videocog)
+  cpustop(usbcog)
+  cpustop(housekeeper_cog)
+  let loadingcog=cpu(@loadcog,@pslock) 							' start loading cog
+  cpustop(cpuid())									' stop itself
+  endif  
+end sub
+
 '-------------------- changefreq
 
 sub do_changefreq
@@ -2399,8 +2575,10 @@ end sub
 '-------------------- changevol
 
 sub do_changevol
+
 dim t1 as expr_result
 dim channel,vol as integer
+
 t1=pop()
 vol=round(converttofloat(t1)*1000) mod 16384
 t1=pop()
@@ -2411,8 +2589,10 @@ end sub
 '-------------------- changewav
 
 sub do_changewav
+
 dim t1 as expr_result
 dim channel,wave as integer
+
 t1=pop()
 wave=converttoint(t1)
 if wave<0 then wave=0
@@ -2423,6 +2603,101 @@ if wave <32 then
 else
   lpoke base+64*channel+8,$8800_0000 
 endif
+end sub
+
+'-------------------- chr$
+
+sub do_chr
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "chr$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1.result.sresult=chr$(arg)
+t1.result_type=result_string
+push t1  
+end sub
+
+'-------------------- circle
+
+sub do_circle
+
+dim t1,t2,t3 as expr_result 
+
+t3=pop()
+t2=pop()
+t1=pop()
+if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) then
+   v.circle(t1.result.iresult,t2.result.iresult,t3.result.iresult,plot_color) : return
+else
+   v.circle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
+endif   
+end sub
+
+'-------------------- click
+
+sub do_click
+
+dim t1 as expr_result
+
+t1=pop()
+if t1.result.uresult=0 then keyclick=0 else keyclick=1
+end sub
+
+'-------------------- close
+
+sub do_close
+
+dim numpar, channel as integer
+dim  t1 as expr_result
+
+numpar=compiledline(lineptr_e).result.uresult
+t1=pop()
+if t1.result_type<>result_channel then print "channel# expected" : return  
+channel  = t1.result.iresult
+close #channel
+end sub
+
+'-------------------- cls
+
+sub do_cls
+cls(ink,paper): plot_color=ink
+end sub
+
+'-------------------- color
+
+sub do_color
+
+dim t1 as expr_result
+
+t1=pop()
+plot_color=t1.result.iresult
+end sub
+
+'-------------------- cos
+
+sub do_cos
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "cos: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=cos(trig_coeff*converttofloat(t1))
+t1.result_type=result_float   
+push t1  
+end sub
+
+'-------------------- cursor
+
+sub do_cursor
+
+dim t1 as expr_result
+t1=pop()
+if t1.result.uresult=0 then  v.setspritesize(17,0,0) else v.setspritesize(17,8,16) 
 end sub
 
 '-------------------- defenv
@@ -2568,6 +2843,104 @@ if harm(0)>=0 then ' synthesize with harmonics
 endif 
 end sub
 
+'-------------------- defsprite
+
+sub do_defsprite
+
+dim t1,t2,t3,t4,t5 as expr_result  	' todo parameters # control, more formats
+dim a1,a2,a3,a4,a5 as integer
+
+t5=pop()
+t4=pop()
+t3=pop()
+t2=pop()
+t1=pop()
+a1=converttoint(t1) : a2=converttoint(t2) : a3=converttoint(t3) : a4=converttoint(t4) : a5=converttoint(t5) ' do convert, defsprite is not a racing command
+if sprite(a1)<> nil then delete(sprite(a1))	' todo: check parameters for limits
+sprite(a1)=new ubyte(a4*a5-1)
+for y=a3 to a3+a5-1
+  for x=a2 to a4+a2-1
+    sprite(a1,(x-a2)+(y-a3)*(a4))=pspeek(v.buf_ptr+x+1024*y)
+  next x
+next y
+v.setspriteptr(a1,sprite(a1))
+v.setspritesize(a1,a4,a5)
+end sub
+
+'-------------------- dir
+
+sub do_dir
+
+dim filename as string
+dim px,py,i,j,n,swapped as integer
+dim filelist(128) as string
+
+chdir("/sd/bas")       ' set working directory - TODO allow to change it!
+print "Working directory: "; currentdir$ 
+px=0
+for i=0 to 127: filelist(i)="" : next i
+filename=dir$("*", fbDirectory)
+n=0
+while filename <> "" andalso filename <> nil andalso n<128
+  filename="[dir] "+filename
+  filelist(n)=filename
+  n=n+1
+  filename = dir$()     	' continue scan
+end while
+for i=0 to n-1			' now sort this
+  swapped=false
+  for j=0 to n-i-2
+    if filelist(j) > filelist(j+1) then
+      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
+      swapped=true
+    endif
+  next j
+if not swapped then exit for
+next i
+for i=0 to n-1
+  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+next i  
+if n>=128  then print "More than 128 entries found: clean your directory"
+print
+n=0
+px=0: py=v.getcursory()
+filename = dir$("*", fbNormal )   
+do while filename <> "" andalso filename <> nil andalso n<128
+  filelist(n)=filename: n=n+1 
+  filename = dir$()       
+loop
+for i =0 to n-1
+  swapped=false
+  for j=0 to n-i-2
+    if filelist(j) > filelist(j+1) then
+      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
+      swapped=true
+    endif
+  next j
+if not swapped then exit for
+next i
+for i=0 to n-1
+  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
+next i  
+if n>=128  then print "More than 128 entries found: clean your directory"
+print
+end sub
+
+'-------------------- draw
+
+sub do_draw
+dim t1,t2 as expr_result 
+dim x,y as integer
+
+t2=pop()
+t1=pop()
+x=converttoint(t1)
+y=converttoint(t2)
+v.draw(plot_x,plot_y,x,y,plot_color) 
+plot_x=x
+plot_y=y
+end sub
+
 '-------------------- end
 
 sub do_end
@@ -2579,6 +2952,15 @@ end sub
 
 sub do_enter
 do_load(1234)
+end sub
+
+'------------------- error processing
+
+sub do_error
+
+dim r as ulong
+r=compiledline(lineptr_e).result.uresult
+print "Error ";r;": ";errors$(r)
 end sub
 
 '-------------------- for
@@ -2600,6 +2982,109 @@ else
 endif
 end sub
 
+'-------------------- get
+
+sub do_get		' get  #chn,addr,(amount,(pos))
+
+dim numpar,channel,amount,adr,i,j,r as integer
+dim  t1 as expr_result
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=4  then t1=pop() : pos=converttoint(t1)   else pos=-1
+if numpar>=3  then t1=pop() : amount=converttoint(t1) else amount=1
+if numpar>=2  then t1=pop() : adr=converttoint(t1)
+t1=pop() : channel=converttoint(t1)
+getres(j)=0
+if pos>=0 then
+  for i=0 to  amount/1024
+    get #channel,pos+1,block(0),amount,r
+    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
+    getres(j)+=r
+  next  i  
+else
+  for i=0 to  amount/1024
+    get #channel,,block(0),amount,r
+    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
+    getres(j)+=r
+  next  i  
+endif  
+end sub  
+
+'-------------------- getenvsustain
+
+sub do_getenvsustain
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "getenvsustain: "; : printerror(39) : return
+t1=pop()
+t1.result.iresult=suspoints(converttoint(t1))
+t1.result_type=result_int
+push t1  
+end sub
+
+'-------------------- getnotevalue
+
+sub do_getnotevalue
+
+dim r,notebase,noteexp as single
+dim a as integer
+dim t1 as expr_result
+
+t1=pop()
+a=converttoint(t1) 
+notebase=notetable(a mod 12) 
+noteexp=(a/12) 
+r=(2.0^noteexp)*notebase
+t1.result.fresult=r: t1.result_type=result_float : push t1
+end sub
+
+'-------------------- getpixel
+
+sub do_getpixel
+
+dim t1,t2 as expr_result
+dim numpar,a1,a2 as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2 then print "getpixel: "; : printerror(39) : return
+t2=pop()
+t1=pop()
+a1=converttoint(t1) : a2=converttoint(t2)
+t1.result.uresult=pspeek(v.buf_ptr+a1+1024*a2)
+t1.result_type=result_uint
+push t1
+end sub
+
+'-------------------- gettime
+
+sub do_gettime
+
+dim hi2, lo2 as ulong
+
+dim t1 as expr_result
+hi2,lo2=do_gettime2()
+t1.result_type=result_uint
+t1.result.twowords(0)=lo2
+t1.result.twowords(1)=hi2
+push t1
+end sub
+
+'----- A helper for gettime
+
+function do_gettime2() as ulong,ulong
+
+dim lo1, hi1 as ulong
+
+const asm 
+   getct hi1 wc
+   getct lo1
+end asm   
+return hi1, lo1
+end function  
+
 '-------------------- gosub
 
 sub do_gosub()
@@ -2614,6 +3099,198 @@ else
   gosubtable(gosubtop).lineptr=oldrunptr
   gosubtable(gosubtop).cmdptr=lineptr_e+2
 endif
+end sub
+
+'--------------------- goto
+
+'------- fast goto
+
+sub do_fast_goto
+
+dim testptr,flag as ulong
+
+testptr=compiledline(lineptr_e).result.uresult
+flag=pslpeek(testptr)' :print " In goto:",flag , testptr : waitms(1000)
+if flag=compiledline(lineptr_e).result.twowords(1) then
+  runptr=testptr
+  lineptr_e=lineptr-1
+  if runheader(5)=$7FFF_FFFF  then runheader(5)=0
+else
+  do_find_goto  
+endif  
+end sub 
+
+'------- find goto  
+
+sub do_find_goto
+
+dim gotoline,gotoptr,oldgotoptr as integer
+dim gotoheader(5) as ulong
+
+gotoline=compiledline(lineptr_e).result.twowords(1)
+gotoptr=programstart
+do
+  psram.read1(varptr(gotoheader),gotoptr,24)  : 
+  if gotoheader(0)<>$FFFFFFFF then
+    oldgotoptr=gotoptr
+    gotoptr=gotoheader(5)
+  endif
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+
+if gotoheader(0)=gotoline then
+    compiledline(lineptr_e).result.uresult=oldgotoptr ' we got the pointer
+    compiledline(lineptr_e).result_type=token_fast_goto
+    psram.write(varptr(compiledline(lineptr_e)),oldrunptr+(2+lineptr_e)*compiledslot,compiledslot)   
+    do_fast_goto
+  else
+    printerror(38)
+  endif  
+end sub
+
+'------- slow goto  
+
+sub do_slow_goto
+
+dim gotoline,gotoptr,oldgotoptr as integer
+dim gotoheader(5) as ulong
+dim t1 as expr_result
+
+t1=pop() : gotoline=converttoint(t1)
+gotoptr=programstart
+do
+  psram.read1(varptr(gotoheader),gotoptr,24)  : 
+  if gotoheader(0)<>$FFFFFFFF then
+    oldgotoptr=gotoptr
+    gotoptr=gotoheader(5)
+  endif
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+if gotoheader(0)=gotoline then  
+   runptr=oldgotoptr
+   lineptr_e=lineptr-1
+  if runheader(5)=$7FFF_FFFF  then runheader(5)=0 
+  endif
+end sub
+
+' ----------------  hex$
+
+sub do_hex
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>2 orelse numpar=0 then print "hex$: "; : printerror(39) : return
+if numpar=2 then t1=pop() : num=converttoint(t1) else num=8
+t1=pop() : arg=converttoint(t1)
+t1.result.sresult=hex$(arg,num)
+t1.result_type=result_string
+push t1  
+end sub
+
+' ----------------  inkey$
+
+sub do_inkey
+
+dim t1 as expr_result
+let key=kbm.get_key() 
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then  
+  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
+ endif
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then
+  if leds and 2 = 2 then 
+    if key>96 andalso key<123 then
+      key-=32
+    else if key>64 andalso key<91 then 
+      key+=32
+    else if key>22 andalso key<32 then 
+      key-=9
+    else if key>13 andalso key<23 then 
+      key4+=39
+    endif
+  endif
+
+t1.result.sresult=chr$(scantochar(key)) else t1.result.sresult=""
+t1.result_type=result_string
+push t1
+end sub 
+
+' ----------------  int
+
+sub do_int
+
+dim t1 as expr_result
+
+t1=pop()
+select case t1.result_type
+  case result_float: t1.result.iresult=int(t1.result.fresult)
+  case result_string: t1.result.iresult=int(val(t1.result.sresult))
+  case result_string2: t1.result.iresult=int(val(convertstring(t1.result.uresult))) 
+end select
+t1.result_type=result_int
+push t1
+end sub
+
+' ----------------  left$
+
+sub do_left
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2  then print "left$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "left$: "; : printerror(15) : return 
+t1.result.sresult=left$(t1.result.sresult,arg)
+push t1  
+end sub
+
+' ----------------  len
+
+sub do_len
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "len: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "len: "; : printerror(15) : return 
+t1.result.iresult=len(t1.result.sresult)
+t1.result_type=result_int
+push t1  
+end sub
+
+' ----------------  list
+
+sub do_list
+dim numpar, startline,endline
+dim t1 as expr_result
+dim aend as integer
+dim newlist as integer
+dim header as ulong(5)
+dim linebuf(127) as ubyte
+
+startline=0 : endline=$7FFFFFFF
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=1 then t1=pop() : startline=converttoint(t1)
+if numpar=2 then t1=pop() : endline=converttoint(t1) : t1=pop() : startline=converttoint(t1)
+
+
+print
+let listptr=programstart 
+do 
+  psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
+  
+  if header(0)<> $FFFFFFFF then
+    longfill(linebuf,0,64)
+    psram.read1(varptr(linebuf),header(2),header(3))
+    if header(0)>=startline andalso header(0)<=endline then v.writeln(varptr(linebuf))  
+    listptr=header(5)
+    endif
+
+loop until header(5)=$7FFF_FFFF orelse header(0)=-1
 end sub
 
 '-------------------- load
@@ -2656,6 +3333,126 @@ endif
 print "Loaded ";currentdir$+"/"+loadname
 end sub
 
+'-------------------- log
+
+sub do_log
+
+dim t1  as expr_result
+dim numpar as ulong
+dim base as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=0 orelse numpar>2 then print "log: "; : printerror(39) : return
+if numpar=2 then 
+  t1=pop()
+  base=log(converttofloat(t1))
+else
+  base=1.0
+endif
+t1=pop()
+t1.result.fresult=log(converttofloat(t1))/base
+t1.result_type=result_float
+push t1
+end sub
+
+'-------------------- mid$
+
+sub do_mid
+
+dim t1 as expr_result
+dim numpar,arg1,arg2 as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>3  then print "mid$: "; : printerror(39) : return
+t1=pop() : arg2=converttoint(t1)
+t1=pop() : arg1=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "mid$: "; : printerror(15) : return 
+t1.result.sresult=mid$(t1.result.sresult,arg1,arg2)
+push t1  
+end sub
+
+'-------------------- mouse
+
+sub do_mouse
+
+dim t1 as expr_result
+
+t1=pop()
+if t1.result.uresult=0 then v.setspritesize(16,0,0) else v.setspritesize(16,32,32)
+end sub
+
+'-------------------- mousek
+
+sub do_mousek
+
+dim t1 as expr_result
+'dim k as ulong
+'k=kbm.mouse_buttons()
+t1.result_type=result_uint
+t1.result.uresult=mousek
+push t1
+end sub
+
+'-------------------- mousew
+
+sub do_mousew
+
+dim t1 as expr_result
+'dim x,y,z as ulong
+'x,y=kbm.mouse_scroll()
+t1.result_type=result_int
+t1.result.iresult=mousew
+push t1
+end sub
+
+'-------------------- mousex
+
+sub do_mousex
+
+dim t1 as expr_result
+'dim x,y as ulong
+'x,y=kbm.mouse_xy()
+t1.result_type=result_uint
+t1.result.uresult=mousex
+push t1
+end sub
+
+'-------------------- mousey
+
+sub do_mousey
+
+dim t1 as expr_result
+'dim x,y as ulong
+'x,y=kbm.mouse_xy()
+t1.result_type=result_uint
+t1.result.uresult=mousey
+push t1
+end sub
+
+'------------------ new
+
+sub do_new
+
+pslpoke(memlo,$FFFFFFFF)
+varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: next i
+programstart=memlo :runptr=memlo : runptr2=memlo
+stackpointer=0
+lineptr=0 
+programptr=memlo ': stringptr=0
+
+lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
+for i=0 to maxfor: fortable(i).varnum=-1 : next i
+for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
+next i
+trig_coeff=1.0 : trig_coeff2=1.0
+memtop=v.textbuf_ptr
+v.setspritesize(17,8,16)
+v.setspritesize(16,32,32)
+loadname="noname.bas"
+init_audio
+end sub
+
 '-------------------- next
 
 sub do_next()
@@ -2679,6 +3476,129 @@ if inrun>0 andalso runptr<>fortable(fortop).lineptr then
 else
   lineptr_e=fortable(fortop).cmdptr-1
 endif  
+end sub
+
+'-------------------- no command (print "Unknown command")
+
+sub do_no_command
+printerror(23)
+end sub
+
+'-------------------- nothing
+
+sub do_nothing					' a placeholder for tokens that don't do anything by themselves (then, else) 
+end sub
+
+'-------------------- open
+
+sub do_open
+
+dim t1 as expr_result
+dim filename as string
+dim numpar, mode,channel as integer
+
+numpar=compiledline(lineptr_e).result.uresult
+
+t1=pop()
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then  print "filename expected" : return  ' error here
+filename=t1.result.sresult
+t1=pop()
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+mode=0
+if t1.result_type=result_string then
+  if t1.result.sresult="read" then mode=1
+  if t1.result.sresult="write" then mode=2
+  if t1.result.sresult="append" then mode=4
+else
+  mode=converttoint(t1)
+endif
+t1=pop()
+if t1.result_type<>result_channel then print "channel# expected" : return  
+channel  = t1.result.iresult
+select case  mode
+  case 1 	: open filename for input as #channel 
+  case 2 	: open filename for output as #channel  
+  case 4 	: open filename for append as #channel  
+  case else	: print "Open: invalid mode"
+end  select
+end sub
+
+'-------------------- pinfloat
+
+sub do_pinfloat
+
+dim t1 as expr_result
+
+t1=pop() 'value
+pinfloat(converttoint(t1))
+end sub
+
+'-------------------- pinhi
+
+sub do_pinhi
+
+dim t1  as expr_result
+
+t1=pop() 'value
+pinhi(converttoint(t1))
+end sub
+
+'-------------------- pinlo
+
+sub do_pinlo
+
+dim t1 as expr_result
+
+t1=pop() 'value
+pinlo(converttoint(t1))
+end sub
+
+'-------------------- pinread
+
+sub do_pinread
+
+dim t1 as expr_result
+
+t1=pop()
+r=pinread(converttoint(t1))
+t1.result_type=result_uint
+t1.result.uresult=4
+push t1
+end sub
+
+'-------------------- pinstart
+
+sub do_pinstart
+
+dim t1,t2,t3,t4 as expr_result
+
+t1=pop() 'value
+t2=pop() ' pint1=pop() 'value
+t3=pop() ' pint1=pop() 'value
+t4=pop() ' pin
+pinstart(converttoint(t4),converttoint(t3),converttoint(t2), converttoint(t1))
+end sub
+
+'-------------------- pintoggle
+
+sub do_pintoggle
+
+dim t1  as expr_result
+
+t1=pop() 'value
+pintoggle(converttoint(t1))
+end sub
+
+'-------------------- pinwrite
+
+sub do_pinwrite
+
+dim t1,t2 as expr_result
+
+t1=pop() 'value
+t2=pop() ' pin
+pinwrite(converttoint(t2), converttoint(t1))
 end sub
 
 '-------------------- play
@@ -2742,11 +3662,64 @@ lpoke base2+44,sus
 if delay>0 then waitms(delay) 
 end sub
 
+'-------------------- plot
+
+sub do_plot
+
+dim t1,t2 as expr_result 
+dim x,y as integer
+
+t2=pop() 					 
+t1=pop()
+x=converttoint(t1)
+y=converttoint(t2)
+plot_x=x: plot_y=y
+v.putpixel(plot_x,plot_y,plot_color)      
+end sub
+
 '-------------------- pop
 
 sub do_pop()
 if gosubtop>0 then  gosubtop -=1 
 end sub
+
+'-------------------- print
+
+sub do_print  
+
+dim t1,t2 as expr_result
+dim r as integer
+ 
+r=0
+t1=pop() 
+if t1.result_type=print_mod_comma orelse t1.result_type=print_mod_semicolon then r=t1.result_type :  t1=pop()
+if t1.result_type=print_mod_empty then r=t1.result_type 
+if t1.result_type=result_error then printerror(t1.result.uresult): goto 811
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
+
+if t1.result_type=token_channel then print "Print to channel (not yet implemented)"; t1.result.iresult : t1=pop()
+
+if r=print_mod_comma  then
+  if t1.result_type=result_int then print t1.result.iresult,
+  if t1.result_type=result_uint then print t1.result.uresult,
+  if t1.result_type=result_float then print t1.result.fresult,
+  if t1.result_type=result_string then print t1.result.sresult,
+endif  
+if r=print_mod_semicolon then 
+  if t1.result_type=result_int then print t1.result.iresult;
+  if t1.result_type=result_uint then print t1.result.uresult;
+  if t1.result_type=result_float then print t1.result.fresult;
+  if t1.result_type=result_string then print t1.result.sresult;
+endif
+if r=0 then 
+  if t1.result_type=result_int then print t1.result.iresult
+  if t1.result_type=result_uint then print t1.result.uresult
+  if t1.result_type=result_float then print t1.result.fresult
+  if t1.result_type=result_string then print t1.result.sresult
+endif 
+if r=print_mod_empty then print
+'waitms(10)
+811 end sub
 
 ' ------------------- push a variable on the stack. No command for this, a variable is a command
 
@@ -2755,6 +3728,51 @@ if stackpointer<maxstack then
   stack(stackpointer)=compiledline(lineptr_e)
   stackpointer+=1
 endif
+end sub
+
+'-------------------- put
+
+sub do_put			' put  #chn,addr,(amount,(pos))
+
+dim numpar, channel,amount,adr,i,j,r as integer
+dim  t1 as expr_result
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=4  then t1=pop() : pos=converttoint(t1)   else pos=-1
+if numpar>=3 then t1=pop() : amount=converttoint(t1) else amount=1
+if numpar>=2 then t1=pop() : adr=converttoint(t1)
+t1=pop() : channel=converttoint(t1)
+getres(j)=0
+if pos>=0 then
+   i=0: do
+   j=0: do    
+   if adr<$80000 then block(j)=peek(adr+1024*i+j) else block(j)=pspeek(adr+1024*i+j)
+   j=j+1 : loop until j>=1024 orelse 1024*i+j>amount
+   put #channel, pos+1,block(0),amount, r : getres(channel)=r
+   if 1024*i+j>amount then exit loop
+   i=i+1 : loop
+else  
+   i=0: do
+   j=0: do  
+   if adr<$80000 then block(j)=peek(adr+1024*i+j) else block(j)=pspeek(adr+1024*i+j)
+   j=j+1 : loop until j>=1024 orelse 1024*i+j>amount
+   put #channel,,block(0),amount, r : getres(channel)=r
+   if 1024*i+j>amount then exit loop
+   i=i+1 : loop
+endif
+end  sub  
+
+'-------------------- rdpin
+
+sub do_rdpin
+
+dim t1 as expr_result
+
+t1=pop()
+r=rdpin(converttoint(t1))
+t1.result_type=result_uint
+t1.result.uresult=4
+push t1
 end sub
 
 '------------------- release
@@ -2778,6 +3796,78 @@ if gosubtop>0 then
   lineptr_e=lineptr-1
   gosubtop -=1 
 endif   
+end sub
+
+'------------------- right$
+
+sub do_right
+
+dim t1 as expr_result
+dim numpar,arg as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2  then print "right$: "; : printerror(39) : return
+t1=pop() : arg=converttoint(t1)
+t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "right$: "; : printerror(15) : return 
+t1.result.sresult=right$(t1.result.sresult,arg)
+push t1  
+end sub
+
+'------------------- rnd
+
+sub do_rnd
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "rnd: "; : printerror(39) : return
+if numpar=0 then
+  t1.result_type=result_uint
+  t1.result.uresult=getrnd()
+  push t1
+else
+  t1=pop()
+  if t1.result_type=result_int orelse t1.result_type=result_uint then
+'   print " In do_rnd got int  param"
+   t1.result.uresult=getrnd() mod t1.result.uresult
+   t1.result_type=result_uint   
+   push t1  
+ else if t1.result_type=result_float then
+'   print " In do_rnd got float  param"
+   t1.result.fresult=(t1.result.fresult/1048576.0)*(getrnd() mod 1048576)
+   t1.result_type=result_float   
+   push t1    
+  else 
+    print "rnd: "; : printerror(40) 
+    push t1
+  endif  
+endif  
+end sub
+
+'-------------------- round
+
+sub do_round
+
+dim t1 as expr_result
+
+t1=pop()
+t1.result.iresult=converttoint(t1) : t1.result_type=result_int
+push t1
+end sub
+
+'-------------------- rqpin
+
+sub do_rqpin
+
+dim t1 as expr_result
+
+t1=pop()
+r=rqpin(converttoint(t1))
+t1.result_type=result_uint
+t1.result.uresult=4
+push t1
 end sub
 
 ' ------------------ run
@@ -2813,7 +3903,7 @@ do
 loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
   ''do whatever kbm.peek_latest_key()=$106 
 if runptr<>$7FFF_FFFF then 
-    print "Stopped at line ";runheader(0) 
+  print: print "Stopped at line ";runheader(0) 
 endif
 inrun=0
 lineptr_e=r_lineptr_e
@@ -2853,6 +3943,83 @@ if t1.result_type=result_string then
 endif  
 end sub
 
+' ------------------ setdelay
+
+sub do_setdelay
+
+dim t1,t2 as expr_result
+
+t1=pop() 
+t2=pop()  
+channels(converttoint(t2)).delay=converttoint(t1)
+end sub
+
+' ------------------ setenv
+
+sub do_setenv
+
+dim t1,t2 as expr_result
+
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).env=converttoint(t1)
+end sub
+
+' ------------------ setlen
+
+sub do_setlen
+
+dim t1,t2 as expr_result
+
+t1=pop()  
+t2=pop()  
+channels(converttoint(t2)).length=converttofloat(t1)
+end sub
+
+' ------------------ setpan
+
+sub do_setpan
+
+dim t1,t2 as expr_result
+
+t1=pop() 'value
+t2=pop() ' pin
+channels(converttoint(t2)).pan=converttofloat(t1)
+end sub
+
+' ------------------ setsustain
+
+sub do_setsustain
+
+dim t1,t2 as expr_result
+
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).sus=converttoint(t1)
+end sub
+
+' ------------------ setvol
+
+sub do_setvol
+
+dim t1,t2 as expr_result
+
+t1=pop()  
+t2=pop()  
+channels(converttoint(t2)).vol=converttofloat(t1)
+end sub
+
+' ------------------ setwave
+
+sub do_setwave
+
+dim t1,t2 as expr_result
+
+t1=pop() 
+t2=pop() 
+channels(converttoint(t2)).wave=converttoint(t1)
+end sub
+
 ' ------------------ shutup
 
 sub do_shutup
@@ -2870,252 +4037,183 @@ else
 endif  
 end sub
 
+' ------------------ sin
 
+sub do_sin
 
-
-
-
-
-
-
-
-
-
-
-
-' ---------------  List the program. 
-
-sub do_list
-dim numpar, startline,endline
 dim t1 as expr_result
-dim aend as integer
-dim newlist as integer
-dim header as ulong(5)
-dim linebuf(127) as ubyte
+dim numpar as ulong
 
-startline=0 : endline=$7FFFFFFF
 numpar=compiledline(lineptr_e).result.uresult
-if numpar=1 then t1=pop() : startline=converttoint(t1)
-if numpar=2 then t1=pop() : endline=converttoint(t1) : t1=pop() : startline=converttoint(t1)
-
-
-print
-let listptr=programstart 
-do 
-  psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
-  
-  if header(0)<> $FFFFFFFF then
-    longfill(linebuf,0,64)
-    psram.read1(varptr(linebuf),header(2),header(3))
-    if header(0)>=startline andalso header(0)<=endline then v.writeln(varptr(linebuf))  
-    listptr=header(5)
-    endif
-
-loop until header(5)=$7FFF_FFFF orelse header(0)=-1
+if numpar>1 orelse numpar=0 then print "sin: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=sin(trig_coeff*converttofloat(t1))
+t1.result_type=result_float   
+push t1  
 end sub
 
-'---------------- Clear the program
+' ------------------ sprite
 
-sub do_new
+sub do_sprite
 
-pslpoke(memlo,$FFFFFFFF)
-varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: next i
-programstart=memlo :runptr=memlo : runptr2=memlo
-stackpointer=0
-lineptr=0 
-programptr=memlo ': stringptr=0
+dim t1,t2,t3 as expr_result 
+dim a1,a2,a3 as integer
 
-lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
-for i=0 to maxfor: fortable(i).varnum=-1 : next i
-for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
-next i
-trig_coeff=1.0 : trig_coeff2=1.0
-memtop=v.textbuf_ptr
-v.setspritesize(17,8,16)
-v.setspritesize(16,32,32)
-loadname="noname.bas"
-init_audio
+t3=pop()
+t2=pop()
+t1=pop()
+a1=converttoint(t1) : a2=converttoint(t2) : a3=converttoint(t3)
+v.setspritepos(a1,a2,a3)
 end sub
 
-'----------------------- goto
-sub do_fast_goto
+' ------------------ sqr
 
-dim testptr,flag as ulong
+sub do_sqr
 
-testptr=compiledline(lineptr_e).result.uresult
-flag=pslpeek(testptr)' :print " In goto:",flag , testptr : waitms(1000)
-if flag=compiledline(lineptr_e).result.twowords(1) then
-  runptr=testptr
-  lineptr_e=lineptr-1
-  if runheader(5)=$7FFF_FFFF  then runheader(5)=0
-else
-  do_find_goto  
-endif  
-end sub 
-
-sub do_open
 dim t1 as expr_result
-dim filename as string
-dim numpar, mode,channel as integer
+dim numpar as ulong
 
 numpar=compiledline(lineptr_e).result.uresult
-
+if numpar>1 orelse numpar=0 then print "sqr: "; : printerror(39) : return
 t1=pop()
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then  print "filename expected" : return  ' error here
-filename=t1.result.sresult
-t1=pop()
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-mode=0
-if t1.result_type=result_string then
-  if t1.result.sresult="read" then mode=1
-  if t1.result.sresult="write" then mode=2
-  if t1.result.sresult="append" then mode=4
-else
-  mode=converttoint(t1)
-endif
-t1=pop()
-if t1.result_type<>result_channel then print "channel# expected" : return  
-channel  = t1.result.iresult
-'print "Open,  channel=";channel; " mode=";mode;  " filename=";filename
-select case  mode
-  case 1 	: open filename for input as #channel 
-  case 2 	: open filename for output as #channel  
-  case 4 	: open filename for append as #channel  
-  case  else	: print "Open: invalid mode"
-end  select
-
+t1.result.fresult=sqr(converttofloat(t1))
+t1.result_type=result_float   
+push t1  
 end sub
 
+' ------------------ stick
 
-sub do_close
-dim numpar, channel as integer
-dim  t1 as expr_result
+sub do_stick
+
+dim t1 as expr_result
+dim numpar as ulong
+
 numpar=compiledline(lineptr_e).result.uresult
-
+if numpar>1 then print "stick: "; : printerror(39) : return
+if numpar=0 then t1.result.uresult=stick(0) : t1.result_type=result_uint : push t1 : return
 t1=pop()
-if t1.result_type<>result_channel then print "channel# expected" : return  
-channel  = t1.result.iresult
-close #channel
-end sub
-
-sub  do_get
-' get  #chn,addr,(amount,(pos))
-dim numpar, channel,amount,adr,i,j,r as integer
-dim  t1 as expr_result
-numpar=compiledline(lineptr_e).result.uresult
-if  numpar=4  then t1=pop() : pos=converttoint(t1)   else pos=-1
-if  numpar>=3  then t1=pop() : amount=converttoint(t1) else amount=1
-if  numpar>=2  then t1=pop() : adr=converttoint(t1)
-t1=pop() : channel=converttoint(t1)
-
-getres(j)=0
-if pos>=0 then
-  for i=0 to  amount/1024
-    get #channel,pos+1,block(0),amount,r
-    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
-    getres(j)+=r
-  next  i  
-else
-  for i=0 to  amount/1024
-    get #channel,,block(0),amount,r
-    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
-    getres(j)+=r
-  next  i  
-endif  
-end  sub  
-
-sub  do_put
-' get  #chn,addr,(amount,(pos))
-dim numpar, channel,amount,adr,i,j,r as integer
-dim  t1 as expr_result
-numpar=compiledline(lineptr_e).result.uresult
-if  numpar=4  then t1=pop() : pos=converttoint(t1)   else pos=-1
-if  numpar>=3  then t1=pop() : amount=converttoint(t1) else amount=1
-if  numpar>=2  then t1=pop() : adr=converttoint(t1)
-t1=pop() : channel=converttoint(t1)
-
-getres(j)=0
-if pos>=0 then
-   i=0: do
-   j=0: do    
-   if adr<$80000 then block(j)=peek(adr+1024*i+j) else block(j)=pspeek(adr+1024*i+j)
-   j=j+1 : loop until j>=1024 orelse 1024*i+j>amount
-   put #channel, pos+1,block(0),amount, r : getres(channel)=r
-   if 1024*i+j>amount then exit loop
-   i=i+1 : loop
-else  
-   i=0: do
-   j=0: do  
-   if adr<$80000 then block(j)=peek(adr+1024*i+j) else block(j)=pspeek(adr+1024*i+j)
-   j=j+1 : loop until j>=1024 orelse 1024*i+j>amount
-   put #channel,,block(0),amount, r : getres(channel)=r
-   if 1024*i+j>amount then exit loop
-   i=i+1 : loop
-endif
-end  sub  
-  
-sub do_find_goto
-
-dim gotoline,gotoptr,oldgotoptr as integer
-dim gotoheader(5) as ulong
-
-gotoline=compiledline(lineptr_e).result.twowords(1)
- ' print "find goto"                                                                     'print gotoline 
-gotoptr=programstart
-do
-  psram.read1(varptr(gotoheader),gotoptr,24)  : 
-  if gotoheader(0)<>$FFFFFFFF then
-    oldgotoptr=gotoptr
-    gotoptr=gotoheader(5)
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    t1.result.uresult=stick(q) : t1.result_type=result_uint : push t1 : return 
+  else 
+     printerror(41) : return
   endif
-  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+else
+  printerror(41) 
+endif    
+end sub
 
-if gotoheader(0)=gotoline then
-    compiledline(lineptr_e).result.uresult=oldgotoptr ' we got the pointer
-    compiledline(lineptr_e).result_type=token_fast_goto
-    psram.write(varptr(compiledline(lineptr_e)),oldrunptr+(2+lineptr_e)*compiledslot,compiledslot)   
-    do_fast_goto
-  else
-     printerror(38)
+' ------------------ strig
+
+sub do_strig
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "strig: "; : printerror(39) : return
+if numpar=0 then t1.result.uresult=strig(0) : t1.result_type=result_uint : push t1 : return
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    t1.result.uresult=strig(q) : t1.result_type=result_uint : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+ else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ tan
+
+sub do_tan
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "tan: "; : printerror(39) : return
+t1=pop()
+t1.result.fresult=tan(trig_coeff*converttofloat(t1))
+t1.result_type=result_float   
+push t1  
+end sub
+
+' ------------------ val
+
+sub do_val
+
+dim t1 as expr_result
+dim numpar,arg,num as ulong
+dim ival as integer
+dim fval as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "val: "; : printerror(39) : return
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then print "val: "; : printerror(15) : return 
+if left$(t1.result.sresult,1)="$" then t1.result.sresult="&h"+right$(t1.result.sresult,len(t1.result.sresult)-1)
+if left$(t1.result.sresult,1)="%" then t1.result.sresult="&b"+right$(t1.result.sresult,len(t1.result.sresult)-1)
+fval=val(t1.result.sresult)
+ival=val%(t1.result.sresult)
+if fval=ival then
+  t1.result.iresult=ival
+  t1.result_type=result_int
+else
+  if fval=0 andalso ival<>0 then
+    t1.result.iresult=ival
+    t1.result_type=result_int
+  else  
+    t1.result.fresult=fval
+    t1.result_type=result_float  
   endif  
+endif
+push t1  
 end sub
 
-sub do_slow_goto
+' ------------------ wrpin
 
-dim gotoline,gotoptr,oldgotoptr as integer
-dim gotoheader(5) as ulong
-dim t1 as expr_result
-
-t1=pop() : gotoline=converttoint(t1)
-gotoptr=programstart
-do
-  psram.read1(varptr(gotoheader),gotoptr,24)  : 
-  if gotoheader(0)<>$FFFFFFFF then
-    oldgotoptr=gotoptr
-    gotoptr=gotoheader(5)
-  endif
-  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
-if gotoheader(0)=gotoline then  
-   runptr=oldgotoptr
-   lineptr_e=lineptr-1
-  if runheader(5)=$7FFF_FFFF  then runheader(5)=0 
-  endif
+sub do_wrpin
+dim t1,t2 as expr_result
+t1=pop() 'value
+t2=pop() ' pin
+wrpin(converttoint(t2), converttoint(t1))
 end sub
 
-'----------------------- Error processing
+' ------------------ wxpin
 
-sub do_error
+sub do_wxpin
+dim t1,t2 as expr_result
+t1=pop() 'value
+t2=pop() ' pin
+wxpin(converttoint(t2), converttoint(t1))
+end sub
 
-dim r as ulong
-r=compiledline(lineptr_e).result.uresult
-print "Error ";r;": ";errors$(r)
+' ------------------ wypin
+
+sub do_wypin
+dim t1,t2 as expr_result
+t1=pop() 'value
+t2=pop() ' pin
+wypin(converttoint(t2), converttoint(t1))
 end sub
 
 
-'------------------ Assigning to a variable  
 
 
+
+
+
+
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------- Runtime variable processing--------------------------------------------------------------------- 
+'----------------------------------------------------------------------------------------------------------------------------------------
+
+
+'------------------ Assign
 
 sub do_assign
 
@@ -3163,20 +4261,15 @@ select case arrtype
       case array_string	        : pslpoke(arridx,t1.result.uresult)
       case else		: printerror(50) : return
     end select
- 
-
 end sub
 
 
-' --------------------- Read a variable and push to the stack
-
-' getvar : fun_getvar, var#, numpar. Var, if array, has array type and a pointer
+'------------------ getvar.  Read a variable and push it to the RPN stack
 
 sub do_getvar
 
 dim t1 as expr_result
 dim arrptr,vartype,numpar,esize,dim1,dim2,dim3,i1,i2,i3,varidx as ulong
-'print "in do_getvar, compiledline(lineptr_e) rt,ttw0,tw1="; compiledline(lineptr_e).result_type, compiledline(lineptr_e).result.twowords(0),compiledline(lineptr_e).result.twowords(1)
 if compiledline(lineptr_e).result.twowords(1)=0 then
   t1.result=variables(compiledline(lineptr_e).result.uresult).value
   t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
@@ -3194,8 +4287,8 @@ dim3=pslpeek(arrptr+12) ' todo :do one read from psram for speed
 if numpar>2 then t1=pop() : i3=converttoint(t1)   else i3=0 
 if numpar>1 then t1=pop() : i2=converttoint(t1)   else i2=0 
 if numpar>0 then t1=pop() : i1=converttoint(t1)   else i1=0 
-'print "dim1=",dim1,"dim2=",dim2,"dim3=",dim3, "esize=",esize, "i1=", i1,"i2=", i2, "i3=", i3
-varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize ': print "arrptr=",arrptr,"varidx=",varidx,"memtop=",memtop,"bufptr=",v.buf_ptr
+
+varidx=arrptr+16+(i1+i2*dim1+i3*dim1*dim2)*esize 
 
 select case vartype
   case array_no_type 	:  psram.read1(varptr(t1),varidx,12) ':print "in do_getvar notype array=",t1.result_type,t1.result.twowords(0),t1.result.twowords(1),pslpeek(varidx),pslpeek(varidx+4),pslpeek(varidx+8) 
@@ -3212,9 +4305,9 @@ select case vartype
   case array_string	:  t1.result_type=result_string : t1.result.uresult=pslpeek(varidx) : if t1.result.uresult>=$80000 then t1.result_type=result_string2 ' todo a proper memory map
 end select
 push t1   
-'print "In do_getvar, got result_type=";t1.result_type; " uresult=";t1.result.uresult; " twowords(1)=";t1.result.twowords(1) 
 end sub
 
+'------------------ getaddr.  Get a pointer to a variable and push it to the RPN stack
 
 sub do_getaddr
 
@@ -3247,38 +4340,169 @@ if numpar>0 then
 else
   t1.result_type=result_uint : t1.result.uresult=arrptr
 endif  
- 
 push t1   
-'print "In do_getvar, got result_type=";t1.result_type; " uresult=";t1.result.uresult; " twowords(1)=";t1.result.twowords(1) 
 end sub
 
 
-sub do_inkey
+
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------- Operators ------------------------------------------------------------------------------------- 
+'----------------------------------------------------------------------------------------------------------------------------------------
+
+'--------------------------------- AND 
+
+sub do_and 
+
+dim t1,t2 as expr_result
+
+t2=pop()
+t1=pop()
+if t1.result_type=result_int then t1.result.uresult=cast(ulong,t1.result.iresult) : t1.result_type=result_uint
+if t2.result_type=result_int then t2.result.uresult=cast(ulong,t2.result.iresult) : t2.result_type=result_uint
+if t1.result_type=result_string orelse t2.result_type=result_string orelse t1.result_type=result_float orelse t2.result_type=result_float then t1.result.uresult=6: t1.result_type=result_error: goto 1060
+t1.result.uresult=t1.result.uresult and t2.result.uresult : goto 1060
+t1.result.uresult=7 : t1.result_type=result_error
+1060 push t1
+end sub
+
+'--------------------------------- DIV (integer divide)
+
+sub do_div 
+
+dim t1,t2 as expr_result  ' todo: return error at attempting divide by zero
+
+t2=pop()
+t1=pop()
+
+if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1090
+if t1.result_type=result_float then t1.result_type=result_int : t1.result.iresult=cast(integer,t1.result.fresult)
+if t2.result_type=result_float then t2.result_type=result_int : t2.result.iresult=cast(integer,t2.result.fresult)
+if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult/=t2.result.uresult :goto 1090
+if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult/t2.result.iresult: t1.result_type=result_int :goto 1090
+if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult/=t2.result.uresult :goto 1090
+if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult=t1.result.iresult/t2.result.iresult: goto 1090
+t1.result.uresult=11 : t1.result_type=result_error 
+1090 push t1
+end sub
+
+'--------------------------------- fdiv (/) - float divide
+
+sub do_fdiv 
+dim t1,t2 as expr_result  ' todo: return error at attempting divide by zero
+
+t2=pop()
+t1=pop()
+if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1100
+if t1.result_type=result_int then t1.result_type=result_float : t1.result.fresult=cast(single,t1.result.iresult) 
+if t1.result_type=result_uint then t1.result_type=result_float : t1.result.fresult=cast(single,t1.result.uresult)
+if t2.result_type=result_int then t2.result_type=result_float : t2.result.fresult=cast(single,t2.result.iresult) 
+if t2.result_type=result_uint then t2.result_type=result_float : t2.result.fresult=cast(single,t2.result.uresult) 
+if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult/=t2.result.fresult: goto 1100
+t1.result.uresult=11 : t1.result_type=result_error
+1100 push t1
+end sub
+
+'--------------------------------- minus (-)
+
+sub do_minus
+
+dim t1,t2 as expr_result
+
+t2=pop()
+t1=pop()
+
+if t1.result_type=result_uint andalso t2.result_type=result_uint then 
+    if t2.result.uresult<t1.result.uresult then  t1.result.uresult-=t2.result.uresult : goto 1050 else t1.result.iresult=t1.result.uresult-t2.result.uresult : t1.result_type=result_int : goto 1050
+    endif
+if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult-t2.result.iresult: t1.result_type=result_int :goto 1050
+if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.uresult)-t2.result.fresult: t1.result_type=result_float :goto 1050
+if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult-=t2.result.uresult:goto 1050
+if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult-=t2.result.iresult:goto 1050
+if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.iresult)-t2.result.fresult: t1.result_type=result_float :goto 1050
+if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.fresult=t1.result.fresult-cast(single,t2.result.uresult) :goto 1050
+if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.fresult=t1.result.fresult-cast(single,t2.result.iresult) :goto 1050
+if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult-=t2.result.fresult:goto 1050
+if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=3: t1.result_type=result_error: goto 1050
+t1.result.uresult=5 : t1.result_type=result_error 
+1050 push t1
+end sub
+
+'--------------------------------- negative (-), one argument negative
+
+sub do_negative
 
 dim t1 as expr_result
-let key=kbm.get_key() 
-if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then  
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
- endif
-if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then
-  if leds and 2 = 2 then 
-    if key>96 andalso key<123 then
-      key-=32
-    else if key>64 andalso key<91 then 
-      key+=32
-    else if key>22 andalso key<32 then 
-      key-=9
-    else if key>13 andalso key<23 then 
-      key4+=39
-    endif
-  endif
-
-t1.result.sresult=chr$(scantochar(key)) else t1.result.sresult=""
-t1.result_type=result_string
+t1=pop()
+if t1.result_type=result_int then 
+  t1.result.iresult=-t1.result.iresult
+else if t1.result_type=result_uint then 
+  t1.result.iresult=-t1.result.uresult : t1.result_type=result_int
+else if t1.result_type=result_float then 
+  t1.result.fresult=-t1.result.fresult
+else 
+  t1.result_type=result_error : t1.result.uresult=40
+endif
 push t1
-end sub 
- 
-'------------------------ Operators 
+end sub
+
+'--------------------------------- MOD (modulo)
+
+sub do_mod 
+
+dim t1,t2 as expr_result  
+
+t2=pop()
+t1=pop()
+if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1110
+if t1.result_type=result_float then t1.result_type=result_int : t1.result.iresult=cast(integer,t1.result.fresult)
+if t2.result_type=result_float then t2.result_type=result_int : t2.result.iresult=cast(integer,t2.result.fresult)
+if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=t1.result.uresult mod t2.result.uresult :goto 1110
+if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult mod t2.result.iresult: t1.result_type=result_int :goto 1110
+if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult=t1.result.iresult mod t2.result.uresult :goto 1110
+if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult=t1.result.iresult mod t2.result.iresult: goto 1110
+t1.result.uresult=11 : t1.result_type=result_error
+1110 push t1
+end sub
+
+'--------------------------------- mul (*)
+
+sub do_mul
+
+dim t1,t2 as expr_result
+
+t2=pop()
+t1=pop()
+
+if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult*=t2.result.uresult :goto 1080
+if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult*t2.result.iresult: t1.result_type=result_int :goto 1080
+if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.uresult)*t2.result.fresult: t1.result_type=result_float :goto 1080
+if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult*=t2.result.uresult:goto 1080
+if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult*=t2.result.iresult:goto 1080
+if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.iresult)*t2.result.fresult: t1.result_type=result_float :goto 1080
+if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.fresult=t1.result.fresult*cast(single,t2.result.uresult) :goto 1080
+if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.fresult=t1.result.fresult*cast(single,t2.result.iresult) :goto 1080
+if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult*=t2.result.fresult:goto 1080
+if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=8: t1.result_type=result_error: goto 1080
+t1.result.uresult=9 : t1.result_type=result_error 
+1080 push t1
+end sub
+
+'--------------------------------- OR
+
+sub do_or 
+dim t1,t2 as expr_result
+
+t2=pop()
+t1=pop()
+if t1.result_type=result_int then t1.result.uresult=cast(ulong,t1.result.iresult) : t1.result_type=result_uint
+if t2.result_type=result_int then t2.result.uresult=cast(ulong,t2.result.iresult) : t2.result_type=result_uint
+if t1.result_type=result_string orelse t2.result_type=result_string orelse t1.result_type=result_float orelse t2.result_type=result_float then t1.result.uresult=6: t1.result_type=result_error: goto 1070
+t1.result.uresult=t1.result.uresult or t2.result.uresult : goto 1070
+t1.result.uresult=7 : t1.result_type=result_error 
+1070 push t1
+end sub
+
+'--------------------------------- plus (+)
 
 sub do_plus 
 
@@ -3307,127 +4531,20 @@ t1.result.uresult=4 : t1.result_type=result_error
 1040 push t1
 end sub
 
-sub do_minus
-
-dim t1,t2 as expr_result
-
-t2=pop()
-t1=pop()
-
-if t1.result_type=result_uint andalso t2.result_type=result_uint then 
-    if t2.result.uresult<t1.result.uresult then  t1.result.uresult-=t2.result.uresult : goto 1050 else t1.result.iresult=t1.result.uresult-t2.result.uresult : t1.result_type=result_int : goto 1050
-    endif
-if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult-t2.result.iresult: t1.result_type=result_int :goto 1050
-if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.uresult)-t2.result.fresult: t1.result_type=result_float :goto 1050
-if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult-=t2.result.uresult:goto 1050
-if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult-=t2.result.iresult:goto 1050
-if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.iresult)-t2.result.fresult: t1.result_type=result_float :goto 1050
-if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.fresult=t1.result.fresult-cast(single,t2.result.uresult) :goto 1050
-if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.fresult=t1.result.fresult-cast(single,t2.result.iresult) :goto 1050
-if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult-=t2.result.fresult:goto 1050
-if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=3: t1.result_type=result_error: goto 1050
-t1.result.uresult=5 : t1.result_type=result_error 
-1050 push t1
-end sub
-
-sub do_and 
-
-dim t1,t2 as expr_result
-
-t2=pop()
-t1=pop()
-if t1.result_type=result_int then t1.result.uresult=cast(ulong,t1.result.iresult) : t1.result_type=result_uint
-if t2.result_type=result_int then t2.result.uresult=cast(ulong,t2.result.iresult) : t2.result_type=result_uint
-if t1.result_type=result_string orelse t2.result_type=result_string orelse t1.result_type=result_float orelse t2.result_type=result_float then t1.result.uresult=6: t1.result_type=result_error: goto 1060
-t1.result.uresult=t1.result.uresult and t2.result.uresult : goto 1060
-t1.result.uresult=7 : t1.result_type=result_error
-1060 push t1
-end sub
-
-sub do_or 
-dim t1,t2 as expr_result
-
-t2=pop()
-t1=pop()
-if t1.result_type=result_int then t1.result.uresult=cast(ulong,t1.result.iresult) : t1.result_type=result_uint
-if t2.result_type=result_int then t2.result.uresult=cast(ulong,t2.result.iresult) : t2.result_type=result_uint
-if t1.result_type=result_string orelse t2.result_type=result_string orelse t1.result_type=result_float orelse t2.result_type=result_float then t1.result.uresult=6: t1.result_type=result_error: goto 1070
-t1.result.uresult=t1.result.uresult or t2.result.uresult : goto 1070
-t1.result.uresult=7 : t1.result_type=result_error 
-1070 push t1
-end sub
-
-sub do_mul
-
-dim t1,t2 as expr_result
-
-t2=pop()
-t1=pop()
-
-if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult*=t2.result.uresult :goto 1080
-if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult*t2.result.iresult: t1.result_type=result_int :goto 1080
-if t1.result_type=result_uint andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.uresult)*t2.result.fresult: t1.result_type=result_float :goto 1080
-if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult*=t2.result.uresult:goto 1080
-if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult*=t2.result.iresult:goto 1080
-if t1.result_type=result_int andalso t2.result_type=result_float then t1.result.fresult=cast(single,t1.result.iresult)*t2.result.fresult: t1.result_type=result_float :goto 1080
-if t1.result_type=result_float andalso t2.result_type=result_uint then t1.result.fresult=t1.result.fresult*cast(single,t2.result.uresult) :goto 1080
-if t1.result_type=result_float andalso t2.result_type=result_int then t1.result.fresult=t1.result.fresult*cast(single,t2.result.iresult) :goto 1080
-if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult*=t2.result.fresult:goto 1080
-if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=8: t1.result_type=result_error: goto 1080
-t1.result.uresult=9 : t1.result_type=result_error 
-1080 push t1
-end sub
-
-sub do_div 
-
-dim t1,t2 as expr_result  ' todo: return error at attempting divide by zero
-
-t2=pop()
-t1=pop()
-
-if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1090
-if t1.result_type=result_float then t1.result_type=result_int : t1.result.iresult=cast(integer,t1.result.fresult)
-if t2.result_type=result_float then t2.result_type=result_int : t2.result.iresult=cast(integer,t2.result.fresult)
-if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult/=t2.result.uresult :goto 1090
-if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult/t2.result.iresult: t1.result_type=result_int :goto 1090
-if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult/=t2.result.uresult :goto 1090
-if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult=t1.result.iresult/t2.result.iresult: goto 1090
-t1.result.uresult=11 : t1.result_type=result_error 
-1090 push t1
-end sub
-
-sub do_fdiv 
-dim t1,t2 as expr_result  ' todo: return error at attempting divide by zero
-
-t2=pop()
-t1=pop()
-if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1100
-if t1.result_type=result_int then t1.result_type=result_float : t1.result.fresult=cast(single,t1.result.iresult) 
-if t1.result_type=result_uint then t1.result_type=result_float : t1.result.fresult=cast(single,t1.result.uresult)
-if t2.result_type=result_int then t2.result_type=result_float : t2.result.fresult=cast(single,t2.result.iresult) 
-if t2.result_type=result_uint then t2.result_type=result_float : t2.result.fresult=cast(single,t2.result.uresult) 
-if t1.result_type=result_float andalso t2.result_type=result_float then t1.result.fresult/=t2.result.fresult: goto 1100
-t1.result.uresult=11 : t1.result_type=result_error
-1100 push t1
-end sub
 
 
-sub do_mod 
 
-dim t1,t2 as expr_result  
 
-t2=pop()
-t1=pop()
-if t1.result_type=result_string orelse t2.result_type=result_string then t1.result.uresult=10: t1.result_type=result_error: goto 1110
-if t1.result_type=result_float then t1.result_type=result_int : t1.result.iresult=cast(integer,t1.result.fresult)
-if t2.result_type=result_float then t2.result_type=result_int : t2.result.iresult=cast(integer,t2.result.fresult)
-if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.uresult=t1.result.uresult mod t2.result.uresult :goto 1110
-if t1.result_type=result_uint andalso t2.result_type=result_int then t1.result.iresult=t1.result.uresult mod t2.result.iresult: t1.result_type=result_int :goto 1110
-if t1.result_type=result_int andalso t2.result_type=result_uint then t1.result.iresult=t1.result.iresult mod t2.result.uresult :goto 1110
-if t1.result_type=result_int andalso t2.result_type=result_int then t1.result.iresult=t1.result.iresult mod t2.result.iresult: goto 1110
-t1.result.uresult=11 : t1.result_type=result_error
-1110 push t1
-end sub
+
+
+
+
+
+
+
+
+
+
 
 sub do_shl 
 dim t1,t2 as expr_result  
@@ -3627,559 +4744,6 @@ end sub
 
 
 
-
-sub do_rnd
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 then print "rnd: "; : printerror(39) : return
-if numpar=0 then
-  t1.result_type=result_uint
-  t1.result.uresult=getrnd()
-  push t1
-else
-  t1=pop()
-  if t1.result_type=result_int orelse t1.result_type=result_uint then
-'   print " In do_rnd got int  param"
-   t1.result.uresult=getrnd() mod t1.result.uresult
-   t1.result_type=result_uint   
-   push t1  
- else if t1.result_type=result_float then
-'   print " In do_rnd got float  param"
-   t1.result.fresult=(t1.result.fresult/1048576.0)*(getrnd() mod 1048576)
-   t1.result_type=result_float   
-   push t1    
-  else 
-    print "rnd: "; : printerror(40) 
-    push t1
-  endif  
-endif  
-end sub
-
-sub do_getenvsustain
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "getenvsustain: "; : printerror(39) : return
-t1=pop()
-t1.result.iresult=suspoints(converttoint(t1))
-t1.result_type=result_int
-push t1  
-end sub
-
-sub do_sin
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "sin: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=sin(trig_coeff*converttofloat(t1))
-t1.result_type=result_float   
-push t1  
-end sub
-
-
-sub do_mid
-
-dim t1 as expr_result
-dim numpar,arg1,arg2 as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar<>3  then print "mid$: "; : printerror(39) : return
-t1=pop() : arg2=converttoint(t1)
-t1=pop() : arg1=converttoint(t1)
-t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "mid$: "; : printerror(15) : return 
-t1.result.sresult=mid$(t1.result.sresult,arg1,arg2)
-push t1  
-end sub
-
-sub do_right
-
-dim t1 as expr_result
-dim numpar,arg as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar<>2  then print "right$: "; : printerror(39) : return
-t1=pop() : arg=converttoint(t1)
-t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "right$: "; : printerror(15) : return 
-t1.result.sresult=right$(t1.result.sresult,arg)
-push t1  
-end sub
-
-sub do_left
-
-dim t1 as expr_result
-dim numpar,arg as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar<>2  then print "left$: "; : printerror(39) : return
-t1=pop() : arg=converttoint(t1)
-t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "left$: "; : printerror(15) : return 
-t1.result.sresult=left$(t1.result.sresult,arg)
-push t1  
-end sub
-
-sub do_asc
-
-dim t1 as expr_result
-dim numpar,arg as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "asc: "; : printerror(39) : return
-t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "asc: "; : printerror(15) : return 
-t1.result.iresult=asc(t1.result.sresult)
-t1.result_type=result_int
-push t1  
-end sub
-
-sub do_len
-
-dim t1 as expr_result
-dim numpar,arg as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "len: "; : printerror(39) : return
-t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "len: "; : printerror(15) : return 
-t1.result.iresult=len(t1.result.sresult)
-t1.result_type=result_int
-push t1  
-end sub
-
-sub do_chr
-
-dim t1 as expr_result
-dim numpar,arg as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "chr$: "; : printerror(39) : return
-t1=pop() : arg=converttoint(t1)
-t1.result.sresult=chr$(arg)
-t1.result_type=result_string
-push t1  
-end sub
-
-sub do_val
-
-dim t1 as expr_result
-dim numpar,arg,num as ulong
-dim ival as integer
-dim fval as single
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "val: "; : printerror(39) : return
-t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-if t1.result_type<>result_string then print "val: "; : printerror(15) : return 
-if left$(t1.result.sresult,1)="$" then t1.result.sresult="&h"+right$(t1.result.sresult,len(t1.result.sresult)-1)
-if left$(t1.result.sresult,1)="%" then t1.result.sresult="&b"+right$(t1.result.sresult,len(t1.result.sresult)-1)
-fval=val(t1.result.sresult)
-ival=val%(t1.result.sresult)
-if fval=ival then
-  t1.result.iresult=ival
-  t1.result_type=result_int
-else
-  if fval=0 andalso ival<>0 then
-    t1.result.iresult=ival
-    t1.result_type=result_int
-  else  
-    t1.result.fresult=fval
-    t1.result_type=result_float  
-  endif  
-endif
-  
-push t1  
-end sub
-
-
-sub do_hex
-
-dim t1 as expr_result
-dim numpar,arg,num as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>2 orelse numpar=0 then print "hex$: "; : printerror(39) : return
-if numpar=2 then t1=pop() : num=converttoint(t1) else num=8
-t1=pop() : arg=converttoint(t1)
-
-t1.result.sresult=hex$(arg,num)
-t1.result_type=result_string
-push t1  
-end sub
-
-sub do_bin
-
-dim t1 as expr_result
-dim numpar,arg,num as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>2 orelse numpar=0 then print "bin$: "; : printerror(39) : return
-if numpar=2 then t1=pop() : num=converttoint(t1) else num=0
-t1=pop() : arg=converttoint(t1)
-t1.result.sresult=bin$(arg,num)
-t1.result_type=result_string
-push t1  
-end sub
-
-sub do_cos
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "cos: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=cos(trig_coeff*converttofloat(t1))
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_tan
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "tan: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=tan(trig_coeff*converttofloat(t1))
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_asin
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "asin: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=asin(converttofloat(t1))*trig_coeff2
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_acos
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "acos: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=acos(converttofloat(t1))*trig_coeff2
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_atn
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "atn: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=atan(converttofloat(t1))*trig_coeff2
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_sqr
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 orelse numpar=0 then print "sqr: "; : printerror(39) : return
-t1=pop()
-t1.result.fresult=sqr(converttofloat(t1))
-t1.result_type=result_float   
-push t1  
-end sub
-
-sub do_stick
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 then print "stick: "; : printerror(39) : return
-
-if numpar=0 then t1.result.uresult=stick(0) : t1.result_type=result_uint : push t1 : return
-
-t1=pop()
-if t1.result_type=result_int orelse t1.result_type=result_uint then  
-  q=t1.result.uresult
-  if q<7 then 
-    t1.result.uresult=stick(q) : t1.result_type=result_uint : push t1 : return 
-  else 
-     printerror(41) : return
-  endif
-  
-else
-  printerror(41) 
-endif    
-  
-end sub
-
-sub do_strig
-
-dim t1 as expr_result
-dim numpar as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar>1 then print "strig: "; : printerror(39) : return
-
-if numpar=0 then t1.result.uresult=strig(0) : t1.result_type=result_uint : push t1 : return
-
-t1=pop()
-if t1.result_type=result_int orelse t1.result_type=result_uint then  
-  q=t1.result.uresult
-  if q<7 then 
-    t1.result.uresult=strig(q) : t1.result_type=result_uint : push t1 : return 
-  else 
-     printerror(41) : return
-  endif
-  
-else
-  printerror(41) 
-endif    
-  
-end sub
-
-sub do_getpixel
-
-dim t1,t2 as expr_result
-dim numpar,a1,a2 as ulong
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar<>2 then print "getpixel: "; : printerror(39) : return
-
-t2=pop()
-t1=pop()
-a1=converttoint(t1) : a2=converttoint(t2)
-t1.result.uresult=pspeek(v.buf_ptr+a1+1024*a2)
-t1.result_type=result_uint
-push t1
-
- 
-end sub
-
-sub do_log
-
-dim t1  as expr_result
-dim numpar as ulong
-dim base as single
-
-numpar=compiledline(lineptr_e).result.uresult
-if numpar=0 orelse numpar>2 then print "log: "; : printerror(39) : return
-
-if numpar=2 then 
-  t1=pop()
-  base=log(converttofloat(t1))
-else
-  base=1.0
-endif
-t1=pop()
-t1.result.fresult=log(converttofloat(t1))/base
-t1.result_type=result_float
-push t1
-
- 
-end sub
-
-sub do_defsprite
-dim t1,t2,t3,t4,t5 as expr_result 
-dim a1,a2,a3,a4,a5 as integer
-
-t5=pop()
-t4=pop()
-t3=pop()
-t2=pop()
-t1=pop()
-
-' do convert, defsprite is not a racing command
-a1=converttoint(t1) : a2=converttoint(t2) : a3=converttoint(t3) : a4=converttoint(t4) : a5=converttoint(t5)
- 
-' todo: check parameters for linits
-if sprite(a1)<> nil then delete(sprite(a1))
-sprite(a1)=new ubyte(a4*a5-1)
-for y=a3 to a3+a5-1
-  for x=a2 to a4+a2-1
-    sprite(a1,(x-a2)+(y-a3)*(a4))=pspeek(v.buf_ptr+x+1024*y)
-  next x
-next y
-v.setspriteptr(a1,sprite(a1))
-v.setspritesize(a1,a4,a5)
-
-end sub
-
-sub do_sprite
-dim t1,t2,t3 as expr_result 
-dim a1,a2,a3 as integer
-t3=pop()
-t2=pop()
-t1=pop()
-a1=converttoint(t1) : a2=converttoint(t2) : a3=converttoint(t3)
-v.setspritepos(a1,a2,a3)
-end sub
-
-sub do_mousex
-
-dim t1 as expr_result
-'dim x,y as ulong
-'x,y=kbm.mouse_xy()
-t1.result_type=result_uint
-t1.result.uresult=mousex
-push t1
-end sub
-
-sub do_mousey
-
-dim t1 as expr_result
-'dim x,y as ulong
-'x,y=kbm.mouse_xy()
-t1.result_type=result_uint
-t1.result.uresult=mousey
-push t1
-end sub
-
-sub do_mousew
-
-dim t1 as expr_result
-'dim x,y,z as ulong
-'x,y=kbm.mouse_scroll()
-t1.result_type=result_int
-t1.result.iresult=mousew
-push t1
-end sub
-
-sub do_mousek
-
-dim t1 as expr_result
-'dim k as ulong
-'k=kbm.mouse_buttons()
-t1.result_type=result_uint
-t1.result.uresult=mousek
-push t1
-end sub
-
-
-sub do_rdpin
-
-dim t1 as expr_result
-
-t1=pop()
-r=rdpin(converttoint(t1))
-t1.result_type=result_uint
-t1.result.uresult=4
-push t1
-end sub
-
-sub do_rqpin
-
-dim t1 as expr_result
-
-t1=pop()
-r=rqpin(converttoint(t1))
-t1.result_type=result_uint
-t1.result.uresult=4
-push t1
-end sub
-
-sub do_pinread
-
-dim t1 as expr_result
-
-t1=pop()
-r=pinread(converttoint(t1))
-t1.result_type=result_uint
-t1.result.uresult=4
-push t1
-end sub
-
-sub do_gettime
-
-dim hi2, lo2 as ulong
-
-dim t1 as expr_result
-hi2,lo2=do_gettime2()
-t1.result_type=result_uint
-t1.result.twowords(0)=lo2
-t1.result.twowords(1)=hi2
-push t1
-end sub
-
-function do_gettime2() as ulong,ulong
-
-dim lo1, hi1 as ulong
-
-const asm 
-   getct hi1 wc
-   getct lo1
-end asm   
-
-return hi1, lo1
-end function  
-   
-
-'' ----------------------------- Graphics related runtime procedures --------------------------------------
-
-'' ----------------------------- Clear the screen
-
-sub do_cls
-cls(ink,paper): plot_color=ink
-end sub
-
-'' ----------------------------- Set a color # from the palette to plot/draw
-
-sub do_color
-dim t1 as expr_result
-t1=pop()
-plot_color=t1.result.iresult
-end sub
-
-' ----------------------------- Plot a point, set starting point to draw a line
-
-sub do_plot
-
-dim t1,t2 as expr_result 
-dim x,y as integer
-
-t2=pop() 					 
-t1=pop()
-x=converttoint(t1)
-y=converttoint(t2)
-plot_x=x: plot_y=y
-v.putpixel(plot_x,plot_y,plot_color)      
-end sub
-
-' --------------------------- Draw a line to point set by plot or previous draw, set a new starting point
-
-sub do_draw
-dim t1,t2 as expr_result 
-dim x,y as integer
-
-t2=pop()
-t1=pop()
-x=converttoint(t1)
-y=converttoint(t2)
-v.draw(plot_x,plot_y,x,y,plot_color) 
-plot_x=x
-plot_y=y
-end sub
-
 ' -------------------------- Draw a filled circle at x,y and radius r
 
 sub do_fcircle
@@ -4195,36 +4759,6 @@ else
 endif   
 end sub
 
-' -------------------------- Draw an empty circle at x,y and radius r
-
-sub do_circle
-dim t1,t2,t3 as expr_result 
-
-t3=pop()
-t2=pop()
-t1=pop()
-if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) then
-   v.circle(t1.result.iresult,t2.result.iresult,t3.result.iresult,plot_color) : return
-else
-   v.circle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
-endif   
-end sub
-
-' -------------------------- Draw a rectangle
-
-sub do_box
-dim t1,t2,t3,t4 as expr_result 
-
-t4=pop()
-t3=pop()
-t2=pop()
-t1=pop()
-if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) andalso (t4.result_type=result_int orelse t4.result_type=result_uint) then
-   v.box(t1.result.iresult,t2.result.iresult,t3.result.iresult,t4.result.iresult,plot_color) : return
-else
-   v.box(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
-endif   
-end sub
 
 sub do_fill
 dim t1,t2,t3,t4 as expr_result 
@@ -4255,48 +4789,6 @@ else
    v.frame(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
 endif   
 end sub
-
-'' ----------------------------- Text related runtime procedures --------------------------------------
-
-' ------------------------- Print to the screem
-
-sub do_print  
-
-dim t1,t2 as expr_result
-dim r as integer
- 
-r=0
-t1=pop() 
-'print t1.result_type,t1.result.uresult
-
-if t1.result_type=print_mod_comma orelse t1.result_type=print_mod_semicolon then r=t1.result_type :  t1=pop()
-if t1.result_type=print_mod_empty then r=t1.result_type 
-if t1.result_type=result_error then printerror(t1.result.uresult): goto 811
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult)  :  t1.result_type=result_string  
-
-if t1.result_type=token_channel then print "Print to channel "; t1.result.iresult : t1=pop()
-
-if r=print_mod_comma  then
-  if t1.result_type=result_int then print t1.result.iresult,
-  if t1.result_type=result_uint then print t1.result.uresult,
-  if t1.result_type=result_float then print t1.result.fresult,
-  if t1.result_type=result_string then print t1.result.sresult,
-endif  
-if r=print_mod_semicolon then 
-  if t1.result_type=result_int then print t1.result.iresult;
-  if t1.result_type=result_uint then print t1.result.uresult;
-  if t1.result_type=result_float then print t1.result.fresult;
-  if t1.result_type=result_string then print t1.result.sresult;
-endif
-if r=0 then 
-  if t1.result_type=result_int then print t1.result.iresult
-  if t1.result_type=result_uint then print t1.result.uresult
-  if t1.result_type=result_float then print t1.result.fresult
-  if t1.result_type=result_string then print t1.result.sresult
-endif 
-if r=print_mod_empty then print
-'waitms(10)
-811 end sub
 
 
 sub do_paper
@@ -4341,118 +4833,6 @@ free$=decuns$(memtop-programptr)+" BASIC bytes free"
 v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
 end sub
 
-sub do_setwave
-dim t1,t2 as expr_result
-t1=pop() 
-t2=pop() 
-channels(converttoint(t2)).wave=converttoint(t1)
-end sub
-
-sub do_setsustain
-dim t1,t2 as expr_result
-t1=pop() 
-t2=pop() 
-channels(converttoint(t2)).sus=converttoint(t1)
-end sub
-
-sub do_setenv
-dim t1,t2 as expr_result
-t1=pop() 
-t2=pop() 
-channels(converttoint(t2)).env=converttoint(t1)
-end sub
-
-sub do_setdelay
-dim t1,t2 as expr_result
-t1=pop() 
-t2=pop()  
-channels(converttoint(t2)).delay=converttoint(t1)
-end sub
-
-sub do_setlen
-dim t1,t2 as expr_result
-t1=pop()  
-t2=pop()  
-channels(converttoint(t2)).length=converttofloat(t1)
-end sub
-
-sub do_setvol
-dim t1,t2 as expr_result
-t1=pop()  
-t2=pop()  
-channels(converttoint(t2)).vol=converttofloat(t1)
-end sub
-
-sub do_setpan
-dim t1,t2 as expr_result
-t1=pop() 'value
-t2=pop() ' pin
-channels(converttoint(t2)).pan=converttofloat(t1)
-end sub
-
-
-sub do_pinwrite
-dim t1,t2 as expr_result
-t1=pop() 'value
-t2=pop() ' pin
-pinwrite(converttoint(t2), converttoint(t1))
-end sub
-
-sub do_pinfloat
-dim t1 as expr_result
-t1=pop() 'value
-pinfloat(converttoint(t1))
-end sub
-
-sub do_pinlo
-dim t1 as expr_result
-t1=pop() 'value
-pinlo(converttoint(t1))
-end sub
-
-sub do_pinhi
-dim t1  as expr_result
-t1=pop() 'value
-pinhi(converttoint(t1))
-end sub
-
-sub do_pintoggle
-dim t1  as expr_result
-t1=pop() 'value
-pintoggle(converttoint(t1))
-end sub
-
-
-sub do_pinstart
-dim t1,t2,t3,t4 as expr_result
-t1=pop() 'value
-t2=pop() ' pint1=pop() 'value
-t3=pop() ' pint1=pop() 'value
-t4=pop() ' pin
-pinstart(converttoint(t4),converttoint(t3),converttoint(t2), converttoint(t1))
-end sub
-
-
-sub do_wrpin
-dim t1,t2 as expr_result
-t1=pop() 'value
-t2=pop() ' pin
-wrpin(converttoint(t2), converttoint(t1))
-end sub
-
-sub do_wxpin
-dim t1,t2 as expr_result
-t1=pop() 'value
-t2=pop() ' pin
-wxpin(converttoint(t2), converttoint(t1))
-end sub
-
-sub do_wypin
-dim t1,t2 as expr_result
-t1=pop() 'value
-t2=pop() ' pin
-wypin(converttoint(t2), converttoint(t1))
-end sub
 
 sub do_position
 dim t1,t2 as expr_result
@@ -4526,23 +4906,9 @@ r=memtop-programptr
 t1.result_type=result_uint : t1.result.uresult=r : push t1
 end sub 
 
-sub do_adr
 
-''' TODO !! the arg is a variable and we have to retrieve its addr and not value!!!
-end sub 
 
-sub do_getnotevalue
 
-dim r,  notebase,noteexp as single
-dim a as integer
-dim t1 as expr_result
-t1=pop()
-a=converttoint(t1) 
-notebase=notetable(a mod 12) 
-noteexp=(a/12) 
-r=(2.0^noteexp)*notebase
-t1.result.fresult=r: t1.result_type=result_float : push t1
-end sub
 
 
 sub do_waitms
@@ -4573,67 +4939,6 @@ end sub
 
 
 
-sub do_dir
-dim filename as string
-dim px,py,i,j,n,swapped as integer
-dim filelist(128) as string
-
-chdir("/sd/bas")       ' set working directory
-print "Working directory: "; currentdir$ 
-px=0
-for i=0 to 127: filelist(i)="" : next i
-filename=dir$("*", fbDirectory)
-n=0
-while filename <> "" andalso filename <> nil andalso n<128
-  filename="[dir] "+filename
-  filelist(n)=filename
-  n=n+1
-  filename = dir$()      ' continue scan
-end while
-' now sort this
-
-for i =0 to n-1
-  swapped=false
-  for j=0 to n-i-2
-    if filelist(j) > filelist(j+1) then
-      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
-      swapped=true
-    endif
-  next j
-if not swapped then exit for
-next i
-for i=0 to n-1
-  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
-next i  
-if n>=128  then print "More than 128 entries found: clean your directory"
-print
-n=0
-
-px=0: py=v.getcursory()
-
-filename = dir$("*", fbNormal )  ' start scan for all files and directories
-do while filename <> "" andalso filename <> nil andalso n<128
-  filelist(n)=filename: n=n+1 
-  filename = dir$()      ' continue scan
-loop
-
-for i =0 to n-1
-  swapped=false
-  for j=0 to n-i-2
-    if filelist(j) > filelist(j+1) then
-      filelist(j), filelist(j+1) = filelist(j+1),filelist(j)
-      swapped=true
-    endif
-  next j
-if not swapped then exit for
-next i
-for i=0 to n-1
-  print filelist(i); : px=px+64: v.setcursorx(px) : if px>255 then px=0: print
-next i  
-if n>=128  then print "More than 128 entries found: clean your directory"
-print
-
-end sub
 
 sub do_if
 
@@ -4664,151 +4969,8 @@ trig_coeff=0.01745329251994329576923690768489
 trig_coeff2=57.295779513082320876798154814105
 end sub
 
-sub do_round
-dim t1 as expr_result
-
-t1=pop()
-t1.result.iresult=converttoint(t1) : t1.result_type=result_int
-push t1
-end sub
-
-sub do_int
-dim t1 as expr_result
-
-t1=pop()
-select case t1.result_type
-  case result_float: t1.result.iresult=int(t1.result.fresult)
-  case result_string: t1.result.iresult=int(val(t1.result.sresult))
-  case result_string2: t1.result.iresult=int(val(convertstring(t1.result.uresult))) 
-end select
-t1.result_type=result_int
-push t1
-end sub
 
 
-sub do_nothing
-' else, then  itself does nothing.
-end sub
-
-sub do_brun
-
-dim t1 as expr_result
-dim pos,r,psramptr as integer
-dim filename, fullfilename as string
-
-t1=pop() 
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
-if t1.result_type=result_string then
-  filename=t1.result.sresult
-  if left$(filename,1)="/" then 
-    fullfilename=filename
-  else
-    fullfilename="/sd/bin/"+filename  
-  endif  
-'  if mid$(filename,2,1)=":" then fullfilename=right$(filename,len(filename-3)) ' todo for future: strip c:/
-  open fullfilename for input as #9
-  r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
-  let pos=1: let r=0 : let psramptr=0
-  do
-    get #9,pos,block(0),1024,r : pos+=r	
-    psram.write(varptr(block(0)),psramptr,1024)	
-    psramptr+=r 
-					                                         ' move the buffer to the RAM and update RAM position. Todo: this can be done all at once
-  loop until r<>1024  orelse psramptr>=$7C000  					         ' do until eof or memory full
-
-' stop all driver cogs except PSRAM
-
-    cpustop(audiocog)
-    cpustop(videocog)
-    cpustop(usbcog)
-    cpustop(housekeeper_cog)
-
-'start loading cog
-
-    let loadingcog=cpu(@loadcog,@pslock) 
-
-' stop itself
-    
-    cpustop(cpuid())
-
-  endif  
-end sub
-
-
-sub do_mouse
-
-dim t1 as expr_result
-t1=pop()
-if t1.result.uresult=0 then v.setspritesize(16,0,0) else v.setspritesize(16,32,32)
-end sub
-
-sub do_cursor
-
-dim t1 as expr_result
-t1=pop()
-if t1.result.uresult=0 then  v.setspritesize(17,0,0) else v.setspritesize(17,8,16) 
-end sub
-
-
-sub do_click
-
-dim t1 as expr_result
-t1=pop()
-if t1.result.uresult=0 then keyclick=0 else keyclick=1
-end sub
-
-
-sub do_beep
-
-dim t1,t2 as expr_result
-dim freq as ulong
-dim sample(1) as ubyte
-
-t2=pop()
-t1=pop()
-
-if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
-sample(0)=127: sample(1)=128
-paula.play8(7,varptr(sample),freq*2,16384,2,0)
-push t2
-do_waitms
-paula.stop(7)
-end sub
-
-sub do_no_command
-printerror(23)
-end sub
-
-sub do_negative
-
-dim t1 as expr_result
-t1=pop()
-if t1.result_type=result_int then 
-  t1.result.iresult=-t1.result.iresult
-else if t1.result_type=result_uint then 
-  t1.result.iresult=-t1.result.uresult : t1.result_type=result_int
-else if t1.result_type=result_float then 
-  t1.result.fresult=-t1.result.fresult
-else 
-  t1.result_type=result_error : t1.result.uresult=40
-endif
-push t1
-end sub
-
-sub do_abs
-
-dim t1 as expr_result
-t1=pop()
-if t1.result_type=result_int then 
-  t1.result.iresult=abs(t1.result.iresult)
-'uresult is always positive
-else if t1.result_type=result_float then 
-  t1.result.fresult=abs(t1.result.fresult)
-else 
-  t1.result_type=result_error : t1.result.uresult=40
-endif
-push t1
-end sub
 
 '--------------------------- THE END OF THE MAIN PROGRAM ------------------------------------------------------
 
@@ -4952,7 +5114,8 @@ commands(token_lpoke)=@do_lpoke
 commands(token_peek)=@do_peek
 commands(token_dpeek)=@do_dpeek
 commands(token_lpeek)=@do_lpeek
-commands(token_adr)=@do_adr
+commands(token_adr)=@do_nothing
+
 commands(token_fre)=@do_fre
 commands(token_getnotevalue)=@do_getnotevalue
 commands(fun_getaddr)=@do_getaddr
@@ -4994,14 +5157,7 @@ dim i,j as integer
 dim a as single
 'v.cls(147,154)
 dim k as single : k=1.0
-'for i=0 to 1023 : samplebuf(0,i)=round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
-'for i=0 to 511  : samplebuf(1,i)= -32512+127*i: samplebuf(1,512+i)=-samplebuf(1,i) : next i   		' 1 : triangle 
-'for i=0 to 1023 : samplebuf(2,i)= -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
-'for i=0 to 127  : samplebuf(3,i)= -32600 : next i : for i=128 to 1023 : samplebuf(3,i) =32600 : next i 	' 3 pulse 12.5%
-'for i=0 to 511  : samplebuf(4,i)= -32600 : next i : for i=512 to 1023 : samplebuf(4,i) =32600 : next i 	' 4 square
-'for i=0 to 255  : samplebuf(5,i)= -32600 : next i : for i=256 to 1023 : samplebuf(5,i) =32600 : next i 	' 5 pulse 25%
-'for i=0 to 1023 : samplebuf(6,i)= dpeek(varptr(atari12)+16+2*i) : next i 				' 6 pokey waveform 12	
-'for i=0 to 1023 : samplebuf(7,i)= dpeek(varptr(atari2)+16+2*i) : next i 				' 7 pokey waveform 2	
+
 for i=0 to 1023 : psdpoke       2*i,round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
 for i=0 to 511  : psdpoke  2048+2*i, -32512+127*i: psdpoke 2048+2*(512+i),32512-127*i : next i   		' 1 : triangle 
 for i=0 to 1023 : psdpoke  4096+2*i, -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
@@ -5046,14 +5202,7 @@ noteperiods(6)=300 : noteperiods(7)=283 : noteperiods(8)=267 : noteperiods(9)=25
 end sub
 
 
-function getnoteval(token) as single
-dim note,noteexp as integer
-dim notebase,a as single
-note = token-token_notename 
-notebase=notetable(note mod 12) 
-noteexp=1+(note/12) 
-return (2.0^noteexp)*notebase
-end function
+
 
 
 
