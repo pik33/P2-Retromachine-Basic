@@ -391,7 +391,7 @@ dim errors$(255)
 dim compiledline(127) as expr_result
 declare ucompiledline alias compiledline as ulong(383)
 dim lineptr as integer
-dim lineptr_e as integer
+dim lineptr_e, ilineptr_e as integer
 dim programstart as ulong
 dim lastline as ulong
 dim lastlineptr as ulong
@@ -471,7 +471,6 @@ do_insert=-1
 '--------------------------------------------------------------------------------------------------------
 
 do
-  waitvbl
   line$=edit()
   interpret: line$="" 
 loop
@@ -2162,10 +2161,11 @@ function execute_line (astart=0 as integer) as integer
 '' This executes a line either in immediate mode or loaded from PSRAM in the program executing mode
 
 dim cmd as asub
+
 runptr2=0
 for lineptr_e=astart to lineptr-1
-cmd=commands(compiledline(lineptr_e).result_type and 255)
-cmd
+  cmd=commands(compiledline(lineptr_e).result_type and 255)
+  cmd
 next lineptr_e
 return runptr2
 end function
@@ -2179,12 +2179,15 @@ do: loop until hkcnt<>c
 end sub
 
 
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------- Runtime helper functions -----------------------------------------------------------------------
+'----------------------------------------------------------------------------------------------------------------------------------------
+
 ' ------------------- pop and push functions called by do_xxx functions to pop arguments and push results
 
 function pop() as expr_result
 
 dim t1 as expr_result
-
 if stackpointer=0 then
   t1.result_type=result_error
   t1.result.uresult=24
@@ -2196,10 +2199,6 @@ return t1
 end function 
 
 sub push(t1 as expr_result )
-
-'print "In push: "; t1.result_type
-'print "In push: "; t1.result.uresult
-
 if stackpointer<maxstack then 
   stack(stackpointer)=t1
   stackpointer+=1
@@ -2207,101 +2206,59 @@ if stackpointer<maxstack then
 endif
 end sub
 
+' -------------------------------- Runtime converting functions
 
-sub do_gosub()
-' on the stack: varnum, step, endval
+' converts the PSRAM based string to 'normal' string. A PSRAM pointer at input, a string at output
 
-dim t1 as expr_result
+function  convertstring(psaddr as ulong) as string
 dim i as integer
-gosubtop+=1
-if compiledline(lineptr_e+1).result_type=token_end then
-' there is token_goto after gosub, and then end. set the pointer to the start of the next line
-  gosubtable(gosubtop).lineptr=runptr
-  gosubtable(gosubtop).cmdptr=0
-else
-  gosubtable(gosubtop).lineptr=oldrunptr
-  gosubtable(gosubtop).cmdptr=lineptr_e+2
-endif
-end sub
 
+dim s as string
+dim l as ulong
+l=pslpeek(psaddr)
+s="" 
+for i=1 to l : s+=chr$(pspeek(psaddr+3+i)) :next i
+return s
+end function
 
-sub do_for()
-' on the stack: varnum, step, endval
+' converts a variable to an integer
 
-dim t1 as expr_result
-dim i as integer
-fortop+=1
-'i=-1: do: i+=1 : loop until fortable(i).varnum= -1 orelse i>= maxfor
-'if i> maxfor then printerror(36) : return
-t1=pop() : fortable(fortop).varnum=t1.result.iresult
-t1=pop() : fortable(fortop).stepval=converttoint(t1)
-t1=pop() : fortable(fortop).endval=converttoint(t1)
-if compiledline(lineptr_e).result_type=token_end then
-' end of line after for, set the pointer to the start of the next line
-  fortable(fortop).lineptr=runptr
-  fortable(fortop).cmdptr=0
-else
-  fortable(fortop).lineptr=oldrunptr
-  fortable(fortop).cmdptr=lineptr_e+1
-'fortop=i ' to speedup next
-endif
-end sub
+function converttoint (t1 as expr_result) as integer 
 
-' now do_next todo
+select case t1.result_type
+  case result_int:  return t1.result.iresult
+  case result_uint: return t1.result.uresult
+  case result_float: return round(t1.result.fresult)
+  case result_string: return round(val(t1.result.sresult))
+  case result_string2: return round(val(convertstring(t1.result.uresult))) 
+  case result_channel: return t1.result.iresult
+  case else: return 0
+end select
+end function
 
-sub do_return()
-if gosubtop>0 then
-  runptr=gosubtable(gosubtop).lineptr
-  runptr2=gosubtable(gosubtop).cmdptr
-  lineptr_e=lineptr-1
-  gosubtop -=1 
-endif   
-end sub
+' converts a variable to float
 
-sub do_pop()
-if gosubtop>0 then  gosubtop -=1 
-end sub
+function converttofloat (t1 as expr_result) as single
 
-sub do_next()
+dim s as single
 
-dim t1 as expr_result
-dim varnum as integer
+select case t1.result_type
+  case result_int:  s=t1.result.iresult : return s
+  case result_uint: s=t1.result.uresult : return s
+  case result_float: return t1.result.fresult
+  case result_string: return val(t1.result.sresult)
+  case result_string2: return val(convertstring(t1.result.uresult)) :r=result_int
+  case else: return 0.0
+end select
+end function
 
-t1=pop() :varnum=t1.result.uresult
-if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
-if variables(varnum).vartype=result_float then variables(varnum).vartype=result_int : variables(varnum).value.iresult=round(variables(varnum).value.fresult)
-variables(varnum).value.iresult+=fortable(fortop).stepval 
-if fortable(fortop).stepval>=0 then
-  if variables(varnum).value.iresult>fortable(fortop).endval then fortop-=1 : return ' do nothing 
-else
-  if variables(varnum).value.iresult<fortable(fortop).endval then fortop -=1 : return ' do nothing 
-endif
-' if not returned, goto pointer 
-if inrun>0 andalso runptr<>fortable(fortop).lineptr then
-  runptr=fortable(fortop).lineptr
-  runptr2=fortable(fortop).cmdptr
-  lineptr_e=lineptr-1
-else
-  lineptr_e=fortable(fortop).cmdptr-1
-endif  
-end sub
+'----------------- End of converting 
 
+'----------------------------------------------------------------------------------------------------------------------------------------
+'----- A nostalgic experiment with saving the program on a cassette tape ----------------------------------------------------------------
+'----------------------------------------------------------------------------------------------------------------------------------------
 
-' ------------------ push a variable on the stack as an independent operation called by execute_line 
-
-sub do_push
-if stackpointer<maxstack then 
-  stack(stackpointer)=compiledline(lineptr_e)
-  stackpointer+=1
-  
-endif
-end sub
-
-  
 sub csave_block(address as ulong)
-
-' let it be 1k blocks=256 longs=8 kbits=32 k samples
-' we enter it at the state of playing 1 kHz header tone
 
 for i=0 to 63 step 2
   do: loop until lpeek(base+64*7)>32768
@@ -2326,7 +2283,6 @@ end sub
 
 sub csave_addtoblock(d as ubyte, force as ubyte)
 
-
 if force=0 then
   block(blockptr)=d
   blockptr+=1
@@ -2344,8 +2300,9 @@ else
 endif
 end sub  
 
-sub test_csave
+'----------------------- csave
 
+sub test_csave
 
 dim i,j as integer
 dim qqq as ulong
@@ -2388,51 +2345,280 @@ csave_addtoblock(0,1)
 dpoke base+7*64+20,0
 end sub
 
-' ----------------- Save the program
+'----------------------------------------------------------------------------------------------------------------------------------------
+'----- End of cassette procedures -------------------------------------------------------------------------------------------------------
+'----------------------------------------------------------------------------------------------------------------------------------------
 
-sub do_save                           ''' <------------------------ TODO vartables has to be saved too! Or maybe o
+
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------- Runtime functions ------------------------------------------------------------------------------
+'----------------------------------------------------------------------------------------------------------------------------------------
+
+'-------------------- changefreq
+
+sub do_changefreq
+
 dim t1 as expr_result
-dim filebuf as ubyte(511)
-dim i,numpar as integer
-dim fileheader,savestart, saveptr as ulong
-dim header(5) as ulong
-dim linebuf(125) as ubyte
-dim saveline$ as string
+dim channel,lfreq,skip,i,period as integer
+dim ps as ulong
+dim freq as single
+
+t1=pop()
+freq=converttofloat(t1)
+lfreq=int(log(freq)/log(2))
+skip=round(2^(lfreq+5))
+if skip>32768 then i=skip/32768: skip=32768 else i=1
+period=round((3546895/freq)/(i*(2^(13-lfreq))))
+t1=pop()
+channel=converttoint(t1) mod 8
+ps=skip shl 16+period
+if (lpeek(base+64*channel+8) and $0800_0000)=0 then 
+  lpoke base+64*channel+24,ps
+else
+  dpoke base+64*channel+24,round(3546895/freq) 
+  dpoke base+64*channel+26,256
+endif 
+end sub
+
+'-------------------- changepan
+
+sub do_changepan
+
+dim t1 as expr_result
+dim channel,pan as integer
+
+t1=pop()
+pan=8192+round(8192*converttofloat(t1)) 
+if pan<0 then pan=0
+if pan>16384 then pan=16384
+t1=pop()
+channel=converttoint(t1) mod 8
+dpoke base+64*channel+22,pan
+end sub
+
+'-------------------- changevol
+
+sub do_changevol
+dim t1 as expr_result
+dim channel,vol as integer
+t1=pop()
+vol=round(converttofloat(t1)*1000) mod 16384
+t1=pop()
+channel=converttoint(t1) mod 8
+dpoke base+64*channel+20,vol
+end sub
+
+'-------------------- changewav
+
+sub do_changewav
+dim t1 as expr_result
+dim channel,wave as integer
+t1=pop()
+wave=converttoint(t1)
+if wave<0 then wave=0
+t1=pop()
+channel=converttoint(t1) mod 8
+if wave <32 then 
+  lpoke base+64*channel+8,2048*wave+$8000_0000 
+else
+  lpoke base+64*channel+8,$8800_0000 
+endif
+end sub
+
+'-------------------- defenv
+
+sub do_defenv
+
+dim a,d,s,r,numpar,i,channel,wptr  as integer
+dim aa,dd,ss,rr,fulltime,timeunit,da,dr as single 
+dim t1 as expr_result
+dim s1 as string
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>2 andalso numpar<>5 then return 			' TODO and print error
+
+if numpar=2 then						' env from .h2 or from a pointer
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s1=convertstring(t1.result.uresult)
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
+  else 
+    s1=""
+    wptr=converttoint(t1)
+  endif  
+  if s1<>"" then 
+    t1=pop()
+    channel=converttoint(t1) 
+    close #9 : open "/sd/media/h/"+s1 for input as #9
+    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
+    get #9,17,envbuf8(channel,0),256
+    for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
+    close #9
+    envbuf(channel,255)=0                                                              
+    return
+  else
+    if wptr < $80000 then 
+      for i=0 to 255: envbuf(channel,i)=dpeek(wptr+2*i): next i
+    else
+      for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i) : next i
+    endif
+    envbuf(channel,255)=0
+    return   
+  endif
+endif  
+
+if numpar=5 then   						 'simple adsr
+  t1=pop() : rr=converttofloat(t1)
+  t1=pop() : ss=converttofloat(t1) 
+  t1=pop() : dd=converttofloat(t1)
+  t1=pop() : aa=converttofloat(t1)
+  t1=pop() : channel=converttoint(t1)
+  if ss<0.0 then ss=0.0 
+  if ss>1.0 then ss=1.0
+  fulltime=aa+dd+rr
+  timeunit=256/fulltime : a=round(aa*timeunit) : d=round(dd*timeunit) : r=round(rr*timeunit)  
+  da=65520.0/a : dd=(65520.0-65520.0*ss)/d : dr=(65520.0*ss)/r  
+  suspoints(channel)=a+d
+  aa=0.0 : for i=0 to a-1  : envbuf(channel,i)=round(aa): aa+=da : next i
+  for i=a to (a+d-1) : envbuf(channel,i)=round(aa) : aa=aa-dd : if aa<0.0 then aa=0.0
+  next i
+  for i=(a+d) to 255 : envbuf(channel,i)=round(aa): aa=aa-dr : if aa<0.0 then aa=0.0
+  next i
+  envbuf(channel,255)=0
+endif
+envbuf(channel,255)=0
+end sub
+
+'-------------------- defsnd
+
+sub do_defsnd
+dim numpar,i,j,par,channel,wptr as integer
+dim even,odd, max,spl,qqq as single 
+dim t1 as expr_result
+dim s as string
+dim harm(15) as single
+dim sample as short
 
 numpar=compiledline(lineptr_e).result.uresult
 
-if numpar>0 then t1=pop() else t1.result.sresult=loadname : t1.result_type=result_string 
-if pslpeek(programstart)=$FFFFFFFF then printerror(27): return
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
-if t1.result_type=result_string then
-  if t1.result.sresult="" then t1.result.sresult=loadname else loadname=t1.result.sresult
-  close #9: open currentdir$+"/"+t1.result.sresult for output as #9
-'  put #9,1,fileheader,1
-  i=5
-  saveptr=programstart
-  do
-    psram.read1(varptr(header(0)),saveptr,24)
-    psram.read1(varptr(linebuf(0)),header(2),header(3)) 
-    saveline$="" : for i=1 to header(3) : saveline$=saveline$+chr$(linebuf(i-1)) : next i 
- '   put #9,i,header(3),1 : i+=4
- '   put #9,i,linebuf(0),header(3) : i+=header(3)
-     print #9, saveline$
-    saveptr=header(5)
-  loop until header(5)=$7FFFFFFF
-  close #9  
-  print "Saved as ";currentdir$+"/"+loadname
-endif  
+' defsnd channel, string - tries to load from /media/s an s2 file from PC-Softsynth
+' defsnd channel, h1,h2.... h15 - defines harmonics
+' defsnd channel, negfloat, negfloat - defines even and odd harmonics dampening
+' defsnd channel, oneint - loads the wave from the pointer
+
+if numpar<2 then return
+ 
+if numpar=2 then
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s=convertstring(t1.result.uresult)
+  else if t1.result_type=result_string then 
+    s=t1.result.sresult
+  else 
+    s=""
+    wptr=converttoint(t1)
+  endif  
+  if s<>"" then 
+    t1=pop()
+    channel=converttoint(t1) : if channel>31 then return
+    close #9 : open "/sd/media/s/"+s for input as #9
+    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
+    for i=0 to 1024 : get #9,17+2*i,sample,1 : psdpoke 2048*channel+2*i, sample : next i
+    close #9
+    return
+  else
+    if wptr < ($80000 - 2048) then 
+      for i=0 to 1023: psdpoke 2048*channel+2*i,dpeek(wptr+2*i): next i
+    else
+      for i=0 to 1023 : psdpoke 2048*channel+2*i,psdpeek(wptr+2*i) : next i
+    endif
+    return 
+  endif
+  return
+endif
+for i=0 to 15 : harm(i)=0: next i  
+for i=numpar to 2 step -1 
+  t1=pop() 
+  harm(i-2)=converttofloat(t1) 
+next i
+t1=pop()
+channel=converttoint(t1) : : if channel>31 then return
+max=0
+if harm(0)<0 then
+  even=abs(harm(0))
+  odd=abs(harm(1)) 
+  harm(0)=1
+  harm(1)=even
+  harm(2)=odd
+  for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
+  for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
+endif
+if harm(0)>=0 then ' synthesize with harmonics
+  for i=0 to 1023
+    spl=0
+    for j=0 to 15 : spl+=harm(j)*sin((1.0/512)*3.14159265359*i*(j+1)) : next j 
+    if abs(spl)>max then max=abs(spl)  
+  next i  
+  for i=0 to 1023
+    spl=0
+    for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j 
+    psdpoke 2048*channel+2*i, round(spl)
+  next i  
+endif 
 end sub
 
-'----------------- Load the program
-'lo todo: errors while loading
+'-------------------- end
+
+sub do_end
+lineptr_e=lineptr-1
+runptr=$7FFF_FFFF
+end sub
+
+'-------------------- enter
 
 sub do_enter
 do_load(1234)
 end sub
 
+'-------------------- for
 
-sub do_load(amode=0 as integer)   ' here amode = 2, why?
+sub do_for()
+
+dim t1 as expr_result
+dim i as integer
+fortop+=1
+t1=pop() : fortable(fortop).varnum=t1.result.iresult
+t1=pop() : fortable(fortop).stepval=converttoint(t1)
+t1=pop() : fortable(fortop).endval=converttoint(t1)
+if compiledline(lineptr_e).result_type=token_end then	' end of line after for, set the pointer to the start of the next line
+  fortable(fortop).lineptr=runptr
+  fortable(fortop).cmdptr=0
+else
+  fortable(fortop).lineptr=oldrunptr
+  fortable(fortop).cmdptr=lineptr_e+1
+endif
+end sub
+
+'-------------------- gosub
+
+sub do_gosub()
+
+dim t1 as expr_result
+dim i as integer
+gosubtop+=1
+if compiledline(lineptr_e+1).result_type=token_end then
+  gosubtable(gosubtop).lineptr=runptr
+  gosubtable(gosubtop).cmdptr=0
+else
+  gosubtable(gosubtop).lineptr=oldrunptr
+  gosubtable(gosubtop).cmdptr=lineptr_e+2
+endif
+end sub
+
+'-------------------- load
+
+sub do_load(amode=0 as integer)  
 
 dim t1 as expr_result
 dim i, r, amount,numpar as integer
@@ -2470,188 +2656,68 @@ endif
 print "Loaded ";currentdir$+"/"+loadname
 end sub
 
-sub do_end
-lineptr_e=lineptr-1
-runptr=$7FFF_FFFF
-end sub
+'-------------------- next
 
-'----------------- Run the program 
+sub do_next()
 
-'' line header: linenum major, linenum minor, list start, list length, prev ptr, next ptr
-
-sub do_run
-dim numpar as integer
-dim key22 : key22=0
-numpar=compiledline(lineptr_e).result.uresult
-if numpar=1 then do_load ' todo also run linenum so check the param
-
-let runptr=programstart  : runptr2=0 : oldrunptr=-1
-if inrun>0 then 
-  psram.read1(varptr(runheader),runptr,24)  
-  return
-endif
-inrun=1
-psram.read1(varptr(runheader),runptr,24) 
-if runheader(0)=$FFFFFFFF then inrun=0: return 
-do 
-  if runptr<>oldrunptr then
-    psram.read1(varptr(runheader),runptr,24) 					        ' : let tt=getct() - tt : print "loaded header, time=", tt
-    psram.read1(varptr(compiledline(0)),runptr+2*compiledslot,runheader(2)-runptr)    	' : let tt=getct()-tt : : print "loaded compiledline, time=", tt' todo: avoid 2 psram reads. Make a buf for he line or something
-      											'for i=0 to lineptr : print compiledline(i).result_type, : next i
-    lineptr=((runheader(2)-runptr)/compiledslot)-3  					' : let tt=getct()-tt :: print "computed lineptr, time="; tt ' todo: keep the line ptr
-    oldrunptr=runptr	 	 							' : let tt=getct()-tt :  print "got a new header, time="; tt
-  endif
-  runptr=runheader(5)	  							' : let tt=getct()-tt :  print "got a new header, time="; tt
-  runptr2=execute_line(runptr2)										' :  let tt=getct()-tt : :print "excuted a line "; runheader(0), "time="; tt
-loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
-  ''do whatever kbm.peek_latest_key()=$106 
-if runptr<>$7FFF_FFFF then 
-    print "Stopped at line ";runheader(0)
-endif
-inrun=0
-v.setspritesize(17,8,16)
-v.setspritesize(16,32,32)
-end sub
-
-
-
-
-
-
-
-sub do_defenv
-dim a,d,s,r,numpar,i,j,par,channel,wptr  as integer
-dim aa,dd,ss,rr,even,odd, max,spl,qqq,fulltime,timeunit,da,dr as single 
 dim t1 as expr_result
-dim s1 as string
-dim harm(15) as single
-
-numpar=compiledline(lineptr_e).result.uresult
-
-
-' defenv channel, string - tries to load from /media/h a h2 file from PC-Softsynth
-'TODO for 2.0: ' defenv channel, l1,r1,l2,r2,l3,r3,l4,r4 - defines ADSR in Yamaha DX  style, except these are linear values
-' defsnd channel, a,d,s,r - defines ADSR attack time, decay time, sus level, release time. Sus point has to be returned - how?
-
-
-if numpar<>2 andalso numpar<>5 andalso numpar<>9 then return ' and print error
-
- 
-if numpar=2 then
-  t1=pop()
-  if t1.result_type=result_string2 then 
-    s1=convertstring(t1.result.uresult)
-  else if t1.result_type=result_string then 
-    s1=t1.result.sresult
-  else 
-    s1=""
-   wptr=converttoint(t1)
-  endif  
-
-    
-  if s1<>"" then 
-    t1=pop()
-    channel=converttoint(t1) 
-    close #9 : open "/sd/media/h/"+s1 for input as #9
-    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-    get #9,17,envbuf8(channel,0),256
-    for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
-    close #9
-    envbuf(channel,255)=0                                                                   '  for i=0 to 255: v.putpixel(i,288-envbuf(channel,i)/400,40) : next i
-    return
-  else
-    if wptr < ($80000 - 2048) then 
-      for i=0 to 255: envbuf(channel,i)=dpeek(wptr+2*i): next i
-    else
-      for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i) : next i
-    endif
-    envbuf(channel,255)=0
-    return   
-  endif
+dim varnum as integer
+t1=pop() :varnum=t1.result.uresult
+if fortable(fortop).varnum<>t1.result.uresult then printerror(37) : return
+if variables(varnum).vartype=result_float then variables(varnum).vartype=result_int : variables(varnum).value.iresult=round(variables(varnum).value.fresult)
+variables(varnum).value.iresult+=fortable(fortop).stepval 
+if fortable(fortop).stepval>=0 then
+  if variables(varnum).value.iresult>fortable(fortop).endval then fortop-=1 : return ' do nothing 
+else
+  if variables(varnum).value.iresult<fortable(fortop).endval then fortop -=1 : return ' do nothing 
+endif
+' if not returned, goto pointer 
+if inrun>0 andalso runptr<>fortable(fortop).lineptr then
+  runptr=fortable(fortop).lineptr
+  runptr2=fortable(fortop).cmdptr
+  lineptr_e=lineptr-1
+else
+  lineptr_e=fortable(fortop).cmdptr-1
 endif  
-
-if numpar=5 then    'simple adsr
-
-  t1=pop() : rr=converttofloat(t1)
-  t1=pop() : ss=converttofloat(t1) 
-  t1=pop() : dd=converttofloat(t1)
-  t1=pop() : aa=converttofloat(t1)
-  t1=pop() : channel=converttoint(t1)
-  if ss<0.0 then ss=0.0 
-  if ss>1.0 then ss=1.0
-  fulltime=aa+dd+rr
-  timeunit=256/fulltime : a=round(aa*timeunit) : d=round(dd*timeunit) : r=round(rr*timeunit) :print a,d,r,a+d+r
-  da=65520.0/a : dd=(65520.0-65520.0*ss)/d : dr=(65520.0*ss)/r : print da,dd,dr
-  suspoints(channel)=a+d
-  aa=0.0 : for i=0 to a-1  : envbuf(channel,i)=round(aa): aa+=da : next i
-  for i=a to (a+d-1) : envbuf(channel,i)=round(aa) : aa=aa-dd : if aa<0.0 then aa=0.0
-  next i
-  for i=(a+d) to 255 : envbuf(channel,i)=round(aa): aa=aa-dr : if aa<0.0 then aa=0.0
-  next i
-  envbuf(channel,255)=0
- ' for i=0 to 255 : print envbuf(channel,i), : next i
- endif
-  
-  
-  
-  envbuf(channel,255)=0
-'   for i=0 to 255 : print envbuf(channel,i), : next i                                                            '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
 end sub
 
+'-------------------- play
 
 sub do_play
 
-' play channel : play 440 Hz with waveform(channel) and envelope(channel) with max volume
-' play channel, freq: play freq with waveform(channel and envleope(channel) 
 ' play channel, freq, wait, volume, waveform, envelope, length, pan, sus
-
-
-'channel: int, 0..7
-'freq: float in Hz
-'volume : float from 0 to 16
-'waveform : int, 0 to 7 - from def, 8: noise
-'envelope : int, 0 to 7, 8: no envelope
-'wait : in ms
-
-'samplefreq 1 316 406.25
 
 dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period as integer
 dim params(8) as single
 dim t1 as expr_result
 dim speed_coeff, freq,pan ,vol,slen as single
-speed_coeff=815.6614449376854599406528189911*(95.0/256.0)
+speed_coeff=305.873
 
 for i=0 to 8 : params(i)=-2.0 : next i
-'params(0)=0: params(1)=440.0 : params(2)=16.0 : params(3)=0.0 : params(4)=0.0 : params(5)=1.0 : params(6)=0.0 : params(7)=0.0 : 
-'chn		freq		   vol		   wave#	   env#		   len		   delay	   pan		: sus 
 numpar=compiledline(lineptr_e).result.uresult
 for i=numpar to 1 step -1 
   t1=pop() 
   params(i-1)=converttofloat(t1) 
 next i
+
 if params(0)<0 then channel=0 else channel=round(params(0)) mod 8
 if params(1)<0 then freq=channels(channel).freq else freq=params(1) : channels(channel).freq=freq
+if params(2)<0 orelse params(2)>10000.0 then delay=channels(channel).delay else delay=round(params(2)) : channels(channel).delay=delay
 if params(3)<0 orelse params(3)>16.384 then vol=channels(channel).vol else vol=params(3) : channels(channel).vol=vol
 if params(4)<0 orelse params(4)>32 then wave=channels(channel).wave else wave=round(params(4)) : channels(channel).wave=wave
 if params(5)<0 orelse params(5)>8.0 then env=channels(channel).env else env=round(params(5)) : channels(channel).env=env
 if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else slen=params(6) : channels(channel).length=slen
-if params(2)<0 orelse params(2)>10000.0 then delay=channels(channel).delay else delay=round(params(2)) : channels(channel).delay=delay
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
-
 
 lfreq=int(log(freq)/log(2))
 skip=round(2^(lfreq+5))
 if skip>32768 then i=skip/32768: skip=32768 else i=1
 period=round((3546895/freq)/(i*(2^(13-lfreq))))
- 
-  
-'print period,skip
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
 base2=base+64*channel
-'skip=round(freq*3.9827219) 
 if wave <32 then 
   lpoke base2+8,2048*wave+$C000_0000 
 else
@@ -2662,8 +2728,8 @@ lpoke base2+12,0
 dpoke base2+20,ivol 
 dpoke base2+22,ipan 
 if wave<32 then
-  dpoke base2+24,period 'spl=59122.8 57.773711 Hz at skip 256, 0.225535610 per skip
-  dpoke base2+26,skip ' todo: use skip to make accurate sample rate
+  dpoke base2+24,period 
+  dpoke base2+26,skip  
 else
   dpoke base2+24,round(3546895/freq) 
   dpoke base2+26,256
@@ -2671,78 +2737,126 @@ endif
 lpoke base2+28,$0000_0000
 lpoke base2+32,0 
 if env=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(env,0))
-lpoke base2+40,speed' speed
-lpoke base2+44,sus 'len
-
-if delay>0 then waitms(delay) ' : print "wait "; round(params(6)) : l
-'lpoke bASE+7*64+20,0
-'do: position(0,0): print dpeek(base+4),dpeek(base+4+64),dpeek(base+4+128),dpeek(base+4+192),dpeek(base+4+256),dpeek(base+4+320)," ",lpeek(base+4+384);"           ",dpeek(base+4+448) : loop
+lpoke base2+40,speed 
+lpoke base2+44,sus 
+if delay>0 then waitms(delay) 
 end sub
 
-sub do_changevol
-dim t1 as expr_result
-dim channel,vol as integer
-t1=pop()
-vol=round(converttofloat(t1)*1000) mod 16384
-t1=pop()
-channel=converttoint(t1) mod 8
-dpoke base+64*channel+20,vol
+'-------------------- pop
+
+sub do_pop()
+if gosubtop>0 then  gosubtop -=1 
 end sub
 
-sub do_changepan
-dim t1 as expr_result
-dim channel,pan as integer
-t1=pop()
-pan=8192+round(8192*converttofloat(t1)) 
-if pan<0 then pan=0
-if pan>16384 then pan=16384
-t1=pop()
-channel=converttoint(t1) mod 8
-dpoke base+64*channel+22,pan
-end sub
+' ------------------- push a variable on the stack. No command for this, a variable is a command
 
-sub do_changefreq
-dim t1 as expr_result
-dim channel,lfreq,skip,i,period as integer
-dim ps as ulong
-dim freq as single
-t1=pop()
-
-freq=converttofloat(t1)
-lfreq=int(log(freq)/log(2))
-skip=round(2^(lfreq+5))
-if skip>32768 then i=skip/32768: skip=32768 else i=1
-period=round((3546895/freq)/(i*(2^(13-lfreq))))
-t1=pop()
-channel=converttoint(t1) mod 8
-ps=skip shl 16+period
-if channels(channel).wave<32 then 
-  lpoke base+64*channel+24,ps
-else
-  dpoke base+64*channel+24,round(3546895/freq) 
-  dpoke base+64*channel+26,256
-endif 
-
-
-end sub
-
-sub do_changewav
-dim t1 as expr_result
-dim channel,wave as integer
-t1=pop()
-wave=converttoint(t1)
-if wave<0 then wave=0
-t1=pop()
-channel=converttoint(t1) mod 8
-if wave <32 then 
-  lpoke base+64*channel+8,2048*wave+$C000_0000 
-else
-  lpoke base+64*channel+8,$C800_0000 
+sub do_push
+if stackpointer<maxstack then 
+  stack(stackpointer)=compiledline(lineptr_e)
+  stackpointer+=1
 endif
 end sub
 
+'------------------- release
+
+sub do_release
+
+dim t1 as expr_result
+dim channel as integer
+
+t1=pop()
+channel=converttoint(t1)
+if channel>=0 andalso channel<=7 then lpoke base+64*channel+44,255  
+end sub
+
+'------------------- return
+
+sub do_return()
+if gosubtop>0 then
+  runptr=gosubtable(gosubtop).lineptr
+  runptr2=gosubtable(gosubtop).cmdptr
+  lineptr_e=lineptr-1
+  gosubtop -=1 
+endif   
+end sub
+
+' ------------------ run
+
+sub do_run
+
+dim numpar as integer
+dim r_lineptr_e, r_runptr, r_runptr2 as ulong
+
+r_lineptr_e=lineptr_e
+r_runptr=runptr
+r_runptr2=runptr2
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=1 then do_load ' todo also run linenum so check the param
+runptr=programstart : runptr2=0 : oldrunptr=-1
+if inrun>0 then 
+  psram.read1(varptr(runheader),runptr,24)  
+  return
+endif
+inrun=1
+psram.read1(varptr(runheader),runptr,24) 
+if runheader(0)=$FFFFFFFF then inrun=0: return 
+do 
+  if runptr<>oldrunptr then
+    psram.read1(varptr(runheader),runptr,24) 					     
+    psram.read1(varptr(compiledline(0)),runptr+2*compiledslot,runheader(2)-runptr)    
+    lineptr=((runheader(2)-runptr)/compiledslot)-3  					 
+    oldrunptr=runptr	 	 							 
+  endif
+  runptr=runheader(5)	  							 
+  runptr2=execute_line(runptr2)										 
+loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
+  ''do whatever kbm.peek_latest_key()=$106 
+if runptr<>$7FFF_FFFF then 
+    print "Stopped at line ";runheader(0) 
+endif
+inrun=0
+lineptr_e=r_lineptr_e
+runptr=r_runptr
+runptr2=r_runptr2
+v.setspritesize(17,8,16)
+v.setspritesize(16,32,32)
+end sub
+
+' ------------------ save
+
+sub do_save                        
+dim t1 as expr_result
+dim i,numpar as integer
+dim header(5) as ulong
+dim linebuf(125) as ubyte
+dim saveline$ as string
+dim saveptr as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>0 then t1=pop() else t1.result.sresult=loadname : t1.result_type=result_string 
+if pslpeek(programstart)=$FFFFFFFF then printerror(27): return
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
+if t1.result_type=result_string then
+  if t1.result.sresult="" then t1.result.sresult=loadname else loadname=t1.result.sresult
+  close #9: open currentdir$+"/"+t1.result.sresult for output as #9
+  saveptr=programstart
+  do
+    psram.read1(varptr(header(0)),saveptr,24)
+    psram.read1(varptr(linebuf(0)),header(2),header(3)) 
+    saveline$="" : for i=1 to header(3) : saveline$=saveline$+chr$(linebuf(i-1)) : next i 
+    print #9, saveline$
+    saveptr=header(5)
+  loop until header(5)=$7FFFFFFF
+  close #9  
+  print "Saved as ";currentdir$+"/"+loadname
+endif  
+end sub
+
+' ------------------ shutup
 
 sub do_shutup
+
 dim t1 as expr_result
 dim channel,i,numpar as integer
 
@@ -2757,101 +2871,17 @@ endif
 end sub
 
 
-sub do_release
-
-dim t1 as expr_result
-dim channel as integer
-t1=pop()
-channel=converttoint(t1)
-if channel>=0 andalso channel<=7 then lpoke base+64*channel+44,255 ' else printerror
-end sub
 
 
-sub do_defsnd
-dim numpar,i,j,par,channel,wptr as integer
-dim even,odd, max,spl,qqq as single 
-dim t1 as expr_result
-dim s as string
-dim harm(15) as single
-dim sample as short
-
-numpar=compiledline(lineptr_e).result.uresult
 
 
-' defsnd channel, string - tries to load from /media/s an s2 file from PC-Softsynth
-' defsnd channel, h1,h2.... h15 - defines harmonics
-' defsnd channel, negfloat, negfloat - defines even and odd harmonics dampening
-' defsnd channel, oneint - loads the wave from the pointer
 
-if numpar<2 then return
 
-  
-if numpar=2 then
-  t1=pop()
-  if t1.result_type=result_string2 then 
-    s=convertstring(t1.result.uresult)
-  else if t1.result_type=result_string then 
-    s=t1.result.sresult
-  else 
-    s=""
-    wptr=converttoint(t1)
-  endif  
 
-    
-  if s<>"" then 
-    t1=pop()
-    channel=converttoint(t1) : if channel>31 then return
-    close #9 : open "/sd/media/s/"+s for input as #9
-    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-    for i=0 to 1024 : get #9,17+2*i,sample,1 : psdpoke 2048*channel+2*i, sample : next i
-    close #9
-                                                                       'for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-    return
-  else
-    if wptr < ($80000 - 2048) then 
-      for i=0 to 1023: psdpoke 2048*channel+2*i,dpeek(wptr+2*i): next i
-    else
-      for i=0 to 1023 : psdpoke 2048*channel+2*i,psdpeek(wptr+2*i) : next i
-    endif
-    return 
-  endif
-  
-                                                                        '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-  return
- 
-endif
-for i=0 to 15 : harm(i)=0: next i  
-for i=numpar to 2 step -1 
-  t1=pop() 
-  harm(i-2)=converttofloat(t1) 
-next i
-t1=pop()
-channel=converttoint(t1) : : if channel>31 then return
-max=0
-if harm(0)<0 then
-  even=abs(harm(0))
-  odd=abs(harm(1)) 
-  harm(0)=1
-  harm(1)=even
-  harm(2)=odd
-  for i=3 to 15 step 2 : harm(i)=harm(i-2)*even : next i
-  for i=4 to 14 step 2 : harm(i)=harm(i-2)*odd : next i
-endif
-if harm(0)>=0 then ' synthesize with harmonics
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15 : spl+=harm(j)*sin((1.0/512)*3.14159265359*i*(j+1)) : next j 
-    if abs(spl)>max then max=abs(spl)  ': print max 
-  next i  
-  for i=0 to 1023
-    spl=0
-    for j=0 to 15: spl+=harm(j)*(32600.0/max)*sin(1.0/512*3.14159265359*i*(j+1)) :next j ':' print spl
-    psdpoke 2048*channel+2*i, round(spl)
-  next i  
-endif 
 
-                                                               '  for i=0 to 1023: v.putpixel(i,288-samplebuf(channel,i)/200,40) : next i
-end sub
+
+
+
 
 ' ---------------  List the program. 
 
@@ -3085,19 +3115,7 @@ end sub
 
 '------------------ Assigning to a variable  
 
-function  convertstring(psaddr as ulong) as string
-dim i as integer
 
-dim s as string
-dim l as ulong
-'print "in convertstring: psaddr=";psaddr
-l=pslpeek(psaddr)
-'print "in convertstring: len=";l
-s="" 
-for i=1 to l : s+=chr$(pspeek(psaddr+3+i)) :next i
-'print "in convertstring: str=";s
-return s
-end function
 
 sub do_assign
 
@@ -3609,32 +3627,6 @@ end sub
 
 
 
-function converttoint (t1 as expr_result) as integer 
-
-select case t1.result_type
-  case result_int:  return t1.result.iresult
-  case result_uint: return t1.result.uresult
-  case result_float: return round(t1.result.fresult)
-  case result_string: return round(val(t1.result.sresult))
-  case result_string2: return round(val(convertstring(t1.result.uresult))) 
-  case result_channel: return t1.result.iresult
-  case else: return 0
-end select
-end function
-
-function converttofloat (t1 as expr_result) as single
-
-dim s as single
-
-select case t1.result_type
-  case result_int:  s=t1.result.iresult : return s
-  case result_uint: s=t1.result.uresult : return s
-  case result_float: return t1.result.fresult
-  case result_string: return val(t1.result.sresult)
-  case result_string2: return val(convertstring(t1.result.uresult)) :r=result_int
-  case else: return 0.0
-end select
-end function
 
 sub do_rnd
 
