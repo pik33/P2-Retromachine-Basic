@@ -24,6 +24,7 @@ dim psram as class using "psram.spin2"
 
 dim kbm as class using "usbnew.spin2"
 dim paula as class using "audio096.spin2"
+dim dircmd as class using "dir.c"
 
 #include "dir.bi"
 
@@ -242,9 +243,10 @@ const token_round=191
 const token_coginit=192 'todo
 const token_on=193	'todo
 const token_delete=194  'todo
-const token_cd=195      'todo
+const token_cd=195     
 const token_copy=196    'todo
 const token_framebuf=197'todo
+const token_mkdir=198
 
 const token_error=255
 const token_end=510
@@ -466,7 +468,7 @@ position 2*editor_spaces,4 : print "Ready"
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
-
+mkdir("testdir")
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -600,7 +602,7 @@ end function
 
 ''-----------------------------------------------------------------------------------------------------------
 ' 					A housekeepeer.
-' A deedicated cog that is intended to do things in the background, for example tracking GUI elements
+' A dedicated cog that is intended to do things in the background, for example tracking GUI elements
 ' or playing audio tracks in  the background.  In the current version it reads the mouse pointer and
 ' a digital joystick position. It also implements a 200 Hz clock that's ticks are synchronized with vblanks 
 ''-----------------------------------------------------------------------------------------------------------
@@ -852,6 +854,13 @@ lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 ' process the case when simple load or save is called without "". This cannot be done earlier, as tokens has to be known                                    					 
  
 if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="lo." orelse lp$="s." orelse lp$="br." orelse lp$="enter" orelse lp$="e.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
+if (lp$="delete" orelse lp$="mkdir") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
+
+' cd needs special treatment..
+
+if lp$="cd" then lparts(addptr+1).token=token_string
+if lp$="cd." andalso lparts(addptr+1).part$="." then lparts(addptr+1).token=token_string : lparts(addptr+1).part$=".." : lparts(addptr).token=token_cd
+if lp$="cd" andalso lparts(addptr+1).part$="/" then lparts(addptr+1).token=token_string : for i=(addptr+2) to k: lparts(addptr+1).part$+=lparts(i).part$ : next i
 
 ' determine a type of the line and compile it
 
@@ -1061,6 +1070,7 @@ select case s
   case "defsprite"   	: return token_defsprite
   case "ds."   		: return token_defsprite
   case "deg"		: return token_deg
+  case "delete"		: return token_delete
   case "dim"	     	: return token_dim
   case "dir"	     	: return token_dir
   case "dpoke"		: return token_dpoke
@@ -1091,6 +1101,7 @@ select case s
   case "load"	     	: return token_load
   case "lo."	     	: return token_load
   case "lpoke"		: return token_lpoke
+  case "mkdir"		: return token_mkdir
   case "mode"	     	: return token_mode
   case "m."	     	: return token_mode
   case "mouse"	     	: return token_mouse
@@ -1472,7 +1483,8 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
 451 select case cmd
   case token_beep	: err=compile_fun_2p()
   case token_box      	: vars,err=compile_fun_varp()  
-  case token_brun    	: vars,err=compile_fun_varp()      	' for arguments  
+  case token_brun    	: vars,err=compile_fun_varp()  		' for arguments 
+  case token_cd		: err=compile_fun_1p()   	 
   case token_circle   	: vars,err=compile_fun_varp()  		
   case token_click	: err=compile_fun_1p()
   case token_cls      	: compile_nothing()                    	' no params, do nothing, only add a command to the line, but case needs something to do after 
@@ -1488,6 +1500,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_defsnd     : vars,err=compile_fun_varp()   
   case token_defsprite	: vars,err=compile_fun_varp()		' defsprite now has only one syntax, but other are planned (defsprite pointer, defsprite file)
   case token_deg	: compile_nothing()
+  case token_delete	: err=compile_fun_1p()
   case token_dim	: err=compile_dim() : goto 450		' non-standard command with its own compiler
   case token_dir	: vars,err=compile_fun_varp()		' now only dir without params, but they are planned (dir *.bas)
   case token_dpoke	: err=compile_fun_2p()
@@ -1509,6 +1522,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_list     	: vars,err=compile_fun_varp()   
   case token_load    	: vars,err=compile_fun_varp() 
   case token_lpoke	: err=compile_fun_2p()
+  case token_mkdir	: err=compile_fun_1p()
   case token_mode	: err=compile_fun_1p()
   case token_mouse	: err=compile_fun_1p()
   case token_new      	: compile_nothing()   
@@ -2528,22 +2542,36 @@ end sub
 '-------------------- cd
 
 sub do_cd
-dim newdir$ as string
 
-'dim t1 as expr_result
-'if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
-'if t1.result_type<>result_string then printerror(15): return
-'newdir$=t1.result.sresult
-'if left$(newdir$)="/" then 
-'  chdir(newdir$)
-'else
-'  if newdir$<>".." then
-'    newdir$=currentdir$+"/"+newdir$
-'  else
-'    newdir$=
+dim slash,err as integer
+dim newdir$,filename as string
+dim t1 as expr_result
 
-'err=geterr() : if err<>0 then print strerror$(err): chdir(currentdir$) : return
-
+filename = dir$("*", fbNormal or fbDirectory )   
+t1=pop()
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then printerror(15): return
+newdir$=t1.result.sresult
+if newdir$=".." then 
+  slash=instrrev(len(currentdir$),currentdir$,"/") 
+  if slash>1 then newdir$=left$(currentdir$,slash-1) else newdir$="/"
+  chdir newdir$
+  err=geterr() : if err<>0 then print err,strerror$(err) : printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
+  return
+endif  
+if left$(newdir$,1)="/" then 
+  chdir(newdir$)
+  err=geterr() : if err<>0 then printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
+  return
+else
+  if currentdir$<>"/" then newdir$=currentdir$+"/"+newdir$ else newdir$=currentdir$+newdir$ 
+  if right$(newdir$,1)="/" then newdir$=left$(newdir$,len(newdir$)-1)
+  chdir(newdir$)
+  err=geterr() : if err<>0 then printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
+endif
 end sub
 
 '-------------------- changefreq
@@ -2888,6 +2916,22 @@ end sub
 sub do_deg
 trig_coeff=0.01745329251994329576923690768489
 trig_coeff2=57.295779513082320876798154814105
+end sub
+
+'-------------------- delete
+
+sub do_delete
+
+dim err as integer
+dim filename$ as string
+dim t1 as expr_result
+
+t1=pop()
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then printerror(15): return
+if currentdir$<>"/" then filename$=currentdir$+"/"+t1.result.sresult else filename$="/"+t1.result.sresult
+kill filename$
+err=geterr() : if err<>0 then print "Cannot delete file or file doesn't exist: system error "; err
 end sub
 
 '-------------------- dir
@@ -3532,6 +3576,22 @@ t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(
 if t1.result_type<>result_string then print "mid$: "; : printerror(15) : return 
 t1.result.sresult=mid$(t1.result.sresult,arg1,arg2)
 push t1  
+end sub
+
+'-------------------- mkdir
+
+sub do_mkdir
+
+dim err as integer
+dim filename$ as string
+dim t1 as expr_result
+
+t1=pop()
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type<>result_string then printerror(15): return
+filename$=t1.result.sresult
+mkdir(filename$)
+err=geterr() : if err<>0 then print "Cannot create a directory: system error "; err
 end sub
 
 '-------------------- mode
@@ -5164,6 +5224,10 @@ commands(token_open)=@do_open
 commands(token_close)=@do_close
 commands(token_get)=@do_get
 commands(token_put)=@do_put
+commands(token_cd)=@do_cd
+commands(token_delete)=@do_delete
+commands(token_mkdir)=@do_mkdir
+
 end sub
 
 ''-------------------------------- Audio subsystem init  -------------------------------------
@@ -5273,6 +5337,7 @@ errors$(49)="Array index out of range"
 errors$(50)="Bad type while assigning to array"
 errors$(51)="Too many variables"
 errors$(52)="'Then' expected"
+errors$(53)="Directory doesn't exist"
 end sub
         
 sub printerror(err as integer)
