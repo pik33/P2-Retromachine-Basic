@@ -1037,6 +1037,7 @@ select case s
   case "box"         	: return token_box
   case "brun"	     	: return token_brun
   case "br."	     	: return token_brun
+  case "cd"		: return token_cd
   case "changefreq"	: return token_changefreq
   case "cf."		: return token_changefreq
   case "changepan"	: return token_changepan
@@ -2524,6 +2525,27 @@ if t1.result_type=result_string then
   endif  
 end sub
 
+'-------------------- cd
+
+sub do_cd
+dim newdir$ as string
+
+'dim t1 as expr_result
+'if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+'if t1.result_type<>result_string then printerror(15): return
+'newdir$=t1.result.sresult
+'if left$(newdir$)="/" then 
+'  chdir(newdir$)
+'else
+'  if newdir$<>".." then
+'    newdir$=currentdir$+"/"+newdir$
+'  else
+'    newdir$=
+
+'err=geterr() : if err<>0 then print strerror$(err): chdir(currentdir$) : return
+
+end sub
+
 '-------------------- changefreq
 
 sub do_changefreq
@@ -2876,8 +2898,7 @@ dim filename as string
 dim px,py,i,j,n,swapped as integer
 dim filelist(128) as string
 
-chdir("/sd/bas")       ' set working directory - TODO allow to change it!
-print "Working directory: "; currentdir$ 
+print "Current directory: "; currentdir$ 
 px=0
 for i=0 to 127: filelist(i)="" : next i
 filename=dir$("*", fbDirectory)
