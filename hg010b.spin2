@@ -98,7 +98,7 @@ CON
 
 
 hdmi_base       = 0           				 	'must be a multiple of 8
-_clkfreq        = 336956522    					'this is the retromachine standard main clock, PAL color frequency * 95
+_clkfreq        = 340500000 					'this is the retromachine standard main clock, PAL color frequency * 96
 debugger        = 1                                             'set this to non-zero value if you want to use BRK debugger
 
 
