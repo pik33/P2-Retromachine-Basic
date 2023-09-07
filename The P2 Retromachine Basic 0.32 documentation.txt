@@ -337,6 +337,16 @@ cd name will append the name to the current path. cd /name will use /name as a n
 mkdir name makes a new directory in the current directory
 delete name deletes a file or a directory
 
+To open the file, use open #channelnum, #mode, "filename"
+#mode can be #read, #write or #append (or 1,2,4) 
+Use channels 2..9 - 0 and 1 are system channels, they can be reopened but the effect may be unpredictable.
+Reopening channel #0 will stop the screen output. 
+Use get #channel,address,amount,position to get amount bytes from position and plase them at address
+position starts at 0 (not 1!) and amount is always in bytes.
+Use put to save bytes from the address to the file
+close #channel closes the file
+
+
 
 Commands (shortcuts):
 ----------
@@ -353,32 +363,42 @@ beep frequency, time (b.)  		generates the square vave at frequency in Hz for th
 bin$(value,length)			returns a string that is a binary representation of the argument, in 'length' digits Length is optimal
 box x1,y1,x2,y2				draws a filled rectangle from x1,y1 to x2,y2
 brun filename  (br.) 			loads and executes a binary file compiled for a P2 by anything
+cd newpath				changed the directory
+changefreq channel,freq (cf.)		changes the frequency of the audio channe;
+changepan channel, pan (cp.)		changes the stereo position of the sound in a channel
+changevol channel, vol (cv.)		changes the audio volume
+changewave channel, waveform# (cw.)	changes the audio waveform, 32=noise
 chr$(value)				returns a one-character string that represents a given ASCII code
 circle x,y,r (ci.)			draws the empty circle with the center at x,y and radius r
 click on/off or 1/0     		switches the keyboard click on and off 
+close #channel				close the file opened with this channel
 cls 					clears the screen
 color colornum	(c.)			sets a color for graphic operations. There are 256 colors, 16 hues (high nibble) and 16 brightnesses (low nibble) similar to the 8-bit Atari. 0 to 15 are greys
-cos(x)					returns a cosine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+cos(x)					returns a cosine of x. The unit can be switched by by deg and rad commands 
 csave (cs.)				tries to save a program to an audio cassette. Experimental and there is no cload yet.
 cursor on/off or 1/0    		switches the text cursor on and off. Because of a bug in this version, use 1/0 in programs. 
 defenv channel,params			defines the sound envelope for the channel
 defsnd channel, params			defines the waveform for the channel
 defsprite spritenum,x,y,w,h (ds.)	makes a sprite from a screen rectangle
 deg					switches trigonometric functions to 360 degree system
+delete filename				deletes a file or a directory (the directory has to be empty)
 dim					declares an array or a typed variable
 dir					lists the working directory of an SD card
 dpeek(x)				returns a 16-bit unsigned value from the memory at address x
 dpoke x,val				writes a 16-bit unsigned val to the memory at address x
 draw end_x, end_y (dr.)			draws the line to point end_x, end_y. This will be the starting point for the new draw. The first starting point can be set with 'plot'
 fcircle x,y,r (fc.)			draws the filled circle with the center at x,y and radius r
-fill x,y,newcolor,oldcolor (fi.)	flood fill. Starts at x,y and replaces all pixels with oldcolor to newcolor until other color boundary fouund.
+fill x,y,newcolor,oldcolor (fi.)	flood fill. Starts at x,y and replaces all pixels with oldcolor to newcolor until other color boundary found.
 font fontnum			        sets the font family for characters to print. 2 fonts are implemented, 0=Atari ST mono, 1=PC DOS
 for (f.) 				starts a loop (see program control)
 frame (fr.)				draws an empty rectangle from x1,y1 to x2,y2
 fre					returns amount of free Basic memory
+get #channel,addr,amount,pos		get bytes from a file
 getenvsustain(slot)			gets the sustain point set by defenv, to use with setsustain
 getnotevalue(midinote)			returns the frequency of the MIDI note in Hz
-getpixel(x,y)			        returns the color of the pixel at screen position x,y. The function returns the bacgkround pixel color even if there is a sprite drawn over this pixel.
+getpixel(x,y)(ge.)		        returns the color of the pixel at screen position x,y. The function returns the bacgkround pixel color even if there is a sprite drawn over this pixel.
+gettime					gets a counter (ct) register, 64bit internally but 32 bits exposed now
+gosub line				calls a subroutine. Put the return address on the stack and goto line
 goto line (g.)				jumps to the line
 hex$(value)                             returns a string that is a hexadecimal representation of the argument, in 'length' digits Length is optimal, 8 used if not provided
 if					with 'then' and 'else' controls the program flow
@@ -389,9 +409,11 @@ left$(string,num)			returns first num characters of the string
 len(string)				returns the length of the string
 list startline, endline (l.)		outputs the code on the screen form startline to endline. If no endline specified, the program will be listed to the end. 
 load "filename" (lo.)	         	loads a Basic program from the file. May be used in format load filename - without ""
+log (value, base)			logarithm. If base not specified, then base=e
 lpeek(x)				returns a 32-bit unsigned value from the memory at address x
 lpoke x,val				writes a 32-bit unsigned val to the memory at address x
 mid$(string,pos,amount)			returns amount character of tthe string starting from pos. The base position is 1
+mkdir dirname				makes a directory
 mode modenum (m.)			sets "look and feel" of the interpreter. 0 - Atari style, 1 - PC amber, 2 - PC green, 3 - PC white, 4 - Atari ST mono 
 					Names can be used instead of numbers: 'atari', pc_amber", 'pc_green', 'pc_white', 'st'
 mouse on/off or 1/0			switches the mouse pointer on and off
@@ -401,6 +423,7 @@ mousek					returns the mouse key state: 0 - not pressed, 1-left, 2-right, 4-midd
 mousew					returns the mousewheel position. It is unbounded 16-bit signed integer.
 new					clears the program memory and all variables
 next (n.)				closes a 'for' loop
+open #channel,#mode,"filename"		opens a file and attaches it to the channel
 paper colornum	(p.)		 	sets the background of the characters to print
 peek(x)					returns an 8-bit unsigned value from the memory at address x
 pinfloat pin				sets the pin to float
@@ -413,31 +436,36 @@ pinwrite pin, value			if value=0, sets the pin output to low, else sets the pin 
 play channel, (parameters)		plays a sound
 plot x,y (pl.)				sets a pixel color at x,y to the color determined by a previous "color" command and sets a new starting point for 'draw'
 poke x,val				writes an 8-bit unsigned val to the memory at address x
+pop					pops the return address from the gosub stack, enabling to return from the nested subs directly to the main code
 position x,y (po.)			sets a curcor position. The x resolution is half a character, so multiply number of characters by 2. This allows centering strings that have odd number of characters.
 print (?)				outputs to the screen and moves the cursor to the new line if , or ; is not used.
 					Use , after an argument to print the new one after a tab (8 characters), use ; to print the next argument directly after the previous. 
+put #channel,addr,amount,pos		put amount bytes to the file opened by open #channel, from addr, to file position pos
 rad					switches trigonometric functions to radians
 rdpin pin				returns the smartpin output register value, notifies the smart pin
+rem (')					a comment
 release channel				makes the envelope in the audio channel to continue to the end. 
+return					returns from a subroutine
 right$(string,num)			returns last num characters of the string
 rnd(value)				returns a random value. If no arguments, it is a 32-bit unsigned integer. If integer or float parameter is given, it returns integer or float that is less than,0 the parameter.
 rqpin pin				returns the smartpin output register value, does not notify the smart pin
-run					starts the program. You can use "run" inside the program to restart it.
+run (filename)  			starts the program. You can use "run" inside the program to restart it. If filename specified, loads it and then runs
 save filename (s.)			saves the program to the file
-setdelay channel, delay			sets the delay in ms for the audio channel to wait after 'play' instruction. Default=0
-setenv channel,env#			sets the predefined envelope for the audio channel. Redefine it with defenv if needed
-setlen channel, len			sets the time of the sound in seconds. Default 1.0
-setpan channel, pan			sets the stereo position, -1.0 left, +1.0 right, 0.0 center. Default 0.0
-setvol channel, vol			sets the volume of the channel, from 0.0 to 16.384. Higher values will cause clipping; default=4.0
-setwave channel, wave#			sets the predefined waveform for the channel. Redefine it with defsnd.
-setsustain channel,point		sets the sustain point for the envelope. The envelope will stop there until 'release' command is executed
-sin(x)					returns a sine of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+setdelay channel, delay	(sd.)		sets the delay in ms for the audio channel to wait after 'play' instruction. Default=0
+setenv channel,env# (se.)		sets the predefined envelope for the audio channel. Redefine it with defenv if needed
+setlen channel, len (sl.)		sets the time of the sound in seconds. Default 1.0
+setpan channel, pan (sp.)		sets the stereo position, -1.0 left, +1.0 right, 0.0 center. Default 0.0
+setvol channel, vol (sv.)		sets the volume of the channel, from 0.0 to 16.384. Higher values will cause clipping; default=4.0
+setwave channel, wave#	(sw.)		sets the predefined waveform for the channel. Redefine it with defsnd.
+setsustain channel,point (ss.)  	sets the sustain point for the envelope. The envelope will stop there until 'release' command is executed
+shutup #channel (sh.)			silences the channel. If channel not specified, silences all of them.
+sin(x)					returns a sine of x. The unit can be changed by deg and rad commands as in Atari Basic)
 sprite spritenum,x,y (sp.)		move the sprite number sprite# (from 0 to 15
 sqr(x)					returns the square root of x
 stick(joynum)				returns the position of a digital joystick
 strig(joynum)				returns the button state of a digital jystick
 str$(value)				converts a value to a string. 
-tan(x)					returns a tangent of x. The unit is now 1/360 of full circle (switching units is planned by deg and rad commands as in Atari Basic)
+tan(x)					returns a tangent of x. The unit can be changed by deg and rad commands as in Atari Basic)
 val(string)				convert a string to a number. If it can, it returns an integer, if not, returns a single. If failed, returns 0
 waitms time				waits "time" miliseconds. Doesn't have any upper limits as it creates an internal loop when time>5000 ms
 waitclock (wc.)				waits for the internal 5 ms/200Hz clock tick. The clock is vblank synchronized so there is 1 vblank for 4 ticks
