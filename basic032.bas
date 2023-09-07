@@ -4,7 +4,7 @@
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
 
-const HEAPSIZE=192000
+const HEAPSIZE=96000
 '#define PSRAM4
 #define PSRAM16
 
@@ -1044,6 +1044,7 @@ function iscommand(s as string) as ubyte
 select case s
   case "beep"	     	: return token_beep
   case "b."	     	: return token_beep
+  case "blit"		: return token_blit
   case "box"         	: return token_box
   case "brun"	     	: return token_brun
   case "br."	     	: return token_brun
@@ -1189,6 +1190,8 @@ select case s
   case "chr$"		: return token_chr
   case "cos"		: return token_cos
   case "dpeek"		: return token_dpeek
+  case "framebuf"	: return token_framebuf
+  case "fb."		: return token_framebuf
   case "fre"		: return token_fre
   case "getpixel"     	: return token_getpixel
   case "ge."     	: return token_getpixel
@@ -1485,6 +1488,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
 'print  "In compile_immediate cmd=:", cmd
 451 select case cmd
   case token_beep	: err=compile_fun_2p()
+  case token_blit	: vars,err=compile_fun_varp()
   case token_box      	: vars,err=compile_fun_varp()  
   case token_brun    	: vars,err=compile_fun_varp()  		' for arguments 
   case token_cd		: err=compile_fun_1p()   	 
@@ -2476,6 +2480,26 @@ do_waitms
 paula.stop(7)
 end sub
 
+'-------------------- blit
+
+' blit buf1,x1,y1,x2,y2,s1,buf2,x2,y2,s2
+sub do_blit
+
+dim t1 as expr_result
+dim p(9) as ulong
+dim i,numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>10 andalso numpar<>6 then print "blit: "; : printerror (39,runheader(0)) : return
+for i=numpar-1 to 0 step -1: t1=pop() : p(i)=converttoint(t1): next i
+if numpar=10 then 
+  v.blit(p(0),p(1),p(2),p(3),p(4),p(5),p(6),p(7),p(8),p(9))
+else
+  v.blit(v.buf_ptr,p(0),p(1),p(2),p(3),1024,v.buf_ptr,p(4),p(5),1024) 
+endif  
+end sub
+
+
 '-------------------- bin$
 
 sub do_bin
@@ -3129,6 +3153,15 @@ t1=pop()
 v.frame(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
 end sub
 
+'-------------------- framebuf
+
+sub do_framebuf
+
+dim t1 as expr_result 
+
+t1.result_type=result_uint : t1.result.uresult=v.buf_ptr
+push t1
+end sub
 '-------------------- fre
 
 sub do_fre
@@ -5233,6 +5266,8 @@ commands(token_put)=@do_put
 commands(token_cd)=@do_cd
 commands(token_delete)=@do_delete
 commands(token_mkdir)=@do_mkdir
+commands(token_blit)=@do_blit
+commands(token_framebuf)=@do_framebuf
 
 end sub
 
@@ -5347,7 +5382,7 @@ errors$(53)="Directory doesn't exist"
 end sub
         
 sub printerror(err as integer, linenum=0 as integer)
-v.write("Error " ): v.write(v.inttostr(err)) : v.write(": ")  : v.write(errors$(err))
+v.write("Error " ): v.write(v.inttostr(err)) : v.write(" - ")  : v.write(errors$(err))
 if linenum>0 then v.write(" in line " ): v.writeln(v.inttostr(linenum))
 end sub
 

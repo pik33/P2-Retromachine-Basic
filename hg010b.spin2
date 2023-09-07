@@ -129,7 +129,7 @@ timingsxxt      =  $70810000   ' streamer imm->pins
 var
 
 long buf_ptr           'initial main buffer pointer
-long textbuf_ptr	' auxiliary text buffer for Basic
+long textbuf_ptr       'auxiliary text buffer for Basic
 long font_ptr          'initial font definition pointer
 long border_ptr        'border colors buffer pointer
 long cursor_ptr        'cursor position pointer
@@ -1148,11 +1148,22 @@ if colors==256
 
 pub blit(f,x1a,y1a,x2a,y2a,s1,t,x1b,y1b,s2) | y
 
-
 if ((f>=$80000) && (t>=$80000)) ' todo: check if the fields overlap and reorder the move
-  repeat y from y1a to y2a
-    ram.read1($80000-16384*debugger-4096-1024, f+(y)*s1+x1a, x2a-x1a+1)
-    ram.write($80000-16384*debugger-4096-1024, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)
+  if x1a>x2a
+    x1a,x2a:=x2a,x1a
+  if y1a>y2a
+    y1a,y2a:=y2a,y1a  
+
+  if t+x1a+y1a*s1>f+x1b+y1b*s2
+    repeat y from y1a to y2a
+  '    writeln(string("I am here"))
+      ram.read1($80000-4096-1024, f+(y)*s1+x1a, x2a-x1a+1)
+      ram.write($80000-4096-1024, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)
+  else
+    repeat y from y2a to y1a
+ '     writeln(string("I am there"))
+      ram.read1($80000-4096-1024, f+(y)*s1+x1a, x2a-x1a+1)
+      ram.write($80000-4096-1024, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)     
     
 if ((f>=$80000) && (t<$80000)) 
   repeat y from y1a to y2a
@@ -1163,10 +1174,10 @@ if ((f<$80000) && (t>=$80000))
   repeat y from y1a to y2a
     ram.write(f+(y)*s1+x1a,t+(y1b-y1a+y)*s2+x1b,x2a-x1a+1)
     
-f ((f<$80000) && (t<$80000)) 
+if ((f<$80000) && (t<$80000)) 
   repeat y from y1a to y2a
     bytemove (f+(y)*s1+x1a,t+(y1b-y1a+y)*s2+x1b,x2a-x1a+1)
-
+ 
 
 
 
