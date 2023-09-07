@@ -1076,6 +1076,7 @@ select case s
   case "dir"	     	: return token_dir
   case "dpoke"		: return token_dpoke
   case "draw"        	: return token_draw
+  case "drawto"        	: return token_draw
   case "dr."        	: return token_draw
   case "else"	     	: return token_else
   case "end"		: return token_progend
@@ -1165,6 +1166,7 @@ select case s
   case "wc."   		: return token_waitclock
   case "waitvbl"     	: return token_waitvbl
   case "wv."     	: return token_waitvbl
+  case "wrpin"	     	: return token_wrpin
   case "wxpin"	     	: return token_wxpin
   case "wypin"	     	: return token_wypin
   case else         	 : return 0  
