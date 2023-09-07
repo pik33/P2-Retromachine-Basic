@@ -1,4 +1,6 @@
-10 rem plays a pentatonic melody using simple beep
+5 ' plays a pentatonic melody using a predefined waveform
+10 defsnd 0,"glocke.s2"
+12 defenv 0,"percus.h2"
 15 c!=2^(1/12)
 20 r=rnd mod 6
 25 a!=246.943
@@ -10,5 +12,5 @@
 100 for i=0 to r : a!=a!*c! : next i
 110 print a!,
 115 q=(q+1) mod 15
-120 if q=14 then beep a!,400 : else beep a!,200
+120 if q=14 then sound 0,a!,0,16000,0 : waitms 400 : else sound 0,a!,0,16000,0 : waitms 200
 130 goto 20

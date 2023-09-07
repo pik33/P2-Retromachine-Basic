@@ -1,3 +1,6 @@
+5 ' You can draw with a mouse. Left button draws, right clears, middle fills, wheel canges color
+6 ' You need a mouse that can report the wheel in a boot mode (aka Logitech, but not only)
+7 '
 10 mode 3 : cursor off : cls : s=0 : oldmousew=mousew
 20 if (s=1) and (mousek=1) then waitclock : draw mousex, mousey : goto 20
 30 if mousew<>oldmousew then color mousew : box 1008,0,1023,16

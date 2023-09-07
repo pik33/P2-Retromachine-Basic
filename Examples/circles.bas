@@ -1,3 +1,4 @@
+5  rem simply draw circles in a loop
 10 cls : i=-10 : j=-10
 20 color (i+j) mod 256 : fcircle i,j,30
 30 i=i+1

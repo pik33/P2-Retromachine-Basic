@@ -430,7 +430,7 @@ dim suspoints(7) as ushort
 dim loadname as string
 dim do_insert as integer
 dim cy,cx as integer
-
+dim inload as integer
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -468,7 +468,7 @@ position 2*editor_spaces,4 : print "Ready"
 pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
-mkdir("testdir")
+inload=0
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -869,31 +869,32 @@ if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto 104   ' 
 
 if (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  		' first part, commans
   err=compile(linenum,0,cont) 
-  if err<>0 then printerror(err): goto 101
+  if err<>0 then printerror(err,linenum): goto 101
   if rest$<>"" then  line$=rest$ : cont=4 : goto 108 else goto 104
 endif
       							
 if (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 		' not a first part, command
   err=compile(linenum,0,cont) 
-  if err<>0 then printerror(err): goto 101
+  if err<>0 then printerror(err,linenum): goto 101
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  	
 endif
 							 
 if (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  		' first part, assign
   err=compile_assign(linenum,0,cont)
-  if err<>0 then printerror(err): goto 101
+  if err<>0 then printerror(err,linenum): goto 101
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104
 endif
     							 
 if (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 		' not a first part, assign
   err=compile_assign(linenum,0,cont) 
-  if err<>0 then printerror(err): goto 101
+  if err<>0 then printerror(err,linenum): goto 101
   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								 
 endif
 
 104 if linenum=0 then 								' line 0 is for immediate execution
   execute_line(2)
-101 v.writeln("") : v.writeln("Ready") 
+101 if inload=0 then v.writeln("") : v.writeln("Ready") 
+    if inload=1 andalso err>0 then print fullline$
 endif
 
 end sub
@@ -1873,7 +1874,7 @@ if isname(lparts(ct).part$) then
       case "single" 	: arraytype=array_float		: esize=4
       case "double" 	: arraytype=array_double	: esize=8
       case "string" 	: arraytype=array_string	: esize=4
-      case else		: printerror(47) : return 47
+      case else		: return 47
     end select
   endif  
 else
@@ -2556,20 +2557,20 @@ if newdir$=".." then
   slash=instrrev(len(currentdir$),currentdir$,"/") 
   if slash>1 then newdir$=left$(currentdir$,slash-1) else newdir$="/"
   chdir newdir$
-  err=geterr() : if err<>0 then print err,strerror$(err) : printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
   print "Current directory: ";currentdir$
   return
 endif  
 if left$(newdir$,1)="/" then 
   chdir(newdir$)
-  err=geterr() : if err<>0 then printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
   print "Current directory: ";currentdir$
   return
 else
   if currentdir$<>"/" then newdir$=currentdir$+"/"+newdir$ else newdir$=currentdir$+newdir$ 
   if right$(newdir$,1)="/" then newdir$=left$(newdir$,len(newdir$)-1)
   chdir(newdir$)
-  err=geterr() : if err<>0 then printerror(53) : chdir(currentdir$) else currentdir$=newdir$
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
   print "Current directory: ";currentdir$
 endif
 end sub
@@ -3482,6 +3483,8 @@ dim i, r, amount,numpar as integer
 dim header,linelength as ulong
 dim line2 as ubyte(125)
 dim line2$ as string 
+
+inload=1
 numpar=compiledline(lineptr_e).result.uresult
 lpoke varptr(line2$),varptr(line2)
 if numpar>0 then t1=pop() else t1.result.sresult=loadname : t1.result_type=result_string 
@@ -3511,6 +3514,7 @@ else
   printerror(30)  ' line$="": for j=0 to header(3)-1: line$+=chr$(linebuf(j)): next j
 endif
 print "Loaded ";currentdir$+"/"+loadname
+inload=0
 end sub
 
 '-------------------- log
@@ -5285,50 +5289,50 @@ end sub
 sub init_error_strings
 
 errors$(0)=""
-errors$(1)="Expected number, got something else."
-errors$(2)="Cannot add a number to a string."
-errors$(3)="Cannot substract strings."
-errors$(4)="Unknown error while adding."
-errors$(5)="Unknown error while substracting."
-errors$(6)="Cannot do logic operation on string or float."
-errors$(7)="Unknown error while doing logic operation."
-errors$(8)="Cannot multiply strings."
-errors$(9)="Unknown error while multiplying."
-errors$(10)="Cannot divide strings."
-errors$(11)="Unknown error while dividing."
-errors$(12)="Cannot compute a power of a string."
-errors$(13)="Unknown error while computing a power."
-errors$(14)="Right parenthesis expected."
-errors$(15)="Expected string."
-errors$(16)="Expected float."
-errors$(17)="Expected unsigned integer."
-errors$(18)="Expected integer."
-errors$(19)="No more variable slots."
-errors$(20)="Variable not found."
-errors$(21)="Comma expected."
-errors$(22)="Comma or semicolon expected."
-errors$(23)="Unknown command."
-errors$(24)="Stack underflow."
-errors$(25)="Cannot execute goto or gosub in the immediate mode."
-errors$(26)="Cannot load from this file."
-errors$(27)="The program is empty."
-errors$(28)="If after if."
-errors$(29)="Empty expression."
-errors$(30)="String expected."  '' ==15!!!!!
-errors$(31)="Interpreter internal error."
-errors$(32)="Expected assign."
-errors$(33)="Expected 'to'."
-errors$(34)="Expected integer variable."
-errors$(35)="Uninitialized variable in 'next', use 'for' before."
-errors$(36)="No more slots for 'for'."
-errors$(37)="'Next' doesn't match 'for'."
-errors$(38)="'Goto' target line not found."
+errors$(1)="Expected number, got something else"
+errors$(2)="Cannot add a number to a string"
+errors$(3)="Cannot substract strings"
+errors$(4)="Unknown error while adding"
+errors$(5)="Unknown error while substracting"
+errors$(6)="Cannot do logic operation on string or float"
+errors$(7)="Unknown error while doing logic operation"
+errors$(8)="Cannot multiply strings"
+errors$(9)="Unknown error while multiplying"
+errors$(10)="Cannot divide strings"
+errors$(11)="Unknown error while dividing"
+errors$(12)="Cannot compute a power of a string"
+errors$(13)="Unknown error while computing a power"
+errors$(14)="Right parenthesis expected"
+errors$(15)="Expected string"
+errors$(16)="Expected float"
+errors$(17)="Expected unsigned integer"
+errors$(18)="Expected integer"
+errors$(19)="No more variable slots"
+errors$(20)="Variable not found"
+errors$(21)="Comma expected"
+errors$(22)="Comma or semicolon expected"
+errors$(23)="Unknown command"
+errors$(24)="Stack underflow"
+errors$(25)="Cannot execute goto or gosub in the immediate mode"
+errors$(26)="Cannot load from this file"
+errors$(27)="The program is empty"
+errors$(28)="If after if"
+errors$(29)="Empty expression"
+errors$(30)="String expected"  '' ==15!!!!!
+errors$(31)="Interpreter internal error"
+errors$(32)="Expected assign"
+errors$(33)="Expected 'to'"
+errors$(34)="Expected integer variable"
+errors$(35)="Uninitialized variable in 'next', use 'for' before"
+errors$(36)="No more slots for 'for'"
+errors$(37)="'Next' doesn't match 'for'"
+errors$(38)="'Goto' target line not found"
 errors$(39)="Bad number of parameters"
 errors$(40)="Function undefined for strings"
-errors$(41)="Bad parameter."
-errors$(42)="Cannot declare an array: the variable exists."
-errors$(43)="Expected '('."
-errors$(44)="Expected ')' or ','."
+errors$(41)="Bad parameter"
+errors$(42)="Cannot declare an array: the variable exists"
+errors$(43)="Expected '('"
+errors$(44)="Expected ')' or ','"
 errors$(45)="No more than 3 dimensions supported"
 errors$(46)="Variable name expected"
 errors$(47)="Type name expected"
@@ -5340,8 +5344,9 @@ errors$(52)="'Then' expected"
 errors$(53)="Directory doesn't exist"
 end sub
         
-sub printerror(err as integer)
-v.write("Error " ): v.write(v.inttostr(err)) : v.write(": ")  : v.writeln(errors$(err))
+sub printerror(err as integer, linenum=0 as integer)
+v.write("Error " ): v.write(v.inttostr(err)) : v.write(": ")  : v.write(errors$(err))
+if linenum>0 then v.write(" in line " ): v.writeln(v.inttostr(linenum))
 end sub
 
 '' ------------------------------- Hardware start/stop/initialization 
