@@ -430,7 +430,7 @@ dim suspoints(7) as ushort
 dim loadname as string
 dim do_insert as integer
 dim cy,cx as integer
-dim inload as integer
+dim inload,err as integer
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -469,6 +469,13 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
 inload=0
+
+open "/sd/bas/autorun.bas" for input as #9
+err=geterr()
+close #9
+if err=0 then line$="run autorun.bas" : interpret
+
+
 '-------------------------------------------------------------------------------------------------------- 
 '-------------------------------------- MAIN LOOP -------------------------------------------------------
 '--------------------------------------------------------------------------------------------------------
@@ -3714,6 +3721,7 @@ end sub
 
 sub do_new
 
+if inrun=1 then inrun=2
 pslpoke(memlo,$FFFFFFFF)
 varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: next i
 programstart=memlo :runptr=memlo : runptr2=memlo
@@ -4232,9 +4240,9 @@ do
   endif
   runptr=runheader(5)	  							 
   runptr2=execute_line(runptr2)										 
-loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C))
+loop until runptr=$7FFF_FFFF orelse ((kbm.keystate(kbm.KEY_LCTRL) orelse kbm.keystate(kbm.KEY_RCTRL)) andalso kbm.keystate(kbm.KEY_C)) orelse inrun=2
   ''do whatever kbm.peek_latest_key()=$106 
-if runptr<>$7FFF_FFFF then 
+if runptr<>$7FFF_FFFF andalso inrun=1 then 
   print: print "Stopped at line ";runheader(0) 
 endif
 inrun=0

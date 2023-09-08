@@ -5,7 +5,7 @@ chdir "/sd/bas"
 let currentdir$="/sd/bas"
 
 close #9: open "nonexistingfile" for input as #9
-let err=geterr() : print err, strerror$(err) : close #9
+do: let err=geterr() : print err, strerror$(err) : close #9
 
 chdir "/kwass"
 let err=geterr() : print err, strerror$(err) 

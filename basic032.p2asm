@@ -482,9 +482,9 @@ LR__0001
 	add	ptr__usbnew_spin2_dat__, ##10196
 	rdbyte	result1, ptr__usbnew_spin2_dat__
 	sub	ptr__usbnew_spin2_dat__, ##10196
-	add	objptr, ##41964
+	add	objptr, ##41968
 	wrlong	result1, objptr
-	sub	objptr, ##41964
+	sub	objptr, ##41968
 ' if key>0 andalso key<4 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): paula.stop(7)
 	cmp	local05, #1 wc
  if_b	jmp	#LR__0002
@@ -574,9 +574,9 @@ LR__0004
 	call	#_scantochar
 	mov	local11, result1
 '   if leds and 2 = 2 then 						' caps lock
-	add	objptr, ##41964
+	add	objptr, ##41968
 	rdlong	local12, objptr
-	sub	objptr, ##41964
+	sub	objptr, ##41968
 	mov	local06, local12 wz
  if_e	jmp	#LR__0012
 '     if key4>96 andalso key4<123 then                 
@@ -656,9 +656,9 @@ LR__0013
 	sub	local14, #1
 	cmps	local14, local13 wc
  if_ae	jmp	#LR__0013
-	add	objptr, ##41972
+	add	objptr, ##41976
 	wrlong	#0, objptr
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local07, objptr
 	getbyte	local08, local07, #0
 	mul	local08, #128
@@ -685,11 +685,11 @@ LR__0014
  if_ae	jmp	#LR__0015
 	add	objptr, #60
 	rdword	local06, objptr
-	add	objptr, ##41912
+	add	objptr, ##41916
 	rdlong	local08, objptr
 	shl	local08, #1
 	add	local06, local08
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local12, objptr
 	sub	objptr, #62
 	mul	local12, #16
@@ -709,11 +709,11 @@ LR__0014
 	mov	arg04, local08
 	mov	arg05, local09
 	call	#_hg010b_spin2_putcharxycgf
-	add	objptr, ##41972
+	add	objptr, ##41976
 	rdlong	local06, objptr
 	add	local06, #1
 	wrlong	local06, objptr
-	sub	objptr, ##41972
+	sub	objptr, ##41976
 	add	local14, #1
 	jmp	#LR__0014
 LR__0015
@@ -977,9 +977,9 @@ LR__0032
 	add	arg01, #127
 	mov	arg02, #32
 	call	#_pspoke
-	add	objptr, ##41972
+	add	objptr, ##41976
 	wrlong	#0, objptr
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local12, objptr
 	getbyte	local08, local12, #0
 	mul	local08, #128
@@ -1007,11 +1007,11 @@ LR__0033
  if_ae	jmp	#LR__0034
 	add	objptr, #60
 	rdword	local06, objptr
-	add	objptr, ##41912
+	add	objptr, ##41916
 	rdlong	local08, objptr
 	shl	local08, #1
 	add	local06, local08
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local12, objptr
 	sub	objptr, #62
 	mul	local12, #16
@@ -1031,11 +1031,11 @@ LR__0033
 	mov	arg04, local08
 	mov	arg05, local09
 	call	#_hg010b_spin2_putcharxycgf
-	add	objptr, ##41972
+	add	objptr, ##41976
 	rdlong	local06, objptr
 	add	local06, #1
 	wrlong	local06, objptr
-	sub	objptr, ##41972
+	sub	objptr, ##41976
 	mov	local06, local14
 	mov	local12, local14
 	add	local12, #1
@@ -1108,9 +1108,9 @@ LR__0037
 	add	arg01, #127
 	mov	arg02, #32
 	call	#_pspoke
-	add	objptr, ##41972
+	add	objptr, ##41976
 	wrlong	#0, objptr
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local12, objptr
 	getbyte	local08, local12, #0
 	mul	local08, #128
@@ -1138,11 +1138,11 @@ LR__0038
  if_ae	jmp	#LR__0040
 	add	objptr, #60
 	rdword	local06, objptr
-	add	objptr, ##41912
+	add	objptr, ##41916
 	rdlong	local08, objptr
 	shl	local08, #1
 	add	local06, local08
-	sub	objptr, ##41910
+	sub	objptr, ##41914
 	rdbyte	local12, objptr
 	sub	objptr, #62
 	mul	local12, #16
@@ -1162,11 +1162,11 @@ LR__0038
 	mov	arg04, local08
 	mov	arg05, local09
 	call	#_hg010b_spin2_putcharxycgf
-	add	objptr, ##41972
+	add	objptr, ##41976
 	rdlong	local06, objptr
 	add	local06, #1
 	wrlong	local06, objptr
-	sub	objptr, ##41972
+	sub	objptr, ##41976
 	mov	local06, local14
 	mov	local12, local14
 	add	local12, #1
@@ -1549,9 +1549,9 @@ LR__0074
 	add	objptr, ##28188
 	wrlong	result1, objptr
 	mov	local04, ##@LR__5130
-	add	objptr, ##13788
+	add	objptr, ##13792
 	wrlong	local04, objptr
-	sub	objptr, ##13788
+	sub	objptr, ##13792
 	rdlong	arg01, objptr
 	sub	objptr, ##28188
 	mov	local07, arg01
@@ -1562,10 +1562,10 @@ LR__0075
  if_ne	jmp	#LR__0075
 LR__0076
 	sub	local07, arg01 wz
-	add	objptr, ##41980
+	add	objptr, ##41984
 	wrlong	local07, objptr
 ' if l=0 then goto 101					' empty line,  nothing to do except print "ready"
-	sub	objptr, ##41980
+	sub	objptr, ##41984
  if_e	jmp	#LR__0206
 	mov	local08, #0
 ' d=0							' before we split the line, we have to find colons that are inside a string, 
@@ -1652,18 +1652,18 @@ LR__0082
 	sub	objptr, ##27148
  if_e	jmp	#LR__0084
 LR__0083
-	add	objptr, ##41980
+	add	objptr, ##41984
 	rdlong	local13, objptr
-	sub	objptr, ##41980
+	sub	objptr, ##41984
 	mov	local14, local13
 	cmps	local02, local14 wc
  if_b	add	local02, #1
  if_b	jmp	#LR__0082
 LR__0084
 ' if i<l then let rest$=trim$(right$(line$,len(line$)-i)):line$=trim$(left$(line$,i-1)) else rest$="" 	' and separate the part of the line before the first : from the rest
-	add	objptr, ##41980
+	add	objptr, ##41984
 	rdlong	local04, objptr
-	sub	objptr, ##41980
+	sub	objptr, ##41984
 	cmps	local02, local04 wc
  if_ae	jmp	#LR__0087
 	add	objptr, ##28188
@@ -1687,9 +1687,9 @@ LR__0086
 	call	#__system__RTrim_S
 	mov	arg01, result1
 	call	#__system__LTrim_S
-	add	objptr, ##41984
+	add	objptr, ##41988
 	wrlong	result1, objptr
-	sub	objptr, ##13796
+	sub	objptr, ##13800
 	rdlong	arg01, objptr
 	sub	objptr, ##28188
 	sub	local02, #1
@@ -1705,9 +1705,9 @@ LR__0086
 	jmp	#LR__0088
 LR__0087
 	mov	local04, ##@LR__5134
-	add	objptr, ##41984
+	add	objptr, ##41988
 	wrlong	local04, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 LR__0088
 ' 
 ' if cont=-1 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not the last part
@@ -1716,9 +1716,9 @@ LR__0088
 	sub	objptr, ##28196
 	cmp	local04, ##-1 wz
  if_ne	jmp	#LR__0089
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	local06, ##@LR__5135
 	mov	arg02, local06
 	call	#__system___string_cmp
@@ -1734,9 +1734,9 @@ LR__0089
 	sub	objptr, ##28196
 	cmp	local04, ##-1 wz
  if_ne	jmp	#LR__0090
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5136
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -1751,9 +1751,9 @@ LR__0090
 	sub	objptr, ##28196
 	cmp	local04, #4 wz
  if_ne	jmp	#LR__0091
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5137
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -1768,9 +1768,9 @@ LR__0091
 	sub	objptr, ##28196
 	cmp	local04, #4 wz
  if_ne	jmp	#LR__0092
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5138
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
@@ -1813,9 +1813,9 @@ LR__0094
 	add	local15, #1
 	sub	fp, #56
 LR__0095
-	add	objptr, ##41980
+	add	objptr, ##41984
 	rdlong	local04, objptr
-	sub	objptr, ##41980
+	sub	objptr, ##41984
 	cmps	local02, local04 wcz
  if_be	jmp	#LR__0094
 	mov	local03, local15
@@ -1837,7 +1837,7 @@ LR__0096
 	add	fp, #56
 	add	local03, fp
 	rdlong	local05, local03
-	add	objptr, ##41992
+	add	objptr, ##41996
 	wrlong	local05, objptr
 	mov	local03, local02
 	add	local03, #1
@@ -1850,15 +1850,15 @@ LR__0096
 '   if p1>0 then let p$=mid$(line$,p1,1) : if p$<>"" then lparts(k).part$=p$ : k+=1 
 	sub	objptr, #4
 	rdlong	local04, objptr
-	sub	objptr, ##41992
+	sub	objptr, ##41996
 	cmps	local04, #1 wc
 	sub	fp, #56
  if_b	jmp	#LR__0098
 	add	objptr, ##28188
 	rdlong	arg01, objptr
-	add	objptr, ##13804
+	add	objptr, ##13808
 	rdlong	arg02, objptr
-	sub	objptr, ##41992
+	sub	objptr, ##41996
 	mov	arg03, #1
 	call	#__system__Mid_S
 	mov	local19, result1
@@ -1878,14 +1878,14 @@ LR__0097
 LR__0098
 	add	objptr, ##28188
 	rdlong	arg01, objptr
-	add	objptr, ##13804
+	add	objptr, ##13808
 	rdlong	arg02, objptr
 	add	arg02, #1
 	add	objptr, #4
 	rdlong	arg03, objptr
 	sub	objptr, #4
 	rdlong	local11, objptr
-	sub	objptr, ##41992
+	sub	objptr, ##41996
 	mov	local12, local11
 	sub	arg03, local12
 	sub	arg03, #1
@@ -3783,16 +3783,16 @@ LR__0195
 	jmp	#LR__0206
 LR__0196
 '   if rest$<>"" then  line$=rest$ : cont=4 : goto 108 else goto 104
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5205
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0205
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	local04, objptr
-	sub	objptr, ##13796
+	sub	objptr, ##13800
 	wrlong	local04, objptr
 	add	objptr, #8
 	wrlong	#4, objptr
@@ -3834,16 +3834,16 @@ LR__0197
 	jmp	#LR__0206
 LR__0198
 '   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  	
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5206
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0205
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	local04, objptr
-	sub	objptr, ##13796
+	sub	objptr, ##13800
 	wrlong	local04, objptr
 	add	objptr, #8
 	wrlong	#4, objptr
@@ -3883,16 +3883,16 @@ LR__0199
 	jmp	#LR__0206
 LR__0200
 '   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5207
 	call	#__system___string_cmp
 	cmp	result1, #0 wz
  if_e	jmp	#LR__0205
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	local04, objptr
-	sub	objptr, ##13796
+	sub	objptr, ##13800
 	wrlong	local04, objptr
 	add	objptr, #8
 	wrlong	#4, objptr
@@ -3933,16 +3933,16 @@ LR__0201
 	jmp	#LR__0206
 LR__0202
 '   if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								 
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	arg01, objptr
-	sub	objptr, ##41984
+	sub	objptr, ##41988
 	mov	arg02, ##@LR__5208
 	call	#__system___string_cmp
 	cmps	result1, #0 wz
  if_e	jmp	#LR__0203
-	add	objptr, ##41984
+	add	objptr, ##41988
 	rdlong	local04, objptr
-	sub	objptr, ##13796
+	sub	objptr, ##13800
 	wrlong	local04, objptr
 	add	objptr, #8
 	wrlong	#4, objptr
@@ -11142,24 +11142,24 @@ LR__0915
 LR__0916
 	sub	local08, arg01
 	mov	result1, local08
-	add	objptr, ##41980
+	add	objptr, ##41984
 	wrlong	result1, objptr
-	sub	objptr, #80
+	sub	objptr, #84
 	rdlong	arg01, objptr
 	sub	arg01, result1
 	sub	arg01, #4
 	andn	arg01, #3
 	wrlong	arg01, objptr
-	add	objptr, #80
+	add	objptr, #84
 	rdlong	arg02, objptr
-	sub	objptr, ##41980
+	sub	objptr, ##41984
 	call	#_pslpoke
 '     pslpoke memtop,l
 '     for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part$,i,1)) : next i
 	mov	local10, #1
-	add	objptr, ##41980
+	add	objptr, ##41984
 	rdlong	local11, objptr
-	sub	objptr, ##41980
+	sub	objptr, ##41984
 	add	local11, #1
 LR__0917
 	cmps	local10, local11 wc
@@ -12172,18 +12172,18 @@ LR__1012
 	shl	_var03, #2
 	add	arg01, _var03
 	rdlong	_var04, arg01
-	add	objptr, ##13828
+	add	objptr, ##13832
 	wrlong	_var04, objptr
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 '   q=lpeek(address+4*i)
 '      for bit=0 to 31
 	mov	_var05, #0
 	callpa	#(@LR__1017-@LR__1013)>>2,fcache_load_ptr_
 LR__1013
 '       if (q and (1 shl bit)) then sample(4*bit)=127: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=128 else sample(4*bit)=128: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=127
-	add	objptr, ##42004
+	add	objptr, ##42008
 	rdlong	_var04, objptr
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 	decod	_var03, _var05
 	test	_var04, _var03 wz
  if_e	jmp	#LR__1014
@@ -12250,18 +12250,18 @@ LR__1017
 	shl	_var03, #2
 	add	arg01, _var03
 	rdlong	_var04, arg01
-	add	objptr, ##13828
+	add	objptr, ##13832
 	wrlong	_var04, objptr
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 '   q=lpeek(address+4+4*i)
 '      for bit=0 to 31
 	mov	_var05, #0
 	callpa	#(@LR__1021-@LR__1018)>>2,fcache_load_ptr_
 LR__1018
 '       if (q and (1 shl bit)) then sample(128+4*bit)=127: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=128 else sample(128+4*bit)=128: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=127
-	add	objptr, ##42004
+	add	objptr, ##42008
 	rdlong	_var04, objptr
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 	decod	_var03, _var05
 	test	_var04, _var03 wz
  if_e	jmp	#LR__1019
@@ -13686,9 +13686,9 @@ LR__1163
 	setq	objptr
 	coginit	local08, arg02 wc
  if_b	neg	local08, #1
-	add	objptr, ##13848
+	add	objptr, ##13852
 	wrlong	local08, objptr
-	sub	objptr, ##42020
+	sub	objptr, ##42024
 	mov	arg01, #0
 	cogid	arg01
 	cogstop	arg01
@@ -15710,10 +15710,10 @@ LR__1293
 	add	ptr___system__dat__, #32
 	rdlong	result1, ptr___system__dat__ wz
 	sub	ptr___system__dat__, #32
-	add	objptr, ##42012
+	add	objptr, ##42016
 	wrlong	result1, objptr
 '     r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
-	sub	objptr, ##42012
+	sub	objptr, ##42016
  if_e	jmp	#LR__1294
 	mov	arg01, #0
 	call	#__system___getiolock_0574
@@ -15723,9 +15723,9 @@ LR__1293
 	mov	arg01, #0
 	mov	arg03, #0
 	call	#__system___basic_print_string
-	add	objptr, ##42012
+	add	objptr, ##42016
 	rdlong	arg02, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	mov	arg01, #0
 	mov	arg03, #0
 	mov	arg04, #10
@@ -15735,9 +15735,9 @@ LR__1293
 	mov	arg03, #0
 	call	#__system___basic_print_string
 	mov	local01, #0
-	add	objptr, ##42012
+	add	objptr, ##42016
 	rdlong	arg01, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	call	#__system___strerror
 	mov	arg02, result1
 	mov	arg01, local01
@@ -17691,13 +17691,13 @@ _do_fre
 	sub	objptr, ##7504
 	rdlong	local01, objptr
 	sub	arg01, local01
-	add	objptr, ##7616
+	add	objptr, ##7620
 	wrlong	arg01, objptr
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
 	rdlong	local01, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	wrlong	local01, fp
 	mov	arg01, fp
 	call	#_push
@@ -17742,14 +17742,14 @@ _do_get
 	mov	arg01, fp
 	sub	fp, #28
 	call	#_converttoint
-	add	objptr, ##42008
+	add	objptr, ##42012
 	wrlong	result1, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 	jmp	#LR__1411
 LR__1410
-	add	objptr, ##42008
+	add	objptr, ##42012
 	wrlong	##-1, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 LR__1411
 ' if numpar>=3  then t1=pop() : amount=converttoint(t1) else amount=1
 	rdlong	arg03, fp
@@ -17821,9 +17821,9 @@ LR__1414
 ' t1=pop() : channel=converttoint(t1)
 ' getres(j)=0
 ' if pos>=0 then
-	add	objptr, ##852
+	add	objptr, ##856
 	rdlong	local02, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 	cmps	local02, #0 wc
  if_b	jmp	#LR__1421
 '   for i=0 to  amount/1024
@@ -17845,10 +17845,10 @@ LR__1415
 '     get #channel,pos+1,block(0),amount,r
 	add	fp, #4
 	rdlong	arg01, fp
-	add	objptr, ##42008
+	add	objptr, ##42012
 	rdlong	arg02, objptr
 	add	arg02, #1
-	sub	objptr, ##1892
+	sub	objptr, ##1896
 	mov	arg03, objptr
 	sub	objptr, ##40116
 	add	fp, #4
@@ -18951,9 +18951,9 @@ LR__1511
  if_b	cmp	local01, #224 wc
  if_ae	jmp	#LR__1520
 '   if leds and 2 = 2 then 
-	add	objptr, ##41964
+	add	objptr, ##41968
 	rdlong	local01, objptr wz
-	sub	objptr, ##41964
+	sub	objptr, ##41968
  if_e	jmp	#LR__1519
 '     if key>96 andalso key<123 then
 	add	objptr, ##35444
@@ -19016,11 +19016,11 @@ LR__1514
 	rdlong	local01, objptr
 	sub	objptr, ##35444
 	cmp	local01, #23 wc
- if_b	add	objptr, ##41968
+ if_b	add	objptr, ##41972
  if_b	rdlong	local02, objptr
  if_b	add	local02, #39
  if_b	wrlong	local02, objptr
- if_b	sub	objptr, ##41968
+ if_b	sub	objptr, ##41972
 LR__1515
 LR__1516
 LR__1517
@@ -19462,18 +19462,18 @@ LR__1561
 	wrlong	#0, result1
 	add	objptr, ##38024
 	rdlong	local02, objptr
-	add	objptr, ##4000
+	add	objptr, ##4004
 	wrlong	local02, objptr
-	sub	objptr, ##42024
+	sub	objptr, ##42028
 ' do 
 LR__1562
 	add	fp, #32
 	mov	arg01, fp
 	sub	fp, #32
-	add	objptr, ##42024
+	add	objptr, ##42028
 	rdlong	arg02, objptr
 	mov	arg03, #24
-	sub	objptr, ##36188
+	sub	objptr, ##36192
 	call	#_psram_spin2_read1
 	sub	objptr, ##5836
 '   psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
@@ -19526,9 +19526,9 @@ LR__1563
 	add	fp, #52
 	rdlong	local02, fp
 	sub	fp, #52
-	add	objptr, ##42024
+	add	objptr, ##42028
 	wrlong	local02, objptr
-	sub	objptr, ##42024
+	sub	objptr, ##42028
 LR__1564
 	add	fp, #52
 	rdlong	local02, fp
@@ -20607,12 +20607,20 @@ _do_mousey_ret
 _do_new
 	mov	COUNT_, #3
 	call	#pushregs_
+' 
+' if inrun=1 then inrun=2
+	add	objptr, ##41196
+	rdlong	arg03, objptr
+	sub	objptr, ##41196
+	cmp	arg03, #1 wz
+ if_e	add	objptr, ##41196
+ if_e	wrlong	#2, objptr
+ if_e	sub	objptr, ##41196
 	decod	arg01, #19
 	neg	arg02, #1
 	call	#_pslpoke
 	add	objptr, ##27144
 	wrlong	#0, objptr
-' 
 ' pslpoke(memlo,$FFFFFFFF)
 ' varnum=0 : for i=0 to maxvars: variables(i).name="" : variables(i).vartype=0: next i
 	mov	local01, #0
@@ -21395,9 +21403,9 @@ _do_pinread
 	shr	result1, arg01
 	shr	arg01, #6
 	zerox	result1, arg01
-	add	objptr, ##42012
+	add	objptr, ##42016
 	wrlong	result1, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -23026,14 +23034,14 @@ _do_put
 	mov	arg01, fp
 	sub	fp, #28
 	call	#_converttoint
-	add	objptr, ##42008
+	add	objptr, ##42012
 	wrlong	result1, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 	jmp	#LR__1811
 LR__1810
-	add	objptr, ##42008
+	add	objptr, ##42012
 	wrlong	##-1, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 LR__1811
 ' if numpar>=3 then t1=pop() : amount=converttoint(t1) else amount=1
 	rdlong	arg05, fp
@@ -23104,9 +23112,9 @@ LR__1814
 ' t1=pop() : channel=converttoint(t1)
 ' getres(j)=0
 ' if pos>=0 then
-	add	objptr, ##852
+	add	objptr, ##856
 	rdlong	local02, objptr
-	sub	objptr, ##42008
+	sub	objptr, ##42012
 	cmps	local02, #0 wc
  if_b	jmp	#LR__1820
 	add	fp, #16
@@ -23182,10 +23190,10 @@ LR__1819
 '    put #channel, pos+1,block(0),amount, r : getres(channel)=r
 	add	fp, #4
 	rdlong	arg01, fp
-	add	objptr, ##42008
+	add	objptr, ##42012
 	rdlong	arg02, objptr
 	add	arg02, #1
-	sub	objptr, ##1892
+	sub	objptr, ##1896
 	mov	arg03, objptr
 	sub	objptr, ##40116
 	add	fp, #4
@@ -23368,9 +23376,9 @@ _do_rdpin
 	mov	arg01, fp
 	call	#_converttoint
 	rdpin	result1, result1
-	add	objptr, ##42012
+	add	objptr, ##42016
 	wrlong	result1, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -23763,9 +23771,9 @@ _do_rqpin
 	mov	arg01, result1
 	mov	result1, #0
 	rqpin	result1, arg01
-	add	objptr, ##42012
+	add	objptr, ##42016
 	wrlong	result1, objptr
-	sub	objptr, ##42012
+	sub	objptr, ##42016
 	add	fp, #8
 	wrlong	#29, fp
 	sub	fp, #8
@@ -23834,7 +23842,7 @@ _do_run
 	sub	objptr, ##5836
 '   psram.read1(varptr(runheader),runptr,24)  
 '   return
-	jmp	#LR__1876
+	jmp	#LR__1877
 LR__1870
 	add	objptr, ##41196
 	wrlong	#1, objptr
@@ -23855,7 +23863,7 @@ LR__1870
  if_e	add	objptr, ##41196
  if_e	wrlong	#0, objptr
  if_e	sub	objptr, ##41196
- if_e	jmp	#LR__1876
+ if_e	jmp	#LR__1877
 ' do 
 LR__1871
 '   if runptr<>oldrunptr then
@@ -23920,7 +23928,7 @@ LR__1872
 	rdlong	local04, objptr
 	sub	objptr, ##41144
 	cmp	local04, ##2147483647 wz
- if_e	jmp	#LR__1874
+ if_e	jmp	#LR__1875
 	mov	arg01, #224
 	call	#_usbnew_spin2_keystate
 	cmp	result1, #0 wz
@@ -23928,20 +23936,31 @@ LR__1872
 	mov	arg01, #228
 	call	#_usbnew_spin2_keystate
 	cmp	result1, #0 wz
- if_e	jmp	#LR__1871
+ if_e	jmp	#LR__1874
 LR__1873
 	mov	arg01, #6
 	call	#_usbnew_spin2_keystate
 	cmp	result1, #0 wz
- if_e	jmp	#LR__1871
+ if_ne	jmp	#LR__1875
 LR__1874
+	add	objptr, ##41196
+	rdlong	local04, objptr
+	sub	objptr, ##41196
+	cmp	local04, #2 wz
+ if_ne	jmp	#LR__1871
+LR__1875
 '   ''do whatever kbm.peek_latest_key()=$106 
-' if runptr<>$7FFF_FFFF then 
+' if runptr<>$7FFF_FFFF andalso inrun=1 then 
 	add	objptr, ##41144
 	rdlong	local04, objptr
 	sub	objptr, ##41144
 	cmp	local04, ##2147483647 wz
- if_e	jmp	#LR__1875
+ if_e	jmp	#LR__1876
+	add	objptr, ##41196
+	rdlong	local04, objptr
+	sub	objptr, ##41196
+	cmp	local04, #1 wz
+ if_ne	jmp	#LR__1876
 '   print: print "Stopped at line ";runheader(0) 
 	mov	arg01, #0
 	call	#__system___getiolock_0574
@@ -23976,7 +23995,7 @@ LR__1874
 	mov	arg01, #0
 	call	#__system___getiolock_0574
 	wrlong	#0, result1
-LR__1875
+LR__1876
 	add	objptr, ##41196
 	wrlong	#0, objptr
 	sub	objptr, ##3180
@@ -23994,7 +24013,7 @@ LR__1875
 	mov	arg02, #32
 	mov	arg03, #32
 	call	#_hg010b_spin2_setspritesize
-LR__1876
+LR__1877
 	mov	ptra, fp
 	call	#popregs_
 _do_run_ret
@@ -24925,17 +24944,17 @@ LR__1921
  if_ne	cmp	local01, #29 wz
  if_ne	jmp	#LR__1923
 	rdlong	local01, fp
-	add	objptr, ##42004
+	add	objptr, ##42008
 	wrlong	local01, objptr
 '   q=t1.result.uresult
 '   if q<7 then 
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 	cmps	local01, #7 wc
  if_ae	jmp	#LR__1922
-	add	objptr, ##42004
+	add	objptr, ##42008
 	rdlong	local01, objptr
 	shl	local01, #2
-	sub	objptr, #228
+	sub	objptr, #232
 	add	local01, objptr
 	rdlong	local01, local01
 	wrlong	local01, fp
@@ -25037,17 +25056,17 @@ LR__1931
  if_ne	cmp	local01, #29 wz
  if_ne	jmp	#LR__1933
 	rdlong	local01, fp
-	add	objptr, ##42004
+	add	objptr, ##42008
 	wrlong	local01, objptr
 '   q=t1.result.uresult
 '   if q<7 then 
-	sub	objptr, ##42004
+	sub	objptr, ##42008
 	cmps	local01, #7 wc
  if_ae	jmp	#LR__1932
-	add	objptr, ##42004
+	add	objptr, ##42008
 	rdlong	local01, objptr
 	shl	local01, #2
-	sub	objptr, #200
+	sub	objptr, #204
 	add	local01, objptr
 	rdlong	local01, local01
 	wrlong	local01, fp
@@ -32724,6 +32743,33 @@ _program
 ' loadname="noname.bas"
 ' do_insert=-1
 ' inload=0
+' 
+' open "/sd/bas/autorun.bas" for input as #9
+	mov	arg02, ##@LR__5715
+	mov	arg01, #9
+	mov	arg03, #0
+	call	#__system___basic_open_string
+	add	ptr___system__dat__, #32
+	rdlong	result1, ptr___system__dat__
+	sub	ptr___system__dat__, #32
+	add	objptr, ##41964
+	wrlong	result1, objptr
+	sub	objptr, ##41964
+' err=geterr()
+' close #9
+	mov	arg01, #9
+	call	#__system__close
+' if err=0 then line$="run autorun.bas" : interpret
+	add	objptr, ##41964
+	rdlong	local01, objptr wz
+	sub	objptr, ##41964
+ if_e	mov	local01, ##@LR__5716
+ if_e	add	objptr, ##28188
+ if_e	wrlong	local01, objptr
+ if_e	sub	objptr, ##28188
+ if_e	call	#_interpret
+' 
+' 
 ' '-------------------------------------------------------------------------------------------------------- 
 ' '-------------------------------------- MAIN LOOP -------------------------------------------------------
 ' '--------------------------------------------------------------------------------------------------------
@@ -32736,7 +32782,7 @@ LR__2410
 	wrlong	local01, objptr
 	sub	objptr, ##28188
 	call	#_interpret
-	mov	local01, ##@LR__5715
+	mov	local01, ##@LR__5717
 	add	objptr, ##28188
 	wrlong	local01, objptr
 	sub	objptr, ##28188
@@ -57177,6 +57223,12 @@ LR__5714
 	byte	"noname.bas"
 	byte	0
 LR__5715
+	byte	"/sd/bas/autorun.bas"
+	byte	0
+LR__5716
+	byte	"run autorun.bas"
+	byte	0
+LR__5717
 	byte	
 	byte	0
 	alignl
@@ -68107,7 +68159,7 @@ __methodtable__
 __heap_base
 	long	0[24002]
 objmem
-	long	0[10507]
+	long	0[10508]
 stackspace
 	long	0[1]
 	org	COG_BSS_START
