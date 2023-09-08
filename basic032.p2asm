@@ -56206,7 +56206,7 @@ LR__5375
 	byte	"setpan"
 	byte	0
 LR__5376
-	byte	"sp"
+	byte	"sp."
 	byte	0
 LR__5377
 	byte	"setsustain"

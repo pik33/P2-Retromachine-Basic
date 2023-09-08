@@ -1153,7 +1153,7 @@ select case s
   case "setlen"		: return token_setlen  
   case "sl."		: return token_setlen  
   case "setpan"		: return token_setpan
-  case "sp"		: return token_setpan
+  case "sp."		: return token_setpan
   case "setsustain"	: return token_setsustain
   case "ss."		: return token_setsustain
   case "setvol" 	: return token_setvol
