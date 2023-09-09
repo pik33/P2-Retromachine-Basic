@@ -3,6 +3,7 @@
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
+#include "dir.bi"
 
 const HEAPSIZE=96000
 '#define PSRAM4
@@ -24,9 +25,6 @@ dim psram as class using "psram.spin2"
 
 dim kbm as class using "usbnew.spin2"
 dim paula as class using "audio096.spin2"
-dim dircmd as class using "dir.c"
-
-#include "dir.bi"
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Constants --------------------------------------------
@@ -111,6 +109,7 @@ const token_dec=41
 const token_ne=42
 const fun_pushs2=43
 const token_channel=44
+const token_skip=45
 
 const token_cls=64
 const token_new=65
@@ -241,7 +240,7 @@ const token_enter=189
 const token_rem=190	
 const token_round=191	
 const token_coginit=192 'todo
-const token_on=193	'todo
+const token_on=193	
 const token_delete=194  
 const token_cd=195     
 const token_copy=196    'todo
@@ -1118,6 +1117,7 @@ select case s
   case "new"         	: return token_new
   case "next"	     	: return token_next
   case "n."	     	: return token_next
+  case "on"		: return token_on
   case "open"		: return token_open
   case "paper"	     	: return token_paper
   case "pa."	     	: return token_paper
@@ -1541,6 +1541,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_mouse	: err=compile_fun_1p()
   case token_new      	: compile_nothing()   
   case token_next     	: err=compile_next() :goto 450
+  case token_on		: err=compile_on() : goto 450
   case token_open	: err=compile_fun_3p()
   case token_paper	: err=compile_fun_1p()
   case token_pinfloat	: err=compile_fun_1p()
@@ -1586,7 +1587,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 ' if there is token_adr somewhere, change fun_getvar to fun_getaddr
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
-' DEBUG print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'''''print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1966,7 +1967,7 @@ end function
 
 '----- compile 'goto' 
 
-function compile_goto( ) as ulong
+function compile_goto() as ulong
 
 dim gotoline, gotoptr,oldgotoptr as integer
 dim gotoheader as ulong(5)
@@ -1995,6 +1996,62 @@ else										' there is expression, target line not known
   expr()
   t3.result_type=token_slow_goto : t3.result.uresult=0 : compiledline(lineptr)=t3:  lineptr+=1   ' compile slow_goto
 endif
+return 0
+end function
+
+function compile_on() as ulong
+
+dim numpar,onlineptr,i as integer
+expr()
+'print lparts(ct).part$ 'ok
+numpar=0
+compiledline(lineptr).result_type=token_on : onlineptr=lineptr : lineptr+=1' we need onlineptr to save param# there
+if lparts(ct).part$="goto" then
+  i=ct+1
+  do
+    if lparts(i).token=token_decimal then
+      compiledline(lineptr).result.twowords(0)=$80000000
+      compiledline(lineptr).result.twowords(1)=val%(lparts(i).part$)  
+      compiledline(lineptr).result_type=token_find_goto
+      lineptr+=1
+      numpar+=1
+    else
+      return 17
+    endif  
+    i+=1
+    if lparts(i).token<>token_comma andalso lparts(i).token<>token_end then return 21
+    if lparts(i).token=token_end then exit loop
+    i+=1
+  loop until lparts(i).token=token_end  
+  compiledline(onlineptr).result.twowords(1)=1
+endif    
+
+if lparts(ct).part$="gosub" then
+  i=ct+1
+  do
+    if lparts(i).token=token_decimal then
+      compiledline(lineptr).result_type=token_gosub
+      lineptr+=1
+      compiledline(lineptr).result.twowords(0)=$80000000
+      compiledline(lineptr).result.twowords(1)=val%(lparts(i).part$)  
+      compiledline(lineptr).result_type=token_find_goto
+      lineptr+=1
+      numpar+=1
+      compiledline(lineptr).result_type=token_skip
+      lineptr+=1
+    else
+      return 17
+    endif  
+    i+=1
+    if lparts(i).token<>token_comma andalso lparts(i).token<>token_end then return 21
+    if lparts(i).token=token_end then exit loop
+    i+=1
+  loop until lparts(i).token=token_end  
+  compiledline(onlineptr).result.twowords(1)=3
+endif   
+compiledline(onlineptr).result.uresult=numpar
+for i=lineptr to onlineptr step -1 : if compiledline(i).result_type=token_skip then compiledline(i).result.uresult=lineptr-2
+next i 
 return 0
 end function
 
@@ -3636,8 +3693,9 @@ t1=pop()
 if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then printerror(15): return
 filename$=t1.result.sresult
-mkdir(filename$)
-err=geterr() : if err<>0 then print "Cannot create a directory: system error "; err
+err=mkdir(filename$)
+'err=geterr() : 
+if err<>0 then print "Cannot create a directory: system error "; err
 end sub
 
 '-------------------- mode
@@ -3774,7 +3832,22 @@ end sub
 
 '-------------------- nothing
 
-sub do_nothing					' a placeholder for tokens that don't do anything by themselves (then, else) 
+sub do_nothing					' a placeholder for tokens that don't do anything by themselves
+end sub
+
+'-------------------- on
+
+sub do_on
+
+dim t1 as expr_result
+dim skip, t, numpar as integer
+
+numpar=compiledline(lineptr_e).result.uresult
+skip=compiledline(lineptr_e).result.twowords(1)
+t1=pop()
+t=converttoint(t1)
+if t<1 orelse t>numpar then return
+lineptr_e+=skip*(t-1)
 end sub
 
 '-------------------- open
@@ -4392,6 +4465,14 @@ t1.result_type=result_float
 push t1  
 end sub
 
+' ------------------ skip
+' A helper token for on-gosub: skips the rest of gosubs
+
+sub do_skip
+
+lineptr_e=compiledline(lineptr_e).result.uresult-1
+end sub
+
 ' ------------------ sprite
 
 sub do_sprite
@@ -4777,7 +4858,7 @@ if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.
 if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)=t2.result.sresult):goto 1150
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult=convertstring(t2.result.uresult)) :goto 1150
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)=convertstring(t2.result.uresult)) :goto 1150
-t1.result.uresult=0
+t1.result.uresult=0: if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 1150 t1.result_type=result_int 
 push t1
 end sub
@@ -4821,8 +4902,8 @@ if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.
 if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)>=t2.result.sresult):goto 1180
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult>=convertstring(t2.result.uresult)) :goto 1180
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)>=convertstring(t2.result.uresult)) :goto 1180
-t1.result.uresult=0
-1180 t1.result_type=result_int 
+t1.result.uresult=0: if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
+1180 t1.result_type=result_int : if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 push t1
 end sub
 
@@ -4848,7 +4929,7 @@ if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.re
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult>convertstring(t2.result.uresult)) :goto 1160
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)>convertstring(t2.result.uresult)) :goto 1160
 t1.result.uresult=0
-1160 t1.result_type=result_int 
+1160 t1.result_type=result_int : if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 push t1
 end sub
 
@@ -4873,7 +4954,7 @@ if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.
 if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<=t2.result.sresult):goto 1190
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<=convertstring(t2.result.uresult)) :goto 1190
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<=convertstring(t2.result.uresult)) :goto 1190
-t1.result.uresult=0
+t1.result.uresult=0: if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 1190 t1.result_type=result_int 
 push t1
 end sub
@@ -4899,7 +4980,7 @@ if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.
 if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<t2.result.sresult):goto 1170
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<convertstring(t2.result.uresult)) :goto 1170
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<convertstring(t2.result.uresult)) :goto 1170
-t1.result.uresult=0
+t1.result.uresult=0: if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 1170 t1.result_type=result_int 
 push t1
 end sub
@@ -5009,7 +5090,7 @@ if t1.result_type=result_uint andalso t2.result_type=result_uint then t1.result.
 if t1.result_type=result_string2 andalso t2.result_type=result_string then t1.result.uresult=(convertstring(t1.result.uresult)<>t2.result.sresult):goto 1192
 if t1.result_type=result_string andalso t2.result_type=result_string2 then t1.result.uresult=(t1.result.sresult<>convertstring(t2.result.uresult)) :goto 1192
 if t1.result_type=result_string2 andalso t2.result_type=result_string2 then t1.result.uresult=(convertstring(t1.result.uresult)<>convertstring(t2.result.uresult)) :goto 1192
-t1.result.uresult=0
+t1.result.uresult=0: if t1.result.uresult<>0 then t1.result.uresult=1 ' for Atari Basic on.. goto compatibility
 1192 t1.result_type=result_int 
 push t1
 end sub
@@ -5276,6 +5357,10 @@ commands(token_delete)=@do_delete
 commands(token_mkdir)=@do_mkdir
 commands(token_blit)=@do_blit
 commands(token_framebuf)=@do_framebuf
+commands(token_on)=@do_on
+
+commands(token_skip)=@do_skip
+
 
 end sub
 
