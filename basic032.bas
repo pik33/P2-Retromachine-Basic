@@ -1105,6 +1105,7 @@ select case s
   case "if"	     	: return token_if
   case "ink"	     	: return token_ink
   case "i."	     	: return token_ink
+  case "input"		: return token_input
   case "list"	     	: return token_list
   case "l."	     	: return token_list
   case "load"	     	: return token_load
@@ -1532,6 +1533,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_frame     	: vars,err=compile_fun_varp()  
   case token_if      	: err=compile_if(aline) :goto 450
   case token_ink	: err=compile_fun_1p()
+  case token_input	: vars,err=compile_input()
   case token_int	: err=compile_fun_1p()
   case token_list     	: vars,err=compile_fun_varp()   
   case token_load    	: vars,err=compile_fun_varp() 
@@ -1587,7 +1589,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 ' if there is token_adr somewhere, change fun_getvar to fun_getaddr
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
-'''''print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+'''''' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1758,6 +1760,39 @@ if lparts(ct).token<>token_end then
     expr()
     i+=1
     if lparts(ct).token=token_comma then ct+=1
+    if lparts(ct).token=token_end then exit loop
+   ' if lparts(ct).token<> token_comma then exit loop else ct+=1
+  loop 
+endif
+return i,err
+end function
+
+'----  Compile input. The same as compile_varp() except these has to be variables, and not expressions, and also we need getaddr and not getvar
+
+function compile_input() as ulong,ulong 
+
+dim t1 as expr_result
+dim i,err,oldlineptr as integer
+
+if lparts(ct).token=token_string then
+  l=len(lparts(ct).part$)    								' place the literal in the psram
+  memtop=(memtop-l-4) and $FFFFFFFC
+  pslpoke memtop,l
+  for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part$,i,1)) : next i
+  t1.result.uresult=memtop
+  t1.result_type=result_string2  
+  compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+  if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token=token_semicolon then t1.result_type=print_mod_semicolon : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  ct+=1
+endif
+
+i=0 : err=0
+if lparts(ct).token<>token_end then
+  do
+    err=getaddr() :ct+=1
+    i+=1 
+    if lparts(ct).token=token_comma then ct+=1 
     if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
@@ -1999,6 +2034,8 @@ endif
 return 0
 end function
 
+'----- compile 'on' (on..goto, on..gosub) 
+
 function compile_on() as ulong
 
 dim numpar,onlineptr,i as integer
@@ -2055,6 +2092,46 @@ next i
 return 0
 end function
 
+'----- A helper for compile_input and compile_read
+ 
+function getaddr() as ulong
+
+dim i,j,numpar,err as integer
+dim t2 as expr_result
+dim varname$,suffix$  as string
+
+varname$=lparts(ct).part$
+j=-1
+
+for i=0 to varnum-1
+  if variables(i).name=varname$ then j=i : exit
+next i
+if  j=-1 andalso varnum<maxvars then   
+  variables(varnum).name=varname$
+  variables(varnum).value.iresult=0
+  variables(varnum).vartype=result_int
+  j=varnum
+  varnum+=1 
+endif     
+numpar=0
+if lparts(ct+1).token=token_lpar then								' check if it is an array
+  ct+=1 											' omit this lpar, this is for expr list
+  do
+    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
+    if lparts(ct).token=token_lpar then ct+=1 : err=expr() : ct+=1 else err=expr()
+    if err>0 then return err
+    numpar+=1
+  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate error if end
+    if lparts(ct).token=token_end then return 14
+endif  
+t2.result.twowords(1)=numpar
+t2.result_type=fun_getaddr:t2.result.twowords(0)=j
+compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate error
+return 0
+end function
+
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------------- 
 
 '---------------------------------------------------------------------------------------------------------------------------------------
 '------------------------------------------ The end of the precompiler  ----------------------------------------------------------------
@@ -3510,6 +3587,49 @@ t1.result_type=result_int
 push t1
 end sub
 
+' ----------------  input
+
+sub do_input
+dim line$,part$ as string
+dim i,numpar,comma as ulong
+dim t1 as expr_result
+
+numpar=compiledline(lineptr_e).result.uresult
+
+/'do
+  line$=edit()
+  do 
+    comma=instr(1,line$,",")
+    if comma>0  then part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma) :  else part$=line$ 
+    if isnum(part$) and not isint(part$) then r=result_float
+    if isint(part$) then r=result_int
+    if isdec(part$) then r=result_uint
+    if not isnum(part$) then r=result_string
+    t1=pop() : vartype=t1.result.twowords(1)
+    select case vartype
+      case 0			: esize=12
+      case array_no_type	: esize=12
+      case array_byte		: esize=1
+      case array_ubyte		: esize=1
+      case array_short		: esize=2
+      case array_ushort	        : esize=2
+      case array_long		: esize=4
+      case array_ulong		: esize=4
+      case array_int64		: esize=8
+      case array_uint64		: esize=8
+      case array_float		: esize=4
+      case array_double		: esize=8
+      case array_string		: esize=5 ' dummy, for string
+      case else			: esize=12
+    end select
+    if esize=12 then
+      if r=result_int then lpoke t1.result.uresult, val%(part$)
+      if r=result_uint then lpoke t1.result.uresult, val%(part$)
+      if r=result_float then lpoke t1.result.uresult, val(part$)
+      if r=result_string then lpoke t1.result.uresult,lpeek(varptr(
+'/
+end sub
+
 ' ----------------  left$
 
 sub do_left
@@ -4771,12 +4891,14 @@ if compiledline(lineptr_e).result.twowords(1)=0 then
   t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
    if t1.result_type>=array_no_type then goto 2200
   t1.result.uresult=varptr(variables(compiledline(lineptr_e).result.uresult).value)
+  t1.result.twowords(1)=0
   t1.result_type=result_uint
   push t1 : return
 endif  
 ' if we are here, this is the array
 2200 
 arrptr=variables(compiledline(lineptr_e).result.uresult).value.uresult
+t1.result.twowords(1)=variables(compiledline(lineptr_e).result.uresult).vartype
 vartype=pslpeek(arrptr) and 65535
 numpar=compiledline(lineptr_e).result.twowords(1) ':print "in do_getvar numpar=",numpar
 esize=pspeek(arrptr+2)
@@ -5360,6 +5482,7 @@ commands(token_framebuf)=@do_framebuf
 commands(token_on)=@do_on
 
 commands(token_skip)=@do_skip
+commands(token_input)=@do_input
 
 
 end sub
