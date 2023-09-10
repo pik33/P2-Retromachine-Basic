@@ -1589,7 +1589,7 @@ t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr
 ' if there is token_adr somewhere, change fun_getvar to fun_getaddr
 for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
 next i
-'''''' print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+''''print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
 return err
 end function
 
@@ -1784,9 +1784,9 @@ if lparts(ct).token=token_string then
   compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
   if lparts(ct).token=token_semicolon then t1.result_type=print_mod_semicolon : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token<>token_semicolon  andalso lparts(ct).token<>token_comma then t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1 : ct-=1
   ct+=1
 endif
-
 i=0 : err=0
 if lparts(ct).token<>token_end then
   do
@@ -1796,7 +1796,13 @@ if lparts(ct).token<>token_end then
     if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
+
+else
+  err=54
+  
+
 endif
+
 return i,err
 end function
 
@@ -2385,7 +2391,7 @@ dim i as integer
 
 dim s as string
 dim l as ulong
-l=pslpeek(psaddr)
+l=pslpeek(psaddr) 
 s="" 
 for i=1 to l : s+=chr$(pspeek(psaddr+3+i)) :next i
 return s
@@ -3591,43 +3597,88 @@ end sub
 
 sub do_input
 dim line$,part$ as string
-dim i,numpar,comma as ulong
+dim numpar,comma,stringaddr,vartype,esize as ulong
 dim t1 as expr_result
+dim fval as single
+dim args(64) as string
+dim i,j,l,cpx,cpy as integer
 
 numpar=compiledline(lineptr_e).result.uresult
+if numpar<1 orelse numpar>64 then print "In input: ";: printerror(39,runheader(0)) : return
+i=numpar-1
+cpx=v.cursor_x/2 : cpy=v.cursor_y
+do
 
-/'do
   line$=edit()
-  do 
-    comma=instr(1,line$,",")
-    if comma>0  then part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma) :  else part$=line$ 
-    if isnum(part$) and not isint(part$) then r=result_float
-    if isint(part$) then r=result_int
-    if isdec(part$) then r=result_uint
-    if not isnum(part$) then r=result_string
-    t1=pop() : vartype=t1.result.twowords(1)
-    select case vartype
-      case 0			: esize=12
-      case array_no_type	: esize=12
-      case array_byte		: esize=1
-      case array_ubyte		: esize=1
-      case array_short		: esize=2
-      case array_ushort	        : esize=2
-      case array_long		: esize=4
-      case array_ulong		: esize=4
-      case array_int64		: esize=8
-      case array_uint64		: esize=8
-      case array_float		: esize=4
-      case array_double		: esize=8
-      case array_string		: esize=5 ' dummy, for string
-      case else			: esize=12
-    end select
-    if esize=12 then
-      if r=result_int then lpoke t1.result.uresult, val%(part$)
-      if r=result_uint then lpoke t1.result.uresult, val%(part$)
-      if r=result_float then lpoke t1.result.uresult, val(part$)
-      if r=result_string then lpoke t1.result.uresult,lpeek(varptr(
-'/
+
+  if v.cursor_y=cpy+1 then
+    line$=trim$(right$(line$,len(line$)-cpx+editor_spaces)) 
+  else
+   line$=trim$(line$) 
+  endif
+  do
+   comma=instr(1,line$,",")  
+   if comma>0  then 
+     part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma)  
+   else 
+     part$=trim$(line$) : line$=""
+   endif
+   args(i)=part$  
+   i=i-1
+   loop until i<0 orelse line$=""
+loop until i<0
+
+for i=0 to numpar-1
+
+  if isnum(args(i)) and not isint(args(i)) then r=result_float 
+  if isint(args(i)) then r=result_int 
+  if isdec(args(i)) then r=result_uint 
+  if not isnum(args(i)) then 
+    r=result_string2
+    l=len(part$)    								' place the literal in the psram
+    memtop=(memtop-l-4) and $FFFFFFFC
+    pslpoke memtop,l
+    for j=1 to l : pspoke memtop+3+j, asc(mid$(args(i),j,1)) : next j
+    stringaddr=memtop 
+  endif  
+  t1=pop() : vartype=t1.result.twowords(1)
+  select case vartype
+    case 0			: esize=12
+    case array_no_type	: esize=12
+    case array_byte		: esize=1
+    case array_ubyte		: esize=1
+    case array_short		: esize=2
+    case array_ushort	        : esize=2
+    case array_long		: esize=4
+    case array_ulong		: esize=4
+    case array_int64		: esize=8
+    case array_uint64		: esize=8
+    case array_float		: esize=6 ' dummy, for float
+    case array_double		: esize=8
+    case array_string		: esize=5 ' dummy, for string
+    case else			: esize=12
+  end select
+  if esize=12 andalso t1.result.uresult<$80000 then
+    if r=result_int then lpoke t1.result.uresult, val%(args(i))
+    if r=result_uint then lpoke t1.result.uresult, val%(args(i))
+    if r=result_float then fval=val(args(i)): lpoke t1.result.uresult,lpeek(varptr(fval))
+    if r=result_string2 then lpoke t1.result.uresult,stringaddr
+    lpoke t1.result.uresult+8,r
+  endif
+  if esize=12 andalso t1.result.uresult>=$80000 then
+    if r=result_int then pslpoke t1.result.uresult, val%(args(i))
+    if r=result_uint then pslpoke t1.result.uresult, val%(args(i))
+    if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+    if r=result_string2 then pslpoke t1.result.uresult,stringaddr
+    pslpoke t1.result.uresult+8,r
+  endif
+  if esize=5 andalso r=result_string2 then pslpoke t1.result.uresult,stringaddr
+  if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,val%(args(i))
+  if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,val%(args(i))
+  if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
+  if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+next i 
+
 end sub
 
 ' ----------------  left$
@@ -4891,7 +4942,7 @@ if compiledline(lineptr_e).result.twowords(1)=0 then
   t1.result_type=variables(compiledline(lineptr_e).result.uresult).vartype
    if t1.result_type>=array_no_type then goto 2200
   t1.result.uresult=varptr(variables(compiledline(lineptr_e).result.uresult).value)
-  t1.result.twowords(1)=0
+  t1.result.twowords(1)=variables(compiledline(lineptr_e).result.uresult).vartype
   t1.result_type=result_uint
   push t1 : return
 endif  
@@ -5595,6 +5646,7 @@ errors$(50)="Bad type while assigning to array"
 errors$(51)="Too many variables"
 errors$(52)="'Then' expected"
 errors$(53)="Directory doesn't exist"
+errors$(54)="Unexpected end of line"
 end sub
         
 sub printerror(err as integer, linenum=0 as integer)
