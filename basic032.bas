@@ -228,7 +228,7 @@ const token_changepan=177
 const token_shutup=178
 const token_open=179	
 const token_close=180
-const token_input=181	'todo
+const token_input=181	 
 const token_read=182	'todo
 const token_data=183	'todo
 const token_cload=184	'todo
@@ -246,6 +246,7 @@ const token_cd=195
 const token_copy=196    'todo
 const token_framebuf=197'
 const token_mkdir=198
+const token_restore=199
 
 const token_error=255
 const token_end=510
@@ -1073,6 +1074,7 @@ select case s
   case "csave"	     	: return token_csave
   case "cs."	     	: return token_csave
   case "cursor"	     	: return token_cursor
+  case "data"		: return token_data
   case "defsnd"	     	: return token_defsnd
   case "defenv"	     	: return token_defenv
   case "defsprite"   	: return token_defsprite
@@ -1140,9 +1142,11 @@ select case s
   case "?"       	: return token_print
   case "put"		: return token_put
   case "rad"		: return token_rad
+  case "read"		: return token_read
   case "release"	: return token_release
   case "rem"		: return token_rem
   case "'"		: return token_rem
+  case "restore"	: return token_restore
   case "return"		: return token_return
   case "run"	     	: return token_run
   case "save"	     	: return token_save
@@ -1511,6 +1515,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_changevol 	: err=compile_fun_2p()  
   case token_changepan  : err=compile_fun_2p()  
   case token_cursor	: err=compile_fun_1p()
+  case token_data	: compile_nothing()
   case token_defenv     : vars,err=compile_fun_varp()   
   case token_defsnd     : vars,err=compile_fun_varp()   
   case token_defsprite	: vars,err=compile_fun_varp()		' defsprite now has only one syntax, but other are planned (defsprite pointer, defsprite file)
@@ -1560,8 +1565,10 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_print    	: err=compile_print()  : goto 450
   case token_put	: vars,err=compile_fun_varp()
   case token_rad	: compile_nothing()
+  case token_read	: vars,err=compile_read()
   case token_release	: err=compile_fun_1p()
   case token_rem	: compile_nothing() : goto 450
+  case token_restore	: compile_nothing()
   case token_return:	: compile_nothing()
   case token_run      	: vars,err=compile_fun_varp()   
   case token_save    	: vars,err=compile_fun_varp()  
@@ -1767,6 +1774,28 @@ endif
 return i,err
 end function
 
+'----  Compile read. The same as compile_input() except printing a prompt
+
+function compile_read() as ulong,ulong 
+
+dim t1 as expr_result
+dim i,err,oldlineptr as integer
+
+i=0 : err=0
+if lparts(ct).token<>token_end then
+  do
+    err=getaddr() :ct+=1
+    i+=1 
+    if lparts(ct).token=token_comma then ct+=1 
+    if lparts(ct).token=token_end then exit loop
+   ' if lparts(ct).token<> token_comma then exit loop else ct+=1
+  loop 
+else
+  err=54
+endif
+return i,err
+end function
+
 '----  Compile input. The same as compile_varp() except these has to be variables, and not expressions, and also we need getaddr and not getvar
 
 function compile_input() as ulong,ulong 
@@ -1796,13 +1825,9 @@ if lparts(ct).token<>token_end then
     if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
-
 else
   err=54
-  
-
 endif
-
 return i,err
 end function
 
@@ -3998,7 +4023,7 @@ end sub
 '-------------------- no command (print "Unknown command")
 
 sub do_no_command
-printerror(23)
+printerror(23,runheader(0))
 end sub
 
 '-------------------- nothing
@@ -4359,6 +4384,99 @@ t1.result.uresult=4
 push t1
 end sub
 
+' ----------------  read
+
+sub do_read
+dim line$,part$ as string
+dim numpar,comma,stringaddr,vartype,esize as ulong
+dim t1 as expr_result
+dim fval as single
+dim args(64) as string
+dim i,j,l,cpx,cpy as integer
+
+/'
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<1 orelse numpar>64 then print "In read: ";: printerror(39,runheader(0)) : return
+i=numpar-1
+do
+' if readptr=0, and readline="" then find the first data line
+' then read it
+' if there is a dataline, get a part
+' if there is no part, read the next dataline
+
+ 
+  line$=edit()
+
+  if v.cursor_y=cpy+1 then
+    line$=trim$(right$(line$,len(line$)-cpx+editor_spaces)) 
+  else
+   line$=trim$(line$) 
+  endif
+  do
+   comma=instr(1,line$,",")  
+   if comma>0  then 
+     part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma)  
+   else 
+     part$=trim$(line$) : line$=""
+   endif
+   args(i)=part$  
+   i=i-1
+   loop until i<0 orelse line$=""
+loop until i<0
+
+for i=0 to numpar-1
+
+  if isnum(args(i)) and not isint(args(i)) then r=result_float 
+  if isint(args(i)) then r=result_int 
+  if isdec(args(i)) then r=result_uint 
+  if not isnum(args(i)) then 
+    r=result_string2
+    l=len(part$)    								' place the literal in the psram
+    memtop=(memtop-l-4) and $FFFFFFFC
+    pslpoke memtop,l
+    for j=1 to l : pspoke memtop+3+j, asc(mid$(args(i),j,1)) : next j
+    stringaddr=memtop 
+  endif  
+  t1=pop() : vartype=t1.result.twowords(1)
+  select case vartype
+    case 0			: esize=12
+    case array_no_type	: esize=12
+    case array_byte		: esize=1
+    case array_ubyte		: esize=1
+    case array_short		: esize=2
+    case array_ushort	        : esize=2
+    case array_long		: esize=4
+    case array_ulong		: esize=4
+    case array_int64		: esize=8
+    case array_uint64		: esize=8
+    case array_float		: esize=6 ' dummy, for float
+    case array_double		: esize=8
+    case array_string		: esize=5 ' dummy, for string
+    case else			: esize=12
+  end select
+  if esize=12 andalso t1.result.uresult<$80000 then
+    if r=result_int then lpoke t1.result.uresult, val%(args(i))
+    if r=result_uint then lpoke t1.result.uresult, val%(args(i))
+    if r=result_float then fval=val(args(i)): lpoke t1.result.uresult,lpeek(varptr(fval))
+    if r=result_string2 then lpoke t1.result.uresult,stringaddr
+    lpoke t1.result.uresult+8,r
+  endif
+  if esize=12 andalso t1.result.uresult>=$80000 then
+    if r=result_int then pslpoke t1.result.uresult, val%(args(i))
+    if r=result_uint then pslpoke t1.result.uresult, val%(args(i))
+    if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+    if r=result_string2 then pslpoke t1.result.uresult,stringaddr
+    pslpoke t1.result.uresult+8,r
+  endif
+  if esize=5 andalso r=result_string2 then pslpoke t1.result.uresult,stringaddr
+  if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,val%(args(i))
+  if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,val%(args(i))
+  if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
+  if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+next i 
+'/
+end sub
+
 '------------------- release
 
 sub do_release
@@ -4369,6 +4487,12 @@ dim channel as integer
 t1=pop()
 channel=converttoint(t1)
 if channel>=0 andalso channel<=7 then lpoke base+64*channel+44,255  
+end sub
+
+'------------------- restore
+
+sub do_restore()
+
 end sub
 
 '------------------- return
@@ -5534,6 +5658,9 @@ commands(token_on)=@do_on
 
 commands(token_skip)=@do_skip
 commands(token_input)=@do_input
+commands(token_data)=@do_nothing
+commands(token_read)=@do_read
+commands(token_restore)=@do_restore
 
 
 end sub
@@ -5651,7 +5778,7 @@ end sub
         
 sub printerror(err as integer, linenum=0 as integer)
 v.write("Error " ): v.write(v.inttostr(err)) : v.write(" - ")  : v.write(errors$(err))
-if linenum>0 then v.write(" in line " ): v.writeln(v.inttostr(linenum))
+if linenum>0 then v.write(" in line " ): v.writeln(v.inttostr(linenum)) else v.writeln("")
 end sub
 
 '' ------------------------------- Hardware start/stop/initialization 
