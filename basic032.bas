@@ -410,6 +410,8 @@ dim runptr,runptr2,oldrunptr as ulong
 dim getres(9) as integer ' det  function result  for channel
 dim inrun as ulong
 dim runheader as ulong(5)
+dim dataheader as ulong(8)
+dim dataptr as ulong
 dim fortop,gosubtop as integer
 dim free$ as string
 dim keyclick as integer
@@ -431,6 +433,7 @@ dim loadname as string
 dim do_insert as integer
 dim cy,cx as integer
 dim inload,err as integer
+dim readline as string
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
@@ -3982,7 +3985,7 @@ programstart=memlo :runptr=memlo : runptr2=memlo
 stackpointer=0
 lineptr=0 
 programptr=memlo ': stringptr=0
-
+dataptr=0 : readline=""
 lastline=0 : lastlineptr=-1 :fortop=0 :gosubtop=0
 for i=0 to maxfor: fortable(i).varnum=-1 : next i
 for i=0 to 15: if sprite(i)<> nil then v.setspritesize(i,0,0) : delete(sprite(i)) 
@@ -4386,44 +4389,61 @@ end sub
 
 ' ----------------  read
 
+function read_next_line() as string
+dim readline as string
+if dataptr=$7FFFFFFF then return("")
+do
+ ' print dataptr
+  psram.read1(varptr(dataheader),dataptr,36) 
+  if dataheader(0)<>$FFFFFFFF then dataptr=dataheader(5)
+loop until dataheader(5)=$7FFF_FFFF orelse dataheader(0)=$ffffffff orelse dataheader(8)=token_data
+if dataheader(8)=token_data then 
+ 'print "data found at line "; dataheader(0)
+  l=dataheader(2) : j=dataheader(3) : for i=0 to j-1: readline+=chr$(pspeek(l+i)): next i 
+  i=instr(1,readline,"data")
+  readline=trim$(right$(readline,len(readline)-i-4))  
+else
+  return ("") 'todo proper err
+endif
+return readline
+end function
+
 sub do_read
 dim line$,part$ as string
 dim numpar,comma,stringaddr,vartype,esize as ulong
 dim t1 as expr_result
 dim fval as single
 dim args(64) as string
-dim i,j,l,cpx,cpy as integer
+dim i,j,l,cpx,cpy ,qqqqq as integer
+dim olddataptr as ulong
 
-/'
+
 numpar=compiledline(lineptr_e).result.uresult
 if numpar<1 orelse numpar>64 then print "In read: ";: printerror(39,runheader(0)) : return
 i=numpar-1
+if readline="" then readline=read_next_line() ': print readline
+if readline=""  then print "No more data" : return ' error
+
+
+i=numpar-1
 do
-' if readptr=0, and readline="" then find the first data line
-' then read it
-' if there is a dataline, get a part
-' if there is no part, read the next dataline
-
  
-  line$=edit()
-
-  if v.cursor_y=cpy+1 then
-    line$=trim$(right$(line$,len(line$)-cpx+editor_spaces)) 
-  else
-   line$=trim$(line$) 
-  endif
   do
-   comma=instr(1,line$,",")  
-   if comma>0  then 
-     part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma)  
-   else 
-     part$=trim$(line$) : line$=""
-   endif
-   args(i)=part$  
-   i=i-1
-   loop until i<0 orelse line$=""
-loop until i<0
+    
+    comma=instr(1,readline,",")  
+      if comma>0  then 
+      part$=left$(readline,comma-1): readline=right$(readline,len(readline)-comma)  
+     else 
+       part$=trim$(readline) : readline=""
+     endif
 
+     args(i)=part$  
+     i=i-1
+    if readline="" then readline=read_next_line() : if readline=""  then qqqqq=i
+  loop until i<0 orelse readline=""
+
+loop until i<0
+print qqqqq
 for i=0 to numpar-1
 
   if isnum(args(i)) and not isint(args(i)) then r=result_float 
@@ -4474,7 +4494,7 @@ for i=0 to numpar-1
   if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
   if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
 next i 
-'/
+
 end sub
 
 '------------------- release
@@ -4591,7 +4611,8 @@ r_runptr2=runptr2
 
 numpar=compiledline(lineptr_e).result.uresult
 if numpar=1 then do_load ' todo also run linenum so check the param
-runptr=programstart : runptr2=0 : oldrunptr=-1
+runptr=programstart : runptr2=0 : oldrunptr=-1 
+dataptr=programstart : readline="" ' reset the data pointer
 if inrun>0 then 
   psram.read1(varptr(runheader),runptr,24)  
   return
