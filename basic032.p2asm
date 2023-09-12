@@ -8,7 +8,7 @@ con
 	fbArchive = 32
 	fbNormal = 33
 	HEAPSIZE = 96000
-	ver = 32
+	ver = 33
 	key_enter = 141
 	key_escape = 155
 	key_backspace = 136
@@ -26528,11 +26528,11 @@ LR__2042
  if_ne	sub	objptr, ##42172
 '   if not isnum(args(i)) then 
 	add	fp, #304
-	rdlong	arg03, fp
-	shl	arg03, #2
+	rdlong	local05, fp
+	shl	local05, #2
 	sub	fp, #260
-	add	arg03, fp
-	rdlong	arg01, arg03
+	add	local05, fp
+	rdlong	arg01, local05
 	sub	fp, #44
 	call	#_isnum
 	not	local05, result1
@@ -26541,9 +26541,13 @@ LR__2042
 	add	objptr, ##42172
 	wrlong	#43, objptr
 	sub	objptr, ##42172
-	add	fp, #4
-	rdlong	arg01, fp
-	sub	fp, #4
+	add	fp, #304
+	rdlong	arg03, fp
+	shl	arg03, #2
+	sub	fp, #260
+	add	arg03, fp
+	rdlong	arg01, arg03
+	sub	fp, #44
 	mov	local02, arg01
 	callpa	#(@LR__2044-@LR__2043)>>2,fcache_load_ptr_
 LR__2043
@@ -62046,7 +62050,7 @@ _dat_
 	long	@@@_dat_ + 12612
 	byte	$50, $32, $20, $52, $65, $74, $72, $6f, $6d, $61, $63, $68, $69, $6e, $65, $20
 	byte	$42, $41, $53, $49, $43, $20, $76, $65, $72, $73, $69, $6f, $6e, $20, $30, $2e
-	byte	$33, $32, $00, $00
+	byte	$33, $33, $00, $00
 	alignl
 _hg010b_spin2_dat_
 '-' 
