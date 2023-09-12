@@ -4422,30 +4422,26 @@ numpar=compiledline(lineptr_e).result.uresult
 if numpar<1 orelse numpar>64 then print "In read: ";: printerror(39,runheader(0)) : return
 i=numpar-1
 if readline="" then readline=read_next_line() ': print readline
-if readline=""  then print "No more data" : return ' error
-
-
+if readline="" then printerror(55,runheader(0)) :return
+j=0
 i=numpar-1
 do
- 
   do
-    
     comma=instr(1,readline,",")  
       if comma>0  then 
       part$=left$(readline,comma-1): readline=right$(readline,len(readline)-comma)  
      else 
        part$=trim$(readline) : readline=""
      endif
-
+     if part$<>"" then j=j+1
      args(i)=part$  
      i=i-1
-    if readline="" then readline=read_next_line() : if readline=""  then qqqqq=i
+    if readline="" then readline=read_next_line() 
   loop until i<0 orelse readline=""
-
 loop until i<0
-print qqqqq
-for i=0 to numpar-1
+if j<numpar then printerror(55,runheader(0))
 
+for i=0 to numpar-1
   if isnum(args(i)) and not isint(args(i)) then r=result_float 
   if isint(args(i)) then r=result_int 
   if isdec(args(i)) then r=result_uint 
@@ -4457,42 +4453,45 @@ for i=0 to numpar-1
     for j=1 to l : pspoke memtop+3+j, asc(mid$(args(i),j,1)) : next j
     stringaddr=memtop 
   endif  
-  t1=pop() : vartype=t1.result.twowords(1)
-  select case vartype
-    case 0			: esize=12
-    case array_no_type	: esize=12
-    case array_byte		: esize=1
-    case array_ubyte		: esize=1
-    case array_short		: esize=2
-    case array_ushort	        : esize=2
-    case array_long		: esize=4
-    case array_ulong		: esize=4
-    case array_int64		: esize=8
-    case array_uint64		: esize=8
-    case array_float		: esize=6 ' dummy, for float
-    case array_double		: esize=8
-    case array_string		: esize=5 ' dummy, for string
-    case else			: esize=12
-  end select
-  if esize=12 andalso t1.result.uresult<$80000 then
-    if r=result_int then lpoke t1.result.uresult, val%(args(i))
-    if r=result_uint then lpoke t1.result.uresult, val%(args(i))
-    if r=result_float then fval=val(args(i)): lpoke t1.result.uresult,lpeek(varptr(fval))
-    if r=result_string2 then lpoke t1.result.uresult,stringaddr
-    lpoke t1.result.uresult+8,r
+  t1=pop() 
+  if i>=numpar-j then
+    vartype=t1.result.twowords(1)
+    select case vartype
+      case 0			: esize=12
+      case array_no_type	: esize=12
+      case array_byte		: esize=1
+      case array_ubyte		: esize=1
+      case array_short		: esize=2
+      case array_ushort	        : esize=2
+      case array_long		: esize=4
+      case array_ulong		: esize=4
+      case array_int64		: esize=8
+      case array_uint64		: esize=8
+      case array_float		: esize=6 ' dummy, for float
+      case array_double		: esize=8
+      case array_string		: esize=5 ' dummy, for string
+      case else			: esize=12
+    end select
+    if esize=12 andalso t1.result.uresult<$80000 then
+      if r=result_int then lpoke t1.result.uresult, val%(args(i))
+      if r=result_uint then lpoke t1.result.uresult, val%(args(i))
+      if r=result_float then fval=val(args(i)): lpoke t1.result.uresult,lpeek(varptr(fval))
+      if r=result_string2 then lpoke t1.result.uresult,stringaddr
+      lpoke t1.result.uresult+8,r
+    endif
+    if esize=12 andalso t1.result.uresult>=$80000 then
+      if r=result_int then pslpoke t1.result.uresult, val%(args(i))
+      if r=result_uint then pslpoke t1.result.uresult, val%(args(i))
+      if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+      if r=result_string2 then pslpoke t1.result.uresult,stringaddr
+      pslpoke t1.result.uresult+8,r
+    endif
+    if esize=5 andalso r=result_string2 then pslpoke t1.result.uresult,stringaddr
+    if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,val%(args(i))
+    if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,val%(args(i))
+    if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
+    if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
   endif
-  if esize=12 andalso t1.result.uresult>=$80000 then
-    if r=result_int then pslpoke t1.result.uresult, val%(args(i))
-    if r=result_uint then pslpoke t1.result.uresult, val%(args(i))
-    if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
-    if r=result_string2 then pslpoke t1.result.uresult,stringaddr
-    pslpoke t1.result.uresult+8,r
-  endif
-  if esize=5 andalso r=result_string2 then pslpoke t1.result.uresult,stringaddr
-  if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,val%(args(i))
-  if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,val%(args(i))
-  if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
-  if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
 next i 
 
 end sub
@@ -4512,7 +4511,7 @@ end sub
 '------------------- restore
 
 sub do_restore()
-
+dataptr=programstart : readline="" ' reset the data pointer
 end sub
 
 '------------------- return
@@ -5795,6 +5794,7 @@ errors$(51)="Too many variables"
 errors$(52)="'Then' expected"
 errors$(53)="Directory doesn't exist"
 errors$(54)="Unexpected end of line"
+errors$(55)="No more data"
 end sub
         
 sub printerror(err as integer, linenum=0 as integer)
