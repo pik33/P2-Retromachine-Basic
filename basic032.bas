@@ -247,6 +247,12 @@ const token_copy=196    'todo
 const token_framebuf=197'
 const token_mkdir=198
 const token_restore=199
+const token_padx=200    'todo
+const token_pady=201
+const token_padz=202
+const token_padh=203
+
+
 
 const token_error=255
 const token_end=510
@@ -418,6 +424,7 @@ dim keyclick as integer
 dim housekeeper_cog as integer
 dim housekeeper_stack as integer(128)
 dim mousex,mousey,mousek, mousew as ulong
+dim padx,pady,padz, padh as integer(6)
 dim stick(6) as ulong
 dim strig(6) as ulong
 dim sprite(15) as ubyte pointer
@@ -632,15 +639,16 @@ end sub
 '----------------------------------------------------------------------------------------------------------
 
 sub gethdi
-dim  dummy,i,j,x,y as ulong
+dim  dummy,i,j,x,y,z,h as ulong
 
 mousex,mousey=kbm.mouse_xy()
 dummy,mousew=kbm.mouse_scroll()
 mousek=kbm.mouse_buttons()
-i=0:
+i=0
 for j=0 to 6
   if kbm.hidpad_id(j)>0 then
-    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1)
+    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1) : z=kbm.hidpad_axis(j,5) : h=kbm.hidpad_hat(j,0)
+    padx(i)=x: pady(i)=y: padz(i)=z :padh(i)=h 
     x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
     strig(i)=kbm.hidpad_buttons(j) 
     i=i+1
@@ -1225,8 +1233,12 @@ select case s
   case "mousew"        	: return token_mousew
   case "mousex"        	: return token_mousex
   case "mousey"        	: return token_mousey
+  case "padx"		: return token_padx
+  case "pady"		: return token_pady
+  case "padz"		: return token_padz
+  case "padh"		: return token_padh
   case "peek"		: return token_peek
-  case "pinread"     	: return token_pinread
+  case "pinread"      	: return token_pinread
   case "rdpin"	    	: return token_rdpin
   case "right$"		: return token_right
   case "rqpin"	     	: return token_rqpin
@@ -4084,6 +4096,116 @@ select case  mode
 end  select
 end sub
 
+' ------------------ padx
+
+sub do_padh
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padh: "; : printerror(39) : return
+if numpar=0 then 
+  t1.result.uresult=padh(0): t1.result_type=result_int : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    t1.result.uresult=padh(q): t1.result_type=result_int : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ padx
+
+sub do_padx
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padx: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padx(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padx(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ pady
+
+sub do_pady
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "pady: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+pady(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+pady(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ padz
+
+sub do_padz
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padz: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padz(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padz(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
 '-------------------- paper
 
 sub do_paper
@@ -5681,6 +5803,10 @@ commands(token_input)=@do_input
 commands(token_data)=@do_nothing
 commands(token_read)=@do_read
 commands(token_restore)=@do_restore
+commands(token_padx)=@do_padx
+commands(token_pady)=@do_pady
+commands(token_padz)=@do_padz
+commands(token_padh)=@do_padh
 
 
 end sub
