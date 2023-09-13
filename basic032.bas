@@ -127,7 +127,7 @@ const token_list=76
 const token_run=77
 const token_fast_goto=78
 const token_slow_goto=79
-const token_csave=80
+'' const token_csave=80 '' to reimplement in v. 1.1
 const token_save=81
 const token_load=82
 const token_find_goto=83
@@ -229,9 +229,9 @@ const token_shutup=178
 const token_open=179	
 const token_close=180
 const token_input=181	 
-const token_read=182	'todo
-const token_data=183	'todo
-const token_cload=184	'todo
+const token_read=182	 
+const token_data=183	 
+'' const token_cload=184	' to implement in v. 1.1
 const token_blit=185	
 const token_playsample=186 'todo ps. channel,pointer,freq or #period ,vol,lstart,lend
 const token_get=187	 
@@ -247,11 +247,13 @@ const token_copy=196    'todo
 const token_framebuf=197'
 const token_mkdir=198
 const token_restore=199
-const token_padx=200    'todo
+const token_padx=200     
 const token_pady=201
 const token_padz=202
 const token_padh=203
-
+const token_padrx=204     
+const token_padry=205
+const token_padrz=206
 
 
 const token_error=255
@@ -424,7 +426,7 @@ dim keyclick as integer
 dim housekeeper_cog as integer
 dim housekeeper_stack as integer(128)
 dim mousex,mousey,mousek, mousew as ulong
-dim padx,pady,padz, padh as integer(6)
+dim padx,pady,padz,padh,padrx,padry,padrz as integer(6)
 dim stick(6) as ulong
 dim strig(6) as ulong
 dim sprite(15) as ubyte pointer
@@ -639,7 +641,7 @@ end sub
 '----------------------------------------------------------------------------------------------------------
 
 sub gethdi
-dim  dummy,i,j,x,y,z,h as ulong
+dim  dummy,i,j,x,y,z,h,rx,ry,rz as ulong
 
 mousex,mousey=kbm.mouse_xy()
 dummy,mousew=kbm.mouse_scroll()
@@ -647,8 +649,11 @@ mousek=kbm.mouse_buttons()
 i=0
 for j=0 to 6
   if kbm.hidpad_id(j)>0 then
-    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1) : z=kbm.hidpad_axis(j,5) : h=kbm.hidpad_hat(j,0)
+    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1) : z=kbm.hidpad_axis(j,2) : h=kbm.hidpad_hat(j,0)
+    rx=kbm.hidpad_axis(j,3) : ry=kbm.hidpad_axis(j,4) : rz=kbm.hidpad_axis(j,5) 
+    
     padx(i)=x: pady(i)=y: padz(i)=z :padh(i)=h 
+    padrx(i)=rx: padry(i)=ry: padrz(i)=rz  
     x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
     strig(i)=kbm.hidpad_buttons(j) 
     i=i+1
@@ -800,8 +805,17 @@ i=0 : do
   if lparts(i).part$="then" then exit loop 					' try to find 'then'
   i=i+1 
 loop until i>k
-if i<k then addptr=i+1	 							' then found
+if i<k then addptr=i+1	
+ 							' then found
 lp$=lparts(addptr).part$ 
+if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then ' ? is abbreviation of print, but it has no dots, so it has to be treated here
+  k+=1
+  for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
+  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-1)
+  lparts(addptr).part$="?"
+  goto 825
+endif  
+
 dot=instr(1,lparts(addptr).part$,".")						' find a dot	
 if dot>0 andalso dot<len(lparts(addptr).part$) then 				' split the part
   k+=1
@@ -809,13 +823,8 @@ if dot>0 andalso dot<len(lparts(addptr).part$) then 				' split the part
   lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-dot)
   lparts(addptr).part$=left$(lparts(addptr).part$,dot)
 endif  
-if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then ' ? is abbreviation of print, but it has no dots, so it has to be treated here
-  k+=1
-  for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
-  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-1)
-  lparts(addptr).part$="?"
-endif  
 
+825
 lp$=lparts(addptr).part$ 
 
 ' process mouse/cursor/click on/off
@@ -1080,10 +1089,10 @@ select case s
   case "click"	     	: return token_click
   case "close"		: return token_close
   case "cls"         	: return token_cls
+  case "coginit"	: return token_coginit
   case "color"       	: return token_color
   case "c."       	: return token_color
-  case "csave"	     	: return token_csave
-  case "cs."	     	: return token_csave
+  case "copy"		: return token_copy
   case "cursor"	     	: return token_cursor
   case "data"		: return token_data
   case "defsnd"	     	: return token_defsnd
@@ -1143,6 +1152,7 @@ select case s
   case "pinwrite"    	: return token_pinwrite
   case "play"	     	: return token_play
   case "p."	     	: return token_play
+  case "playsample"     : return token_playsample
   case "plot"        	: return token_plot
   case "pl."        	: return token_plot
   case "poke"		: return token_poke
@@ -1236,6 +1246,9 @@ select case s
   case "padx"		: return token_padx
   case "pady"		: return token_pady
   case "padz"		: return token_padz
+  case "padrx"		: return token_padrx
+  case "padry"		: return token_padry
+  case "padrz"		: return token_padrz
   case "padh"		: return token_padh
   case "peek"		: return token_peek
   case "pinread"      	: return token_pinread
@@ -1524,7 +1537,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_cls      	: compile_nothing()                    	' no params, do nothing, only add a command to the line, but case needs something to do after 
   case token_close     	: err=compile_fun_1p()                    
   case token_color    	: err=compile_fun_1p()  
-  case token_csave    	: vars,err=compile_fun_varp()  
+
   case token_changefreq	: err=compile_fun_2p()  
   case token_changewave	: err=compile_fun_2p()  
   case token_changevol 	: err=compile_fun_2p()  
@@ -1996,7 +2009,8 @@ end function
 function compile_for() as ulong  
 
 dim t1 as expr_result
-dim cmd,varnum as ulong
+dim cmd,varnum,b1,b2,b3 as ulong
+dim note_val as single
 
 if isassign(lparts(ct+1).part$) then compile_immediate_assign(5) else return 32
 t1=compiledline(lineptr-1): if t1.result_type<>fun_assign  then  return 34'		' after this we should have fun_assign_i or fun_assign_u with var# as uresult.
@@ -2004,7 +2018,26 @@ varnum=t1.result.uresult
 if lparts(ct).part$<>"to" then return 33
 ct+=1
 expr()  										' there is "to" value pushed on the stack
-if lparts(ct).part$="step" orelse lparts(ct).part$="s." then
+if lparts(ct).part$="step" orelse left$(lparts(ct).part$,2)="s." then
+  if left$(lparts(ct).part$,2)="s." andalso len(lparts(ct).part$)>2 then ' correct the part
+    lparts(ct).part$=right$(lparts(ct).part$,len(lparts(ct).part$)-2) ' strip 's.'
+    lparts(ct).token=isfunction(lparts(ct).part$) : if lparts(ct).token>0 then goto 2102
+    lparts(ct).token=isnotename(lparts(ct).part$) :
+    if lparts(ct).token>0 then 
+      note_val=getnoteval(lparts(ct).token)
+      lparts(ct).part$=str$(note_val) 
+      lparts(ct).token=token_float
+      goto 2102
+    endif
+    lparts(ct).token=isconstant(lparts(ct).part$) : if lparts(ct).token>0 then lparts(ct).part$=str$(lparts(ct).token) : lparts(ct).token=token_integer : goto 2102
+    b1=isnum(lparts(ct).part$) : b2=isint(lparts(ct).part$) : b3=isdec(lparts(ct).part$)
+    if b1 andalso b2 andalso b3 then lparts(ct).token=token_decimal 			: goto 2102 	' pure decimal for line num
+    if b1 andalso b2 andalso (not b3) then lparts(ct).token=token_integer 		: goto 2102 	' integer
+    if b1 andalso (not b2) andalso (not b3) then lparts(ct).token=token_float 		: goto 2102 	' float
+    if isname(lparts(ct).part$) then lparts(ct).token=token_name : goto 2102	
+2102
+    ct-=1
+  endif     
   ct+=1
   expr()
 else
@@ -4122,6 +4155,89 @@ else
 endif    
 end sub
 
+' ------------------ padrx
+
+sub do_padrx
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padrx: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padrx(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padrx(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ padry
+
+sub do_padry
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padry: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padry(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padry(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ padrz
+
+sub do_padrz
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padrz: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padrz(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padrz(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
 ' ------------------ padx
 
 sub do_padx
@@ -5680,7 +5796,6 @@ commands(token_fast_goto)=@do_fast_goto
 commands(token_find_goto)=@do_find_goto
 commands(token_slow_goto)=@do_slow_goto
 commands(fun_converttoint)=@do_nothing
-commands(token_csave)=@test_csave
 commands(token_save)=@do_save
 commands(token_load)=@do_load
 commands(token_pinwrite)=@do_pinwrite
@@ -5806,6 +5921,9 @@ commands(token_restore)=@do_restore
 commands(token_padx)=@do_padx
 commands(token_pady)=@do_pady
 commands(token_padz)=@do_padz
+commands(token_padrx)=@do_padrx
+commands(token_padry)=@do_padry
+commands(token_padrz)=@do_padrz
 commands(token_padh)=@do_padh
 
 
