@@ -239,11 +239,11 @@ const token_put=188
 const token_enter=189	 
 const token_rem=190	
 const token_round=191	
-const token_coginit=192 'todo
+const token_coginit=192  
 const token_on=193	
 const token_delete=194  
 const token_cd=195     
-const token_copy=196    'todo
+const token_copy=196    
 const token_framebuf=197'
 const token_mkdir=198
 const token_restore=199
@@ -412,7 +412,7 @@ dim fortable(maxfor) as for_entry
 dim gosubtable(maxgosub) as gosub_entry
 
 dim sample(255) as ubyte ' for csave
-dim block(1023) as ubyte ' for csave and get/put
+dim block(1023) as ubyte ' for csave and get/put/copy
 dim blockptr as ulong
 dim runptr,runptr2,oldrunptr as ulong
 dim getres(9) as integer ' det  function result  for channel
@@ -880,8 +880,10 @@ lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 
 ' process the case when simple load or save is called without "". This cannot be done earlier, as tokens has to be known                                    					 
  
-if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="lo." orelse lp$="s." orelse lp$="br." orelse lp$="enter" orelse lp$="e.") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
-if (lp$="delete" orelse lp$="mkdir") andalso lparts(addptr+1).token=token_name then lparts(addptr+1).token=token_string
+if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="lo." orelse lp$="s." orelse lp$="br." orelse lp$="enter" orelse lp$="e.") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="delete" orelse lp$="mkdir") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="copy") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="copy") andalso lparts(addptr+3).token=token_name andalso right$(lparts(addptr+3).part$,1)<>"$" then lparts(addptr+3).token=token_string
 
 ' cd needs special treatment..
 
@@ -1537,7 +1539,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_cls      	: compile_nothing()                    	' no params, do nothing, only add a command to the line, but case needs something to do after 
   case token_close     	: err=compile_fun_1p()                    
   case token_color    	: err=compile_fun_1p()  
-
+  case token_copy	: err=compile_fun_2p()
   case token_changefreq	: err=compile_fun_2p()  
   case token_changewave	: err=compile_fun_2p()  
   case token_changevol 	: err=compile_fun_2p()  
@@ -2957,6 +2959,40 @@ sub do_cls
 cls(ink,paper): plot_color=ink
 end sub
 
+
+'-------------------- coginit
+
+function do_coginit_2(cog,addrval,ptra_val as integer) as integer
+
+ asm
+ setq ptra_val
+ coginit cog,addrval wc
+ end asm
+ 
+return cog 
+end function
+
+sub do_coginit
+
+dim numpar,ptra_val,addrval,cog as integer
+dim t1 as expr_result
+' coginit d,s
+ ' setq->ptra
+'params: cog,addr,ptra
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>3 then print "coginit: "; : printerror(39) : return
+t1=pop()
+ptra_val=converttoint(t1)
+t1=pop()
+addrval=converttoint(t1)
+t1=pop()
+cog=converttoint(t1)
+cog=do_coginit_2(cog,addrval,ptra_val)
+t1.result.uresult=cog
+t1.result_type=result_int
+push t1
+end sub
+
 '-------------------- color
 
 sub do_color
@@ -2965,6 +3001,42 @@ dim t1 as expr_result
 
 t1=pop()
 plot_color=t1.result.iresult
+end sub
+
+'-------------------- copy
+
+sub do_copy
+
+dim t1,t2 as expr_result
+dim filename_1,filename_2 as string
+
+t1=pop()
+t2=pop()
+if t2.result_type=result_string2 then 
+  filename_1=convertstring(t2.result.uresult)
+else if t2.result_type=result_string then 
+  filename_1=t2.result.sresult
+else 
+  printerror(15,runheader(0)) : return
+endif
+if t1.result_type=result_string2 then 
+  filename_2=convertstring(t1.result.uresult)
+else if t1.result_type=result_string then 
+  filename_2=t1.result.sresult
+else 
+  printerror(15,runheader(0)) : return
+endif
+
+open filename_1 for input as #9 : err=geterr(): if err<>0 then print "System error - ";err; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_1 : close #9 : return
+open filename_2 for output as #8 : err=geterr(): if err<>0 then print "System error - ";err; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_2  : close #8 : return
+
+do
+  get #9,,block(0),1024,r
+  put #8,,block(0),r
+loop until r<>1024  
+close #8
+close #9
+
 end sub
 
 '-------------------- cos
@@ -5925,6 +5997,8 @@ commands(token_padrx)=@do_padrx
 commands(token_padry)=@do_padry
 commands(token_padrz)=@do_padrz
 commands(token_padh)=@do_padh
+commands(token_copy)=@do_copy
+commands(token_coginit)=@do_coginit
 
 
 end sub
