@@ -30,8 +30,8 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.33"
-const ver=33
+const ver$="P2 Retromachine BASIC version 0.49 --- BETA 1"
+const ver=49
 
 '' ------------------------------- Keyboard constants
 
@@ -1155,7 +1155,7 @@ select case s
   case "pinwrite"    	: return token_pinwrite
   case "play"	     	: return token_play
   case "p."	     	: return token_play
-  case "playsample"	: return token_playsample
+''  case "playsample"	: return token_playsample
   case "plot"        	: return token_plot
   case "pl."        	: return token_plot
   case "poke"		: return token_poke
