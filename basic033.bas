@@ -254,6 +254,7 @@ const token_padh=203
 const token_padrx=204     
 const token_padry=205
 const token_padrz=206
+const token_cogstop=207
 
 
 const token_error=255
@@ -1091,7 +1092,7 @@ select case s
   case "click"	     	: return token_click
   case "close"		: return token_close
   case "cls"         	: return token_cls
-  case "coginit"	: return token_coginit
+  case "cogstop"	: return token_cogstop
   case "color"       	: return token_color
   case "c."       	: return token_color
   case "copy"		: return token_copy
@@ -1223,6 +1224,7 @@ select case s
   case "atn"		: return token_atn
   case "bin$"		: return token_bin
   case "chr$"		: return token_chr
+  case "coginit"	: return token_coginit
   case "cos"		: return token_cos
   case "dpeek"		: return token_dpeek
   case "framebuf"	: return token_framebuf
@@ -1544,6 +1546,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_changewave	: err=compile_fun_2p()  
   case token_changevol 	: err=compile_fun_2p()  
   case token_changepan  : err=compile_fun_2p()  
+  case token_cogstop	: err=compile_fun_1p()
   case token_cursor	: err=compile_fun_1p()
   case token_data	: compile_nothing()
   case token_defenv     : vars,err=compile_fun_varp()   
@@ -2975,22 +2978,34 @@ end function
 sub do_coginit
 
 dim numpar,ptra_val,addrval,cog as integer
+dim tempbuf(4095) as ubyte
 dim t1 as expr_result
-' coginit d,s
- ' setq->ptra
-'params: cog,addr,ptra
 numpar=compiledline(lineptr_e).result.uresult
-if numpar<>3 then print "coginit: "; : printerror(39) : return
+if numpar<2 orelse numpar>3 then print "coginit: "; : printerror(39) : return
 t1=pop()
 ptra_val=converttoint(t1)
 t1=pop()
 addrval=converttoint(t1)
-t1=pop()
-cog=converttoint(t1)
+if numpar=3 then 
+  t1=pop()
+  cog=converttoint(t1)
+else
+  cog=16
+endif
+    
+if addrval>$80000 then psram.read1(varptr(tempbuf(0)),addrval,4096) : addrval=varptr(tempbuf(0))
 cog=do_coginit_2(cog,addrval,ptra_val)
 t1.result.uresult=cog
 t1.result_type=result_int
 push t1
+end sub
+
+'-------------------- cogstop
+
+sub do_cogstop
+dim t1 as expr_result
+t1=pop()
+cpustop(converttoint(t1))
 end sub
 
 '-------------------- color
@@ -4737,12 +4752,14 @@ j=0
 i=numpar-1
 do
   do
+    comma=instr(1,readline,"'") : if comma>0 then readline=left$(readline,comma-1) ' allows comments in data
     comma=instr(1,readline,",")  
       if comma>0  then 
       part$=left$(readline,comma-1): readline=right$(readline,len(readline)-comma)  
      else 
        part$=trim$(readline) : readline=""
      endif
+     
      if part$<>"" then j=j+1
      args(i)=part$  
      i=i-1
@@ -5999,6 +6016,7 @@ commands(token_padrz)=@do_padrz
 commands(token_padh)=@do_padh
 commands(token_copy)=@do_copy
 commands(token_coginit)=@do_coginit
+commands(token_cogstop)=@do_cogstop
 
 
 end sub
