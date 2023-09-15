@@ -30,7 +30,7 @@ dim paula as class using "audio096.spin2"
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.49 --- BETA 1"
+const ver$="P2 Retromachine BASIC version 0.49 beta 1"
 const ver=49
 
 '' ------------------------------- Keyboard constants
@@ -255,6 +255,9 @@ const token_padrx=204
 const token_padry=205
 const token_padrz=206
 const token_cogstop=207
+const token_memlo=207
+const token_memhi=207
+const token_setcolor=207
 
 
 const token_error=255
@@ -1174,6 +1177,7 @@ select case s
   case "return"		: return token_return
   case "run"	     	: return token_run
   case "save"	     	: return token_save
+  case "setcolor"	: return token_setcolor
   case "s."	     	: return token_save
   case "setdelay"	: return token_setdelay 
   case "sd."		: return token_setdelay 
@@ -1242,6 +1246,8 @@ select case s
   case "len"		: return token_len
   case "log"		: return token_log
   case "lpeek"		: return token_lpeek
+  case "memhi"		: return token_memhi
+  case "memlo"		: return token_memlo
   case "mid$"		: return token_mid
   case "mousek"        	: return token_mousek
   case "mousew"        	: return token_mousew
@@ -1605,6 +1611,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_return:	: compile_nothing()
   case token_run      	: vars,err=compile_fun_varp()   
   case token_save    	: vars,err=compile_fun_varp()  
+  case token_setcolor   : err=compile_fun_4p()
   case token_setdelay   : err=compile_fun_2p()
   case token_setenv 	: err=compile_fun_2p()
   case token_setlen   	: err=compile_fun_2p()
