@@ -255,9 +255,10 @@ const token_padrx=204
 const token_padry=205
 const token_padrz=206
 const token_cogstop=207
-const token_memlo=207
-const token_memhi=207
-const token_setcolor=207
+const token_memlo=208
+const token_memtop=209
+const token_setcolor=210
+const token_getcolor=211
 
 
 const token_error=255
@@ -1177,8 +1178,9 @@ select case s
   case "return"		: return token_return
   case "run"	     	: return token_run
   case "save"	     	: return token_save
-  case "setcolor"	: return token_setcolor
   case "s."	     	: return token_save
+  case "setcolor"	: return token_setcolor
+  case "sc"		: return token_setcolor
   case "setdelay"	: return token_setdelay 
   case "sd."		: return token_setdelay 
   case "setenv"		: return token_setenv
@@ -1234,6 +1236,8 @@ select case s
   case "framebuf"	: return token_framebuf
   case "fb."		: return token_framebuf
   case "fre"		: return token_fre
+  case "gc."		: return token_getcolor
+  case "getcolor"	: return token_getcolor
   case "getpixel"     	: return token_getpixel
   case "ge."     	: return token_getpixel
   case "getenvsustain"	: return token_getenvsustain
@@ -1246,7 +1250,7 @@ select case s
   case "len"		: return token_len
   case "log"		: return token_log
   case "lpeek"		: return token_lpeek
-  case "memhi"		: return token_memhi
+  case "memtop"		: return token_memtop
   case "memlo"		: return token_memlo
   case "mid$"		: return token_mid
   case "mousek"        	: return token_mousek
@@ -1611,7 +1615,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_return:	: compile_nothing()
   case token_run      	: vars,err=compile_fun_varp()   
   case token_save    	: vars,err=compile_fun_varp()  
-  case token_setcolor   : err=compile_fun_4p()
+  case token_setcolor   : vars,err=compile_fun_varp()
   case token_setdelay   : err=compile_fun_2p()
   case token_setenv 	: err=compile_fun_2p()
   case token_setlen   	: err=compile_fun_2p()
@@ -3514,6 +3518,21 @@ else
 endif  
 end sub  
 
+'-------------------- getcolor
+
+sub do_getcolor
+
+dim t1 as expr_result
+dim numpar as ulong
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 orelse numpar=0 then print "getcolor "; : printerror(39) : return
+t1=pop()
+t1.result.iresult=(v.getpalettecolor(converttoint(t1)) shr 8) and $FFFFFF
+t1.result_type=result_uint
+push t1  
+end sub
+
 '-------------------- getenvsustain
 
 sub do_getenvsustain
@@ -4000,6 +4019,26 @@ t1=pop() 'value
 t2=pop() 
 a=converttoint(t2) : v=converttoint(t1)
 if a<$80000 then lpoke a,v else pslpoke a,v
+end sub
+
+'-------------------- memlo
+
+sub do_memlo
+
+dim t1 as expr_result
+t1.result.uresult=programptr
+t1.result_type=result_uint
+push t1
+end sub
+
+'-------------------- memtop
+
+sub do_memtop
+
+dim t1 as expr_result
+t1.result.uresult=memtop
+t1.result_type=result_uint
+push t1
 end sub
 
 '-------------------- mid$
@@ -5003,6 +5042,33 @@ if t1.result_type=result_string then
   close #9  
   print "Saved as ";currentdir$+"/"+loadname
 endif  
+end sub
+
+' ------------------ setcolor
+
+sub do_setcolor
+
+dim t1 as expr_result
+dim r,g,b,c,numpar as integer
+
+numpar=compiledline(lineptr_e).result.uresult
+
+if numpar=4 then
+  t1=pop(): b=converttoint(t1)
+  t1=pop(): g=converttoint(t1)
+  t1=pop(): r=converttoint(t1)
+  t1=pop(): c=converttoint(t1)
+else if numpar=2 then
+  t1=pop(): c=converttoint(t1)
+  b=c and 255
+  g=(c shr 8) and 255
+  r=(c shr 16) and 255
+  t1=pop(): c=converttoint(t1)
+else
+  print "setcolor: "; : printerror(39,runheader(0)) : return  
+endif
+v.setcolor(c,r,g,b)
+
 end sub
 
 ' ------------------ setdelay
@@ -6024,6 +6090,10 @@ commands(token_padh)=@do_padh
 commands(token_copy)=@do_copy
 commands(token_coginit)=@do_coginit
 commands(token_cogstop)=@do_cogstop
+commands(token_memlo)=@do_memlo
+commands(token_memtop)=@do_memtop
+commands(token_setcolor)=@do_setcolor
+commands(token_getcolor)=@do_getcolor
 
 
 end sub
