@@ -847,6 +847,7 @@ if (lp$="mode" orelse lp$="m.") then
   if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2"  
   if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3"  
   if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4"  
+  if lparts(addptr+1).part$="amiga" then lparts(addptr+1).part$="5"  
 endif
 
 ' find part types 
@@ -1180,7 +1181,7 @@ select case s
   case "save"	     	: return token_save
   case "s."	     	: return token_save
   case "setcolor"	: return token_setcolor
-  case "sc"		: return token_setcolor
+  case "sc."		: return token_setcolor
   case "setdelay"	: return token_setdelay 
   case "sd."		: return token_setdelay 
   case "setenv"		: return token_setenv
@@ -1243,6 +1244,7 @@ select case s
   case "getenvsustain"	: return token_getenvsustain
   case "getnotevalue"	: return token_getnotevalue
   case "gettime"       	: return token_gettime
+  case "gt."		: return token_gettime
   case "hex$"		: return token_hex
   case "inkey$"		: return token_inkey
   case "int"		: return token_int
@@ -4088,6 +4090,7 @@ select case t1.result.iresult
    case 2: font=0 :ink=181 : keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
    case 3: font=0 :ink=15 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
    case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
+   case 5: font=2 :ink=1 :  keyclick=1  : paper=7 : v.setfontfamily(8) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
 end select
 nostalgic_mode=t1.result.iresult
 free$=decuns$(memtop-programptr)+" BASIC bytes free"

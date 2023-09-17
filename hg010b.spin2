@@ -1189,12 +1189,13 @@ if ((f<$80000) && (t<$80000))
 dat
 
 vga_font       file "vgafont.def"
-'vga_font       file "vgafont.def"
 st_font        file "st4font.def"
-'amiga_font     file "amigafont.def"
 a8_font        file "atari8.fnt"
+a8_font2        file "atari8.fnt"
+amiga_font     file "amigafont.def"
 vga16          long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$80400000,$AAAAAA00,$55555500,$0000FF00,$00FF0000,$00FFFF00,$FF000000,$FF00FF00,$FFFF0000,$FFFFFF00
 ataripalette   file "ataripalettep2.def"
+ataripalette2  file "ataripalettep2.def"
 
 '**********************************************************************************
 '
