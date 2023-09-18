@@ -214,15 +214,7 @@ p405        getword oldls,sample0,#0          ' extract old sample value
             getword oldrs,sample0,#1
      	    getword apan0,volpan0,#1          ' extract vol,pan,skip and freq from longs 
     	    getword avol0,volpan0,#0
-            getword askip0,freqskip0,#1    	    
-            getword afreq0,freqskip0,#0
 
-            alts    cn, #time1                ' compute the time difference between this and previous sample
-            mov     dt0,0-0    
-            sub     dt0,time0
-            
-            altd    cn, #time1                ' add channel period to channel time
-            add     0-0,afreq0  	
             
 '---- envelopes
             
@@ -230,10 +222,7 @@ p405        getword oldls,sample0,#0          ' extract old sample value
     if_z    mov     envs1,##$4000		' if 0, no envelope, load $4000=1 for scas
     if_z    jmp     #p410			' and run away	
 
-            mov     envs1,afreq0
-            mul     envs1,envspd0
-            add     envph0,envs1 
-
+            add     envph0,envspd0 
       	    mov     envhi, envph0		' move phase acc to high part of env pointer
 	    shr     envhi,#6			' leave 10 bits in hi
 	    getword envlo,envhi,#0              ' and 16 bit in lo
@@ -260,9 +249,9 @@ p410        testb   sstart0, #27 wz
     if_z    getrnd  spl
     if_z    jmp     #p406
  
-            add     pointer0,askip0           	' compute the pointer to the next sample       
-            setbyte pointer00,pointer0,#0
-            shr     pointer0,#8
+ 
+ 
+            add     pointer0,freq0          	' compute the pointer to the next sample       
          
             testb   sstart0,#31 wz            
     if_z    shl     pointer0,#1        
@@ -276,9 +265,34 @@ p410        testb   sstart0, #27 wz
             mov     qq,pointer0               	' compute place in the memory from where the sample will be loaded
             add     qq,sstart0            
 
-            cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
-    if_le   rdword  spl,qq                     	' if not, use HUB RAM for samples
-    if_gt   call    #cache_read
+cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
+            
+	    mov     addrhi,qq		
+	    shr     addrhi,#8		        ' get 24 upper bits
+	    alts    cn,#cache1            
+	    cmp	    addrhi,0-0 wz               ' and compare with the cache pointer for the channel
+    if_z    jmp     #p701	    		' if equal, cache hit, read the sample from it
+	
+p702	    altd    cn,#cache1			' cache miss. 
+	    mov     0-0,addrhi                  ' update the pointer
+	    mov     cmd,addrhi			' prepare the mailbox
+	    shl     cmd,#8
+            setnib  cmd, #%1011, #7             ' read burst from the external memory
+            mov     hubaddr,cn                  ' to the channel cache
+            shl     hubaddr,#8                  '
+            add     hubaddr,hubptr 
+            mov     count,#256                  ' 256 bytes
+            setq    #2                          ' write 3 longs
+            wrlong  cmd, mailbox                ' run it
+poll1       rdlong  cmd, mailbox                ' poll mailbox for result
+            tjs     cmd, #poll1                 ' retry until valid 
+            
+	
+p701	    mov     qq,cn			' cache hit
+	    shl     qq,#8			' compute the cache start
+	    add     qq,hubptr
+	    add	    qq,addrlo			' add 8 lower bits to the cache addredd
+            rdword  spl,qq                      ' read a word
          
             testb   sstart0,#31 wz 
     if_nz   shl     spl,#8
@@ -382,54 +396,9 @@ p399        djnz    qq,#p301
 ' else load the cache from PSRAM, update the pointer, then read a sample
 
 
-cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
-            
-	    mov     addrhi,qq		
-	    shr     addrhi,#8		        ' get 24 upper bits
-	    alts    cn,#cache1            
-	    cmp	    addrhi,0-0 wz               ' and compare with the cache pointer for the channel
-    if_z    jmp     #p701	    		' if equal, cache hit, read the sample from it
-	
-p702	    altd    cn,#cache1			' cache miss. 
-	    mov     0-0,addrhi                  ' update the pointer
-	    mov     cmd,addrhi			' prepare the mailbox
-	    shl     cmd,#8
-            setnib  cmd, #%1011, #7             ' read burst from the external memory
-            mov     hubaddr,cn                  ' to the channel cache
-            shl     hubaddr,#8                  '
-            add     hubaddr,hubptr 
-            mov     count,#256                  ' 256 bytes
-            setq    #2                          ' write 3 longs
-            wrlong  cmd, mailbox                ' run it
-poll1       rdlong  cmd, mailbox                ' poll mailbox for result
-            tjs     cmd, #poll1                 ' retry until valid 
-            
-	
-p701	    mov     qq,cn			' cache hit
-	    shl     qq,#8			' compute the cache start
-	    add     qq,hubptr
-	    add	    qq,addrlo			' add 8 lower bits to the cache addredd
-    _ret_   rdword  spl,qq                      ' read a word
+
           
 
-'--------------------------------------------------------------------------
-'------ Interrupt service -------------------------------------------------
-'------ Output the sample, get the next one if exists ---------------------
-'--------------------------------------------------------------------------
-
-isr1        wypin   lsample,#left        '2     The sample has to be outputted every 95 cycles     
-            wypin   rsample,#right       '4
-            cmp     ptrb,front wcz       '6    If the buffer is empty, do nothing 
-    if_ne   rdlut   lsnext,ptrb          '11    else read the sample and its time from LUT
-    if_ne   incmod  ptrb,#511
-    if_ne   getword rsample,lsnext,#1    '13
-    if_ne   getword lsample,lsnext,#0    '15
-    
-            reti1                        '17/19 
-          
-'---------------------------------------------------------------------------
-'-------- End of interrupt -------------------------------------------------
-'---------------------------------------------------------------------------    
 
 
 '---------------------------------------------------------------------------
