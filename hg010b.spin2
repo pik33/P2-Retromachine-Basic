@@ -274,6 +274,11 @@ return cog							' return the driver's cog #
 '                                                                                                             	*
 '****************************************************************************************************************
 
+
+pub restorepalette()
+
+longmove(@ataripalette,@ataripalette2,256)
+
 '---------------------------- initialize a cursor (MSDOS type)
 pub initcursor(color) |i
 
@@ -330,7 +335,7 @@ palette_ptr:=@ataripalette				    	' use 256-colors palettr
 repeat i from 0 to 3
   timings[i]:=timings[i]+hdmibase<<17+ timingsxxt          	' add a streamer config (imm->pins) to horizontal timings 
 clkfreq:=timings[9]					    	' set the clock frequency for the mode
-hubset(timings[10])
+'hubset(timings[10])
 waitms(1)                                                   	' wait for stabilization
 lines:=timings[11]
 t_lines:=lines/16
@@ -1191,7 +1196,7 @@ dat
 vga_font       file "vgafont.def"
 st_font        file "st4font.def"
 a8_font        file "atari8.fnt"
-a8_font2        file "atari8.fnt"
+a8_font2       file "atari8.fnt"
 amiga_font     file "amigafont.def"
 vga16          long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$80400000,$AAAAAA00,$55555500,$0000FF00,$00FF0000,$00FFFF00,$FF000000,$FF00FF00,$FFFF0000,$FFFFFF00
 ataripalette   file "ataripalettep2.def"

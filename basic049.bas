@@ -10,7 +10,7 @@ const HEAPSIZE=96000
 #define PSRAM16
 
 #ifdef PSRAM16
-const _clkfreq = 340500000
+const _clkfreq = 344064000
 dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
 #endif
@@ -259,7 +259,7 @@ const token_memlo=208
 const token_memtop=209
 const token_setcolor=210
 const token_getcolor=211
-
+const token_restorepalette=212
 
 const token_error=255
 const token_end=510
@@ -1176,6 +1176,8 @@ select case s
   case "rem"		: return token_rem
   case "'"		: return token_rem
   case "restore"	: return token_restore
+  case "restorepalette" : return token_restorepalette
+  case "rp."		: return token_restorepalette
   case "return"		: return token_return
   case "run"	     	: return token_run
   case "save"	     	: return token_save
@@ -1614,6 +1616,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_release	: err=compile_fun_1p()
   case token_rem	: compile_nothing() : goto 450
   case token_restore	: compile_nothing()
+  case token_restorepalette :compile_nothing()
   case token_return:	: compile_nothing()
   case token_run      	: vars,err=compile_fun_varp()   
   case token_save    	: vars,err=compile_fun_varp()  
@@ -4890,6 +4893,11 @@ sub do_restore()
 dataptr=programstart : readline="" ' reset the data pointer
 end sub
 
+'------------------- restorepalette
+
+sub do_restorepalette()
+v.restorepalette()
+end sub
 '------------------- return
 
 sub do_return()
@@ -6097,6 +6105,7 @@ commands(token_memlo)=@do_memlo
 commands(token_memtop)=@do_memtop
 commands(token_setcolor)=@do_setcolor
 commands(token_getcolor)=@do_getcolor
+commands(token_restorepalette)=@do_restorepalette
 
 
 end sub
