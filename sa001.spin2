@@ -186,9 +186,9 @@ audio       org     0
 
             mov     ptrb,#0              ' A tail pointer for the buffer
             wrpin   dac2,#left           ' PWM DAC at 264600=6*44100
-            wxpin   ##5000000*256,#left        ' Set initial DACs sample rate. It is now controlled via a register by the main program
+            wxpin   ##6*5256,#left  ' Set initial DACs sample rate. It is now controlled via a register by the main program
             wrpin   dac2,#right
-            wxpin   ##5000000*256,#right    
+            wxpin   ##5*256,#right    
             dirh    #left addpins 1
             setse1  #%001<<6 + left      ' Set the event - DAC empty
             mov     cn,#0
