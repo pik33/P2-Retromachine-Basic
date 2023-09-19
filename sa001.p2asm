@@ -1,0 +1,213 @@
+con
+	_clkfreq = 20000000
+	_clkmode = 16779595
+' 
+' clkfreq=340000000
+	clkfreq = 340000000
+' left= 14
+	left = 14
+' right=15
+	right = 15
+' 
+' c4=262
+	c4 = 262
+' d4=294
+	d4 = 294
+' e4=330
+	e4 = 330
+' f4=349
+	f4 = 349
+' g4=392
+	g4 = 392
+' a4=440
+	a4 = 440
+' h4=494
+	h4 = 494
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 20000000
+	long	0 ' clock mode: will default to $100094b
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, ptr_stackspace_
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779592
+	waitx	##200000
+	mov	pa, ##16779595
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##20000000, #20
+	jmp	#skip_clock_set_
+	orgf	128
+skip_clock_set_
+	call	#_test
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra++
+	rdlong	result1, ptra++
+	setq	#3
+	rdlong	arg01, ptra
+	sub	ptra, #4
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    mov	fcache_tmpb_,ptrb
+    pop	ptrb
+    altd	pa,ret_instr_
+    mov	 0-0, ret_instr_
+    setq	pa
+    rdlong	$0, ptrb++
+    push	ptrb
+    mov ptrb,fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
+ret_instr_
+    _ret_ cmp inb,#0
+fcache_tmpb_
+    long 0
+fcache_load_ptr_
+    long FCACHE_LOAD_
+builtin_bytefill_
+        shr	arg03, #1 wc
+ if_c   wrbyte	arg02, arg01
+ if_c   add	arg01, #1
+        movbyts	arg02, #0
+builtin_wordfill_
+        shr	arg03, #1 wc
+ if_c   wrword	arg02, arg01
+ if_c   add	arg01, #2
+        setword	arg02, arg02, #1
+builtin_longfill_
+        wrfast	#0,arg01
+        cmp	arg03, #0 wz
+ if_nz  rep	#1, arg03
+ if_nz  wflong	arg02
+        ret
+
+objptr
+	long	@objmem
+ptr_stackspace_
+	long	@stackspace
+result1
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' 
+' pub test()
+_test
+' 
+' 
+' play(2,0,$1000,16384,1024,0)  
+	mov	arg01, #2
+	mov	arg02, #0
+	decod	arg03, #12
+	decod	arg04, #14
+	decod	arg05, #10
+	mov	arg06, #0
+	call	#_play
+_test_ret
+	ret
+
+' 
+' ' a simple play procedure to not poke everything. 
+' 
+' pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
+_play
+' 
+' base2:=@channel1[0]+64*channel
+	add	objptr, #12
+	mov	_var01, objptr
+	shl	arg01, #6
+	add	_var01, arg01
+' 
+' 
+' long[base2+12]:= len
+	mov	arg01, _var01
+	add	arg01, #12
+	wrlong	arg05, arg01
+' if loop >=0 
+	cmps	arg06, #0 wc
+'   long[base2+16]:= loop
+	sub	objptr, #12
+ if_ae	mov	arg01, _var01
+ if_ae	add	arg01, #16
+ if_ae	wrlong	arg06, arg01
+' else
+'   long[base2+16]:= len+2
+ if_b	add	arg05, #2
+ if_b	mov	arg06, _var01
+ if_b	add	arg06, #16
+ if_b	wrlong	arg05, arg06
+' word[base2+20]:=vol
+	mov	arg01, _var01
+	add	arg01, #20
+	wrword	arg04, arg01
+' long[base2+24]:= splfreq
+	mov	arg01, _var01
+	add	arg01, #24
+	wrlong	arg03, arg01
+' 
+' long[base2+28]:=$40000000    
+	mov	arg01, _var01
+	add	arg01, #28
+	wrlong	##1073741824, arg01
+' long[base2+32]:=0    
+	mov	arg01, _var01
+	add	arg01, #32
+	wrlong	#0, arg01
+' long[base2+36]:=0    
+	mov	arg01, _var01
+	add	arg01, #36
+	wrlong	#0, arg01
+' long[base2+40]:=0    
+	mov	arg01, _var01
+	add	arg01, #40
+	wrlong	#0, arg01
+' long[base2+44]:=0    
+	mov	arg01, _var01
+	add	arg01, #44
+	wrlong	#0, arg01
+' long[base2+8]:=sample+$C0000000     
+	add	arg02, ##-1073741824
+	add	_var01, #8
+	wrlong	arg02, _var01
+_play_ret
+	ret
+hubexit
+	jmp	#cogexit
+objmem
+	long	0[131]
+stackspace
+	long	0[1]
+	org	COG_BSS_START
+_var01
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+arg05
+	res	1
+arg06
+	res	1
+	fit	480

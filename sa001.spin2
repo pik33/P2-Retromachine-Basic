@@ -6,7 +6,7 @@
 '-------------------------------------------------------------------
 con
 
-
+clkfreq=340000000
 left= 14
 right=15
 
@@ -63,6 +63,13 @@ long channel6[16]
 long channel7[16]
 long channel8[16]
 
+obj psram: "psram.spin2"
+
+
+pub test()
+
+
+play(2,0,$1000,16384,1024,0)  
 
 '--------------------------------------------------------------
 '---------- Init the variables, start the cog. ----------------
@@ -112,8 +119,8 @@ if loop >=0
 else
   long[base2+16]:= len+2
 word[base2+20]:=vol
-word[base2+24]:= 3546895/splfreq 
-word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+long[base2+24]:= splfreq
+
 long[base2+28]:=$40000000    
 long[base2+32]:=0    
 long[base2+36]:=0    
@@ -179,9 +186,9 @@ audio       org     0
 
             mov     ptrb,#0              ' A tail pointer for the buffer
             wrpin   dac2,#left           ' PWM DAC at 264600=6*44100
-            wxpin   ##5*256,#left        ' Set initial DACs sample rate. It is now controlled via a register by the main program
+            wxpin   ##5000000*256,#left        ' Set initial DACs sample rate. It is now controlled via a register by the main program
             wrpin   dac2,#right
-            wxpin   ###5*256,#right    
+            wxpin   ##5000000*256,#right    
             dirh    #left addpins 1
             setse1  #%001<<6 + left      ' Set the event - DAC empty
             mov     cn,#0
@@ -190,8 +197,13 @@ audio       org     0
 '----------------- The main loop -------------------------------------------------
 '---------------------------------------------------------------------------------
 
-loop       incmod cn,#7
-         
+loop       incmod cn,#7 wcz
+
+
+	   if_z   waitx ##34000000 ' waitse1
+	   if_z wypin oldls,#left
+           if_z wypin oldrs,#right
+           
 '----------------------------------------------------------------------------------
 '------------- Compute channel samples --------------------------------------------
 '----------------------------------------------------------------------------------
@@ -252,7 +264,9 @@ p410        testb   sstart0, #27 wz
  
  
             add     pointer0,freq0          	' compute the pointer to the next sample       
-         
+         	   cmp cn,#2 wz
+         if_z	   wrlong pointer0, #$30
+         	   
             testb   sstart0,#31 wz            
     if_z    shl     pointer0,#1        
             testb   sstart0,#28 wz            
@@ -263,7 +277,11 @@ p410        testb   sstart0, #27 wz
     if_ge   add     pointer0,lstart0       
             
             mov     qq,pointer0               	' compute place in the memory from where the sample will be loaded
+            shr     qq,#12  			' 20:12 pointer
             add     qq,sstart0            
+
+  jmp #p701
+
 
 cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
             
@@ -296,11 +314,11 @@ p701	    mov     qq,cn			' cache hit
          
             testb   sstart0,#31 wz 
     if_nz   shl     spl,#8
-    if_nz   shl     pointer0,#8
-    if_z    shl     pointer0,#7
+
+    if_z    shr     pointer0,#1
             testb   sstart0,#28 wz            
     if_z    shr     pointer0,#1    
-	    setbyte pointer0,pointer00,#0       
+	   
 
 
 p406        scas    spl,envs1			' apply envelope
@@ -338,50 +356,23 @@ p403        setq    #1                         	' write new pointer and sample v
             wrlong  envph0,ptra[8]
             sub     ptra, channeladd         	' reset the pointer to channel parameters
                       
-            cmp     oldt0,time0 wz           ' If more than 1 sample is computed at the same time, write only the last result
-    if_z    decmod  front, #511          
-         
             getword oldls,ls,#0              ' reuse oldls variable to convert the sample to unsigned
  	    getword oldrs,rs,#0              ' getword instead of mov makes the upper bits=0
             bitnot  oldls,#15                ' convert to unsigned. TODO: compute and apply the gain for samples to not exceed 16 bit range
             bitnot  oldrs,#15		     ' warning: no filter here (yet) but before applying any, remember to and sample values with $FFFF and use signed samples 
-	    
-		    
-            setword oldrs,oldls,#1           ' Pack L and R to one long    		
-            mov     oldsample, newsample     ' The new computed sample will be outputted in the next loop, now we have to fill the buffer with the old one
-            mov     newsample, oldrs       
-
-            mov     oldt0,time0              ' update global time
-            add     time0,dt0    
-                                     
-            cmp     dt0,#0 wz                ' now push dt0 samples to the buffer
-    if_z    jmp     #loop1
-            mov     qq,dt0
-
-    
-            
-p301        rol     dropper,#1 wc
-    if_nc   jmp     #p399
-p398        alts    ptrb,#511                ' checking if the buffer is full - Wuerfel_21's magic stuff
-            cmpr    front, #0-0 wcz
-    if_e    jmp     #p398   
 		
-	    cmp     scbase,#0 wz
-    if_z    jmp     #p302	   
-  
-            incmod  scope,#63 wc            ' save every 127th sample to the scope buffer
-    if_c    mov     scptr2,scptr
-    if_c    shl     scptr2,#2
-    if_c    add     scptr2,scbase     
-            wrlong  scptr2,#$60
-    if_c    wrlong  oldsample,scptr2
-    if_c    incmod  scptr,##639
-			    
-p302        wrlut   oldsample, front        ' if there is a free slot, put the sample into the buffer
-            incmod  front, ##511
-p399        djnz    qq,#p301
-            
-            jmp     #loop            'loop
+'	    cmp     scbase,#0 wz
+'    if_z    jmp     #p302	   
+'  
+'            incmod  scope,#63 wc            ' save every 127th sample to the scope buffer
+'    if_c    mov     scptr2,scptr
+'    if_c    shl     scptr2,#2
+'    if_c    add     scptr2,scbase     
+'            wrlong  scptr2,#$60
+'    if_c    wrlong  oldsample,scptr2
+'    if_c    incmod  scptr,##639
+
+p302        jmp     #loop            'loop
 
 '----------------------------------------------------------------------------------
 '------------- This is the end of the main loop -----------------------------------
@@ -448,7 +439,7 @@ sstart0     long 0     ' start pointer and type at bit 31
 lstart0     long 0
 lend0       long 0
 volpan0     long 0
-freqskip0   long 0
+freq0       long 0
 command0    long 0
 envph0	    long 0
 envptr0	    long 0
@@ -524,4 +515,4 @@ dropper long %10010010_10010010_10010010_10010010
 '
 dat 
 null  			long 	0,0           ' for channel reset
-'sinewave 		file 	"sinus.s2"    ' for testing
+sinewave 		file 	"sinus.s2"    ' for testing

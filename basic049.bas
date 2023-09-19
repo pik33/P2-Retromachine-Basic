@@ -24,7 +24,8 @@ dim psram as class using "psram.spin2"
 '#endif
 
 dim kbm as class using "usbnew.spin2"
-dim paula as class using "audio096.spin2"
+dim audio as class using "audio096.spin2"
+'dim audio as class using "sa001.spin2"
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Constants --------------------------------------------
@@ -454,7 +455,7 @@ dim readline as string
 
 startpsram
 startvideo
-audiocog,base=paula.start(mbox,0,$7F700)
+audiocog,base=audio.start(mbox,0,$7F700)
 waitms(50)
 dpoke base+20,16384
 usbcog=kbm.start()
@@ -521,7 +522,7 @@ waitvbl
 
 let key=kbm.get_key() 
 let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-if key>0 andalso key<4 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): paula.stop(7)
+if key>0 andalso key<4 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): audio.stop(7)
 if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
 if key>$80000000 then rptcnt=0 : rpt=0
 if key=0 andalso rpt=1 then rptcnt+=1
@@ -530,7 +531,7 @@ if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 '' there is a key pressed and it needs to be processed
 
 if key3<>0 then
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
+  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
   let key4=scantochar(key3)          
   if leds and 2 = 2 then 						' caps lock
     if key4>96 andalso key4<123 then                 
@@ -551,7 +552,7 @@ if key3<>0 then
     endif
     v.putchar(key4)
   endif  
-  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then paula.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): paula.stop(7) 'end of line reached
+  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): audio.stop(7) 'end of line reached
  
   if key4=key_enter then 						' get the line from the  screen and return it
     line$="" 
@@ -568,7 +569,7 @@ if key3<>0 then
   
   key4=key3 and 255
   
-  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then paula.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): paula.stop(0)  	' tab
+  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then audio.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): audio.stop(0)  	' tab
   if key4=77 then i=127 : do: 															' end
     if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then 
       if i<127 then v.setcursorx(2*i+2) else v.setcursorx(254)
@@ -2592,7 +2593,7 @@ if t1.result_type<>result_string then name$=loadname else name$=t1.result.sresul
 
 for i=0 to 255: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
 next i
-paula.play8(7,varptr(sample),8000,16384,256,0)
+audio.play8(7,varptr(sample),8000,16384,256,0)
 waitms 3000 
 
 blockptr=0
@@ -2715,10 +2716,10 @@ t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
 sample(0)=127: sample(1)=128
-paula.play8(7,varptr(sample),freq*2,16384,2,0)
+audio.play8(7,varptr(sample),freq*2,16384,2,0)
 push t2
 do_waitms
-paula.stop(7)
+audio.stop(7)
 end sub
 
 '-------------------- blit
@@ -3738,7 +3739,7 @@ sub do_inkey
 dim t1 as expr_result
 let key=kbm.get_key() 
 if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then  
-  if keyclick=1 then paula.play(7,keyclick_spl,44100,4096,spl_len) 
+  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len) 
  endif
 if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then
   if leds and 2 = 2 then 
@@ -6235,7 +6236,7 @@ mbox=psram.getMailbox(0)
 end sub
 
 sub startaudio
-audiocog,base=paula.start(mbox,0,$7F700)
+audiocog,base=audio.start(mbox,0,$7F700)
 end sub 
 
 sub stopaudio

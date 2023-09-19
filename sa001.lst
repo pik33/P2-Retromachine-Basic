@@ -1,0 +1,233 @@
+00000                 | 
+00000                 | #line 1 "D:/programowanie/P2-Retromachine-Basic/sa001.p2asm"
+00000                 | con
+00000                 | 	_clkfreq = 20000000
+00000                 | 	_clkmode = 16779595
+00000                 | ' 
+00000                 | ' clkfreq=340000000
+00000                 | 	clkfreq = 340000000
+00000                 | ' left= 14
+00000                 | 	left = 14
+00000                 | ' right=15
+00000                 | 	right = 15
+00000                 | ' 
+00000                 | ' c4=262
+00000                 | 	c4 = 262
+00000                 | ' d4=294
+00000                 | 	d4 = 294
+00000                 | ' e4=330
+00000                 | 	e4 = 330
+00000                 | ' f4=349
+00000                 | 	f4 = 349
+00000                 | ' g4=392
+00000                 | 	g4 = 392
+00000                 | ' a4=440
+00000                 | 	a4 = 440
+00000                 | ' h4=494
+00000                 | 	h4 = 494
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 20000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $100094b
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 4E 05 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 0C 02 90 5D |  if_ne	jmp	#spininit
+0040c 002 A6 F0 03 F6 | 	mov	ptra, ptr_stackspace_
+00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
+00414 004 EC 01 90 5D |  if_ne	jmp	#skip_clock_set_
+00418 005 00 00 64 FD | 	hubset	#0
+0041c 006 04 80 80 FF 
+00420 007 00 90 66 FD | 	hubset	##16779592
+00424 008 86 01 80 FF 
+00428 009 1F 80 66 FD | 	waitx	##200000
+0042c 00a 04 80 00 FF 
+00430 00b 4B ED 07 F6 | 	mov	pa, ##16779595
+00434 00c 00 EC 63 FD | 	hubset	pa
+00438 00d 18 EC 67 FC | 	wrlong	pa, #24
+0043c 00e 96 98 80 FF 
+00440 00f 14 00 6E FC | 	wrlong	##20000000, #20
+00444 010 BC 01 90 FD | 	jmp	#skip_clock_set_
+00448 011 00 00 00 00 
+      ...             
+005fc 07e 00 00 00 00 
+00600 07f 00 00 00 00 | 	orgf	128
+00604 080             | skip_clock_set_
+00604 080 A4 06 A0 FD | 	call	#_test
+00608 081             | cogexit
+00608 081 38 01 80 FF 
+0060c 082 1F 00 66 FD | 	waitx	##160000
+00610 083 01 52 61 FD | 	cogid	arg01
+00614 084 03 52 61 FD | 	cogstop	arg01
+00618 085             | spininit
+00618 085 61 4B 05 FB | 	rdlong	objptr, ptra++
+0061c 086 61 4F 05 FB | 	rdlong	result1, ptra++
+00620 087 28 06 64 FD | 	setq	#3
+00624 088 00 53 05 FB | 	rdlong	arg01, ptra
+00628 089 04 F0 87 F1 | 	sub	ptra, #4
+0062c 08a 2D 4E 61 FD | 	call	result1
+00630 08b D4 FF 9F FD | 	jmp	#cogexit
+00634 08c             | FCACHE_LOAD_
+00634 08c F9 2D 01 F6 |     mov	fcache_tmpb_,ptrb
+00638 08d 2B F2 63 FD |     pop	ptrb
+0063c 08e 95 EC 8B F9 |     altd	pa,ret_instr_
+00640 08f 95 00 00 F6 |     mov	 0-0, ret_instr_
+00644 090 28 EC 63 FD |     setq	pa
+00648 091 E1 01 04 FB |     rdlong	$0, ptrb++
+0064c 092 2A F2 63 FD |     push	ptrb
+00650 093 96 F2 03 F6 |     mov ptrb,fcache_tmpb_
+00654 094 00 00 80 FD |     jmp	#\$0 ' jmp to cache
+00658 095             | ret_instr_
+00658 095 00 FE 07 02 |     _ret_ cmp inb,#0
+0065c 096             | fcache_tmpb_
+0065c 096 00 00 00 00 |     long 0
+00660 097             | fcache_load_ptr_
+00660 097 8C 00 00 00 |     long FCACHE_LOAD_
+00664 098             | builtin_bytefill_
+00664 098 01 56 55 F0 |         shr	arg03, #1 wc
+00668 099 A9 54 41 CC |  if_c   wrbyte	arg02, arg01
+0066c 09a 01 52 05 C1 |  if_c   add	arg01, #1
+00670 09b 00 54 FD F9 |         movbyts	arg02, #0
+00674 09c             | builtin_wordfill_
+00674 09c 01 56 55 F0 |         shr	arg03, #1 wc
+00678 09d A9 54 51 CC |  if_c   wrword	arg02, arg01
+0067c 09e 02 52 05 C1 |  if_c   add	arg01, #2
+00680 09f AA 54 29 F9 |         setword	arg02, arg02, #1
+00684 0a0             | builtin_longfill_
+00684 0a0 A9 00 88 FC |         wrfast	#0,arg01
+00688 0a1 00 56 0D F2 |         cmp	arg03, #0 wz
+0068c 0a2 AB 02 D8 5C |  if_nz  rep	#1, arg03
+00690 0a3 17 54 61 5D |  if_nz  wflong	arg02
+00694 0a4 2D 00 64 FD |         ret
+00698 0a5             | 
+00698 0a5             | objptr
+00698 0a5 74 07 00 00 | 	long	@objmem
+0069c 0a6             | ptr_stackspace_
+0069c 0a6 80 09 00 00 | 	long	@stackspace
+006a0 0a7             | result1
+006a0 0a7 00 00 00 00 | 	long	0
+006a4 0a8             | COG_BSS_START
+006a4 0a8             | 	fit	480
+006a4                 | 	orgh
+006a4                 | hubentry
+006a4                 | 
+006a4                 | ' 
+006a4                 | ' 
+006a4                 | ' pub test()
+006a4                 | _test
+006a4                 | ' 
+006a4                 | ' 
+006a4                 | ' play(2,0,$1000,16384,1024,0)  
+006a4     02 52 05 F6 | 	mov	arg01, #2
+006a8     00 54 05 F6 | 	mov	arg02, #0
+006ac     0C 56 C5 F9 | 	decod	arg03, #12
+006b0     0E 58 C5 F9 | 	decod	arg04, #14
+006b4     0A 5A C5 F9 | 	decod	arg05, #10
+006b8     00 5C 05 F6 | 	mov	arg06, #0
+006bc     04 00 B0 FD | 	call	#_play
+006c0                 | _test_ret
+006c0     2D 00 64 FD | 	ret
+006c4                 | 
+006c4                 | ' 
+006c4                 | ' ' a simple play procedure to not poke everything. 
+006c4                 | ' 
+006c4                 | ' pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
+006c4                 | _play
+006c4                 | ' 
+006c4                 | ' base2:=@channel1[0]+64*channel
+006c4     0C 4A 05 F1 | 	add	objptr, #12
+006c8     A5 50 01 F6 | 	mov	_var01, objptr
+006cc     06 52 65 F0 | 	shl	arg01, #6
+006d0     A9 50 01 F1 | 	add	_var01, arg01
+006d4                 | ' 
+006d4                 | ' 
+006d4                 | ' long[base2+12]:= len
+006d4     A8 52 01 F6 | 	mov	arg01, _var01
+006d8     0C 52 05 F1 | 	add	arg01, #12
+006dc     A9 5A 61 FC | 	wrlong	arg05, arg01
+006e0                 | ' if loop >=0 
+006e0     00 5C 55 F2 | 	cmps	arg06, #0 wc
+006e4                 | '   long[base2+16]:= loop
+006e4     0C 4A 85 F1 | 	sub	objptr, #12
+006e8     A8 52 01 36 |  if_ae	mov	arg01, _var01
+006ec     10 52 05 31 |  if_ae	add	arg01, #16
+006f0     A9 5C 61 3C |  if_ae	wrlong	arg06, arg01
+006f4                 | ' else
+006f4                 | '   long[base2+16]:= len+2
+006f4     02 5A 05 C1 |  if_b	add	arg05, #2
+006f8     A8 5C 01 C6 |  if_b	mov	arg06, _var01
+006fc     10 5C 05 C1 |  if_b	add	arg06, #16
+00700     AE 5A 61 CC |  if_b	wrlong	arg05, arg06
+00704                 | ' word[base2+20]:=vol
+00704     A8 52 01 F6 | 	mov	arg01, _var01
+00708     14 52 05 F1 | 	add	arg01, #20
+0070c     A9 58 51 FC | 	wrword	arg04, arg01
+00710                 | ' long[base2+24]:= splfreq
+00710     A8 52 01 F6 | 	mov	arg01, _var01
+00714     18 52 05 F1 | 	add	arg01, #24
+00718     A9 56 61 FC | 	wrlong	arg03, arg01
+0071c                 | ' 
+0071c                 | ' long[base2+28]:=$40000000    
+0071c     A8 52 01 F6 | 	mov	arg01, _var01
+00720     1C 52 05 F1 | 	add	arg01, #28
+00724     00 00 A0 FF 
+00728     A9 00 68 FC | 	wrlong	##1073741824, arg01
+0072c                 | ' long[base2+32]:=0    
+0072c     A8 52 01 F6 | 	mov	arg01, _var01
+00730     20 52 05 F1 | 	add	arg01, #32
+00734     A9 00 68 FC | 	wrlong	#0, arg01
+00738                 | ' long[base2+36]:=0    
+00738     A8 52 01 F6 | 	mov	arg01, _var01
+0073c     24 52 05 F1 | 	add	arg01, #36
+00740     A9 00 68 FC | 	wrlong	#0, arg01
+00744                 | ' long[base2+40]:=0    
+00744     A8 52 01 F6 | 	mov	arg01, _var01
+00748     28 52 05 F1 | 	add	arg01, #40
+0074c     A9 00 68 FC | 	wrlong	#0, arg01
+00750                 | ' long[base2+44]:=0    
+00750     A8 52 01 F6 | 	mov	arg01, _var01
+00754     2C 52 05 F1 | 	add	arg01, #44
+00758     A9 00 68 FC | 	wrlong	#0, arg01
+0075c                 | ' long[base2+8]:=sample+$C0000000     
+0075c     00 00 60 FF 
+00760     00 54 05 F1 | 	add	arg02, ##-1073741824
+00764     08 50 05 F1 | 	add	_var01, #8
+00768     A8 54 61 FC | 	wrlong	arg02, _var01
+0076c                 | _play_ret
+0076c     2D 00 64 FD | 	ret
+00770                 | hubexit
+00770     81 00 80 FD | 	jmp	#cogexit
+00774                 | objmem
+00774     00 00 00 00 
+      ...             
+00978     00 00 00 00 
+0097c     00 00 00 00 | 	long	0[131]
+00980                 | stackspace
+00980     00 00 00 00 | 	long	0[1]
+00984 0a8             | 	org	COG_BSS_START
+00984 0a8             | _var01
+00984 0a8             | 	res	1
+00984 0a9             | arg01
+00984 0a9             | 	res	1
+00984 0aa             | arg02
+00984 0aa             | 	res	1
+00984 0ab             | arg03
+00984 0ab             | 	res	1
+00984 0ac             | arg04
+00984 0ac             | 	res	1
+00984 0ad             | arg05
+00984 0ad             | 	res	1
+00984 0ae             | arg06
+00984 0ae             | 	res	1
+00984 0af             | 	fit	480
+00984 0af             | 
