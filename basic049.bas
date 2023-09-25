@@ -3,6 +3,13 @@
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl 
 '-------------------------------------------------------------------
+'memory map
+'7FF00 - PSRAM mboxes
+'7FC00..7FF00 768 bytes free - sys variables? (now unused)
+'7EC00..7FBFF 4k buffer for a video driver
+'7E800..7EBFF 1k buffer for video driver blit
+'7E000..7E7FF 2k audio cache
+
 #include "dir.bi"
 
 const HEAPSIZE=96000
@@ -261,6 +268,8 @@ const token_memtop=209
 const token_setcolor=210
 const token_getcolor=211
 const token_restorepalette=212
+const token_pads=213
+const token_padw=214
 
 const token_error=255
 const token_end=510
@@ -432,7 +441,7 @@ dim keyclick as integer
 dim housekeeper_cog as integer
 dim housekeeper_stack as integer(128)
 dim mousex,mousey,mousek, mousew as ulong
-dim padx,pady,padz,padh,padrx,padry,padrz as integer(6)
+dim padx,pady,padz,padh,padrx,padry,padrz,pads,padw as integer(6)
 dim stick(6) as ulong
 dim strig(6) as ulong
 dim sprite(15) as ubyte pointer
@@ -449,13 +458,15 @@ dim do_insert as integer
 dim cy,cx as integer
 dim inload,err as integer
 dim readline as string
+dim realfreq as single
+
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
 
 startpsram
 startvideo
-audiocog,base=audio.start(mbox,0,$7F700)
+audiocog,base=audio.start(mbox,0,$7E000)
 waitms(50)
 dpoke base+20,16384
 usbcog=kbm.start()
@@ -648,7 +659,7 @@ end sub
 
 sub gethdi
 
-dim  dummy,i,j,x,y,z,h,rx,ry,rz as ulong
+dim  dummy,i,j,x,y,z,h,rx,ry,rz,s,w as ulong
 
 mousex,mousey=kbm.mouse_xy()
 dummy,mousew=kbm.mouse_scroll()
@@ -658,8 +669,10 @@ for j=0 to 6
   if kbm.hidpad_id(j)>0 then
     x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1) : z=kbm.hidpad_axis(j,2) : h=kbm.hidpad_hat(j,0)
     rx=kbm.hidpad_axis(j,3) : ry=kbm.hidpad_axis(j,4) : rz=kbm.hidpad_axis(j,5) 
+    s=kbm.hidpad_axis(j,6) : w=kbm.hidpad_axis(j,7)  
     padx(i)=x: pady(i)=y: padz(i)=z :padh(i)=h 
     padrx(i)=rx: padry(i)=ry: padrz(i)=rz  
+    pads(i)=s: padw(i)=w 
     x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
     strig(i)=kbm.hidpad_buttons(j) 
     i=i+1
@@ -1262,6 +1275,8 @@ select case s
   case "mousew"        	: return token_mousew
   case "mousex"        	: return token_mousex
   case "mousey"        	: return token_mousey
+  case "pads"		: return token_pads
+  case "padw"		: return token_padw
   case "padx"		: return token_padx
   case "pady"		: return token_pady
   case "padz"		: return token_padz
@@ -4378,6 +4393,63 @@ else
   printerror(41) 
 endif    
 end sub
+
+' ------------------ pads
+
+sub do_pads
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "pads: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+pads(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+pads(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
+' ------------------ padw
+
+sub do_padw
+
+dim t1 as expr_result
+dim numpar as ulong
+dim fpad as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar>1 then print "padw: "; : printerror(39) : return
+if numpar=0 then 
+  fpad=(1.0/65536.0)+padw(0)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+  t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return
+endif
+t1=pop()
+if t1.result_type=result_int orelse t1.result_type=result_uint then  
+  q=t1.result.uresult
+  if q<7 then 
+    fpad=(1.0/65536.0)+padw(q)/32767.0 : if abs(fpad) < 0.001 then fpad=0
+    t1.result.fresult=fpad: t1.result_type=result_float : push t1 : return 
+  else 
+     printerror(41) : return
+  endif
+else
+  printerror(41) 
+endif    
+end sub
+
 ' ------------------ padx
 
 sub do_padx
@@ -4592,9 +4664,10 @@ if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= 
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
 
 lfreq=int(log(freq)/log(2))
-skip=round(2^(lfreq+5))
+skip=round(2^(lfreq+6))
 if skip>32768 then i=skip/32768: skip=32768 else i=1
-period=round((3546895/freq)/(i*(2^(13-lfreq))))
+period=round((3546895/freq)/(i*(2^(12-lfreq))))
+realfreq=(3546895.0/period)*(skip/(256.0*1024.0)) 
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
@@ -6098,7 +6171,8 @@ commands(token_padz)=@do_padz
 commands(token_padrx)=@do_padrx
 commands(token_padry)=@do_padry
 commands(token_padrz)=@do_padrz
-commands(token_padh)=@do_padh
+commands(token_padw)=@do_padw
+commands(token_pads)=@do_pads
 commands(token_copy)=@do_copy
 commands(token_coginit)=@do_coginit
 commands(token_cogstop)=@do_cogstop

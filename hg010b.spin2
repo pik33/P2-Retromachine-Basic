@@ -982,8 +982,8 @@ crlf
 pub scrollup(start=0, end=600 , amount=16) | i
 	
 repeat i from 0 to 583 
-  ram.read1($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
-  ram.write($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
+  ram.read1($7E800, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
+  ram.write($7E800, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
 
 repeat i from 584 to 599
    fastline(0,1023,i,write_background)   
@@ -993,8 +993,8 @@ repeat i from 584 to 599
 pub scrollup2(start=0, end=600 , amount=16) | i
 	
 repeat i from 4 to 579 
-  ram.read1($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
-  ram.write($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
+  ram.read1($7E800, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
+  ram.write($7E800, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
 
 repeat i from 580 to 599
    fastline(0,1023,i,write_background)   
@@ -1002,8 +1002,8 @@ repeat i from 0 to 3
    fastline(0,1023,i,write_background)      
 
 repeat i from 0 to 35
-  ram.read1($80000-4096-1024-s_debug, textbuf_ptr+(i+1)*timings[7], timings[7])
-  ram.write($80000-4096-1024-s_debug, textbuf_ptr+i*timings[7], timings[7])
+  ram.read1($7E800, textbuf_ptr+(i+1)*timings[7], timings[7])
+  ram.write($7E800, textbuf_ptr+i*timings[7], timings[7])
 repeat i from 0 to timings[7]-1
   ram.fill(textbuf_ptr+(36*timings[7]+i),32,1,0,1) 
  
@@ -1012,15 +1012,15 @@ repeat i from 0 to timings[7]-1
 pub scrolldown(start=0) | i
 
 repeat i from 579 to (start*16)+4
-  ram.read1($80000-4096-1024-s_debug, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
-  ram.write($80000-4096-1024-s_debug, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
+  ram.read1($7E800, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
+  ram.write($7E800, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
 
 repeat i from (start*16)+4 to (start*16)+19
    fastline(0,1023,i,write_background)    
    
 repeat i from 35 to start
-  ram.read1($80000-4096-1024-s_debug, textbuf_ptr+(i*128), 128)
-  ram.write($80000-4096-1024-s_debug, textbuf_ptr+(i+1)*128,128)
+  ram.read1($7E800, textbuf_ptr+(i*128), 128)
+  ram.write($7E800, textbuf_ptr+(i+1)*128,128)
 repeat i from 0 to 127
   ram.fill((textbuf_ptr+start*128+i),32,1,0,1)      
 
@@ -1158,17 +1158,18 @@ if ((f>=$80000) && (t>=$80000)) ' todo: check if the fields overlap and reorder 
     x1a,x2a:=x2a,x1a
   if y1a>y2a
     y1a,y2a:=y2a,y1a  
-
+  if x2a-x1a>1023 
+    x2a:=x1a+1023 ' limit the line to 1024
   if t+x1a+y1a*s1>f+x1b+y1b*s2
     repeat y from y1a to y2a
   '    writeln(string("I am here"))
-      ram.read1($80000-4096-1024, f+(y)*s1+x1a, x2a-x1a+1)
-      ram.write($80000-4096-1024, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)
+      ram.read1($7E800, f+(y)*s1+x1a, x2a-x1a+1)
+      ram.write($7E800, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)
   else
     repeat y from y2a to y1a
  '     writeln(string("I am there"))
-      ram.read1($80000-4096-1024, f+(y)*s1+x1a, x2a-x1a+1)
-      ram.write($80000-4096-1024, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)     
+      ram.read1($7E800, f+(y)*s1+x1a, x2a-x1a+1)
+      ram.write($7E800, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)     
     
 if ((f>=$80000) && (t<$80000)) 
   repeat y from y1a to y2a
@@ -1408,7 +1409,7 @@ preload2      '  incmod  dlinum,#3
 
 sprite          mov t8,frames
 		and t8,#16 wz
-                mov     spritenum,#17			' 16 +2 sprites. Todo: this should be a parameter
+                mov spritenum, #17			' 16 +2 sprites. Todo: this should be a parameter
 	if_z    mov spritenum, #16	
 		
 
@@ -1539,13 +1540,13 @@ mailbox         long    0
 spriteptr          long 0
 
 cmd             long    0
-buf1            long    $80000-16384-4096
+buf1            long    $80000-1024-4096
 buf2            long    1024
 dlptr2          long    1
 dl              long    1
 
 buf1c long 0
-buf1d            long    $80000-16384-4096
+buf1d            long    $80000-1024-4096
 framebuf2       long    1
 hsync0          long    1
 hsync1          long    1

@@ -1,12 +1,12 @@
-' A Paula inspired sample based synthesizer/audio driver for a P2
-' v. 0.91 beta - 20220314
+' A simple synthesizer/audio driver for a P2
+' v. 0.01 alpha - 20230924
 ' MIT license
 ' Piotr Kardasz pik33@o2.pl with the help from P2 forum community :) 
 ' 8 channel version
 '-------------------------------------------------------------------
 con
 
-clkfreq=340000000
+_clkfreq=340000000
 left= 14
 right=15
 
@@ -24,26 +24,17 @@ var
 Channel registers:
 long #0: the sample phase accumulator: use it as read only although you -can- change this while playing (not recommended, the driver cog writes there at every sample)
 long #1: the current sample generated, 2 words, right:left
-long #2: the sample pointer.
-         Set bit #31 to 0 if the sample is 8 bit, 1 for 16 bit. 
-         Set bit #30 to 1 to start playing the sample from the beginning
-         Set bit #29 to 1 to synchronize channels 0 and 1 for playing stereo without the phase error
-         Set bit #28 to 1 to use interleaved samples (as in .wav file) with fractional skip enabled 
+long #2: envelope PA
+long #3: the sample pointer.
          Set bit #27 to 1 to generate noise instead of audio
-long #3: sample loop start point
-long #4: sample loop end point. 
-         If the sample has to no loop and stop at the end, set loop start=end of sample, loop end=loop start +1 or 2 (for 16 bit)
 long #5: volume and pan
          word #10: volume, 0..16384(=1). Values more than 16384 could cause clipping if sample is normalized
          word #11: pan. 16384: full left, 8192: center, 0: full right
-long #6  period and skip
-         word #11: period. This is the number of Paula cycles between two samples. 
-         word #12: skip 
-         From version 0.93 it is 8.8 fixed point, so set it to 256 for 8 bit or 512 for 16-bit samples. (was: 1 and 2) 
-         Setting higher skip value skips the samples while playing, allows for higher frequencies for the same period
+long #6  frequency
+
 long #7  was: (reserved, unused. The planned usage is ADSR stuff.)
          Command, bit 31=set sample rate, bit 30 - set sample source (1=hub,0=psram)
-long #8  envelope phase accumulator
+
 long #9  envelope pointer. Points to the start of the envelope definition
 long #10 envelope speed. Number of Paula's periods between 2 envelope values. 
 long #11 envelope length
@@ -51,9 +42,7 @@ long #12..15 reserved, unused
 }}
 
 '
-long mailboxaddr
-long scope_ptr
-long cache_ptr
+
 long channel1[16]
 long channel2[16]
 long channel3[16]
@@ -63,13 +52,12 @@ long channel6[16]
 long channel7[16]
 long channel8[16]
 
-obj psram: "psram.spin2"
-
 
 pub test()
 
-
-play(2,0,$1000,16384,1024,0)  
+start(0,0,0)
+longmove($60000,@sinewave+16,512)
+play(2,$60000,$0051_1111,16384,1024,0)  
 
 '--------------------------------------------------------------
 '---------- Init the variables, start the cog. ----------------
@@ -81,28 +69,24 @@ pub start(mbox,scope,cache) :cog,base | iii
 ' scope: a pointer to 640 long oscilloscope data in HUB wor visualization
 ' cache: a pointer to 2 KB long HUB cache for PSRAM audio data
 
-mailboxaddr:=mbox 
-scope_ptr:=scope
-cache_ptr:=cache
 base:=@channel1[0]
-long[$40]:=mbox
+
 repeat iii from 0 to 7
   long[base+64*iii]:=0
   long[base+64*iii+4]:=0
   long[base+64*iii+12]:=0
-  long[base+64*iii+16]:=2 
+  long[base+64*iii+16]:=0
   word[base+64*iii+20]:=0
   word[base+64*iii+22]:=8192
-  word[base+64*iii+24]:=4000+2*iii
-  word[base+64*iii+26]:=2
-  long [base+64*iii+8]:=@null | $C0000000
+  long[base+64*iii+24]:=1
+  long[base+64*iii+8]:= @null | $C0000000
   long[base+64*iii+32]:=0
   long[base+64*iii+36]:=0
   long[base+64*iii+40]:=0
   long[base+64*iii+44]:=0
   long[base+64*iii+28]:=0
   
-cog:=coginit(16,@audio,@mailboxaddr)
+cog:=coginit(16,@audio,base)
 waitms(100)
 return cog,base
 
@@ -113,52 +97,16 @@ pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
 base2:=@channel1[0]+64*channel
 
 
-long[base2+12]:= len
-if loop >=0 
-  long[base2+16]:= loop
-else
-  long[base2+16]:= len+2
 word[base2+20]:=vol
-long[base2+24]:= splfreq
+long[base2+24]:=splfreq
 
-long[base2+28]:=$40000000    
+long[base2+28]:=0 
 long[base2+32]:=0    
 long[base2+36]:=0    
 long[base2+40]:=0    
 long[base2+44]:=0    
 long[base2+8]:=sample+$C0000000     
-    
-pub playtoend8(channel,sample,splfreq,vol,len) |base2,i
 
-base2:=@channel1[0]+64*channel
-long[base2]:=0
-long[base2+8]:=sample+$40000000 
-long[base2+12]:= len
-long[base2+16]:= len+1
-word[base2+20]:=vol
-word[base2+24]:= 3546895/splfreq 
-word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-'long[base2+28]:=$40000000
-repeat 
-  i:=long[base2]
-until (i >>8) >=len
-word[base2+20]:=0
-
-pub play8(channel,sample,splfreq,vol,len,loop=-1) |base2,i
-
-base2:=@channel1[0]+64*channel
-long[base2]:=0
-long[base2+8]:=sample+$40000000 
-if loop>=0
-  long[base2+12]:=loop
-  long[base2+16]:= len
-else
-  long[base2+12]:= len
-  long[base2+16]:= len+1
-word[base2+20]:=vol
-word[base2+24]:= 3546895 /splfreq 
-word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-'long[base2+28]:=$40000000
 
     
 pub stop(channel) 'silence it
@@ -173,219 +121,141 @@ word[@channel1[0]+64*channel+20]:=0
 
 dat
 
-audio       org     0
+audio		org   	0
 
-            rdlong  mailbox2, ptra++     ' get start address of all mailboxes
-            rdlong  scbase, ptra++       ' get start address of scope buffer
-            rdlong  hubptr, ptra++       ' get start address of PSRAM cache
- 
-            cogid   pa                   ' compute cogid
-            mul     pa, #12              ' and mailbox spacing
-            add     mailbox2, pa         ' add offset to find this COG's mailbox
-            mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
-
-            mov     ptrb,#0              ' A tail pointer for the buffer
-            wrpin   dac2,#left           ' PWM DAC at 264600=6*44100
-            wxpin   ##6*5256,#left  ' Set initial DACs sample rate. It is now controlled via a register by the main program
-            wrpin   dac2,#right
-            wxpin   ##5*256,#right    
-            dirh    #left addpins 1
-            setse1  #%001<<6 + left      ' Set the event - DAC empty
-            mov     cn,#0
+            	wrpin   dac2,#left           	' PWM DAC at 264600=6*44100
+            	wxpin   ##6*256,#left       	' Set DACs sample rate. 
+            	wrpin   dac2,#right
+            	wxpin   ##6*256,#right    
+            	dirh    #left addpins 1
+            	setse1  #%001<<6 + left      	' Set the event - DAC empty
+            	mov     cn,#0
             
 '---------------------------------------------------------------------------------        
 '----------------- The main loop -------------------------------------------------
 '---------------------------------------------------------------------------------
 
-loop       incmod cn,#7 wcz
-
-
-	   if_z   waitx ##34000000 ' waitse1
-	   if_z wypin oldls,#left
-           if_z wypin oldrs,#right
+loop       	incmod 	cn,#7 wcz
+	if_nz	jmp 	#p401
+ ' waitx ##34_000_000*1
+	   	waitse1
+	   	bitnot  ls,#15                	' convert to unsigned. TODO: compute and apply the gain for samples to not exceed 16 bit range
+            	bitnot  rs,#15		     	' warning: no filter here (yet) but before applying any, remember to and sample values with $FFFF and use signed samples 
+	   	wypin 	ls,#left
+           	wypin 	rs,#right
+            	mov 	ls,#0
+           	mov 	rs,#0
            
 '----------------------------------------------------------------------------------
 '------------- Compute channel samples --------------------------------------------
 '----------------------------------------------------------------------------------
 
 
-p401        mov     channeladd,cn             	' compute the pointer to channel parameters block
-            shl     channeladd,#6
-            add     ptra,channeladd
+p401            mov     channeladd,cn           ' compute the pointer to channel parameters block
+            	shl     channeladd,#6
+            	add     ptra,channeladd
 
-            setq    #11                        	' read parameters
-            rdlong  pointer0,ptra
-    	    
-p408        
-            
-p404        bitl    command0,#30 wcz          	' bit #30: select PSRAM/HUB
-    if_nz   mov     mailbox,mailbox2            ' if not set, use PSRAM
-    if_z    mov     mailbox,#0                  ' if set, use HUB 
+            	setq    #11                     ' read parameters
+            	rdlong  pointer0,ptra
 
-p405        getword oldls,sample0,#0          ' extract old sample value
-            getword oldrs,sample0,#1
-     	    getword apan0,volpan0,#1          ' extract vol,pan,skip and freq from longs 
-    	    getword avol0,volpan0,#0
+p405        	getword apan0,volpan0,#1       	' extract vol,pan,skip and freq from longs 
+    	    	getword avol0,volpan0,#0
 
-            
 '---- envelopes
             
-            cmp     envptr0,#0 wcz    		' read the pointer
-    if_z    mov     envs1,##$4000		' if 0, no envelope, load $4000=1 for scas
-    if_z    jmp     #p410			' and run away	
+            	cmp  	envptr0,#0 wcz    	' read the pointer
+    	if_z    mov     envs1,##$4000		' if 0, no envelope, load $4000=1 for scas
+    	if_z    jmp     #p410			' and run away	
 
-            add     envph0,envspd0 
-      	    mov     envhi, envph0		' move phase acc to high part of env pointer
-	    shr     envhi,#6			' leave 10 bits in hi
-	    getword envlo,envhi,#0              ' and 16 bit in lo
-	    shr     envhi,#16			' move 10 bits of hi to the lower word
-	    cmp     envhi,envlen0 wcz		' compare this to envelope length
-    if_ge   mov     envhi,envlen0		' if greater than, set it at envlen
-    if_ge   mov     envlo,#0
-    if_ge   mov     envph0,envlen0
-    if_ge   shl     envph0,#22
+            	add     envph0,envspd0 
+      	    	mov     envhi, envph0		' move phase acc to high part of env pointer
+	    	shr     envhi,#6		' leave 10 bits in hi
+	    	getword envlo,envhi,#0          ' and 16 bit in lo
+	    	shr     envhi,#16		' move 10 bits of hi to the lower word
+	    	cmp     envhi,envlen0 wcz	' compare this to envelope length
+    	if_ge   mov     envhi,envlen0		' if greater than, set it at envlen
+    	if_ge   mov     envlo,#0
+    	if_ge   mov     envph0,envlen0
+    	if_ge   shl     envph0,#22
 
-            mov     envs1,envhi			' get the phase acc
-            shl     envs1,#1			' env defs are words, so phase acc*=2
-            add     envs1,envptr0		' and add the pointer
-            rdlong  envs1,envs1			' then read 2 entries
-            getword envs2,envs1,#1		' next value
-            getword envs1,envs1,#0		' current value
-            mul     envs2,envlo			' linear interpolate : new val x envlo
-            not     envlo			' sum of envlo and not envlo is always $FFFF
-            mul     envs1,envlo
-            add     envs1,envs2
-            shr     envs1,#18			' normalize it to $4000
+            	mov     envs1,envhi		' get the phase acc
+            	shl     envs1,#1		' env defs are words, so phase acc*=2
+            	add     envs1,envptr0		' and add the pointer
+            	rdlong  envs1,envs1		' then read 2 entries
+            	getword envs2,envs1,#1		' next value
+            	getword envs1,envs1,#0		' current value
+            	mul     envs2,envlo		' linear interpolate : new val x envlo
+            	not     envlo			' sum of envlo and not envlo is always $FFFF
+            	mul     envs1,envlo
+            	add     envs1,envs2
+            	shr     envs1,#18		' normalize it to $4000
             
-p410        testb   sstart0, #27 wz
-    if_z    getrnd  spl
-    if_z    jmp     #p406
+p410        	testb   sstart0, #27 wz		' bit 27 set=noise channel TODO noise freq will not work now, correct this
+    	if_z    getrnd  spl
+    	if_z    jmp     #p406
  
- 
- 
-            add     pointer0,freq0          	' compute the pointer to the next sample       
+                add     pointer0,freq0          ' compute the pointer to the next sample       
             	mov 	pointer00,pointer0
-         	shr pointer00,#12	   
-         	   
-            testb   sstart0,#31 wz            
-    if_z    shl     pointer00,#1        
-            testb   sstart0,#28 wz            
-    if_z    shl     pointer00,#1        
-        
-            cmp     pointer00,lend0 wcz
-    if_ge   sub     pointer0,lend0	      	' and loop if needed     
-    if_ge   add     pointer0,lstart0       
-            
-            mov     qq,pointer0               	' compute place in the memory from where the sample will be loaded
-            shr     qq,#12  			' 20:12 pointer
-            add     qq,sstart0            
-
-  jmp #p701
-
-
-cache_read  getbyte addrlo,qq,#0 		' when this is called, qq is the addres of the sample			
-            
-	    mov     addrhi,qq		
-	    shr     addrhi,#8		        ' get 24 upper bits
-	    alts    cn,#cache1            
-	    cmp	    addrhi,0-0 wz               ' and compare with the cache pointer for the channel
-    if_z    jmp     #p701	    		' if equal, cache hit, read the sample from it
+         	shr 	pointer00,#22	   
+         	shl	pointer00,#1		' align to word, for 16-bit samples   
+                cmp     pointer00,##2046 wz
+     		add	pointer00,sstart0
+     		
+		rdlong	spl,pointer00
+	if_nz	getword spl2,spl,#1
+		getword spl,spl,#0		' clean high bits
+	if_z	rdword	spl2,sstart0
 	
-p702	    altd    cn,#cache1			' cache miss. 
-	    mov     0-0,addrhi                  ' update the pointer
-	    mov     cmd,addrhi			' prepare the mailbox
-	    shl     cmd,#8
-            setnib  cmd, #%1011, #7             ' read burst from the external memory
-            mov     hubaddr,cn                  ' to the channel cache
-            shl     hubaddr,#8                  '
-            add     hubaddr,hubptr 
-            mov     count,#256                  ' 256 bytes
-            setq    #2                          ' write 3 longs
-            wrlong  cmd, mailbox                ' run it
-poll1       rdlong  cmd, mailbox                ' poll mailbox for result
-            tjs     cmd, #poll1                 ' retry until valid 
-            
-	
-p701	    mov     qq,cn			' cache hit
-	    shl     qq,#8			' compute the cache start
-	    add     qq,hubptr
-	    add	    qq,addrlo			' add 8 lower bits to the cache addredd
-            rdword  spl,qq                      ' read a word
-         
-            testb   sstart0,#31 wz 
-    if_nz   shl     spl,#8
+	 	mov 	pointer00,pointer0
+	 	shl	pointer00,#10		' get rid of 10 high bits
+	 	shr	pointer00,#18		' normalize the rest to 14 bit for SCAS
+	 	mov     pointer01,##16384
+	 	sub	pointer01,pointer00
 
-    if_z    shr     pointer0,#1
-            testb   sstart0,#28 wz            
-    if_z    shr     pointer0,#1    
-	   
+p999	 	scas 	spl,pointer01
+	 	mov 	spl,0-0
+	 	scas	spl2,pointer00
+	 	add	spl,0-0
 
 
-p406        scas    spl,envs1			' apply envelope
-            mov     spl,0-0
-            scas    spl,avol0                 	' apply volume
-            mov     spl,0-0
 
-            scas    spl,apan0                 	' apply pan
-            mov     ls0,0-0
-            mov     qq,##16384
-            sub     qq,apan0
-            scas    spl,qq
-            mov     rs0, 0-0
+p406       	scas    spl,envs1			' apply envelope
+           	mov     spl,0-0
+            	scas    spl,avol0                 	' apply volume
+            	mov     spl,0-0
 
-            sub     rs,oldrs 		      	' replace the old sample with the new one in the mix
-            add     rs,rs0
-            sub     ls,oldls
-            add     ls,ls0
-   
-            setword sample0,rs0,#1           	' pack samples into long
-            setword sample0,ls0,#0
-            
-            bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
-    if_z    mov     pointer0, #0  		
-    if_z    mov     envph0, #0  		' reset also envelope pha and sample value
-  '  if_z    mov     sample0,#0
-    if_z    wrlong  sstart0, ptra[2]          	' reset bit #30 in hub
-            bitl    sstart0, #29 wcz	      	' if bit #29 is set, synchronize stereo at channels 1 and 2
-    if_z    add     time1,##2048
-    if_z    mov     time2,time1
-    if_z    wrlong  sstart0,ptra[2]
+            	scas    spl,apan0                 	' apply pan
+            	mov     ls0,0-0
+            	mov     qq,##16384
+          	sub     qq,apan0
+            	scas    spl,qq
+            	mov     rs0, 0-0
+      
 
-p403        setq    #1                         	' write new pointer and sample value to the hub
-            wrlong  pointer0,ptra
-            wrlong  envph0,ptra[8]
-            sub     ptra, channeladd         	' reset the pointer to channel parameters
-                      
-            getword oldls,ls,#0              ' reuse oldls variable to convert the sample to unsigned
- 	    getword oldrs,rs,#0              ' getword instead of mov makes the upper bits=0
-            bitnot  oldls,#15                ' convert to unsigned. TODO: compute and apply the gain for samples to not exceed 16 bit range
-            bitnot  oldrs,#15		     ' warning: no filter here (yet) but before applying any, remember to and sample values with $FFFF and use signed samples 
+		add	rs,rs0
+		add 	ls,ls0
 		
-'	    cmp     scbase,#0 wz
-'    if_z    jmp     #p302	   
-'  
-'            incmod  scope,#63 wc            ' save every 127th sample to the scope buffer
-'    if_c    mov     scptr2,scptr
-'    if_c    shl     scptr2,#2
-'    if_c    add     scptr2,scbase     
-'            wrlong  scptr2,#$60
-'    if_c    wrlong  oldsample,scptr2
-'    if_c    incmod  scptr,##639
+	
+   
+            	setword sample0,rs0,#1           	' pack samples into long
+            	setword sample0,ls0,#0
+            
+            	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+    	if_z    mov     pointer0, #0  		
+    	if_z    mov     envph0, #0  			' reset also envelope pha 
+	if_z    wrlong  sstart0, ptra[2]      
 
-p302        jmp     #loop            'loop
+
+p403        	setq    #1                         	' write new pointer and sample value to the hub
+            	wrlong  pointer0,ptra
+            	wrlong  envph0,ptra[8]			' todo: env pha has to be at the start of the block to avoid 2 wrlongs
+            	sub     ptra, channeladd         	' reset the pointer to channel parameters
+                      
+p302        	jmp     #loop            'loop
 
 '----------------------------------------------------------------------------------
 '------------- This is the end of the main loop -----------------------------------
 '----------------------------------------------------------------------------------
-
-'----------------------------------------------------------------------------------
-'------------- PSRAM cache ----------- --------------------------------------------
-'----------------------------------------------------------------------------------
-
-' There are 8 cache pointers for 8 channels
-' if 24 higher bits of address=cache, then get a word from the cache
-' else load the cache from PSRAM, update the pointer, then read a sample
-
 
 
           
@@ -403,15 +273,6 @@ a41000000   long $41000000  ' this const has to be immediately before time0 due 
 
 ' Time variables
 
-time0       long 0    ' Global sample computing time
-time1       long 1    ' Local channels time
-time2       long 2
-time3       long 3
-time4       long 4
-time5       long 5
-time6       long 6
-time7       long 7
-time8       long 8
 
 channeladd long 0
 
@@ -420,6 +281,7 @@ front       long 0
 ' temporary variables 
 qq          long 0
 spl         long 0
+spl2		long 0
 zero        long 0
 mailbox     long 0
 mailbox2 long 0
@@ -501,6 +363,7 @@ count       long 256
 addrlo long 0
 addrhi long 0
 pointer00 long 0
+pointer01 long 0
 envhi long 0
 envlo long 0
 envs1 long 0
@@ -515,4 +378,4 @@ dropper long %10010010_10010010_10010010_10010010
 '
 dat 
 null  			long 	0,0           ' for channel reset
-sinewave 		file 	"sinus.s2"    ' for testing
+sinewave 		file 	"/s/lauta.s2"    ' for testing
