@@ -779,25 +779,12 @@ if num==3
 
 ''--------- Redefine a character
 
-pub defchar(fn,ch,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) :s
+pub defchar(ch,ptr) | s,i ' 
 
-s:=@st_font+fn+ch*16
-byte[s+00]:=b0
-byte[s+01]:=b1
-byte[s+02]:=b2
-byte[s+03]:=b3
-byte[s+04]:=b4
-byte[s+05]:=b5
-byte[s+06]:=b6
-byte[s+07]:=b7
-byte[s+08]:=b8
-byte[s+09]:=b9
-byte[s+10]:=b10
-byte[s+11]:=b11
-byte[s+12]:=b12
-byte[s+13]:=b13
-byte[s+14]:=b14
-byte[s+15]:=b15
+s:=font_ptr+ch*16
+repeat i from 0 to 15
+  byte[s+i]:=byte[ptr+i]
+
 
 '*************************************************************************
 '                                                                        *

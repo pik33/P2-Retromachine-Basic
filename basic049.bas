@@ -270,6 +270,9 @@ const token_getcolor=211
 const token_restorepalette=212
 const token_pads=213
 const token_padw=214
+const token_findfirst=215
+const token_findnext=216
+const token_defchar=217
 
 const token_error=255
 const token_end=510
@@ -1117,6 +1120,7 @@ select case s
   case "copy"		: return token_copy
   case "cursor"	     	: return token_cursor
   case "data"		: return token_data
+  case "defchar"	: return token_defchar
   case "defsnd"	     	: return token_defsnd
   case "defenv"	     	: return token_defenv
   case "defsprite"   	: return token_defsprite
@@ -1250,6 +1254,8 @@ select case s
   case "coginit"	: return token_coginit
   case "cos"		: return token_cos
   case "dpeek"		: return token_dpeek
+  case "findfirst"	: return token_findfirst
+  case "findnext"	: return token_findnext
   case "framebuf"	: return token_framebuf
   case "fb."		: return token_framebuf
   case "fre"		: return token_fre
@@ -1579,6 +1585,7 @@ if linetype=5 then cmd=lparts(ct).token : ct+=1
   case token_cogstop	: err=compile_fun_1p()
   case token_cursor	: err=compile_fun_1p()
   case token_data	: compile_nothing()
+  case token_defchar	: err=compile_fun_2p()
   case token_defenv     : vars,err=compile_fun_varp()   
   case token_defsnd     : vars,err=compile_fun_varp()   
   case token_defsprite	: vars,err=compile_fun_varp()		' defsprite now has only one syntax, but other are planned (defsprite pointer, defsprite file)
@@ -3110,6 +3117,24 @@ t1=pop()
 if t1.result.uresult=0 then  v.setspritesize(17,0,0) else v.setspritesize(17,8,16) 
 end sub
 
+'-------------------- defchar
+
+sub do_defchar
+
+dim t1 as expr_result
+dim c,cptr as ulong
+dim buf as ubyte(15)
+
+t1=pop() : cptr=converttoint(t1)
+t1=pop() : c=converttoint(t1)
+if cptr<$80000 then 
+  v.defchar(c,cptr)
+else
+  for i=0 to 15: buf(i)=pspeek(cptr+i): next i
+  v.defchar(c,varptr(buf))
+endif      
+end sub
+
 '-------------------- defenv
 
 sub do_defenv
@@ -3447,6 +3472,76 @@ t3=pop()
 t2=pop()
 t1=pop()
 v.fill(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4))
+end sub
+
+'-------------------- findfirst
+
+sub do_findfirst
+
+dim numpar,c1 as ulong
+dim t1 as expr_result
+dim s1,s2 as string
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=2 then
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s2=convertstring(t1.result.uresult) 
+  else if t1.result_type=result_string then 
+    s2=t1.result.sresult
+  else 
+    print "findfirst: "; : printerror(30) : return  
+  endif  
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s1=convertstring(t1.result.uresult) 
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
+  else 
+    print "findfirst: "; : printerror(30) : return  
+  endif  
+else if numpar=1 then
+  t1=pop()
+  if t1.result_type=result_string2 then 
+    s1=convertstring(t1.result.uresult) 
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
+  else 
+    print "findfirst: "; : printerror(30) : return  
+  endif  
+  s2=""
+else  
+  print "findfirst: "; : printerror(39) : return     
+endif
+
+if s2="" then
+  c1=fbDirectory or fbNormal
+else if lcase$(s2)="dir" then 
+  c1=fbDirectory
+else 
+  c1=fbNormal
+endif  
+s2=dir$(s1,c1)
+t1.result_type=result_string
+t1.result.sresult=s2
+push t1
+
+end sub
+
+'-------------------- findnext
+
+sub do_findnext
+
+
+dim t1 as expr_result
+dim s2 as string
+
+if compiledline(lineptr_e).result.uresult>0 then print "findnext: "; : printerror(39) : return    
+s2=dir$()
+t1.result_type=result_string
+t1.result.sresult=s2
+push t1
+
 end sub
 
 '-------------------- font
@@ -6180,8 +6275,10 @@ commands(token_memlo)=@do_memlo
 commands(token_memtop)=@do_memtop
 commands(token_setcolor)=@do_setcolor
 commands(token_getcolor)=@do_getcolor
+commands(token_defchar)=@do_defchar
 commands(token_restorepalette)=@do_restorepalette
-
+commands(token_findfirst)=@do_findfirst
+commands(token_findnext)=@do_findnext
 
 end sub
 
