@@ -17,7 +17,10 @@ const HEAPSIZE=96000
 #define PSRAM16
 
 #ifdef PSRAM16
-const _clkfreq = 344064000
+'const _clkfreq = 344064000 '48000*28*256 - test
+const _clkfreq = 338688000 '44100*30*256 - test
+'paula*96=340501920 - 96 is 3/8*256
+
 dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
 #endif
@@ -378,6 +381,8 @@ class audiochannel		' a set of predefined values for audio channels
   dim vol as single		' volume (1/1000, 0.0..16.384)
   dim pan as single		' -1.0 left, 1.0 right
   dim sus as ushort		' sustain point on the envelope
+  dim amode as ushort		' freq/skip computing mode
+  dim realfreq as single
 end class
 
 type parts as part(125)         ' parts to split the line into, line has 125 chars max
@@ -461,18 +466,21 @@ dim do_insert as integer
 dim cy,cx as integer
 dim inload,err as integer
 dim readline as string
-dim realfreq as single
+
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
 
 startpsram
-startvideo
+
 audiocog,base=audio.start(mbox,0,$7E000)
 waitms(50)
 dpoke base+20,16384
 usbcog=kbm.start()
+startvideo
+
+
 kbm.mouse_set_limits(1023,599)
 kbm.mouse_set_outptr(varptr(v.spr1ptr)+16*12+4)
 v.setspriteptr(16,@mouse)
@@ -2870,18 +2878,30 @@ end sub
 sub do_changefreq
 
 dim t1 as expr_result
-dim channel,lfreq,skip,i,period as integer
+dim channel,lfreq,skip,i,period,amode as integer
 dim ps as ulong
 dim freq as single
 
 t1=pop()
+
 freq=converttofloat(t1)
-lfreq=int(log(freq)/log(2))
-skip=round(2^(lfreq+5))
-if skip>32768 then i=skip/32768: skip=32768 else i=1
-period=round((3546895/freq)/(i*(2^(13-lfreq))))
 t1=pop()
 channel=converttoint(t1) mod 8
+amode=channels(channel).amode
+if amode>0 then
+  lfreq=int(log(freq)/log(2))
+  skip=round(2^(lfreq+amode))                     '''' this const + const 2 lines lower=18
+  if skip>32768 then i=skip/32768: skip=32768 else i=1
+  period=round((3528000/freq)/(i*(2^(18-amode-lfreq))))  ' should be 3546895 but I use 338688000 for 44100 Hz samples
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) 
+else
+  period=24 '147000 Hz
+  skip=round(1024*256*(freq/147000.0))
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) 
+endif
+
+
+
 ps=skip shl 16+period
 if (lpeek(base+64*channel+8) and $0800_0000)=0 then 
   lpoke base+64*channel+24,ps
@@ -4735,13 +4755,13 @@ sub do_play
 
 ' play channel, freq, wait, volume, waveform, envelope, length, pan, sus
 
-dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period as integer
-dim params(8) as single
+dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period,amode as integer
+dim params(9) as single
 dim t1 as expr_result
 dim speed_coeff, freq,pan ,vol,slen as single
 speed_coeff=305.873
 
-for i=0 to 8 : params(i)=-2.0 : next i
+for i=0 to 9 : params(i)=-2.0 : next i
 numpar=compiledline(lineptr_e).result.uresult
 for i=numpar to 1 step -1 
   t1=pop() 
@@ -4757,12 +4777,21 @@ if params(5)<0 orelse params(5)>8.0 then env=channels(channel).env else env=roun
 if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else slen=params(6) : channels(channel).length=slen
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
+if params(9)<0 orelse params(8)>255 then amode=channels(channel).amode else amode= round(params(9)) : channels(channel).amode=amode
 
-lfreq=int(log(freq)/log(2))
-skip=round(2^(lfreq+6))
-if skip>32768 then i=skip/32768: skip=32768 else i=1
-period=round((3546895/freq)/(i*(2^(12-lfreq))))
-realfreq=(3546895.0/period)*(skip/(256.0*1024.0)) 
+
+if amode>0 then
+  lfreq=int(log(freq)/log(2))
+  skip=round(2^(lfreq+amode))                     '''' this const + const 2 lines lower=18
+  if skip>32768 then i=skip/32768: skip=32768 else i=1
+  period=round((3528000/freq)/(i*(2^(18-amode-lfreq))))  ' should be 3546895 but I use 338688000 for 44100 Hz samples
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) : print period, skip, channels(channel).realfreq
+else
+  period=24 '147000 Hz
+  skip=round(1024*256*(freq/147000.0))
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) : print period, skip, channels(channel).realfreq
+endif
+
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
@@ -6322,6 +6351,7 @@ for i=0 to 7
   channels(i).vol=4.0
   channels(i).pan=0.0
   channels(i).sus=255
+  channels(i).amode=0
   suspoints(i)=255
  ' lpoke base+64*i+28,$80000100 : waitms(2) : lpoke base+28,$40000000  
 next i

@@ -334,7 +334,7 @@ cpl1:=cpl '' todo remove
 palette_ptr:=@ataripalette				    	' use 256-colors palettr
 repeat i from 0 to 3
   timings[i]:=timings[i]+hdmibase<<17+ timingsxxt          	' add a streamer config (imm->pins) to horizontal timings 
-clkfreq:=timings[9]					    	' set the clock frequency for the mode
+'clkfreq:=timings[9]					    	' set the clock frequency for the mode
 'hubset(timings[10])
 waitms(1)                                                   	' wait for stabilization
 lines:=timings[11]
