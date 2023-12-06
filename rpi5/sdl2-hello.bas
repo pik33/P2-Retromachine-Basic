@@ -54,28 +54,26 @@ dim as ulong i,j
 dim q as double
 for i=0 to 1079: for j=0 to 1919 : t2(1920*i+j)=i+256*j : next j : next i
 do
-
-    i=i+1 : rchorse.x=i mod 1920: rchorse.y=i mod 1080
-
-    SDL_UpdateTexture(sdlTexture, NULL, @t2(0), 1920 * 4)
-   	SDL_RenderClear(renderer)
-	SDL_RenderCopy(renderer, sdltexture, NULL, NULL)
- 	SDL_RenderCopy(renderer, textureHorse, NULL, @rcHorse)
- 	SDL_RenderCopy(renderer, textureHello, NULL, @rcHello)
-	SDL_RenderPresent(renderer)
+  i=i+1 : rchorse.x=i mod 1920: rchorse.y=i mod 1080
+  SDL_UpdateTexture(sdlTexture, NULL, @t2(0), 1920 * 4)
+  SDL_RenderClear(renderer)
+  SDL_RenderCopy(renderer, sdltexture, NULL, NULL)
+  SDL_RenderCopy(renderer, textureHorse, NULL, @rcHorse)
+  SDL_RenderCopy(renderer, textureHello, NULL, @rcHello)
+  SDL_RenderPresent(renderer)
   q=timer-q: print q 
-      q=timer
-	dim event as SDL_Event
-	while SDL_PollEvent(@event)
-		select case event.type
-		case SDL_QUIT_
-			exit do
-		case SDL_KEYDOWN
-			if event.key.keysym.sym = SDLK_ESCAPE then
-				exit do
-			end if
-		end select
-	wend '/
+  q=timer
+  dim event as SDL_Event
+  while SDL_PollEvent(@event)
+    select case event.type
+      case SDL_QUIT_
+	exit do
+      case SDL_KEYDOWN
+        if event.key.keysym.sym = SDLK_ESCAPE then
+	  exit do
+	end if
+    end select
+  wend 
 loop
 
 SDL_DestroyTexture(textureHello)
