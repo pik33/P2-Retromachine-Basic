@@ -1,1195 +1,48 @@
-#include "SDL2/SDL.bi"
-#include "crt.bi"
+' A Retromachine Basic interpreter
+' v. 0.32 pre-beta - 20230906
+' MIT license
+' Piotr Kardasz pik33@o2.pl 
+'-------------------------------------------------------------------
+'memory map
+'7FF00 - PSRAM mboxes
+'7FC00..7FF00 768 bytes free - sys variables? (now unused)
+'7EC00..7FBFF 4k buffer for a video driver
+'7E800..7EBFF 1k buffer for video driver blit
+'7E000..7E7FF 2k audio cache
+
 #include "dir.bi"
-#define rpi5
-const nil as any ptr = 0
-'--- basic machne main ram 
 
-union machine_union
-  bytes(&h3fffffff) as ubyte
-  words(&h1fffffff) as ushort
-  longs(&h0fffffff) as ulong
-end union  
+const HEAPSIZE=96000
+'#define PSRAM4
+#define PSRAM16
 
-type sprite_type
-  x as ulong
-  y as ulong
-  w as integer
-  h as integer
-  sptr as ulong
-end type
+#ifdef PSRAM16
+'const _clkfreq = 344064000 '48000*28*256 - test
+const _clkfreq = 338688000 '44100*30*256 - test
+'paula*96=340501920 - 96 is 3/8*256
 
-type md
-    d1 as integer 
-    d2 as integer
-    c1 as ushort
-    c2 as ushort
-    b as integer
-end type
-
-const ibufptr= &h3fffffff-(1920*1080) 
-const tbufptr=ibufptr-37*128
-const cbufptr=tbufptr-128
-
-dim shared machine as machine_union
-
-dim shared t2(1920*1080-1) as ulong                 'the bitmap for video screen
-dim shared bufptr as ulong = ibufptr 'a main framebuffer
-dim shared textbufptr as ulong = tbufptr 'a text buffer for basic editor
-dim shared cursorptr as ulong=cbufptr
-dim shared memtop as ulong= &h3fffffff-(1920*1080)-(37*128) ' interpreter memtop=textbuf at the start
-dim shared sprites(17) as sprite_type
-dim shared fillstack(256) as integer
-dim shared fillptr as integer
-dim shared a as integer
-dim shared as integer resy=600,resx=1024
-dim shared as ulong frames=0
-dim sdlversion as SDL_version
-dim as integer i,j 
-dim shared as integer updated
-dim shared as integer font_family=0
-dim shared as integer write_color=154, write_background=147
-dim shared as integer cursor_x=0,cursor_y=0, cursorshape=14, cursorcolor=154
-dim shared as integer leading_spaces=2, st_lines=37
-' read definitions
-dim shared fonts(3*4096-1) as ubyte
-open "st4font.def" for input as #3
-get #3,0,fonts(0),2048
-close #3
-open "vgafont.def" for input as #3
-get #3,0,fonts(4096),4096
-close #3
-open "amigafont.def" for input as #3
-get #3,0,fonts(8192),4096
-close #3
-
-dim shared mysz(1024) as ubyte
-open "mouse2.def" for input as #3
-get #3,0,mysz(0),1024
-close #3
-for i=0 to 1023: machine.bytes(&h7F000+i)=mysz(i): next i
-
-dim shared ataripalette(255) as ulong
-open "ataripalettep2.def" for input as #3
-get #3,0,ataripalette()
-close #3
-for i=0 to 255 : ataripalette(i)=ataripalette(i) shr 8 : next i ' the p2 palette has been shifted left as rrggbb00
-
-sub putpixel(x as ulong,y as ulong,c as ubyte)
-machine.bytes(bufptr+x+1024*y)=c
-end sub
-
-function getpixel(x as ulong,y as ulong) as ubyte
-return machine.bytes(bufptr+x+1024*y)
-end function
-
-sub fastline(x1 as integer,x2 as integer,y as integer,c as ubyte)									  ' a fast 8bpp horizontal line, to be replaced by fast asm
-clear(machine.bytes(bufptr+1024*y+x1),c,x2-x1+1)
-end sub
-
-
-sub draw1(x1 as integer,y1 as integer,x2 as integer,y2 as integer,c as ubyte)              	  ' I had to rename the function for BASIC	
-dim as integer d,dx,dy,ai,bi,xi,yi,x,y				
-
-if (y1=y2) then
-  fastline(x1,x2,y1,c) ' fastline has to be implemented first
-else
-
-x=x1
-y=y1
-
-if (x1<x2) then 
-  xi=1
-  dx=x2-x1
-else
-  xi=-1
-  dx=x1-x2
-endif
-  
-if (y1<y2) then 
-  yi=1
-  dy=y2-y1
-else
-  yi=-1
-  dy=y1-y2
-endif
-
-putpixel(x,y,c)
-
-if (dx>dy) then
-  ai=(dy-dx)*2
-  bi=dy*2
-  d= bi-dx
-  do while (x<>x2) 
-    if (d>=0) then
-      x+=xi
-      y+=yi
-      d+=ai
-    else
-      d+=bi
-      x+=xi
-    endif 
-    putpixel(x,y,c)
-  loop  
-else
-  ai=(dx-dy)*2
-  bi=dx*2
-  d=bi-dy
-  do while (y<>y2)
-    if (d>=0) then
-      x+=xi
-      y+=yi
-      d+=ai
-    else
-      d+=bi
-      y+=yi
-    endif
-  putpixel(x, y,c)
-  loop
-endif
-endif
-end sub  
-
-
-sub line1(x1 as integer,y1 as integer,x2 as integer,y2 as integer,c as ubyte)  								' this is a "draw" alias
-draw1(x1,y1,x2,y2,c)
-end sub 
-
-sub fcircle(x0 as integer,y0 as integer,r as integer,c as ubyte)
-
-dim as integer d,x,y,da,db
-
-d=5-4*r
-x=0
-y=r
-da=(-2*r+5)*4
-db=3*4
-do while (x<=y) 
-  fastline(x0-x,x0+x,y0-y,c)
-  fastline(x0-x,x0+x,y0+y,c)
-  fastline(x0-y,x0+y,y0-x,c)
-  fastline(x0-y,x0+y,y0+x,c)
-  if d>0 then
-    d+=da
-    y-=1
-    x+=1
-    da+=4*4
-    db+=2*4
-  else
-    d+=db
-    x+=1
-    da+=2*4
-    db+=2*4
-  endif  
-loop
-
-end sub
-
-
-sub ecircle(x0 as integer,y0 as integer,r as integer,c as ubyte)
-
-dim as integer d,x,y,da,db 
-
-d=5-4*r
-x=0
-y=r
-da=(-2*r+5)*4
-db=3*4
-do while (x<=y) 
-  putpixel(x0-x,y0-y,c)
-  putpixel(x0-x,y0+y,c)
-  putpixel(x0+x,y0-y,c)
-  putpixel(x0+x,y0+y,c)
-  putpixel(x0-y,y0-x,c)
-  putpixel(x0-y,y0+x,c)
-  putpixel(x0+y,y0-x,c)
-  putpixel(x0+y,y0+x,c)
-  if d>0 then 
-    d+=da
-    y-=1
-    x+=1
-    da+=4*4
-    db+=2*4
-  else
-    d+=db
-    x+=1
-    da+=2*4
-    db+=2*4
-  endif
-loop  
-end sub
-
-'-- A frame (an empty rectangle) ---------------------------------------
-
-sub frame(x1 as integer,y1 as integer,x2 as integer,y2 as integer,c as ubyte) 
-
-fastline(x1,x2,y1,c)
-fastline(x1,x2,y2,c)
-line1(x1,y1,x1,y2,c)
-line1(x2,y1,x2,y2,c)
-end sub
-
-'-- A box (a filled rectangle) ----------------------------------------
-
-sub box(x1 as integer,y1 as integer,x2 as integer,y2 as integer,c as ubyte) 
-
-dim as integer yy
-
-for yy = y1 to y2
-  fastline(x1,x2,yy,c)
-next yy
-end sub
-    
-    
-' ****************************************************************************************************************
-'                                                                       		 			*
-'  Characters on graphic screen                                          					*
-'                                                                       					*
-' ****************************************************************************************************************    
-
-' ------  Transparent character
-
-sub putcharxycf(x as integer,y as integer ,achar as ubyte,f as ubyte) 
-
-dim as integer xx, yy, bb
-
-for yy = 0 to 15
-  bb=fonts(4096*font_family+16*achar+yy)
-  for xx = 0 to 7
-    if (bb and (1 shl xx))<>0 then
-      putpixel(xx+x,yy+y,f)
-    endif
-  next xx
-next yy
-end sub
-
-' ------  Opaque character  
-
-sub putcharxycg(x as integer,y as integer ,achar as ubyte,f as ubyte, b as ubyte) 
-
-dim as integer xx, yy, bb
-
-for yy = 0 to 15
-  bb=fonts(4096*font_family+16*achar+yy)
-  for xx = 0 to 7
-    if (bb and (1 shl xx))<>0 then
-      putpixel(xx+x,yy+y,f)
-    else
-      putpixel(xx+x,yy+y,b)
-    endif
-  next xx
-next yy
-end sub        
-        
-sub putcharxycgf(x as integer,y as integer ,achar as ubyte,f as ubyte, b as ubyte) 
-putcharxycg(4*x,16*y+4,achar,f,b) ' to be replaced by fast asm
-end sub     
-
-'' ----- String output using above          
-
-sub outtextxycg(x as integer,y as integer,text as string,f as ubyte,b as ubyte) 
-
-dim as integer iii
-
-for iii = 1 to len(text)
-  putcharxycg(x+8*iii,y,asc(mid$(text,iii,1)),f,b)
-next iii  
-end sub
-
-sub outtextxycf(x as integer,y as integer,text as string,f as ubyte) 
-
-dim as integer iii
-
-for iii = 1 to len(text)
-  putcharxycf(x+8*iii-8,y,asc(mid$(text,iii,1)),f)
-next iii  
-end sub
-
-' ------------------- Flood fill
- 
-sub fillpush(v as integer) 
-fillstack(fillptr)=v
-fillptr+=1   
-end sub
-
-    
-function fillpop() as integer
-
-dim v as integer
-
-fillptr-=1
-if fillptr<0 then
-  fillptr=0
-  v=-12345
-else 
-  v=fillstack(fillptr)
-endif
-return v
-end function
-
-      
-sub fill(x as integer ,y as integer,newcolor as integer,oldcolor as integer)
-
-dim as integer x1, spanabove, spanbelow, ov
-
-newcolor=newcolor and 255
-oldcolor=oldcolor and 255
-
-if (oldcolor = newcolor) then return
-
-fillptr=0
-fillpush(x)
-fillpush(y)
-y=fillpop()
-x=fillpop()
-do while (x>-1)       
-  x1 = x
-  do while((x1 >= 0) and (getpixel(x1,y) = oldColor))
-    x1-=1
-  loop  
-  x1+=1
-  spanabove = 0
-  spanbelow = 0
-  do while ((x1 < 1024) and getpixel(x1,y) = oldColor)
-    putpixel (x1,y, newcolor and 255)
-    if ((spanabove = 0) and (y > 0) and (getpixel(x1,y-1) = oldColor)) then
-      fillpush(x1)
-      fillpush(y-1)
-      spanabove = 1 
-    elseif ((spanabove<>0) and (y > 0) and (getpixel(x1,y-1)<> oldColor)) then
-      spanabove = 0
-    endif   
-    if((spanbelow = 0 ) and (y < 599) and getpixel(x1,y+1) = oldColor) then
-      fillpush(x1)
-      fillpush(y + 1)
-      spanBelow = 1
-    elseif((spanbelow<>0) and (y < 599) and (getpixel(x1,y + 1) <> oldColor)) then
-      spanbelow = 0
-    endif  
-    x1+=1
-  loop
-  y=fillpop()
-  x=fillpop()
-loop  
-end sub  
-
-''-----------  Scroll the screen one line up
-
-sub scrollup(start as integer=0, aend as integer=600 , amount as integer=16)  
-
-dim i as integer	
-memmove(@machine.bytes(bufptr+start*1024),@machine.bytes(bufptr+(start+amount)*1024),(aend-start-amount)*1024)  
-for i = aend-amount to aend-1
-  fastline(0,1023,i,write_background)   
-next i
-
-end sub    
-' a version for text scrolling in Basic shifted 4 lines down
-
-sub scrollup2() 
-	
-dim i as integer	
-memmove(@machine.bytes(bufptr+4*1024),@machine.bytes(bufptr+20*1024),592*1024)    
-
-for i = 580 to 599
-  fastline(0,1023,i,write_background)   
-next i
-for i = 0 to 3
-  fastline(0,1023,i,write_background)   
-next i 
- 
-memmove(@machine.bytes(textbufptr),@machine.bytes(textbufptr+128),36*128)
-clear(machine.bytes(textbufptr+(36*128)),32,128) 
-end sub
-
-
-'*************************************************************************
-'                                                                        *
-'  Cursor functions                                                      *
-'                                                                        *
-'*************************************************************************
-sub setspritepos(s as integer, x as integer, y as integer)
-
-sprites(s).x=x
-sprites(s).y=y
-end sub
-
-sub setspritesize(s as integer, w as integer, h as integer)
-
-sprites(s).w=w
-sprites(s).h=h
-end sub
-
-sub setspriteptr(s as integer, sptr as ulong)
-
-sprites(s).sptr=sptr
-end sub
-
-sub setcursorpos(x as integer,y as integer)
-
-''---------- Set the (x,y) position of cursor
-
-cursor_x=x
-cursor_y=y
-setspritepos(17,4*cursor_x,16*cursor_y+4 )
-end sub
-
-sub position(x as integer,y as integer)
-setcursorpos(x,y)
-end sub
-
-function getcursorx() as integer
-return cursor_x
-end function
-
-function getcursory() as integer
-return cursor_y
-end function
-
-sub setcursorx(x as integer)
-cursor_x=x
-setspritepos(17,4*cursor_x,16*cursor_y+4 )
-end sub
-
-sub setcursory(y as integer) 
-cursor_y=y
-setspritepos(17,4*cursor_x,16*cursor_y+4)
-end sub
-
-sub setcursorshape(shape as integer)
-
-dim i as integer
-
-cursorshape=shape
-for i=0 to (8*cursorshape)-1
-  machine.bytes(cursorptr+i)=0
-next i
-for i= 8*cursorshape to 127
-  machine.bytes(cursorptr+i)=cursorcolor
-next i
-end sub
-
-sub setcursorcolor(acolor as ubyte) 
-
-dim i as integer
-
-cursorcolor=acolor
-for i=0 to (8*cursorshape)-1
-  machine.bytes(cursorptr+i)=0
-next i
-for i= 8*cursorshape to 127
-  machine.bytes(cursorptr+i)=cursorcolor
-next i
-end sub
-
-'---------------------------- initialize a cursor (MSDOS type)
-
-sub initcursor(acolor as ubyte)
-
-dim i as integer
-
-cursor_x=0							' place the cursor at 0:0
-cursor_y=0
-for i = 0 to 111
-  machine.bytes(cursorptr+i)=0
-next i  
-for i = 112 to 127
-  machine.bytes(cursorptr+i)=acolor
-next i    
-
-setspriteptr(17,cursorptr)
-setspritesize(17,8,16)
-setspritepos(17,0,0)
-cursorshape=14
-cursorcolor=acolor
-end sub
-
-sub setwritecolors(ff as ubyte,bb as ubyte)
-
-write_color=ff
-write_background=bb
-end sub
-
-sub cls1(fc as ubyte,bc as ubyte)
-
-clear(machine.bytes(bufptr),bc, 1920*1080-1 )
-clear(machine.bytes(textbufptr),32, bufptr-textbufptr)
-setwritecolors(fc,bc)
-cursor_x=0
-cursor_y=0
-setspritepos(17,4*cursor_x,16*cursor_y+4 )
-setcursorcolor(fc)
-end sub
-  
-
-sub setleadingspaces(amount as integer)
-
-leading_spaces=amount
-end sub
-
-''----------- Set cursor at the first character in a new line, scroll if needed 
-
-sub crlf()
-
-cursor_x=leading_spaces*2
-cursor_y+=1
-if cursor_y>st_lines-1 then
-  scrollup2()
-  cursor_y=st_lines-1
-endif
-setspritepos(17,4*cursor_x,16*cursor_y+4 )  
-end sub
-
-''---------- Backspace. Move the cursor back, clear a character
-
-sub bksp()
-
-cursor_x-=1
-if cursor_x=-1 then
-  cursor_x=255
-  cursor_y-=1
-  if cursor_y=-1 then
-    cursor_y=0
-    scrollup2()
-  endif
-endif    
-setspritepos(17,4*cursor_x,16*cursor_y )  
-outtextxycg(cursor_x,cursor_y," ",write_color,write_background)
-
-end sub
-
-
-''---------- Output a char at the cursor position, move the cursor 
-
-sub putchar1(achar as ubyte) 
-
-dim as integer c,x,y,l,newcpl
-
-if achar=10 then crlf()
-if achar=9 then cursor_x=(cursor_x and &b11110000)+16
-  
-if (achar<>9) and (achar<>10) then
-  putcharxycgf(cursor_x,cursor_y,achar,write_color,write_background)
-  machine.bytes(textbufptr+128*cursor_y+cursor_x/2)=achar
-  cursor_x+=2
-endif
-if cursor_x>=256 then
-  cursor_x=0
-  cursor_y+=1
-  if cursor_y>st_lines-1 then
-    scrollup2()
-    cursor_y=st_lines-1
-  endif
-endif    
-setspritepos(17,4*cursor_x,16*cursor_y+4 )
-end sub
-    
-    
-''---------- Output a char at the cursor position, move the cursor, don't react for tab or lf 
-
-sub putchar2(achar as ubyte)
-
-dim as integer c,x,y,l,newcpl 
-
-putcharxycgf(cursor_x,cursor_y,achar,write_color,write_background)
-machine.bytes(textbufptr+128*cursor_y+(cursor_x/2))=achar
-cursor_x+=2
-if cursor_x>=256 then
-  cursor_x=0
-  cursor_y+=1
-  if cursor_y>st_lines-1 then
-    scrollup2()
-    cursor_y=st_lines-1
-  endif
-endif    
-setcursorpos(cursor_x,cursor_y)
-end sub
- 
-''--------- Output a string at the cursor position, move the cursor  
-
-sub write1(text as string) 
-
-dim  as integer iii,c,ncx,ncy
-
-for iii=1 to len(text)  : putchar2(asc(mid$(text,iii,1))) : next iii
-end sub
-
-'--------- Output a string at the cursor position x,y, move the cursor to the next line -
-
-sub writeln(text as string)
-
-write1(text)
-crlf
-end sub
-
-/'    
-
-
- 
-
-
-
-
-'**********************************************************************r***
-'                                                                        *
-' Font related functions                                                 *
-'                                                                        *
-'*************************************************************************
-
-''--------- Set a font offset. TODO: remove, use byte#1 instead
-
-pub setfontfamily(afontnum)
-
-font_family:=afontnum
-'if afontnum==8
-'  font_ptr:=@amiga_font
-
-if afontnum==4
-  font_ptr:=@st_font
-if afontnum==0
-  font_ptr:=@vga_font
-  
-
-''--------- Get a pointer to a font definition
-
-pub getfontaddr(num)
-
-if num==1
-  return @vga_font
-if num==2
-  return @st_font
-if num==3
-  return @a8_font  
-
-''--------- Redefine a character
-
-pub defchar(ch,ptr) | s,i ' 
-
-s:=font_ptr+ch*16
-repeat i from 0 to 15
-  byte[s+i]:=byte[ptr+i]
-
-
-'*************************************************************************
-'                                                                        *
-'  Cursor functions                                                      *
-'                                                                        *
-'*************************************************************************
-
-
-
-'*************************************************************************
-'                                                                        *
-'  VBlank functions                                                      *
-'                                                                        *
-'*************************************************************************
-
-pub waitvbl(amount) | i
-
-''---------- Wait for start of vblank. Amount=delay in frames
-
-repeat i from 1 to amount
-  repeat until vblank==0
-    waitus(100)
-  repeat until vblank==1
-    waitus(100)
-
-
-pub waitvblend(amount) | i
-
-''---------- Wait for end of vblank. Amount=delay in frames
-
-repeat i from 1 to amount
-  repeat until vblank==1
-    waitus(100)
-  repeat until vblank==0
-    waitus(100)
-
-'*************************************************************************
-'                                                                        *
-'  Color functions                                                       *
-'                                                                        *
-'*************************************************************************
-
-''---------- Get a VGA color code
-
-pub getvgacolor(color):r
-
-return colors[color]
-
-pub getpalettecolor(color):r
-
-return long[palette_ptr+4*color]
-
-
-
-''---------- Set the border color
-
-pub setbordercolor(r,g,b) | color
-
-color:=r<<24+g<<16+b<<8
-bordercolor:=color
-
-pub setbordercolor2(color) 
-
-bordercolor:=color
-
-
-''---------- Set colors for putchar, write and writeln
-
-pub setwritecolors(ff,bb)
-
-write_color:=ff
-write_background:=bb
-
-''---------- Set color #c in palette to r,g,b
-
-pub setcolor(c,r,g,b)  |cc
-
-cc:=r<<24+g<<16+b<<8
-long[palette_ptr+4*c]:=cc
-
-pub getcolor(c) :r
-return long[@ataripalette+4*c]
-
-'*************************************************************************
-'                                                                        *
-'  Text functions                                                        *
-'                                                                        *
-'*************************************************************************
-
-''---------- Clear the screen, set its foreground/background color  
-
-pub setleadingspaces(amount)
-
-leading_spaces:=amount
-
-
-
-''---------- Output a char at the cursor position, move the cursor 
-
-pub putchar(achar) | c,x,y,l,newcpl
-
-if achar==10
-  crlf()
-if achar==9
-  cursor_x:=(cursor_x& %11110000)+16
-  
-if (achar<>9) && (achar<>10) 
-  putcharxycgf(cursor_x,16*cursor_y+4,achar,write_color,write_background)
-  ram.fill(textbuf_ptr+(timings[7]*cursor_y+(cursor_x>>1)),achar,1,0,1)
-  cursor_x+=2
-
-if cursor_x>=256
-  cursor_x:=0
-  cursor_y+=1
-  if cursor_y>st_lines-1
-    scrollup2()
-    cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y+4 )
-    
-''---------- Output a char at the cursor position, move the cursor, don't react for tab or lf 
-
-pub putchar2(achar) | c,x,y,l,newcpl
-
-putcharxycgf(cursor_x,16*cursor_y+4,achar,write_color,write_background)
-ram.fill(textbuf_ptr+(timings[7]*cursor_y+(cursor_x>>1)),achar,1,0,1)
-
-cursor_x+=2
-if cursor_x>=256
-  cursor_x:=0
-  cursor_y+=1
-  if cursor_y>st_lines-1
-    scrollup2()
-    cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y+4 ) 
-''--------- Output a string at the cursor position, move the cursor  
-
-pub write(text) | iii,c,ncx,ncy
-
-repeat iii from 0 to strsize(text)-1
-  putchar2(byte[text+iii])
-
-'--------- Output a string at the cursor position x,y, move the cursor to the next line -
-
-pub writeln(text)
-
-write(text)
-crlf
-
- 
- 
-''----------- Scroll the screen one line down 
-
-pub scrolldown(start=0) | i
-
-repeat i from 579 to (start*16)+4
-  ram.read1($7E800, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
-  ram.write($7E800, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
-
-repeat i from (start*16)+4 to (start*16)+19
-   fastline(0,1023,i,write_background)    
-   
-repeat i from 35 to start
-  ram.read1($7E800, textbuf_ptr+(i*128), 128)
-  ram.write($7E800, textbuf_ptr+(i+1)*128,128)
-repeat i from 0 to 127
-  ram.fill((textbuf_ptr+start*128+i),32,1,0,1)      
-
-''----------- Set cursor at the first character in a new line, scroll if needed 
-
-pub crlf()
-
-cursor_x:=leading_spaces*2
-cursor_y+=1
-if cursor_y>st_lines-1
-  scrollup2()
-  cursor_y:=st_lines-1
-setspritepos(17,4*cursor_x,16*cursor_y+4 )  
-''---------- Backspace. Move the cursor back, clear a character
-
-pub bksp()
-
-cursor_x-=1
-if cursor_x==255
-  cursor_x:=s_cpl-1
-  cursor_y-=1
-  if cursor_y==255
-    cursor_y:=0
-    scrollup2()
-setspritepos(17,4*cursor_x,16*cursor_y )  
-
-outtextxycg(cursor_x,cursor_y,string(" "),write_color,write_background)
-
-
-'*************************************************************************
-'                                                                        *
-'  Conversions                                                           *
-'                                                                        *
-'*************************************************************************
-
-''---------- Convert a integer to dec string, return a pointer
-
-pub inttostr(i):result |q,pos,k,j
-
-j:=i
-pos:=10
-k:=0
-
-if (j==0)
-  n_string[0]:=48
-  n_string[1]:=0
-
-else
-  if (j<0)
-    j:=0-j
-    k:=45
-
-  n_string[11]:=0
-  repeat while (pos>-1)
-    q:=j//10
-    q:=48+q
-    n_string[pos]:=q
-    j:=j/10
-    pos-=1
-  repeat while n_string[0]==48
-    bytemove(@n_string,@n_string+1,12)
-
-  if k==45
-     bytemove(@n_string+1,@n_string,12)
-     n_string[0]:=k
-
-q:=@n_string
-return q
-
-''---------- Convert a integer to dec string using d digits, return a pointer
-
-pub inttostr2(i,d):result |q,pos,k,j
-
-j:=i
-pos:=d-1
-k:=0
-
-n_string[d]:=0
-repeat k from 0 to d-1
-  n_string[k]:=48
-
-if (j<>0)
-
-  repeat while (pos>-1)
-    q:=j+//10
-    q:=48+q
-    n_string[pos]:=q
-    j:=j+/10
-    pos-=1
-
-
-q:=@n_string
-return q
-
-''----------  Convert unsigned integer to hex string with d digits, return a pointer
-
-pub inttohex(i,d):result |q,pos,k,j
-
-j:=i
-pos:=d-1
-k:=0
-n_string[d]:=0
-repeat k from 0 to d-1
-  n_string[k]:=48
-if (j<>0)
-
-  repeat while (pos>-1)
-    q:=j+//16
-    if (q>9)
-      q:=q+7
-    q:=48+q
-    n_string[pos]:=q
-    j:=j+/16
-    pos-=1
-
-q:=@n_string
-return q
-
-
-pub setpalette(colors)
-
-if colors==256 
-  palette_ptr:=@ataripalette
-
-'**********************************************************************************
-'
-'        Blitting
-'
-'**********************************************************************************
-
-pub blit(f,x1a,y1a,x2a,y2a,s1,t,x1b,y1b,s2) | y
-
-if ((f>=$80000) && (t>=$80000)) ' todo: check if the fields overlap and reorder the move
-  if x1a>x2a
-    x1a,x2a:=x2a,x1a
-  if y1a>y2a
-    y1a,y2a:=y2a,y1a  
-  if x2a-x1a>1023 
-    x2a:=x1a+1023 ' limit the line to 1024
-  if t+x1a+y1a*s1>f+x1b+y1b*s2
-    repeat y from y1a to y2a
-  '    writeln(string("I am here"))
-      ram.read1($7E800, f+(y)*s1+x1a, x2a-x1a+1)
-      ram.write($7E800, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)
-  else
-    repeat y from y2a to y1a
- '     writeln(string("I am there"))
-      ram.read1($7E800, f+(y)*s1+x1a, x2a-x1a+1)
-      ram.write($7E800, t+(y1b-y1a+y)*s2+x1b, x2a-x1a+1)     
-    
-if ((f>=$80000) && (t<$80000)) 
-  repeat y from y1a to y2a
-    ram.read1(t+(y1b-y1a+y)*s2+x1b,f+(y)*s1+x1a,x2a-x1a+1)
-    
-if ((f<$80000) && (t>=$80000)) 
-  t:=t & $FFFFFFF
-  repeat y from y1a to y2a
-    ram.write(f+(y)*s1+x1a,t+(y1b-y1a+y)*s2+x1b,x2a-x1a+1)
-    
-if ((f<$80000) && (t<$80000)) 
-  repeat y from y1a to y2a
-    bytemove (f+(y)*s1+x1a,t+(y1b-y1a+y)*s2+x1b,x2a-x1a+1)
- '/
-
-
-
-
-sub translate_screen
-
-dim as any pointer p2p,p3p ,pp
-dim as integer sw,sh,bw,bhe,bc
-p2p=@t2(0)
-p3p=@machine.bytes(bufptr)
-pp=@ataripalette(0)
-'sw=1920*1080
-sw=1024
-sh=600
-bc=64
-bw=128
-bhe=60*1280
-
-#if (defined (__FB_ARM__ )) and  (defined (__FB_64BIT__))
-
-      asm
-      ldr x0,p2p          ' main sdl fb
-      ldr x1,p3p          ' 8 bpp fb
-      ldr x2,pp           ' palette ptr
-      ldr w9,bc
-      ldr w4,sh
-
-      ldr w3,bhe
-p5:   str w9,[x0],#4
-      subs x3,x3,#1
-      cbnz x3,p5
-
-p2:   ldr w3,sw
-      ldr w8,bw
-     
-p3:   str w9,[x0],#4
-      subs x8,x8,#1
-      cbnz x8,p3
-      
-p1:   ldrb w5,[x1],#1
-      add x5,x2,x5,lsl #2
-      ldr w6,[x5] 
-      str w6,[x0],#4
-      subs w3,w3,#1
-      cbnz w3,p1
-      
-      ldr x8,bw 
-p4:   str w9,[x0],#4
-      subs x8,x8,#1
-      cbnz x8,p4      
-      
-      subs x4,x4,#1
-      cbnz x4,p2
-      
-      ldr w3,bhe
-p6:   str w9,[x0],#4
-      subs x3,x3,#1
-      cbnz x3,p6
-      
-      end asm
-      
-      
-#else
-dim as integer i
-for i=0 to sw-1 : t2(i)=ataripalette(machine.bytes(bufptr+i)) : next i
+dim v as class using "hg010b.spin2"
+dim psram as class using "psram.spin2"
 #endif
 
-end sub
+'' this version doesn't support 4 bit: video driver needs synchroonizing. To do after reaching a beta phase
 
-sub sprite1
+'#ifdef PSRAM4
+'const _clkfreq = 340500000
+'dim v as class using "hg009-4.spin2"
+'dim psram as class using "psram4.spin2"
+'#endif
 
-dim as any pointer p2p,p3p ,pp
-dim as integer sy,sx,spt,sw,sh,so,i
+dim kbm as class using "usbnew.spin2"
+dim audio as class using "audio096.spin2"
+'dim audio as class using "sa001.spin2"
 
-p2p=@t2(0)
-p3p=@machine.bytes(0)
-pp=@ataripalette(0)
-for i=0 to 17-((frames/16) mod 2)
-  sx=sprites(i).x
-  sy=sprites(i).y
+''-----------------------------------------------------------------------------------------
+''---------------------------------- Constants --------------------------------------------
+''-----------------------------------------------------------------------------------------
 
-  sw=sprites(i).w
-  sh=sprites(i).h
-  spt=sprites(i).sptr
-  so=5120*sy+4*sx+512+60*5120
-  if sx>=1024 then goto a201
-  if sy>=600 then goto a201 
-  ' correct the y and the rest of coordinates to not draw outside the screen
-
-      asm
-      ldr x0,p2p          ' main sdl fb
-      ldr w1,spt           ' sprite pointer
-      ldr x2,p3p
-      add x1,x1,x2
-      ldr x2,pp           ' palette ptr
-      ldr w4,so
-      add x0,x0,x4
-      ldr w7,sh
-       ldr w3,sw
-      
-a102: ldrb w5,[x1],#1
-      cbz w5,a103
-      add x5,x2,x5,lsl #2
-      ldr w6,[x5] 
-      str w6,[x0],#4
-      b a104
-a103: add x0,x0,#4
-
-a104: subs w3,w3,#1
-      cmp w3,#0
-      b.ne a102
-
-      add x0,x0,#4096
-      add x0,x0,#1024
-      ldr w3,sw
-      sub x0,x0,x3,lsl #2
-
-      subs w7,w7,#1
-      cmp w7,#0
-      b.ne a102
-      end asm
-a201: next i
-end sub
-
-
-
-
-'---------------------------------------------------------------------------------------------------------------------------------
-' the thread for the SDL displaying 8bpp
-
-sub sdlthread(qq as any pointer)
-SDL_Init(SDL_INIT_VIDEO)
-
-
-SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best")' // make the scaled rendering look smoother.
-SDL_SetHint(SDL_HINT_RENDER_OPENGL_SHADERS, "1")' // make the scaled rendering look smoother.
-var win= SDL_CreateWindow( "The Retromachine", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280,720 , SDL_WINDOW_shown)
-dim displaymode as sdl_displaymode
-sdl_getcurrentdisplaymode(0,@displaymode)
-displaymode.refresh_rate=50
-displaymode.w=1280
-displaymode.h=720
-sdl_setwindowdisplaymode(win,@displaymode)
-var renderer = SDL_CreateRenderer(win, -1, 14) '  // hardware+vsync+texture   14
-var sdlTexture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STreaming,1280,720)  
-SDL_RenderSetLogicalSize(renderer,1280,720)
-sdl_warpmouseinwindow(win,512,300)
- sdl_showcursor(sdl_disable)
-dim as ulong i,j ,mx,my
-dim q as double
-for i=0 to 599: for j=0 to 1023 : t2(1024*i+j)=0: next j : next i
-do
- ' if updated=1 then
-    updated=0
-    frames+=1
-    translate_screen
-    sdl_getmousestate(@sprites(16).x,@sprites(16).y)
-    sprite1
-    SDL_UpdateTexture(sdlTexture, NULL, @t2(0), 1280 * 4)
-    SDL_RenderClear(renderer)
-    SDL_RenderCopy(renderer, sdltexture, NULL, NULL)
-    SDL_RenderPresent(renderer)
-
- '   sleep(200,1)
- '    SDL_RenderPresent(renderer)
- 'endif
-  dim event as SDL_Event
-  while SDL_PollEvent(@event)
-    select case event.type
-      case SDL_QUIT_
-	      exit do
-      case SDL_KEYDOWN
-        if event.key.keysym.sym = SDLK_ESCAPE then exit do
-      
-    end select
-  wend 
-
-loop
-
-SDL_DestroyTexture(sdltexture)
-SDL_DestroyRenderer(renderer)
-SDL_DestroyWindow(win)
-SDL_Quit()
-a=0
-end sub
-
-
-
-
-
-' ------------------------- interpreter start
-
-const ver_="RPi5 Retromachine BASIC version 0.01"
-const ver=1
+const ver$="P2 Retromachine BASIC version 0.49 beta 3"
+const ver=49
 
 '' ------------------------------- Keyboard constants
 
@@ -1423,6 +276,8 @@ const token_padw=214
 const token_findfirst=215
 const token_findnext=216
 const token_defchar=217
+const token_setamode=218
+const token_getrealfreq=219
 
 const token_error=255
 const token_end=510
@@ -1468,229 +323,213 @@ const maxfor=64
 const maxgosub=64
 
 '----------------------------- Basic program starts here
-const memlo=&h80000
+const memlo=$80000
 
 '----------------------------- Audio stuff
 
-dim shared envbuf(7,255) as ushort			' envelope buffer
-dim shared envbuf8(7,512) as ubyte ' the same for 8-bit access
-dim shared notetable(11) as single			' one octave note frequencies		' 
-dim shared noteperiods(11) as integer			' Paula periods for notes, one octave
+dim envbuf(7,255) as ushort			' envelope buffer
+declare envbuf8 alias envbuf as ubyte(7,512)	' the same for 8-bit access
+dim notetable(11) as single			' one octave note frequencies		' 
+dim noteperiods(11) as integer			' Paula periods for notes, one octave
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
 ''-----------------------------------------------------------------------------------------
-type part                       ' source code line part
-  part_ as string
-  token as integer
-end type
+
+class part                       ' source code line part
+  dim part$ as string
+  dim token as integer
+end class
 
 union aresult			' one long for all result types (until I implement double and int64)
-  iresult as integer
-  uresult as ulong
-  sresult as string ptr
-  fresult as double
-  ulresult as ulongint     	' make an 8 byte placeholder for in64 and double
-  twowords(1) as ulong 	' and allow single word access to it
+  dim iresult as integer
+  dim uresult as ulong
+  dim sresult as string
+  dim fresult as double
+  dim ulresult as ulongint     	' make an 8 byte placeholder for in64 and double
+  dim twowords(1) as ulong 	' and allow single word access to it
 end union
   
-type expr_result		' general variable, not only expression result :) 
-  result as aresult
-  result_type as ulong  
-end type
+class expr_result		' general variable, not only expression result :) 
+  dim result as aresult
+  dim result_type as ulong  
+end class
 
-type variable		' variable table enttry
-  name as string
-  value as aresult
-  vartype as ulong
-end type 
+class variable			' variable table enttry
+  dim name as string
+  dim value as aresult
+  dim vartype as ulong
+end class  
 
-type for_entry			' for-next loop table entry
-  lineptr as ulong 		' line that will be executed after next
-  cmdptr as ulong  		' pointer to a command in this line
-  varnum as integer  	' variable to modify and check
-  stepval as integer
-  endval as integer
-end type
+class for_entry			' for-next loop table entry
+  dim lineptr as ulong 		' line that will be executed after next
+  dim cmdptr as ulong  		' pointer to a command in this line
+  dim varnum as integer  	' variable to modify and check
+  dim stepval as integer
+  dim endval as integer
+end class  
 
-type gosub_entry		' gosub stack entry
-  lineptr as ulong 		' line that will be executed after next
-  cmdptr as ulong  		' command# in this line
-end type 
+class gosub_entry		' gosub stack entry
+  dim lineptr as ulong 		' line that will be executed after next
+  dim cmdptr as ulong  		' command# in this line
+end class 
 
-type audiochannel		' a set of predefined values for audio channels
-  freq as single		' frequency
-  wave as ubyte		' waveform #
-  env as ubyte		' envelope #
-  delay as ushort		' delay in ms
-  length as single		' length in seconds
-  vol as single		' volume (1/1000, 0.0..16.384)
-  pan as single		' -1.0 left, 1.0 right
-  sus as ushort		' sustain point on the envelope
-  amode as ushort		' freq/skip computing mode
-  realfreq as single
-end type
+class audiochannel		' a set of predefined values for audio channels
+  dim freq as single		' frequency
+  dim wave as ubyte		' waveform #
+  dim env as ubyte		' envelope #
+  dim delay as ushort		' delay in ms
+  dim length as single		' length in seconds
+  dim vol as single		' volume (1/1000, 0.0..16.384)
+  dim pan as single		' -1.0 left, 1.0 right
+  dim sus as ushort		' sustain point on the envelope
+  dim amode as ushort		' freq/skip computing mode
+  dim realfreq as single
+end class
 
-dim shared lparts(125) as part         ' parts to split the line into, line has 125 chars max
+type parts as part(125)         ' parts to split the line into, line has 125 chars max
 type asub as sub()		' sub type to make a sub table
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Global variables ------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-dim shared channels(7) as audiochannel
-dim shared variables(1024) as variable
-dim shared varnum as integer
+dim channels(7) as audiochannel
+dim variables as variable(maxvars)
+dim varnum as integer
+dim lparts as parts
 
+dim audiocog,videocog,usbcog,pscog,pslock as integer
+dim base as ulong
+dim mbox as ulong
+dim ansibuf(3) as ubyte
+dim line$ as string
+dim fullline$ as string
+dim cont as integer
 
-dim shared as integer audiocog,videocog,usbcog,pscog,pslock 
-dim shared base_ as ulong
-dim shared mbox as ulong
-dim shared ansibuf(3) as ubyte
-dim shared line_ as string
-dim shared fullline_ as string
-dim shared cont as integer
+dim plot_color,plot_x,plot_y as integer
+dim editor_spaces as integer
+dim paper,ink, font as integer
+dim ct as integer
+dim progend as integer
+dim stack(maxstack) as expr_result
+dim stackpointer as integer
+dim programptr as integer
 
-dim shared as integer plot_color,plot_x,plot_y 
-dim shared editor_spaces as integer
-dim shared as integer paper,ink, font 
-dim shared ct as integer
-dim shared progend as integer
-dim shared stack(maxstack) as expr_result
-dim shared stackpointer as integer
-dim shared programptr as integer
+dim commands(255) as asub 'this is a function table
+dim tokennum as integer
+dim compiledslot as integer
+dim test as expr_result 
+dim key , key2 as ulong
+dim errors$(255)
 
-dim shared commands(255) as asub 'this is a function table
-dim shared tokennum as integer
-dim shared compiledslot as integer
-dim shared test as expr_result 
-dim shared as ulong key, key2  
-dim shared errors_(255) as string
+dim compiledline(127) as expr_result
+declare ucompiledline alias compiledline as ulong(383)
+dim lineptr as integer
+dim lineptr_e, ilineptr_e as integer
+dim programstart as ulong
+dim lastline as ulong
+dim lastlineptr as ulong
+'dim stringtable(maxvars) as string
+'dim stringptr as integer
+dim currentdir$ as string
+dim fortable(maxfor) as for_entry
+dim gosubtable(maxgosub) as gosub_entry
 
-union cli
-  compiledline(127) as expr_result
-  ucompiledline(383) as ulong
-end union
-
-dim shared cl as cli
-  
-dim shared lineptr as integer
-dim shared as integer lineptr_e, ilineptr_e 
-dim shared programstart as ulong
-dim shared lastline as ulong
-dim shared lastlineptr as ulong
-
-dim shared currentdir_ as string
-dim shared fortable(maxfor) as for_entry
-dim shared gosubtable(maxgosub) as gosub_entry
-
-dim shared sample(255) as ubyte ' for csave
-dim shared block(1023) as ubyte ' for csave and get/put/copy
-dim shared blockptr as ulong
-dim shared as ulong runptr,runptr2,oldrunptr 
-dim shared getres(9) as integer ' det  function result  for channel
-dim shared inrun as ulong
-dim shared runheader(5) as ulong
-dim shared dataheader(8) as ulong
-dim shared dataptr as ulong
-dim shared as integer fortop,gosubtop  
-dim shared free_ as string
-dim shared keyclick as integer
-dim shared housekeeper_cog as integer
-dim shared housekeeper_stack(128) as integer
-dim shared as ulong mousex,mousey,mousek, mousew  
-dim shared as integer padx(6),pady(6),padz(6),padh(6),padrx(6),padry(6),padrz(6),pads(6),padw(6)
-dim shared stick(6) as ulong
-dim shared strig(6) as ulong
-dim shared sprite(15) as ubyte pointer
-dim shared hkcnt as ulong
-dim shared as ulong nostalgic_mode, spl_len 
-dim shared keyclick_spl as any pointer
-dim shared trig_coeff as single
-dim shared trig_coeff2 as single
-dim shared linenum as ulong
-dim shared suspoints(7) as ushort
-dim shared loadname as string
-dim shared do_insert as integer
-dim shared as integer cy,cx 
-dim shared as integer inload,err_
-dim shared readline as string
-
-declare sub interpret
-declare function isoperator(s as string) as ubyte
-declare function ischannel(s as string) as ulong
-declare function isconstant(s as string) as integer
-declare function isnotename(s as string) as ulong
-declare function isseparator(s as string) as ulong
-declare function isassign(s as string) as ubyte
-declare function iscommand(s as string) as ubyte
-declare function isfunction(s as string) as ubyte
-declare function isname(s as string) as boolean
-declare function isnum(s as string) as boolean 
-declare function isint(s as string) as boolean
-declare function isdec(s as string) as integer
-declare function isstring(s as string) as boolean
-declare function getnoteval(token as integer) as single
-declare function deleteline(aline as ulong) as integer
-declare function compile (alinemajor as ulong, alineminor as ulong=0, cont as ulong=0) as ulong
-declare sub printerror(err as integer, linenum as integer=0)
-declare function compile_immediate_assign(linetype as ulong) as ulong
-declare function compile_assign (alinemajor as ulong, alineminor as ulong=0, cont as ulong=0)  as ulong
-declare function compile_immediate(linetype as ulong, aline as ulong) as integer
-
-declare function execute_line (astart as integer=0) as integer
-declare function expr() as ulong 
-declare function getaddr() as ulong
+dim sample(255) as ubyte ' for csave
+dim block(1023) as ubyte ' for csave and get/put/copy
+dim blockptr as ulong
+dim runptr,runptr2,oldrunptr as ulong
+dim getres(9) as integer ' det  function result  for channel
+dim inrun as ulong
+dim runheader as ulong(5)
+dim dataheader as ulong(8)
+dim dataptr as ulong
+dim fortop,gosubtop as integer
+dim free$ as string
+dim keyclick as integer
+dim housekeeper_cog as integer
+dim housekeeper_stack as integer(128)
+dim mousex,mousey,mousek, mousew as ulong
+dim padx,pady,padz,padh,padrx,padry,padrz,pads,padw as integer(6)
+dim stick(6) as ulong
+dim strig(6) as ulong
+dim sprite(15) as ubyte pointer
+dim hkcnt as ulong
+dim memtop as ulong
+dim nostalgic_mode, spl_len as ulong
+dim keyclick_spl as any pointer
+dim trig_coeff as single
+dim trig_coeff2 as single
+dim linenum as ulong
+dim suspoints(7) as ushort
+dim loadname as string
+dim do_insert as integer
+dim cy,cx as integer
+dim inload,err as integer
+dim readline as string
 
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
 '----------------------------------------------------------------------------
 
-for i=0 to 17 : sprites(i).y=2048 : next i
- sprites(16).x=300
- sprites(16).y=200
- sprites(16).w=32
- sprites(16).h=32
- sprites(16).sptr=&h7F000
- sprites(17).w=8
- sprites(17).h=16
- sprites(17).x=16
- sprites(17).y=80
- sprites(17).sptr=&h7f400
- for i=sprites(17).sptr to sprites(17).sptr+111 : machine.bytes(i)=0 : next i
- for i=sprites(17).sptr+112 to sprites(17).sptr+127 : machine.bytes(i)=154 : next i
+startpsram
 
-setspriteptr(16,&h7F000)
-setspritesize(16,32,32) 
-threadcreate(@sdlthread,null,0) ' start video
-''housekeeper_cog=cpu(housekeeper(),@housekeeper_stack(0)) : hkcnt=0
+audiocog,base=audio.start(mbox,0,$7E000)
+waitms(50)
+dpoke base+20,16384
+usbcog=kbm.start()
+startvideo
+
+
+kbm.mouse_set_limits(1023,599)
+kbm.mouse_set_outptr(varptr(v.spr1ptr)+16*12+4)
+v.setspriteptr(16,@mouse)
+v.setspritesize(16,32,32) 
+kbm.mouse_move(512,300)
+housekeeper_cog=cpu(housekeeper(),@housekeeper_stack(0)) : hkcnt=0
 editor_spaces=2
 paper=147: ink=154 : font=4
 plot_color=ink : plot_x=0: plot_y=0
-keyclick=1 : nostalgic_mode=0 : 
-'keyclick_spl=@atari_spl : spl_len=1694
+keyclick=1 : nostalgic_mode=0 : keyclick_spl=@atari_spl : spl_len=1694
 compiledslot=sizeof(test)
-'init_commands
-'init_error_strings
-'init_audio
-'do_new
-cls1(ink, paper)
-'setfontfamily(font) 				' use ST Mono font
-setleadingspaces(2)
-chdir "~/bas"
-currentdir_="~/bas"
-position 2*editor_spaces,1 : writeln ver_
-free_=str$(memtop-programptr)+" BASIC bytes free" : writeln free_
-position 2*editor_spaces,4 : writeln "Ready"
-'pinwrite 38,0 : pinwrite 39,0 ' LEDs off
+init_commands
+init_error_strings
+init_audio
+do_new
+cls(ink, paper)
+v.setfontfamily(font) 				' use ST Mono font
+v.setleadingspaces(2)
+mount "/sd", _vfs_open_sdcard()
+chdir "/sd/bas"
+currentdir$="/sd/bas"
+position 2*editor_spaces,1 : print ver$
+free$=decuns$(memtop-programptr)+" BASIC bytes free" : print free$
+position 2*editor_spaces,4 : print "Ready"
+pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
 inload=0
 
 open "/sd/bas/autorun.bas" for input as #9
+err=geterr()
 close #9
-if err=0 then line_="run autorun.bas" : interpret
+if err=0 then line$="run autorun.bas" : interpret
+
+
+'-------------------------------------------------------------------------------------------------------- 
+'-------------------------------------- MAIN LOOP -------------------------------------------------------
+'--------------------------------------------------------------------------------------------------------
+
+do
+  line$=edit()
+  interpret: line$="" 
+loop
+
+'-------------------------------------------------------------------------------------------------------- 
+'------------------------------------ MAIN LOOP END -----------------------------------------------------
+'--------------------------------------------------------------------------------------------------------
 
 ''-------------------------------------------------------------------------------------------------------
 '                     A full screen editor for programming and entering data
@@ -1698,42 +537,41 @@ if err=0 then line_="run autorun.bas" : interpret
 
 function edit() as string
 
-dim as ulong key,key2,key3,key4,rpt,rptcnt,ch
-dim as integer i
-dim line_ as string
+dim key,key2,key3,key4,rpt,rptcnt,ch as ulong
+dim line$ as string
 rpt=0 : rptcnt=0 : key=0 : key2=0 : key3=0 : key4=0 
 do
-'waitvbl
+waitvbl
 '' Do key repeat
 
-'let key=kbm.get_key() 
-'let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-'if key>0 andalso key<4 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): audio.stop(7)
-'if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
-'if key>$80000000 then rptcnt=0 : rpt=0
-'if key=0 andalso rpt=1 then rptcnt+=1
-'if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
+let key=kbm.get_key() 
+let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
+if key>0 andalso key<4 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): audio.stop(7)
+if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
+if key>$80000000 then rptcnt=0 : rpt=0
+if key=0 andalso rpt=1 then rptcnt+=1
+if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 
 '' there is a key pressed and it needs to be processed
 
 if key3<>0 then
-'  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
-'  let key4=scantochar(key3)          
-'  if leds and 2 = 2 then 						' caps lock
-'    if key4>96 andalso key4<123 then                 
-'      key4-=32
-'    else if key4>64 andalso key4<91 then 
-'      key4+=32
-'    else if key4>22 andalso key4<32 then 				' 2x9 slots from #13 to #31 for intenational chars. 
-'      key4-=9								' ST type font used has Polish characters there
-'    else if key4>13 andalso key4<23 then 				
-'      key4+=39
-'    endif
+  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
+  let key4=scantochar(key3)          
+  if leds and 2 = 2 then 						' caps lock
+    if key4>96 andalso key4<123 then                 
+      key4-=32
+    else if key4>64 andalso key4<91 then 
+      key4+=32
+    else if key4>22 andalso key4<32 then 				' 2x9 slots from #13 to #31 for intenational chars. 
+      key4-=9								' ST type font used has Polish characters there
+    else if key4>13 andalso key4<23 then 				
+      key4+=39
+    endif
   endif
  
-  if key4>0 andalso key4<127 andalso  cursor_x<254 then		' put the char on the screen 
+  if key4>0 andalso key4<127 andalso v.cursor_x<254 then		' put the char on the screen 
     if do_insert then							' move the characters right
-      for i=   textbufptr+128*cursor_y+127 to textbufptr+128*cursor_y+(cursor_x/2)+1 step -1 : pspoke i,pspeek(i-1) : next i 
+      for i=  v.textbuf_ptr+128*v.cursor_y+127 to v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2)+1 step -1 : pspoke i,pspeek(i-1) : next i 
       let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
     endif
     v.putchar(key4)
@@ -1811,6 +649,60 @@ endif
 loop
 end function
 
+''-----------------------------------------------------------------------------------------------------------
+' 					A housekeepeer.
+' A dedicated cog that is intended to do things in the background, for example tracking GUI elements
+' or playing audio tracks in  the background.  In the current version it reads the mouse pointer and
+' a digital joystick position. It also implements a 200 Hz clock that's ticks are synchronized with vblanks 
+''-----------------------------------------------------------------------------------------------------------
+
+sub housekeeper
+
+do
+  do: loop until v.vblank=1 : hkcnt+=1 :gethdi
+  waitms(5) : hkcnt+=1 : gethdi
+  waitms(5) : hkcnt+=1 : gethdi
+  waitms(5) : hkcnt+=1 : gethdi
+loop
+end sub
+
+'----------------------------------------------------------------------------------------------------------
+' gethdi is called from the houseekeeper to read HDI related values
+'----------------------------------------------------------------------------------------------------------
+
+sub gethdi
+
+dim  dummy,i,j,x,y,z,h,rx,ry,rz,s,w as ulong
+
+mousex,mousey=kbm.mouse_xy()
+dummy,mousew=kbm.mouse_scroll()
+mousek=kbm.mouse_buttons()
+i=0
+for j=0 to 6
+  if kbm.hidpad_id(j)>0 then
+    x=kbm.hidpad_axis(j,0) : y=kbm.hidpad_axis(j,1) : z=kbm.hidpad_axis(j,2) : h=kbm.hidpad_hat(j,0)
+    rx=kbm.hidpad_axis(j,3) : ry=kbm.hidpad_axis(j,4) : rz=kbm.hidpad_axis(j,5) 
+    s=kbm.hidpad_axis(j,6) : w=kbm.hidpad_axis(j,7)  
+    padx(i)=x: pady(i)=y: padz(i)=z :padh(i)=h 
+    padrx(i)=rx: padry(i)=ry: padrz(i)=rz  
+    pads(i)=s: padw(i)=w 
+    x=1+(x+49152) shr 15 : y=1+(y+49152) shr 15 : stick(i)=x+(y shl 2) 
+    strig(i)=kbm.hidpad_buttons(j) 
+    i=i+1
+  endif
+next j  
+for j=i to 6 : stick(j)=0 : strig(j)=0 : next j 
+
+'joystick positions:
+'	                5     6     7
+'			9    10    11
+'		       13    14    15
+end sub
+
+'-------------------------------------------------------------------------------------------------------------
+'---------------------------------- Housekeeper stuff ends here ----------------------------------------------
+'-------------------------------------------------------------------------------------------------------------
+
 '-------------------------------------------------------------------------------------------------------------
 '
 '                                     LINE INTERPRETER/TOKENIZER
@@ -1820,81 +712,81 @@ end function
 
 sub interpret
  
-dim as integer i,j,k,l,q,d,b1,b2,b3,addptr,dot,p1,p2 
+dim i,j,k,q,d,b1,b2,b3,addptr,dot as integer 
 dim result as expr_result
 dim etype as integer
-dim as integer separators(125)
+dim separators(125)
 dim note_val as single
-dim err_ as integer
-dim as string c_,p_,s1_,s2_,lp_,d_, rest_
+dim err as integer
+dim c$,p$,s1$,s2$,lp$ as string
 
 ' -------------------------    Pass 1: Split the line to parts, strip unneded spaces, lowercase parts, detect and concatenate strings
 
-fullline_=trim$(line_): cont=-1  : linenum=0 : lineptr=0 : err_=0
+fullline$=trim$(line$): cont=-1  : linenum=0 : lineptr=0 : err=0
 
-p108: 
+108 
 for i=0 to 125: separators(i)=0 :next i
-for i=0 to 125: lparts(i).part_="": lparts(i).token=0: next i
+for i=0 to 125: lparts(i).part$="": lparts(i).token=0: next i
 
 ' 1a : extract the first command, split the line to first command and the rest
 
-line_=trim$(line_): d_="" :  l=len(line_) 
-if l=0 then goto p101					                ' empty line,  nothing to do except print "ready"
-d=0							                              ' before we split the line, we have to find colons that are inside a string, 
-for i=1 to len(line_)
-  if mid$(line_,i,1)="""" andalso d=0 then 		' they are inside a string if there is an odd number of " before :
+line$=trim$(line$):let d$="" : let l=len(line$) 
+if l=0 then goto 101					' empty line,  nothing to do except print "ready"
+d=0							' before we split the line, we have to find colons that are inside a string, 
+for i=1 to len(line$)
+  if mid$(line$,i,1)="""" andalso d=0 then 		' they are inside a string if there is an odd number of " before :
     d=1
-  elseif mid$(line_,i,1)="""" andalso d=1 then 
+  else if mid$(line$,i,1)="""" andalso d=1 then 
     d=0
   endif
 lparts(i).token=d  
 next i 
-i=1: do until (mid$(line_,i,1)=":" andalso lparts(i).token=0)  orelse i>=l : i=i+1 : loop 		' find the first : that is not in a string
-if i<l then rest_=trim$(right$(line_,len(line_)-i)):line_=trim$(left$(line_,i-1)) else rest_="" 	' and separate the part of the line before the first : from the rest
+i=1: do until (mid$(line$,i,1)=":" andalso lparts(i).token=0)  orelse i>=l : i=i+1 : loop 		' find the first : that is not in a string
+if i<l then let rest$=trim$(right$(line$,len(line$)-i)):line$=trim$(left$(line$,i-1)) else rest$="" 	' and separate the part of the line before the first : from the rest
 
-if cont=-1 andalso rest_<>"" then cont=0 : goto p107       	' this is the first and not the last part
-if cont=-1 andalso rest_= "" then cont=3 : goto p107		' this is the first AND the last part
-if cont=4  andalso rest_<>"" then cont=1 : goto p107		' this is not the first and not the last part
-if cont=4  andalso rest_= "" then cont=2 : goto p107		' this is the last, and not the first, part
+if cont=-1 andalso rest$<>"" then cont=0 : goto 107       	' this is the first and not the last part
+if cont=-1 andalso rest$= "" then cont=3 : goto 107		' this is the first AND the last part
+if cont=4  andalso rest$<>"" then cont=1 : goto 107		' this is not the first and not the last part
+if cont=4  andalso rest$= "" then cont=2 : goto 107		' this is the last, and not the first, part
 
 ' 1b: find separators
 
-p107:
+107
 separators(0)=0
 i=0: j=1
 do: 
-  i+=1 : c_=mid$(line_,i,1) : if isseparator(c_) then separators(j)=i: j+=1 
+  i+=1 : c$=mid$(line$,i,1) : if isseparator(c$) then separators(j)=i: j+=1 
 loop until i>l
 separators(j)=i
 
 ' 1c : split the command to parts
 
-k=0
+let k=0
 for i=0 to j-1 
-  p1=separators(i) : p2=separators(i+1) ' : print p1,p2
-  if p1>0 then p_=mid$(line_,p1,1) : if p_<>"" then lparts(k).part_=p_ : k+=1 
-  p_=mid$(line_,p1+1,p2-p1-1) : if p_<>"" then lparts(k).part_=p_ : k+=1 
+  let p1=separators(i) : let p2=separators(i+1)' : print p1,p2
+  if p1>0 then let p$=mid$(line$,p1,1) : if p$<>"" then lparts(k).part$=p$ : k+=1 
+  p$=mid$(line$,p1+1,p2-p1-1) : if p$<>"" then lparts(k).part$=p$ : k+=1 
 next i
 
 ' 1d  : first part has to have a line number, if not, add 0 for the immediate line
 
-if (cont=0  orelse  cont=3) andalso isdec(lparts(0).part_)=0  then for i=k to 1 step -1: lparts(i)=lparts(i-1) : next i: lparts(0).part_="0" : k+=1
+if (cont=0 orelse cont=3) andalso (not isdec(lparts(0).part$))  then for i=k to 1 step -1: lparts(i)=lparts(i-1) : next i: lparts(0).part$="0" : k+=1
 
 ' 1e : find strings
 
 i=0
 do
-  if lparts(i).part_<>"""" then i+=1 : goto p109
-  q=i: do: p_=lparts(i+1).part_ : lparts(q).part_=lparts(q).part_+p_: for j=i+1 to k: lparts(j)=lparts(j+1) : next j: k-=1 :  loop until p_="""" orelse i>=k  
-  if p_<>"""" then k+=1:i+=1
-p109: loop until i>=k
+  if lparts(i).part$<>"""" then i+=1 : goto 109
+  let q=i: do: let p$=lparts(i+1).part$ : lparts(q).part$=lparts(q).part$+p$: for j=i+1 to k: lparts(j)=lparts(j+1) : next j: k-=1 :  loop until p$="""" orelse i>=k  
+  if p$<>"""" then k+=1:i+=1
+109 loop until i>=k
 
 ' 1f : concatenate strings if "" detected between
  
 i=0
 do
-  if right$(lparts(i).part_,1)="""" andalso left$(lparts(i+1).part_,1)=""""  then 
-    lparts(i).part_=lparts(i).part_+right$(lparts(i+1).part_,len(lparts(i+1).part_)-1)
+  if right$(lparts(i).part$,1)="""" andalso left$(lparts(i+1).part$,1)=""""  then 
+    lparts(i).part$=lparts(i).part$+right$(lparts(i+1).part$,len(lparts(i+1).part$)-1)
     for j=i+1 to k: lparts(j)=lparts(j+1): next j  
     i-=1 : k-=1 ' do not move i if concatenated
   endif
@@ -1905,9 +797,9 @@ loop until i>=k
  
 i=0 
 do
-  s1_=lparts(i).part_ : s2_=lparts(i+1).part_
-  if ((s1_=">" orelse s1_="<" orelse s1_="+" orelse s1_="-" orelse s1_="*" orelse s1_="/" orelse s1_="^") andalso s2_="=") orelse (s1_="+" andalso s2_="+") orelse (s1_="-" andalso s2_="-") orelse (s1_="<" andalso s2_=">") then
-    lparts(i).part_=s1_+s2_
+  s1$=lparts(i).part$ : s2$=lparts(i+1).part$
+  if ((s1$=">" orelse s1$="<" orelse s1$="+" orelse s1$="-" orelse s1$="*" orelse s1$="/" orelse s1$="^") andalso s2$="=") orelse (s1$="+" andalso s2$="+") orelse (s1$="-" andalso s2$="-") orelse (s1$="<" andalso s2$=">") then
+    lparts(i).part$=s1$+s2$
     for j=i+1 to k : lparts(j)=lparts(j+1) : next j
     i-=1 : k-=1 	' do not move i if concatenated
   endif
@@ -1916,11 +808,11 @@ loop until i>=k
  
 ' 1h : now remove parts that are spaces
 
-for i=0 to k: lparts(i).part_=trim$(lparts(i).part_): next i
+for i=0 to k: lparts(i).part$=trim$(lparts(i).part$): next i
 i=0
 do 
-  if len(lparts(i).part_)=0 then 
-    if i=k-1 then k-=1 :  exit do
+  if len(lparts(i).part$)=0 then 
+    if i=k-1 then k-=1  :  exit
     if i<k-1 then 
       for j=i to k-2 : lparts(j)=lparts(j+1): next j: k-=1  
       if i>0 then i-=1 
@@ -1932,139 +824,139 @@ loop until i>k-1
 ' 1i: lowercase all that is not a string
 
 for j=0 to k-1
-  if left$(lparts(j).part_,1)<>"""" orelse right$(lparts(j).part_,1)<>"""" then lparts(j).part_=lcase$(lparts(j).part_) 
+  if left$(lparts(j).part$,1)<>"""" orelse right$(lparts(j).part$,1)<>"""" then lparts(j).part$=lcase$(lparts(j).part$) 
 next j
 
 '-------------------------------------------------------- Pass 2: Tokenize the line
 
 for i=0 to k: lparts(i).token=-1: next i					' initialize all tokens to -1=invalid
 
-if isdec(lparts(0).part_) then addptr=1 else addptr=0				' check if the abbreviated command are on the line start, or after linenum, 'then' or 'else'
-if lparts(0).part_="else" then addptr=1 					' else is always the first
+if isdec(lparts(0).part$) then addptr=1 else addptr=0				' check if the abbreviated command are on the line start, or after linenum, 'then' or 'else'
+if lparts(0).part$="else" then addptr=1 					' else is always the first
 i=0 : do 
-  if lparts(i).part_="then" then exit do 					' try to find 'then'
+  if lparts(i).part$="then" then exit loop 					' try to find 'then'
   i=i+1 
 loop until i>k
 if i<k then addptr=i+1	 							' then found
-lp_=lparts(addptr).part_ 
+lp$=lparts(addptr).part$ 
 
-if left$(lparts(addptr).part_,1)="?" andalso len(lparts(addptr).part_)>1 then ' ? is abbreviation of print, but it has no dots, so it has to be treated here
+if left$(lparts(addptr).part$,1)="?" andalso len(lparts(addptr).part$)>1 then ' ? is abbreviation of print, but it has no dots, so it has to be treated here
   k+=1
   for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
-  lparts(addptr+1).part_=right$(lparts(addptr).part_,len(lparts(addptr).part_)-1)
-  lparts(addptr).part_="?"
-  goto p825
+  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-1)
+  lparts(addptr).part$="?"
+  goto 825
 endif  
 
-dot=instr(1,lparts(addptr).part_,".")						' find a dot	
-if dot>0 andalso dot<len(lparts(addptr).part_) then 				' split the part
+dot=instr(1,lparts(addptr).part$,".")						' find a dot	
+if dot>0 andalso dot<len(lparts(addptr).part$) then 				' split the part
   k+=1
   for i=k to addptr+1 step -1 : lparts(i)=lparts(i-1) : next i
-  lparts(addptr+1).part_=right$(lparts(addptr).part_,len(lparts(addptr).part_)-dot)
-  lparts(addptr).part_=left$(lparts(addptr).part_,dot)
+  lparts(addptr+1).part$=right$(lparts(addptr).part$,len(lparts(addptr).part$)-dot)
+  lparts(addptr).part$=left$(lparts(addptr).part$,dot)
 endif  
 
-p825:
-lp_=lparts(addptr).part_ 
+825
+lp$=lparts(addptr).part$ 
 
 ' process mouse/cursor/click on/off
 
-if (lp_="mouse" orelse lp_="cursor" orelse lp_="click") then 
-  if lparts(addptr+1).part_="on" then lparts(addptr+1).part_="1" :lparts(2).token=token_decimal
-  if lparts(addptr+1).part_="off" then lparts(addptr+1).part_="0" :lparts(2).token=token_decimal
+if (lp$="mouse" orelse lp$="cursor" orelse lp$="click") then 
+  if lparts(addptr+1).part$="on" then lparts(addptr+1).part$="1" :lparts(2).token=token_decimal
+  if lparts(addptr+1).part$="off" then lparts(addptr+1).part$="0" :lparts(2).token=token_decimal
 endif		
 		
 ' process text constant for 'mode' - TO DO all predefined constants should have # before				
 
-if (lp_="mode" orelse lp_="m.") then 
-  if lparts(addptr+1).part_="atari" then lparts(addptr+1).part_="0"       
-  if lparts(addptr+1).part_="pc_amber" then lparts(addptr+1).part_="1"  
-  if lparts(addptr+1).part_="pc_green" then lparts(addptr+1).part_="2"  
-  if lparts(addptr+1).part_="pc_white" then lparts(addptr+1).part_="3"  
-  if lparts(addptr+1).part_="st" then lparts(addptr+1).part_="4"  
-  if lparts(addptr+1).part_="amiga" then lparts(addptr+1).part_="5"  
+if (lp$="mode" orelse lp$="m.") then 
+  if lparts(addptr+1).part$="atari" then lparts(addptr+1).part$="0"       
+  if lparts(addptr+1).part$="pc_amber" then lparts(addptr+1).part$="1"  
+  if lparts(addptr+1).part$="pc_green" then lparts(addptr+1).part$="2"  
+  if lparts(addptr+1).part$="pc_white" then lparts(addptr+1).part$="3"  
+  if lparts(addptr+1).part$="st" then lparts(addptr+1).part$="4"  
+  if lparts(addptr+1).part$="amiga" then lparts(addptr+1).part$="5"  
 endif
 
 ' find part types 
 
 for i=0 to k-1
-lparts(i).token=isseparator(lparts(i).part_)	: if lparts(i).token>0 then goto p102
-lparts(i).token=isoperator(lparts(i).part_)	: if lparts(i).token>0 then goto p102
-lparts(i).token=isassign(lparts(i).part_) 	: if lparts(i).token>0 then goto p102
-lparts(i).token=iscommand(lparts(i).part_)	: if lparts(i).token>0 then goto p102
-lparts(i).token=isfunction(lparts(i).part_)	: if lparts(i).token>0 then goto p102
-lparts(i).token=isnotename(lparts(i).part_) 
+lparts(i).token=isseparator(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isoperator(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isassign(lparts(i).part$) 	: if lparts(i).token>0 then goto 102
+lparts(i).token=iscommand(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isfunction(lparts(i).part$)	: if lparts(i).token>0 then goto 102
+lparts(i).token=isnotename(lparts(i).part$) 
 if lparts(i).token>0 then 
   note_val=getnoteval(lparts(i).token)
-  lparts(i).part_=str$(note_val) 
+  lparts(i).part$=str$(note_val) 
   lparts(i).token=token_float
-  goto p102
+  goto 102
 endif
 
 ' if it is #channel, make it a number from 0 to 9 while setting a token_channel
 
-lparts(i).token=ischannel(lparts(i).part_) : if lparts(i).token>0 then lparts(i).part_=right$(lparts(i).part_,1) : lparts(i).token=token_channel : goto p102
-lparts(i).token=isconstant(lparts(i).part_) : if lparts(i).token>0 then lparts(i).part_=str$(lparts(i).token) : lparts(i).token=token_integer : goto p102
+lparts(i).token=ischannel(lparts(i).part$) : if lparts(i).token>0 then lparts(i).part$=right$(lparts(i).part$,1) : lparts(i).token=token_channel : goto 102
+lparts(i).token=isconstant(lparts(i).part$) : if lparts(i).token>0 then lparts(i).part$=str$(lparts(i).token) : lparts(i).token=token_integer : goto 102
 
-b1=isnum(lparts(i).part_) : b2=isint(lparts(i).part_) : b3=isdec(lparts(i).part_)
-if b1 andalso b2 andalso b3 then lparts(i).token=token_decimal 			: goto p102 	' pure decimal for line num
-if b1 andalso b2 andalso (not b3) then lparts(i).token=token_integer 		: goto p102 	' integer
-if b1 andalso (not b2) andalso (not b3) then lparts(i).token=token_float 	: goto p102 	' float
+b1=isnum(lparts(i).part$) : b2=isint(lparts(i).part$) : b3=isdec(lparts(i).part$)
+if b1 andalso b2 andalso b3 then lparts(i).token=token_decimal 			: goto 102 	' pure decimal for line num
+if b1 andalso b2 andalso (not b3) then lparts(i).token=token_integer 		: goto 102 	' integer
+if b1 andalso (not b2) andalso (not b3) then lparts(i).token=token_float 	: goto 102 	' float
 
-if isstring(lparts(i).part_) then 
-  lparts(i).token=token_string : lparts(i).part_=mid$(lparts(i).part_,2,len(lparts(i).part_)-2) :goto p102	' string, get rid of ""!
+if isstring(lparts(i).part$) then 
+  lparts(i).token=token_string : lparts(i).part$=mid$(lparts(i).part$,2,len(lparts(i).part$)-2) :goto 102	' string, get rid of ""!
 endif
-if isname(lparts(i).part_) then lparts(i).token=token_name : goto p102						' name
-p102: next i 
+if isname(lparts(i).part$) then lparts(i).token=token_name : goto 102						' name
+102 next i 
 
-lparts(k).token=token_end : lparts(k).part_="": tokennum=k
+lparts(k).token=token_end : lparts(k).part$="": tokennum=k
 
 ' process the case when simple load or save is called without "". This cannot be done earlier, as tokens has to be known                                    					 
  
-if (lp_="load" orelse lp_="save" orelse lp_="brun" orelse lp_="run" orelse lp_="lo." orelse lp_="s." orelse lp_="br." orelse lp_="enter" orelse lp_="e.") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part_,1)<>"$" then lparts(addptr+1).token=token_string
-if (lp_="delete" orelse lp_="mkdir") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part_,1)<>"$" then lparts(addptr+1).token=token_string
-if (lp_="copy") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part_,1)<>"$" then lparts(addptr+1).token=token_string
-if (lp_="copy") andalso lparts(addptr+3).token=token_name andalso right$(lparts(addptr+3).part_,1)<>"$" then lparts(addptr+3).token=token_string
+if (lp$="load" orelse lp$="save" orelse lp$="brun" orelse lp$="run" orelse lp$="lo." orelse lp$="s." orelse lp$="br." orelse lp$="enter" orelse lp$="e.") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="delete" orelse lp$="mkdir") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="copy") andalso lparts(addptr+1).token=token_name andalso right$(lparts(addptr+1).part$,1)<>"$" then lparts(addptr+1).token=token_string
+if (lp$="copy") andalso lparts(addptr+3).token=token_name andalso right$(lparts(addptr+3).part$,1)<>"$" then lparts(addptr+3).token=token_string
 
 ' cd needs special treatment..
 
-if lp_="cd" then lparts(addptr+1).token=token_string
-if lp_="cd." andalso lparts(addptr+1).part_="." then lparts(addptr+1).token=token_string : lparts(addptr+1).part_=".." : lparts(addptr).token=token_cd
-if lp_="cd" andalso lparts(addptr+1).part_="/" then lparts(addptr+1).token=token_string : for i=(addptr+2) to k: lparts(addptr+1).part_+=lparts(i).part_ : next i
+if lp$="cd" then lparts(addptr+1).token=token_string
+if lp$="cd." andalso lparts(addptr+1).part$="." then lparts(addptr+1).token=token_string : lparts(addptr+1).part$=".." : lparts(addptr).token=token_cd
+if lp$="cd" andalso lparts(addptr+1).part$="/" then lparts(addptr+1).token=token_string : for i=(addptr+2) to k: lparts(addptr+1).part$+=lparts(i).part$ : next i
 
 ' determine a type of the line and compile it
 
-if isdec(lparts(0).part_) then linenum=valint(lparts(0).part_)
-if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto p104   ' this was an empty numbered line, delete it
+if isdec(lparts(0).part$) then linenum=val%(lparts(0).part$)
+if linenum>0 andalso k=1 andalso cont=3 then deleteline(linenum) : goto 104   ' this was an empty numbered line, delete it
 
 if (cont=0 orelse cont=3) andalso lparts(2).token<>token_eq  then  		' first part, commans
   err=compile(linenum,0,cont) 
-  if err<>0 then printerror(err,linenum): goto p101
-  if rest_<>"" then  line_=rest_ : cont=4 : goto p108 else goto p104
+  if err<>0 then printerror(err,linenum): goto 101
+  if rest$<>"" then  line$=rest$ : cont=4 : goto 108 else goto 104
 endif
       							
 if (cont=1 orelse cont=2) andalso lparts(1).token<>token_eq  then 		' not a first part, command
   err=compile(linenum,0,cont) 
-  if err<>0 then printerror(err,linenum): goto p101
-  if rest_<>"" then line_=rest_: cont=4 : goto p108 else goto p104  	
+  if err<>0 then printerror(err,linenum): goto 101
+  if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  	
 endif
 							 
 if (cont=0 orelse cont=3) andalso lparts(2).token=token_eq then  		' first part, assign
-  err_=compile_assign(linenum,0,cont)
-  if err_<>0 then printerror(err_,linenum): goto p101
-  if rest_<>"" then line_=rest_: cont=4 : goto p108 else goto p104
+  err=compile_assign(linenum,0,cont)
+  if err<>0 then printerror(err,linenum): goto 101
+  if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104
 endif
     							 
 if (cont=1 orelse cont=2) andalso lparts(1).token=token_eq then 		' not a first part, assign
   err=compile_assign(linenum,0,cont) 
-  if err<>0 then printerror(err,linenum): goto p101
-  if rest_<>"" then line_=rest_: cont=4 : goto p108 else goto p104  								 
+  if err<>0 then printerror(err,linenum): goto 101
+  if rest$<>"" then line$=rest$: cont=4 : goto 108 else goto 104  								 
 endif
 
-p104: if linenum=0 then 								' line 0 is for immediate execution
+104 if linenum=0 then 								' line 0 is for immediate execution
   execute_line(2)
-p101: if inload=0 then writeln("") : writeln("Ready") 
-    if inload=1 andalso err>0 then writeln fullline_
+101 if inload=0 then v.writeln("") : v.writeln("Ready") 
+    if inload=1 andalso err>0 then print fullline$
 endif
 
 end sub
@@ -2115,7 +1007,7 @@ end function
 function ischannel(s as string) as ulong
 
 dim s1 as string
-dim as integer nn,token 
+dim nn,token as integer
 if left$(s,1)<>"#" then return 0
 if len(s)<>2 then return 0
 if right$(s,1)<"0" orelse right$(s,1)>"9" then return 0
@@ -2140,7 +1032,7 @@ end function
 function isnotename(s as string) as ulong
 
 dim s1 as string
-dim as integer nn,token 
+dim nn,token as integer
 if left$(s,1)<>"#" then return 0
 if mid$(s,3,1)="#" then s1=mid$(s,2,2) else s1=mid$(s,2,1)
 if mid$(s,len(s)-1,1)<>"-" then nn=val(right$(s,1)) else nn=-1*val(right$(s,1))
@@ -2170,7 +1062,7 @@ end function
 
 ' Check if the part is a separator, return a token or 0 if not found
 
-function isseparator(s as string) as ulong
+function isseparator(s as string) as ubyte
 
 select case s
   case "+"   : return token_plus
@@ -2316,12 +1208,15 @@ select case s
   case "rp."		: return token_restorepalette
   case "return"		: return token_return
   case "run"	     	: return token_run
+  case "r."	     	: return token_run
   case "save"	     	: return token_save
-  case "s."	     	: return token_save
+  case "s."	      	: return token_save
   case "setcolor"	: return token_setcolor
   case "sc."		: return token_setcolor
+  case "setamode"	: return token_setamode
+  case "sa."		: return token_setamode
   case "setdelay"	: return token_setdelay 
-  case "sd."		: return token_setdelay 
+  case "sd."	 	: return token_setdelay 
   case "setenv"		: return token_setenv
   case "se."		: return token_setenv
   case "setlen"		: return token_setlen  
@@ -2383,6 +1278,7 @@ select case s
   case "ge."     	: return token_getpixel
   case "getenvsustain"	: return token_getenvsustain
   case "getnotevalue"	: return token_getnotevalue
+  case "getrealfreq"	: return token_getrealfreq
   case "gettime"       	: return token_gettime
   case "gt."		: return token_gettime
   case "hex$"		: return token_hex
@@ -2432,15 +1328,15 @@ end function
 
 function isname(s as string) as boolean
 
-dim as integer i,l
-dim m_ as string
+dim i,l as integer
+dim m$ as string
  
 l=len(s): if l=0 then return false
-m_=mid$(s,1,1) : if (m_<"a" orelse m_>"z")  andalso m_<>"_" then return false
+m$=mid$(s,1,1) : if (m$<"a" orelse m$>"z")  andalso m$<>"_" then return false
 if l>2 then 
   for i=2 to l
-    m_=mid$(s,i,1) : if (i<l) andalso (m_<"a" orelse m_>"z") andalso (m_<"0" orelse m_>"9") andalso m_<>"_" andalso m_<>"." then return false 
-    if (i=l) andalso (m_<"a" orelse m_>"z") andalso (m_<"0" orelse m_>"9") andalso m_<>"_" andalso m_<>"$" andalso m_<>"%" andalso m_<>"!" then return false
+    m$=mid$(s,i,1) : if (i<l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"." then return false 
+    if (i=l) andalso (m$<"a" orelse m$>"z") andalso (m$<"0" orelse m$>"9") andalso m$<>"_" andalso m$<>"$" andalso m$<>"%" andalso m$<>"!" then return false
   next i
 endif
 return true
@@ -2450,26 +1346,26 @@ end function
 
 function isnum(s as string) as boolean 
 
-dim as integer i,l,ds,es,hex_,bin_,b  
-dim m_ as string
+dim i,l,ds,es,hex,bin,b as integer
+dim m$ as string
 
 ds=0: es=0
 l=len(s): if l=0 then return false
-m_=mid$(s,1,1) : if (m_<"0" orelse m_>"9") andalso m_<>"." andalso m_<>"$" andalso m_<>"%" andalso m_<>"-" then return false
-if m_="." then ds=1
-if m_="$" then hex_=1 else hex_=0
-if m_="%" then bin_=1 else bin_=0
+m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"." andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
+if m$="." then ds=1
+if m$="$" then hex=1 else hex=0
+if m$="%" then bin=1 else bin=0
 if l>1 then 
   for i=2 to l
-    m_=mid$(s,i,1) : b=false
-    if m_>="0" andalso m_<="9" then b=true  
-    if m_="_" orelse m_="." orelse m_="E" orelse m_="e" orelse m_="-" then b=true 
-    if hex_=1 andalso m_>="a" andalso m_<="f" then b=true
-    if bin_=1 andalso (m_<"0" orelse m_>"1") andalso m_<>"_" then return false
+    m$=mid$(s,i,1) : b=false
+    if m$>="0" andalso m$<="9" then b=true  
+    if m$="_" orelse m$="." orelse m$="E" orelse m$="e" orelse m$="-" then b=true 
+    if hex=1 andalso m$>="a" andalso m$<="f" then b=true
+    if bin=1 andalso (m$<"0" orelse m$>"1") andalso m$<>"_" then return false
     if not b then return false
-    if m_="-" andalso lcase$(mid$(s,i-1,1))<>"e" then return false
-    if m_="." then ds+=1: if ds>1 then return false
-    if m_="E" orelse m_="e" then es+=1: if hex_=0 andalso es>1 then return false
+    if m$="-" andalso lcase$(mid$(s,i-1,1))<>"e" then return false
+    if m$="." then ds+=1: if ds>1 then return false
+    if m$="E" orelse m$="e" then es+=1: if hex=0 andalso es>1 then return false
   next i
 endif
 return true
@@ -2479,19 +1375,19 @@ end function
   
 function isint(s as string) as boolean
 
-dim as integer i,l,ds,es,hex_,bin_ 
-dim m_ as string
+dim i,l,ds,es,hex,bin as integer
+dim m$ as string
 
 l=len(s): if l=0 then return false
-m_=mid$(s,1,1) : if (m_<"0" orelse m_>"9") andalso m_<>"$" andalso m_<>"%" andalso m_<>"-" then return false
-if m_="$" then hex_=1 else hex_=0
-if m_="%" then bin_=1 else bin_=0
+m$=mid$(s,1,1) : if (m$<"0" orelse m$>"9") andalso m$<>"$" andalso m$<>"%" andalso m$<>"-" then return false
+if m$="$" then hex=1 else hex=0
+if m$="%" then bin=1 else bin=0
 if l>1 then 
   for i=2 to l
-    m_=mid$(s,i,1) 
-    if hex_=0 andalso (m_<"0" orelse m_>"9") andalso m_<>"_"  then return false
-    if hex_=1 andalso (m_<"0" orelse m_>"9") andalso (m_<"a" orelse m_>"f") andalso m_<>"_"  then return false
-    if bin_=1 andalso (m_<"0" orelse m_>"1") andalso m_<>"_"  then return false
+    m$=mid$(s,i,1) 
+    if hex=0 andalso (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
+    if hex=1 andalso (m$<"0" orelse m$>"9") andalso (m$<"a" orelse m$>"f") andalso m$<>"_"  then return false
+    if bin=1 andalso (m$<"0" orelse m$>"1") andalso m$<>"_"  then return false
   next i
 endif
 return true
@@ -2499,16 +1395,15 @@ end function
 
 ' Check if the part is a positive decimal number.  
 
-function isdec(s as string) as integer
+function isdec(s as string) as boolean
 
-dim as integer i,l
-dim as string m_
+dim i,l,m$,ds,es
 
 l=len(s): if l=0 then return false
 for i=1 to l
-    m_=mid$(s,i,1) : if (m_<"0" orelse m_>"9") andalso m_<>"_"  then return 0
+    m$=mid$(s,i,1) : if (m$<"0" orelse m$>"9") andalso m$<>"_"  then return false
   next i
-return 1
+return true
 end function 
 
 ' Check if the part is a string.  
@@ -2519,10 +1414,10 @@ end function
 
 ' getnoteval. Returns the frequency of note token
 
-function getnoteval(token as integer) as single
+function getnoteval(token) as single
 
-dim as integer note,noteexp 
-dim as single notebase,a 
+dim note,noteexp as integer
+dim notebase,a as single
 
 note = token-token_notename 
 notebase=notetable(note mod 12) 
@@ -2533,7 +1428,6 @@ end function
 '---------------------------------------------------------------------------------------------------------------------------------------
 '--------------------- The end of interpreter/tokenizer functions ----------------------------------------------------------------------
 '---------------------------------------------------------------------------------------------------------------------------------------
-
 
 '---------------------------------------------------------------------------------------------------------------------------------------
 '
@@ -2550,66 +1444,43 @@ end function
 '---------------------------------------------------------------------------------------------------------------------------------------
 ' Helper functions to manage program lines
 '---------------------------------------------------------------------------------------------------------------------------------------
-sub pslpoke(a as ulong, v as ulong)
-machine.longs(a shr 2)=v
-end sub
-
-function pslpeek(a as ulong) as ulong
-return machine.longs(a shr 2)
-end function
-
-sub psdpoke(a as ulong, v as ushort)
-machine.longs(a shr 1)=v
-end sub
-
-function psdpeek(a as ulong) as ushort
-return machine.words(a shr 1)
-end function
-
-sub pspoke(a as ulong, v as ubyte)
-machine.bytes(a)=v
-end sub
-
-function pspeek(a as ulong) as ubyte
-return machine.bytes(a)
-end function
 
 '----- delete a line from a program
 
 function deleteline(aline as ulong) as integer
 
-dim as ulong lineptr2,oldsearchptr,searchptr
-dim header(5) as ulong
+dim lineptr2,oldsearchptr,searchptr as ulong
+dim header as ulong(5) 
 
 searchptr=programstart
 do
-  memmove(@header(0),@machine.bytes(searchptr),24)
+  psram.read1(varptr(header),searchptr,24)
   lineptr2=searchptr
   searchptr=header(5)
-loop until header(0)>=aline orelse header(5)=&h7FFFFFFF  			' we have a line that number is >= new line
+loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  			' we have a line that number is >= new line
 if header(0)<>aline then return -1						' if not =, then there is no line, return
-pslpoke(lineptr2,&hFFFFFFFF) 							' flag the deleted line
+pslpoke(lineptr2,$FFFF_FFFF) 							' flag the deleted line
 
-if header(5)=&h7FFFFFFF andalso header(4)=&hFFFFFFFF then  			' this is one and only line in the program
+if header(5)=$7FFF_FFFF andalso header(4)=$FFFF_FFFF then  			' this is one and only line in the program
   programstart=memlo : programptr=memlo : lastline=0 : lastlineptr=-1 
-  pslpoke(0,&hFFFFFFFF) : pslpoke 16,&hFFFFFFFF : pslpoke 20,&h7FFFFFFF : runptr=memlo : runptr2=memlo
+  pslpoke(0,$FFFFFFFF) : pslpoke 16,$FFFFFFFF : pslpoke 20,$7FFFFFFF : runptr=memlo : runptr2=memlo
 endif
 
-if header(5)=&h7FFFFFFF andalso header(4)<>&hFFFFFFFF then 			' this is the last, and not first, line of the program
-  pslpoke(header(4)+20,&h7FFFFFFF) 						' unlink the previous line
+if header(5)=$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' this is the last, and not first, line of the program
+  pslpoke(header(4)+20,$7FFF_FFFF) 						' unlink the previous line
   lastlineptr=header(4)           						' keep the last line pointer to avoid searching while sequentially adding a new line
   lastline=pslpeek(header(4))
   return 0
 endif   
 
-if header(5)<>&h7FFFFFFF andalso header(4)=&hFFFFFFFF then 			' this is the first line, but not the last
+if header(5)<>$7FFF_FFFF andalso header(4)=$FFFF_FFFF then 			' this is the first line, but not the last
 '   print "deleted first line"
-  pslpoke(header(5)+16,&hFFFFFFFF) 
+  pslpoke(header(5)+16,$FFFF_FFFF) 
   programstart=header(5) 							' adjust the program start to point on the first new line
   return 0
 endif
 
-if header(5)<>&h7FFFFFFF andalso header(4)<>&hFFFFFFFF then 			' the line is not first and not last
+if header(5)<>$7FFF_FFFF andalso header(4)<>$FFFF_FFFF then 			' the line is not first and not last
    pslpoke(header(5)+16,header(4))  
    pslpoke(header(4)+20, header(5))
    return 0
@@ -2620,15 +1491,15 @@ end function
 
 sub save_line
 
-dim as ulong llength,llength2,llength3 
+dim llength,llength2,llength3 as ulong
 
 llength=compiledslot*(lineptr+1)
-llength2=len(fullline_): if llength2 mod 4 <>0 then llength2=4*((llength2/4)+1)
+llength2=len (fullline$): if llength2 mod 4 <>0 then llength2=4*((llength2/4)+1)
 llength3=llength+llength2
-cl.ucompiledline(2)=programptr+llength
-cl.ucompiledline(3)=llength2 
-memmove(@machine.bytes(programptr),@cl.compiledline(0),llength)
-memmove(@machine.bytes(programptr+llength),@fullline_,llength2)  '''''''''''''''''''' check this!! or use loop with asc(mid$())
+ucompiledline(2)=programptr+llength
+ucompiledline(3)=llength2 
+psram.write(varptr(compiledline),programptr,llength)
+psram.write(lpeek(varptr(fullline$)),programptr+llength,llength2)
 programptr+=llength3
 end sub
 
@@ -2636,32 +1507,32 @@ end sub
 
 function insertline(aline as ulong) as integer
    
-dim as ulong searchptr,lineptr2 
+dim searchptr,lineptr2 as ulong
 
 searchptr=programstart
-dim header(5) as ulong 
+dim header as ulong(5) 
 
 do
-  memmove(@header(0),@machine.bytes(searchptr),24)
+  psram.read1(varptr(header),searchptr,24)
   lineptr2=searchptr
   searchptr=header(5)
-loop until header(0)>=aline orelse header(5)=&h7FFFFFFF  	' we have a line that number is >= new line
+loop until header(0)>=aline orelse header(5)=$7FFF_FFFF  	' we have a line that number is >= new line
 
 if header(0)=aline then return -1 				' delete it first
 if header(0)<aline then return -2 				' end of program reached
 
-if  header(4)=&hFFFFFFFF then 					' this is the first line in the program so the inserted line will be new first
+if  header(4)=$FFFF_FFFF then 					' this is the first line in the program so the inserted line will be new first
   programstart=programptr
   pslpoke(lineptr2+16,programptr)
-  cl.ucompiledline(4)=&hFFFFFFFF
-  cl.ucompiledline(5)=lineptr2
+  ucompiledline(4)=$FFFF_FFFF
+  ucompiledline(5)=lineptr2
   save_line
   return 0
 endif
 
-if header(4)<>&hFFFFFFFF then 					' this is not first line of the program. It doesn't matter if it is last as we will insert a new line before
-  cl.ucompiledline(4)=header(4)
-  cl.ucompiledline(5)=lineptr2
+if header(4)<>$FFFF_FFFF then 					' this is not first line of the program. It doesn't matter if it is last as we will insert a new line before
+  ucompiledline(4)=header(4)
+  ucompiledline(5)=lineptr2
   pslpoke(lineptr2+16,programptr)
   pslpoke(header(4)+20,programptr)
   save_line
@@ -2671,28 +1542,248 @@ end function
 
 '----- Adds a new line at the end of the program
 
-sub add_line_at_end(aline as integer) 
+sub add_line_at_end(aline) 
 
-lastline=aline: cl.ucompiledline(4)=lastlineptr : pslpoke(lastlineptr+20,programptr) : lastlineptr=programptr : cl.ucompiledline(5)=&h7FFFFFFF 
-if programptr=memlo then cl.ucompiledline(4)=&hFFFFFFFF ' that is the first line
+lastline=aline: ucompiledline(4)=lastlineptr : pslpoke(lastlineptr+20,programptr) : lastlineptr=programptr : ucompiledline(5)=$7FFF_FFFF 
+if programptr=memlo then ucompiledline(4)=$FFFFFFFF ' that is the first line
 save_line
-pslpoke(programptr,&hFFFFFFFF) ' write end flag ' is it eeded at all here? 
+pslpoke(programptr,$FFFFFFFF) ' write end flag ' is it eeded at all here? 
 end sub
 
 '--------------------------------------------------------------------------------------------------------------------------
 '---------------------------------- End of line managing helper functions -------------------------------------------------
 '--------------------------------------------------------------------------------------------------------------------------
 
+'--------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------- Compilers ------------------------------------------------------------------------
+'--------------------------------------------------------------------------------------------------------------------------
+
+'--- Do a main compilation task for commands, called from compile(), returns an error code
+
+function compile_immediate(linetype as ulong, aline as ulong) as integer
+
+dim cmd,err,vars as ulong
+dim t3 as expr_result
+
+' linetype=cont+1
+' 1 : this is the first part of the line that will continue
+' 2 - this is the continuation of the line
+' 3 - this is the last continued line
+' 4 - this is the one and only part
+' 5 - continued after if/else
+
+err=0
+cmd=0
+vars=0
+if linetype=2 orelse linetype=3 then cmd=lparts(0).token : ct=1 
+if linetype=4 orelse linetype=1 then cmd=lparts(1).token : ct=2 : lineptr=2
+if linetype=5 then cmd=lparts(ct).token : ct+=1 
+
+'print  "In compile_immediate cmd=:", cmd
+451 select case cmd
+  case token_beep	: err=compile_fun_2p()
+  case token_blit	: vars,err=compile_fun_varp()
+  case token_box      	: vars,err=compile_fun_varp()  
+  case token_brun    	: vars,err=compile_fun_varp()  		' for arguments 
+  case token_cd		: err=compile_fun_1p()   	 
+  case token_circle   	: vars,err=compile_fun_varp()  		
+  case token_click	: err=compile_fun_1p()
+  case token_cls      	: compile_nothing()                    	' no params, do nothing, only add a command to the line, but case needs something to do after 
+  case token_close     	: err=compile_fun_1p()                    
+  case token_color    	: err=compile_fun_1p()  
+  case token_copy	: err=compile_fun_2p()
+  case token_changefreq	: err=compile_fun_2p()  
+  case token_changewave	: err=compile_fun_2p()  
+  case token_changevol 	: err=compile_fun_2p()  
+  case token_changepan  : err=compile_fun_2p()  
+  case token_cogstop	: err=compile_fun_1p()
+  case token_cursor	: err=compile_fun_1p()
+  case token_data	: compile_nothing()
+  case token_defchar	: err=compile_fun_2p()
+  case token_defenv     : vars,err=compile_fun_varp()   
+  case token_defsnd     : vars,err=compile_fun_varp()   
+  case token_defsprite	: vars,err=compile_fun_varp()		' defsprite now has only one syntax, but other are planned (defsprite pointer, defsprite file)
+  case token_deg	: compile_nothing()
+  case token_delete	: err=compile_fun_1p()
+  case token_dim	: err=compile_dim() : goto 450		' non-standard command with its own compiler
+  case token_dir	: vars,err=compile_fun_varp()		' now only dir without params, but they are planned (dir *.bas)
+  case token_dpoke	: err=compile_fun_2p()
+  case token_draw     	: vars, err=compile_fun_varp()   	' 4 or 5 parameters draw planned for speedup - draw x1,y1,x2,y2,color
+  case token_else    	: err=compile_else(aline) : goto 450
+  case token_progend	: compile_nothing() 			' 'end' command
+  case token_enter	: vars,err=compile_fun_varp() 
+  case token_get	: vars,err=compile_fun_varp()
+  case token_fast_goto  : if aline>0 then compile_goto()  : goto 450 else printerror(25) : goto 450
+  case token_gosub      : if aline>0 then compile_gosub() : goto 450 else printerror(25) : goto 450
+  case token_fcircle  	: vars,err=compile_fun_varp()  
+  case token_fill	: err=compile_fun_4p()
+  case token_font	: err=compile_fun_1p()
+  case token_for     	: err=compile_for() :goto 450
+  case token_frame     	: vars,err=compile_fun_varp()  
+  case token_if      	: err=compile_if(aline) :goto 450
+  case token_ink	: err=compile_fun_1p()
+  case token_input	: vars,err=compile_input()
+  case token_int	: err=compile_fun_1p()
+  case token_list     	: vars,err=compile_fun_varp()   
+  case token_load    	: vars,err=compile_fun_varp() 
+  case token_lpoke	: err=compile_fun_2p()
+  case token_mkdir	: err=compile_fun_1p()
+  case token_mode	: err=compile_fun_1p()
+  case token_mouse	: err=compile_fun_1p()
+  case token_new      	: compile_nothing()   
+  case token_next     	: err=compile_next() :goto 450
+  case token_on		: err=compile_on() : goto 450
+  case token_open	: err=compile_fun_3p()
+  case token_paper	: err=compile_fun_1p()
+  case token_pinfloat	: err=compile_fun_1p()
+  case token_pinlo	: err=compile_fun_1p()
+  case token_pinhi	: err=compile_fun_1p()
+  case token_pinstart	: err=compile_fun_4p()
+  case token_pintoggle 	: err=compile_fun_1p()
+  case token_pinwrite   : err=compile_fun_2p()
+  case token_play     	: vars,err=compile_fun_varp()   
+  case token_plot     	: vars,err=compile_fun_varp()   
+  case token_poke	: err=compile_fun_2p()
+  case token_pop	: compile_nothing
+  case token_position	: err=compile_fun_2p()
+  case token_print    	: err=compile_print()  : goto 450
+  case token_put	: vars,err=compile_fun_varp()
+  case token_rad	: compile_nothing()
+  case token_read	: vars,err=compile_read()
+  case token_release	: err=compile_fun_1p()
+  case token_rem	: compile_nothing() : goto 450
+  case token_restore	: compile_nothing()
+  case token_restorepalette :compile_nothing()
+  case token_return:	: compile_nothing()
+  case token_run      	: vars,err=compile_fun_varp()   
+  case token_save    	: vars,err=compile_fun_varp()  
+  case token_setamode   : err=compile_fun_2p()
+  case token_setcolor   : vars,err=compile_fun_varp()
+  case token_setdelay   : err=compile_fun_2p()
+  case token_setenv 	: err=compile_fun_2p()
+  case token_setlen   	: err=compile_fun_2p()
+  case token_setpan 	: err=compile_fun_2p()
+  case token_setsustain	: err=compile_fun_2p()
+  case token_setvol 	: err=compile_fun_2p()
+  case token_setwave 	: err=compile_fun_2p()
+  case token_shutup	: vars,err=compile_fun_varp()
+  case token_sprite	: err=compile_fun_3p()
+  case token_waitclock  : compile_nothing()
+  case token_waitms    	: err=compile_fun_1p()
+  case token_waitvbl    : compile_nothing()
+  case token_wrpin	: err=compile_fun_2p()
+  case token_wxpin	: err=compile_fun_2p()
+  case token_wypin	: err=compile_fun_2p()
+  case token_name       : err=compile_array_assign() : if err=14 then  err=compile_unknown() : goto 450  else goto 450
+  case else	     	: compile_unknown() : goto 450
+end select
+
+t3.result_type=cmd : t3.result.uresult=vars : compiledline(lineptr)=t3:  lineptr+=1
+450 if linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end 				' the last part 
+' if there is token_adr somewhere, change fun_getvar to fun_getaddr
+for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
+next i
+''''print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
+return err
+end function
+
+'--- Do a main compilation task for assigns, called from compile_assign(), returns an error code
+
+function compile_immediate_assign(linetype as ulong) as ulong
+
+dim t1 as expr_result
+dim i,j,numpar,err as integer
+dim  suffix2$ as string
+dim varname2$ as string
+
+t1.result_type=result_error : t1.result.uresult=0
+i=-1: j=-1 : err=0
+
+if linetype=2 orelse linetype=3 then varname2$=lparts(0).part$ : ct=2 ' don't set lineptr
+if linetype=4 orelse linetype=1 then varname2$=lparts(1).part$ : ct=3 : lineptr=2
+if linetype=5 then varname2$=lparts(ct).part$ : ct+=2 ' continued after if/else
+
+suffix2$=right$(varname2$,1)
+expr()
+if varnum>0 then					' try to find a variable
+  for i=0 to varnum-1
+    if variables(i).name=varname2$ then j=i : exit
+  next i
+endif
+if  j=-1 andalso varnum<maxvars then   			' not found, add a new one
+  variables(varnum).name=varname2$
+  j=varnum
+  varnum+=1
+endif
+if varnum>=maxvars then
+  err=45
+else  
+  t1.result.uresult=j: t1.result_type=fun_assign  
+  compiledline(lineptr)=t1:  lineptr+=1 
+  if linetype=3 orelse linetype=4 then compiledline(lineptr).result_type=token_end
+  for i=lineptr to 1 step -1: if compiledline(i).result_type=token_adr andalso compiledline(i-1).result_type=fun_getvar then compiledline(i-1).result_type=fun_getaddr
+  next i
+' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
+  endif
+return err
+end function
+
+' ------------------ compile the line that is calling a command, and save it if linenum>0, called from the interpreter 
+
+function compile (alinemajor as ulong, alineminor=0 as ulong, cont=0 as ulong) as ulong
+
+dim err as ulong
+'line header: num major, num minor,list start, list length, prev, next. That implements 2-way list of program lines 
+ucompiledline(0)=alinemajor
+ucompiledline(1)=alineminor		' this is for the future when maybe linenums will be optional.
+
+' cont: 
+' 0 - this is the first part of the line that will continue
+' 1 - this is the continuation of the line
+' 2 - this is the last continued line
+' 3 - this is the one and only part
+
+err=compile_immediate(cont+1,alinemajor) 
+if err=0 andalso alinemajor>0 then
+  if cont=3 orelse cont=2 then 
+    if alinemajor >lastline then 
+      add_line_at_end(alinemajor)
+    else
+      deleteline(alinemajor)  
+      if alinemajor>lastline then add_line_at_end(alinemajor)  else insertline(alinemajor)   ' TODO: that's not optimal    
+    endif 
+  endif   
+endif 
+return err
+end function
+
+' ------------------ compile the line that is assigning to a variable and save it if linenum>0, called from the interpreter 
+
+function compile_assign (alinemajor as ulong, alineminor=0 as ulong, cont=0 as ulong)  as ulong
+
+dim err as ulong
+
+ucompiledline(0)=alinemajor
+ucompiledline(1)=alineminor
+
+err=compile_immediate_assign(cont+1) 
+if alinemajor>0 then
+  if cont=3 orelse cont=2 then 
+    if alinemajor >lastline then 
+      add_line_at_end(alinemajor)
+    else
+      deleteline(alinemajor)  
+      if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor)   
+    endif 
+  endif
+endif   
+return err
+end function
 
 
 '--------------------------------------------------------------------------------------------------
 ' ----------------------------------- Helper compile functions ------------------------------------
 '--------------------------------------------------------------------------------------------------
-type c_result
-  vars as integer
-  err_ as integer
-end type  
-
 
 '------ A dummy function to have something to call from compile_immediate if the command has no parameters
 
@@ -2715,10 +1806,10 @@ end function
 
 function compile_fun_2p() as ulong
 
-dim err_ as ulong
-err_=expr() : if err>0 then return err_
+dim err as ulong
+err=expr() : if err>0 then return err
 if lparts(ct).token<> token_comma then return 21 else ct+=1 ' todo error
-err_=expr() : if err>0 then return err_
+err=expr() : if err>0 then return err
 return 0
 end function
 
@@ -2726,12 +1817,12 @@ end function
 
 function compile_fun_3p() as ulong
 
-dim err_ as ulong
-err_=expr() : if err_>0 then return err_
-if lparts(ct).token<> token_comma then return 21 else ct+=1 ' todo err_or
-err_=expr() : if err_>0 then return err_
-if lparts(ct).token<> token_comma then return 21 else ct+=1 ' todo err_or
-err_=expr() : if err_>0 then return err_
+dim err as ulong
+err=expr() : if err>0 then return err
+if lparts(ct).token<> token_comma then return 21 else ct+=1 ' todo error
+err=expr() : if err>0 then return err
+if lparts(ct).token<> token_comma then return 21 else ct+=1 ' todo error
+err=expr() : if err>0 then return err
 return 0
 end function
 
@@ -2739,132 +1830,123 @@ end function
 
 function compile_fun_4p() as ulong
 
-dim err_ as ulong
-err_=expr() : if err_>0 then return err_
+dim err as ulong
+err=expr() : if err>0 then return err
 if lparts(ct).token<> token_comma then return 21 else ct+=1 
-err_=expr() : if err_>0 then return err_
+err=expr() : if err>0 then return err
 if lparts(ct).token<> token_comma then return 21 else ct+=1 
-err_=expr() : if err_>0 then return err_
+err=expr() : if err>0 then return err
 if lparts(ct).token<> token_comma then return 21 else ct+=1  
-err_=expr() : if err_>0 then return err_
+err=expr() : if err>0 then return err
 return 0
 end function
 
-'----  Compile a command that can have variable number of parameters. Return num of params and err_or code
+'----  Compile a command that can have variable number of parameters. Return num of params and error code
 
-function compile_fun_varp() as c_result 
+function compile_fun_varp() as ulong,ulong 
 
 dim t1 as expr_result
-dim as integer i,err_ 
-dim cr as c_result
+dim i,err as integer
 
-i=0 : err_=0
+i=0 : err=0
 if lparts(ct).token<>token_end then
   do
     expr()
     i+=1
     if lparts(ct).token=token_comma then ct+=1
-    if lparts(ct).token=token_end then exit do
+    if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
 endif
-cr.vars=i
-cr.err_=err_
-return cr
+return i,err
 end function
 
 '----  Compile read. The same as compile_input() except printing a prompt
 
-function compile_read() as c_result 
+function compile_read() as ulong,ulong 
 
 dim t1 as expr_result
-dim as integer i,err_,oldlineptr
-dim cr as c_result
+dim i,err,oldlineptr as integer
 
-i=0 : err_=0
+i=0 : err=0
 if lparts(ct).token<>token_end then
   do
-    err_=getaddr() :ct+=1
+    err=getaddr() :ct+=1
     i+=1 
     if lparts(ct).token=token_comma then ct+=1 
-    if lparts(ct).token=token_end then exit do
+    if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
 else
-  err_=54
+  err=54
 endif
-cr.vars=i
-cr.err_=err_
-return cr
+return i,err
 end function
 
 '----  Compile input. The same as compile_varp() except these has to be variables, and not expressions, and also we need getaddr and not getvar
 
-function compile_input() as c_result
+function compile_input() as ulong,ulong 
 
 dim t1 as expr_result
-dim as integer i,err_,oldlineptr,l
-dim cr as c_result
+dim i,err,oldlineptr as integer
 
 if lparts(ct).token=token_string then
-  l=len(lparts(ct).part_)    								' place the literal in the psram
-  memtop=(memtop-l-4) and &hFFFFFFFC
+  l=len(lparts(ct).part$)    								' place the literal in the psram
+  memtop=(memtop-l-4) and $FFFFFFFC
   pslpoke memtop,l
-  for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part_,i,1)) : next i
+  for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part$,i,1)) : next i
   t1.result.uresult=memtop
   t1.result_type=result_string2  
-  cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
-  if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : cl.compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1
-  if lparts(ct).token=token_semicolon then t1.result_type=print_mod_semicolon : cl.compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1
-  if lparts(ct).token<>token_semicolon  andalso lparts(ct).token<>token_comma then t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1 : ct-=1
+  compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+  if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token=token_semicolon then t1.result_type=print_mod_semicolon : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token<>token_semicolon  andalso lparts(ct).token<>token_comma then t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1 : ct-=1
   ct+=1
 endif
-i=0 : err_=0
+i=0 : err=0
 if lparts(ct).token<>token_end then
   do
-    err_=getaddr() :ct+=1
+    err=getaddr() :ct+=1
     i+=1 
     if lparts(ct).token=token_comma then ct+=1 
-    if lparts(ct).token=token_end then exit do
+    if lparts(ct).token=token_end then exit loop
    ' if lparts(ct).token<> token_comma then exit loop else ct+=1
   loop 
 else
-  err_=54
+  err=54
 endif
-cr.vars=i
-cr.err_=err_
-return cr
+return i,err
 end function
 
 '----- compile assign to an array element
 
 function compile_array_assign() as ulong 
 
-dim as ulong numpar, i, j, err_  
-dim varname_ as string
+dim numpar, i, j, err as ulong
+dim varname$ as string
 dim t1 as expr_result
-numpar=0 : err_=0
-varname_=lparts(ct-1).part_
+numpar=0 : err=0
+varname$=lparts(ct-1).part$
 if lparts(ct).token=token_lpar then
   ct+=1 											' omit this lpar, this is for expr list
   do
     expr()
     ct+=1  										 
     numpar+=1
-  loop until lparts(ct-1).token=token_rpar    orelse lparts(ct).token=token_end  ' generate err_or if end
+  loop until lparts(ct-1).token=token_rpar    orelse lparts(ct).token=token_end  ' generate error if end
   ct+=1 : expr()
   j=-1 : i=0 
   do 
-    if variables(i).name=varname_ then j=i: exit do
+    if variables(i).name=varname$ then j=i: exit loop
     i+=1
   loop until i>varnum
-  t1.result.twowords(0)=j: t1.result.twowords(1)=numpar : t1.result_type=fun_assign : cl.compiledline(lineptr)=t1: lineptr +=1 
-  if numpar>3 then err_=45
-  if i>varnum then err_=20
+  t1.result.twowords(0)=j: t1.result.twowords(1)=numpar : t1.result_type=fun_assign : compiledline(lineptr)=t1: lineptr +=1 
+  if numpar>3 then err=45
+  if i>varnum then err=20
 else
-  err_=14 ' no rpar
+  err=14 ' no rpar
 endif
-return err_
+return err
 end function
 
 '----- compile print command with its ";" and "," modifiers
@@ -2873,12 +1955,12 @@ function compile_print() as ulong ' todo reconfigurable editor start position
 
 dim t1 as expr_result
 t1.result.uresult=0 : t1.result_type=result_uint
-if lparts(ct).token=token_end then t1.result_type=print_mod_empty: cl.compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1 :return 0 	'print without parameters
+if lparts(ct).token=token_end then t1.result_type=print_mod_empty: compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1 :return 0 	'print without parameters
 do
   expr()  ': print "In compile_print token= "; lparts(ct).token; " part$= "; lparts(ct).part$ :
-  if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : cl.compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1
-  if lparts(ct).token=token_semicolon then  t1.result_type=print_mod_semicolon : cl.compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1
-  if lparts(ct).token=token_end then t1.result_type=token_print : cl.compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token=token_comma then t1.result_type=print_mod_comma : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token=token_semicolon then  t1.result_type=print_mod_semicolon : compiledline(lineptr)=t1:  lineptr+=1 : t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
+  if lparts(ct).token=token_end then t1.result_type=token_print : compiledline(lineptr)=t1:  lineptr+=1
   if lparts(ct).token <>token_comma andalso lparts(ct).token <>token_semicolon andalso lparts(ct).token <>token_end then return 22
   ct+=1  
 loop until lparts(ct).token=token_end orelse ct>=tokennum
@@ -2890,13 +1972,13 @@ end function
 function compile_if(aline as ulong) as ulong  
 
 dim t1 as expr_result
-dim as ulong cmd,err_
+dim cmd,err as ulong
 
-err_=compile_fun_1p()
+err=compile_fun_1p()
 cmd=lparts(ct).token : ct+=1 : if cmd<>token_then then return 52
-t1.result_type=token_if : cl.compiledline(lineptr)=t1:  lineptr+=1
-if isassign(lparts(ct+1).part_) then err_=compile_immediate_assign(5) else err_=compile_immediate(5,aline)
-return err_
+t1.result_type=token_if : compiledline(lineptr)=t1:  lineptr+=1
+if isassign(lparts(ct+1).part$) then err=compile_immediate_assign(5) else err=compile_immediate(5,aline)
+return err
 end function
 
 '----- compile 'else' command. Gets the linenum as it can call compile_immediate() and compile_immediate_assign()
@@ -2904,10 +1986,10 @@ end function
 function compile_else(aline as ulong) as ulong  
 
 dim t1 as expr_result
-dim err_ as ulong
-t1.result_type=token_else : cl.compiledline(lineptr)=t1:  lineptr+=1
-if isassign(lparts(ct+1).part_) then err_=compile_immediate_assign(5) else err_=compile_immediate(5,aline)
-return err_
+dim err as ulong
+t1.result_type=token_else : compiledline(lineptr)=t1:  lineptr+=1
+if isassign(lparts(ct+1).part$) then err=compile_immediate_assign(5) else err=compile_immediate(5,aline)
+return err
 end function
 
 '----- compile 'dim' command. Also it allocates the psram for an aray from the top of the memory
@@ -2915,38 +1997,38 @@ end function
 function compile_dim() as ulong  
  
 dim t1 as expr_result
-dim as ulong cmd, esize  
+dim cmd, esize as ulong
 dim dims(2) as ulong
-dim as integer i,j,l,m  
-dim varname2_ as string
-dim as ulong arraytype,arraysize,arrayptr  
+dim i,j,l,m as integer
+dim varname2$ as string
+dim arraytype,arraysize,arrayptr as ulong
 
 dims(0)=1: dims(1)=1: dims(2)=1
-if isname(lparts(ct).part_) then 
-  varname2_=lparts(ct).part_ 
+if isname(lparts(ct).part$) then 
+  varname2$=lparts(ct).part$ 
   j=-1
   if varnum>0 then
     for i=0 to varnum-1
-      if variables(i).name=varname2_ then j=i : exit for
+      if variables(i).name=varname2$ then j=i : exit
     next i
   endif 
   if j=-1 then j=varnum else print "Dim: at line ";linenum;": warning: the variable existed."
-  if lparts(ct+1).part_ <>"(" andalso lparts(ct+1).part_<>"as" then return 43
-  if lparts(ct+1).part_ = "as" then l=ct+1: goto p1350	' allocate a typed array
+  if lparts(ct+1).part$ <>"(" andalso lparts(ct+1).part$<>"as" then return 43
+  if lparts(ct+1).part$ = "as" then l=ct+1: goto 1350	' allocate a typed array
   l=ct+2 : m=0 : do
-  if isdec(lparts(l).part_) then 
-    dims(m)=valint(lparts(l).part_) : m+=1  
+  if isdec(lparts(l).part$) then 
+    dims(m)=val%(lparts(l).part$) : m+=1  
   else 
     return(17)
   endif  
-  if (lparts(l+1).part_<>"," andalso lparts(l+1).part_<>")" ) then return 44 
+  if (lparts(l+1).part$<>"," andalso lparts(l+1).part$<>")" ) then return 44 
   l+=2
-  loop until lparts(l-1).part_=")" orelse m>2
+  loop until lparts(l-1).part$=")" orelse m>2
   if m>3 then return 45
   arraytype=array_no_type : esize=12
-p1350: 
-  if lparts(l).part_="as" then
-    select case lparts(l+1).part_
+1350 
+  if lparts(l).part$="as" then
+    select case lparts(l+1).part$
       case "byte" 	: arraytype=array_byte		: esize=1
       case "ubyte" 	: arraytype=array_ubyte		: esize=1
       case "short" 	: arraytype=array_short		: esize=2
@@ -2967,14 +2049,14 @@ else
 endif
 arraysize=esize*dims(0)*dims(1)*dims(2)
 arrayptr=memtop-arraysize-16
-arrayptr=arrayptr and &hFFFFFFF0 					' aligned, or miracles happen
+arrayptr=arrayptr and $FFFFFFF0 					' aligned, or miracles happen
 memtop=arrayptr
 psdpoke arrayptr,arraytype 
 psdpoke arrayptr+2,esize 
 pslpoke arrayptr+4,dims(0)
 pslpoke arrayptr+8,dims(1)
 pslpoke arrayptr+12,dims(2)
-variables(j).name=varname2_
+variables(j).name=varname2$
 variables(j).value.uresult=arrayptr
 variables(j).vartype=arraytype
 if j=varnum then varnum+=1
@@ -2986,42 +2068,42 @@ end function
 function compile_for() as ulong  
 
 dim t1 as expr_result
-dim as ulong cmd,varnum,b1,b2,b3 
+dim cmd,varnum,b1,b2,b3 as ulong
 dim note_val as single
 
-if isassign(lparts(ct+1).part_) then compile_immediate_assign(5) else return 32
-t1=cl.compiledline(lineptr-1): if t1.result_type<>fun_assign  then  return 34'		' after this we should have fun_assign_i or fun_assign_u with var# as uresult.
+if isassign(lparts(ct+1).part$) then compile_immediate_assign(5) else return 32
+t1=compiledline(lineptr-1): if t1.result_type<>fun_assign  then  return 34'		' after this we should have fun_assign_i or fun_assign_u with var# as uresult.
 varnum=t1.result.uresult
-if lparts(ct).part_<>"to" then return 33
+if lparts(ct).part$<>"to" then return 33
 ct+=1
 expr()  										' there is "to" value pushed on the stack
-if lparts(ct).part_="step" orelse left$(lparts(ct).part_,2)="s." then
-  if left$(lparts(ct).part_,2)="s." andalso len(lparts(ct).part_)>2 then ' correct the part
-    lparts(ct).part_=right$(lparts(ct).part_,len(lparts(ct).part_)-2) ' strip 's.'
-    lparts(ct).token=isfunction(lparts(ct).part_) : if lparts(ct).token>0 then goto p2102
-    lparts(ct).token=isnotename(lparts(ct).part_) :
+if lparts(ct).part$="step" orelse left$(lparts(ct).part$,2)="s." then
+  if left$(lparts(ct).part$,2)="s." andalso len(lparts(ct).part$)>2 then ' correct the part
+    lparts(ct).part$=right$(lparts(ct).part$,len(lparts(ct).part$)-2) ' strip 's.'
+    lparts(ct).token=isfunction(lparts(ct).part$) : if lparts(ct).token>0 then goto 2102
+    lparts(ct).token=isnotename(lparts(ct).part$) :
     if lparts(ct).token>0 then 
       note_val=getnoteval(lparts(ct).token)
-      lparts(ct).part_=str$(note_val) 
+      lparts(ct).part$=str$(note_val) 
       lparts(ct).token=token_float
-      goto p2102
+      goto 2102
     endif
-    lparts(ct).token=isconstant(lparts(ct).part_) : if lparts(ct).token>0 then lparts(ct).part_=str$(lparts(ct).token) : lparts(ct).token=token_integer : goto p2102
-    b1=isnum(lparts(ct).part_) : b2=isint(lparts(ct).part_) : b3=isdec(lparts(ct).part_)
-    if b1 andalso b2 andalso b3 then lparts(ct).token=token_decimal 			: goto p2102 	' pure decimal for line num
-    if b1 andalso b2 andalso (not b3) then lparts(ct).token=token_integer 		: goto p2102 	' integer
-    if b1 andalso (not b2) andalso (not b3) then lparts(ct).token=token_float 		: goto p2102 	' float
-    if isname(lparts(ct).part_) then lparts(ct).token=token_name : goto p2102	
-p2102:
+    lparts(ct).token=isconstant(lparts(ct).part$) : if lparts(ct).token>0 then lparts(ct).part$=str$(lparts(ct).token) : lparts(ct).token=token_integer : goto 2102
+    b1=isnum(lparts(ct).part$) : b2=isint(lparts(ct).part$) : b3=isdec(lparts(ct).part$)
+    if b1 andalso b2 andalso b3 then lparts(ct).token=token_decimal 			: goto 2102 	' pure decimal for line num
+    if b1 andalso b2 andalso (not b3) then lparts(ct).token=token_integer 		: goto 2102 	' integer
+    if b1 andalso (not b2) andalso (not b3) then lparts(ct).token=token_float 		: goto 2102 	' float
+    if isname(lparts(ct).part$) then lparts(ct).token=token_name : goto 2102	
+2102
     ct-=1
   endif     
   ct+=1
   expr()
 else
-  cl.compiledline(lineptr).result_type=result_int : cl.compiledline(lineptr).result.iresult=1 : lineptr+=1	' if no "step", push 1 instead
+  compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=1 : lineptr+=1	' if no "step", push 1 instead
 endif
-cl.compiledline(lineptr).result_type=result_int : cl.compiledline(lineptr).result.iresult=varnum :lineptr+=1
-cl.compiledline(lineptr).result_type=token_for : cl.compiledline(lineptr).result.iresult=0 :lineptr+=1
+compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=varnum :lineptr+=1
+compiledline(lineptr).result_type=token_for : compiledline(lineptr).result.iresult=0 :lineptr+=1
 return 0
 end function
 
@@ -3030,83 +2112,82 @@ end function
 function compile_next() as ulong
 
 dim t1 as expr_result
-dim as ulong cmd,i,j  
-dim varname_ as string
+dim cmd,i,j as ulong
+dim varname$ as string
 
-varname_=lparts(ct).part_ 
+varname$=lparts(ct).part$ 
 if varnum=0 then return 35
 j=-1
 for i=0 to varnum-1
-  if variables(i).name=varname_ then j=i : exit for
+  if variables(i).name=varname$ then j=i : exit
 next i
 if j=-1 then return 35
-cl.compiledline(lineptr).result_type=result_int : cl.compiledline(lineptr).result.iresult=j :lineptr+=1
-cl.compiledline(lineptr).result_type=token_next : cl.compiledline(lineptr).result.iresult=0 :lineptr+=1
+compiledline(lineptr).result_type=result_int : compiledline(lineptr).result.iresult=j :lineptr+=1
+compiledline(lineptr).result_type=token_next : compiledline(lineptr).result.iresult=0 :lineptr+=1
 return 0
+end function
+
+'----- compile 'gosub' command. Gosub is "goto" that saves the return address, so add token_gosub, then compile goto
+
+function compile_gosub() as ulong
+
+dim err as ulong
+compiledline(lineptr).result_type=token_gosub
+lineptr+=1
+err=compile_goto()
+return err
 end function
 
 '----- compile 'goto' 
 
 function compile_goto() as ulong
 
-dim as integer gotoline, gotoptr,oldgotoptr  
-dim gotoheader(5) as ulong
+dim gotoline, gotoptr,oldgotoptr as integer
+dim gotoheader as ulong(5)
 dim t3 as expr_result
 if lparts(ct).token=token_decimal andalso lparts(ct+1).token=token_end then 	' we have a goto to a constant
-  gotoline=valint(lparts(ct).part_) 
-  cl.compiledline(lineptr).result_type=token_fast_goto
+  gotoline=val%(lparts(ct).part$) 
+  compiledline(lineptr).result_type=token_fast_goto
   gotoptr=programstart 							    	' now try to find a pointer to goto
   do
-    memmove(@gotoheader(0),@machine.bytes(gotoptr),24)
-    if gotoheader(0)<>&hFFFFFFFF then
+    psram.read1(varptr(gotoheader),gotoptr,24)  : 
+    if gotoheader(0)<>$FFFFFFFF then
       oldgotoptr=gotoptr
       gotoptr=gotoheader(5)
     endif
-  loop until gotoheader(5)=&h7FFFFFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
   if gotoheader(0)=gotoline then
-    cl.compiledline(lineptr).result.twowords(0)=oldgotoptr 			' we got the pointer, compile fast_goto
-    cl.compiledline(lineptr).result.twowords(1)=gotoline				' save the target line# in case it is deleted/changed
+    compiledline(lineptr).result.twowords(0)=oldgotoptr 			' we got the pointer, compile fast_goto
+    compiledline(lineptr).result.twowords(1)=gotoline				' save the target line# in case it is deleted/changed
   else
-    cl.compiledline(lineptr).result.twowords(0)=&h80000000				' no pointer, set the flag
-    cl.compiledline(lineptr).result.twowords(1)=gotoline				' and the target line
-    cl.compiledline(lineptr).result_type=token_find_goto				' compile find_goto instead, the runtime will find a pointer 
+    compiledline(lineptr).result.twowords(0)=$80000000				' no pointer, set the flag
+    compiledline(lineptr).result.twowords(1)=gotoline				' and the target line
+    compiledline(lineptr).result_type=token_find_goto				' compile find_goto instead, the runtime will find a pointer 
   endif  
   lineptr+=1
 else										' there is expression, target line not known 
   expr()
-  t3.result_type=token_slow_goto : t3.result.uresult=0 : cl.compiledline(lineptr)=t3:  lineptr+=1   ' compile slow_goto
+  t3.result_type=token_slow_goto : t3.result.uresult=0 : compiledline(lineptr)=t3:  lineptr+=1   ' compile slow_goto
 endif
 return 0
-end function
-
-
-'----- compile 'gosub' command. Gosub is "goto" that saves the return address, so add token_gosub, then compile goto
-
-function compile_gosub() as ulong
-
-dim err_ as ulong
-cl.compiledline(lineptr).result_type=token_gosub
-lineptr+=1
-err_=compile_goto()
-return err_
 end function
 
 '----- compile 'on' (on..goto, on..gosub) 
 
 function compile_on() as ulong
 
-dim as integer numpar,onlineptr,i 
+dim numpar,onlineptr,i as integer
 expr()
 'print lparts(ct).part$ 'ok
 numpar=0
-cl.compiledline(lineptr).result_type=token_on : onlineptr=lineptr : lineptr+=1' we need onlineptr to save param# there
-if lparts(ct).part_="goto" then
+compiledline(lineptr).result_type=token_on : onlineptr=lineptr : lineptr+=1' we need onlineptr to save param# there
+if lparts(ct).part$="goto" then
   i=ct+1
   do
     if lparts(i).token=token_decimal then
-      cl.compiledline(lineptr).result.twowords(0)=&h80000000
-      cl.compiledline(lineptr).result.twowords(1)=valint(lparts(i).part_)  
-      cl.compiledline(lineptr).result_type=token_find_goto
+      compiledline(lineptr).result.twowords(0)=$80000000
+      compiledline(lineptr).result.twowords(1)=val%(lparts(i).part$)  
+      compiledline(lineptr).result_type=token_find_goto
       lineptr+=1
       numpar+=1
     else
@@ -3114,37 +2195,37 @@ if lparts(ct).part_="goto" then
     endif  
     i+=1
     if lparts(i).token<>token_comma andalso lparts(i).token<>token_end then return 21
-    if lparts(i).token=token_end then exit do
+    if lparts(i).token=token_end then exit loop
     i+=1
   loop until lparts(i).token=token_end  
-  cl.compiledline(onlineptr).result.twowords(1)=1
+  compiledline(onlineptr).result.twowords(1)=1
 endif    
 
-if lparts(ct).part_="gosub" then
+if lparts(ct).part$="gosub" then
   i=ct+1
   do
     if lparts(i).token=token_decimal then
-      cl.compiledline(lineptr).result_type=token_gosub
+      compiledline(lineptr).result_type=token_gosub
       lineptr+=1
-      cl.compiledline(lineptr).result.twowords(0)=&h80000000
-      cl.compiledline(lineptr).result.twowords(1)=valint(lparts(i).part_)  
-      cl.compiledline(lineptr).result_type=token_find_goto
+      compiledline(lineptr).result.twowords(0)=$80000000
+      compiledline(lineptr).result.twowords(1)=val%(lparts(i).part$)  
+      compiledline(lineptr).result_type=token_find_goto
       lineptr+=1
       numpar+=1
-      cl.compiledline(lineptr).result_type=token_skip
+      compiledline(lineptr).result_type=token_skip
       lineptr+=1
     else
       return 17
     endif  
     i+=1
     if lparts(i).token<>token_comma andalso lparts(i).token<>token_end then return 21
-    if lparts(i).token=token_end then exit do
+    if lparts(i).token=token_end then exit loop
     i+=1
   loop until lparts(i).token=token_end  
-  cl.compiledline(onlineptr).result.twowords(1)=3
+  compiledline(onlineptr).result.twowords(1)=3
 endif   
-cl.compiledline(onlineptr).result.uresult=numpar
-for i=lineptr to onlineptr step -1 : if cl.compiledline(i).result_type=token_skip then cl.compiledline(i).result.uresult=lineptr-2
+compiledline(onlineptr).result.uresult=numpar
+for i=lineptr to onlineptr step -1 : if compiledline(i).result_type=token_skip then compiledline(i).result.uresult=lineptr-2
 next i 
 return 0
 end function
@@ -3153,18 +2234,18 @@ end function
  
 function getaddr() as ulong
 
-dim as integer i,j,numpar,err_  
+dim i,j,numpar,err as integer
 dim t2 as expr_result
-dim as string varname_,suffix_  
+dim varname$,suffix$  as string
 
-varname_=lparts(ct).part_
+varname$=lparts(ct).part$
 j=-1
 
 for i=0 to varnum-1
-  if variables(i).name=varname_ then j=i : exit for
+  if variables(i).name=varname$ then j=i : exit
 next i
 if  j=-1 andalso varnum<maxvars then   
-  variables(varnum).name=varname_
+  variables(varnum).name=varname$
   variables(varnum).value.iresult=0
   variables(varnum).vartype=result_int
   j=varnum
@@ -3175,247 +2256,24 @@ if lparts(ct+1).token=token_lpar then								' check if it is an array
   ct+=1 											' omit this lpar, this is for expr list
   do
     ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
-    if lparts(ct).token=token_lpar then ct+=1 : err_=expr() : ct+=1 else err_=expr()
-    if err_>0 then return err_
+    if lparts(ct).token=token_lpar then ct+=1 : err=expr() : ct+=1 else err=expr()
+    if err>0 then return err
     numpar+=1
-  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate err_or if end
+  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate error if end
     if lparts(ct).token=token_end then return 14
 endif  
 t2.result.twowords(1)=numpar
 t2.result_type=fun_getaddr:t2.result.twowords(0)=j
-cl. compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate err_or
+compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate error
 return 0
 end function
 
+'----------------------------------------------------------------------------------------------------------------------------------------
+'--------------------------------------------- 
 
-'--------------------------------------------------------------------------------------------------------------------------
-'--------------------------------------- Compilers ------------------------------------------------------------------------
-'--------------------------------------------------------------------------------------------------------------------------
-
-
-'--- Do a main compilation task for commands, called from compile(), returns an error code
-
-function compile_immediate(linetype as ulong, aline as ulong) as integer
-
-dim as ulong cmd,i
-dim t3 as expr_result
-dim cr as c_result
-
-' linetype=cont+1
-' 1 : this is the first part of the line that will continue
-' 2 - this is the continuation of the line
-' 3 - this is the last continued line
-' 4 - this is the one and only part
-' 5 - continued after if/else
-
-cr.err_=0
-cmd=0
-cr.vars=0
-if linetype=2 orelse linetype=3 then cmd=lparts(0).token : ct=1 
-if linetype=4 orelse linetype=1 then cmd=lparts(1).token : ct=2 : lineptr=2
-if linetype=5 then cmd=lparts(ct).token : ct+=1 
-
-'print  "In compile_immediate cmd=:", cmd
-p451: select case cmd
-  case token_beep	          : cr.err_=compile_fun_2p()
-  case token_blit	          : cr=compile_fun_varp()
-  case token_box          	: cr=compile_fun_varp()  
-  case token_brun    	      : cr=compile_fun_varp()  		' for arguments 
-  case token_cd		          : cr.err_=compile_fun_1p()   	 
-  case token_circle   	    : cr=compile_fun_varp()  		
-  case token_click	        : cr.err_=compile_fun_1p()
-  case token_cls      	    : compile_nothing()                    	' no params, do nothing, only add a command to the line, but case needs something to do after 
-  case token_close     	    : cr.err_=compile_fun_1p()                    
-  case token_color    	    : cr.err_=compile_fun_1p()  
-  case token_copy	          : cr.err_=compile_fun_2p()
-  case token_changefreq	    : cr.err_=compile_fun_2p()  
-  case token_changewave	    : cr.err_=compile_fun_2p()  
-  case token_changevol 	    : cr.err_=compile_fun_2p()  
-  case token_changepan      : cr.err_=compile_fun_2p()  
-  case token_cogstop	      : cr.err_=compile_fun_1p()
-  case token_cursor	        : cr.err_=compile_fun_1p()
-  case token_data	          : compile_nothing()
-  case token_defchar	      : cr.err_=compile_fun_2p()
-  case token_defenv         : cr=compile_fun_varp()   
-  case token_defsnd         : cr=compile_fun_varp()   
-  case token_defsprite	    : cr=compile_fun_varp()		' defsprite now has only one syntax, but other are planned (defsprite pointer, defsprite file)
-  case token_deg	          : compile_nothing()
-  case token_delete	        : cr.err_=compile_fun_1p()
-  case token_dim	          : cr.err_=compile_dim() : goto p450		' non-standard command with its own compiler
-  case token_dir	          : cr=compile_fun_varp()		' now only dir without params, but they are planned (dir *.bas)
-  case token_dpoke	        : cr.err_=compile_fun_2p()
-  case token_draw     	    : cr=compile_fun_varp()   	' 4 or 5 parameters draw planned for speedup - draw x1,y1,x2,y2,color
-  case token_else    	      : cr.err_=compile_else(aline) : goto p450
-  case token_progend	      : compile_nothing() 			' 'end' command
-  case token_enter	        : cr=compile_fun_varp() 
-  case token_get	          : cr=compile_fun_varp()
-  case token_fast_goto      : if aline>0 then compile_goto()  : goto p450 else printerror(25) : goto p450
-  case token_gosub          : if aline>0 then compile_gosub() : goto p450 else printerror(25) : goto p450
-  case token_fcircle  	    : cr=compile_fun_varp()  
-  case token_fill	          : cr.err_=compile_fun_4p()
-  case token_font	          : cr.err_=compile_fun_1p()
-  case token_for     	      : cr.err_=compile_for() :goto p450
-  case token_frame     	    : cr=compile_fun_varp()  
-  case token_if      	      : cr.err_=compile_if(aline) :goto p450
-  case token_ink	          : cr.err_=compile_fun_1p()
-  case token_input	        : cr=compile_input()
-  case token_int	          : cr.err_=compile_fun_1p()
-  case token_list     	    : cr=compile_fun_varp()   
-  case token_load    	      : cr=compile_fun_varp() 
-  case token_lpoke	        : cr.err_=compile_fun_2p()
-  case token_mkdir	        : cr.err_=compile_fun_1p()
-  case token_mode	          : cr.err_=compile_fun_1p()
-  case token_mouse	        : cr.err_=compile_fun_1p()
-  case token_new      	    : compile_nothing()   
-  case token_next     	    : cr.err_=compile_next() :goto p450
-  case token_on		          : cr.err_=compile_on() : goto p450
-  case token_open	          : cr.err_=compile_fun_3p()
-  case token_paper	        : cr.err_=compile_fun_1p()
-  case token_pinfloat	      : cr.err_=compile_fun_1p()
-  case token_pinlo	        : cr.err_=compile_fun_1p()
-  case token_pinhi	        : cr.err_=compile_fun_1p()
-  case token_pinstart	      : cr.err_=compile_fun_4p()
-  case token_pintoggle 	    : cr.err_=compile_fun_1p()
-  case token_pinwrite       : cr.err_=compile_fun_2p()
-  case token_play     	    : cr=compile_fun_varp()   
-  case token_plot     	    : cr=compile_fun_varp()   
-  case token_poke	          : cr.err_=compile_fun_2p()
-  case token_pop	          : compile_nothing
-  case token_position	      : cr.err_=compile_fun_2p()
-  case token_print    	    : cr.err_=compile_print()  : goto p450
-  case token_put	          : cr=compile_fun_varp()
-  case token_rad	          : compile_nothing()
-  case token_read	          : cr=compile_read()
-  case token_release	      : cr.err_=compile_fun_1p()
-  case token_rem	          : compile_nothing() : goto p450
-  case token_restore	      : compile_nothing()
-  case token_restorepalette : compile_nothing()
-  case token_return:	      : compile_nothing()
-  case token_run      	    : cr=compile_fun_varp()   
-  case token_save     	    : cr=compile_fun_varp()  
-  case token_setcolor       : cr=compile_fun_varp()
-  case token_setdelay       : cr.err_=compile_fun_2p()
-  case token_setenv 	      : cr.err_=compile_fun_2p()
-  case token_setlen   	    : cr.err_=compile_fun_2p()
-  case token_setpan 	      : cr.err_=compile_fun_2p()
-  case token_setsustain	    : cr.err_=compile_fun_2p()
-  case token_setvol 	      : cr.err_=compile_fun_2p()
-  case token_setwave 	      : cr.err_=compile_fun_2p()
-  case token_shutup	        : cr=compile_fun_varp()
-  case token_sprite	        : cr.err_=compile_fun_3p()
-  case token_waitclock      : compile_nothing()
-  case token_waitms    	    : cr.err_=compile_fun_1p()
-  case token_waitvbl        : compile_nothing()
-  case token_wrpin	        : cr.err_=compile_fun_2p()
-  case token_wxpin	        : cr.err_=compile_fun_2p()
-  case token_wypin	        : cr.err_=compile_fun_2p()
-  case token_name           : cr.err_=compile_array_assign() : if err=14 then  err=compile_unknown() : goto p450  else goto p450
-  case else	     	          : compile_unknown() : goto p450
-end select
-
-t3.result_type=cmd : t3.result.uresult=cr.vars : cl.compiledline(lineptr)=t3:  lineptr+=1
-p450: if linetype=3 orelse linetype=4 then cl.compiledline(lineptr).result_type=token_end 				' the last part 
-' if there is token_adr somewhere, change fun_getvar to fun_getaddr
-for i=lineptr to 1 step -1: if cl.compiledline(i).result_type=token_adr andalso cl.compiledline(i-1).result_type=fun_getvar then cl.compiledline(i-1).result_type=fun_getaddr
-next i
-''''print "In compile_immediate:" : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult, compiledline(i).result.twowords(1) : next i
-return cr.err_
-end function
-
-'--- Do a main compilation task for assigns, called from compile_assign(), returns an error code
-
-function compile_immediate_assign(linetype as ulong) as ulong
-
-dim t1 as expr_result
-dim as integer i,j,numpar,err_
-dim  suffix2_ as string
-dim varname2_ as string
-
-t1.result_type=result_error : t1.result.uresult=0
-i=-1: j=-1 : err=0
-
-if linetype=2 orelse linetype=3 then varname2_=lparts(0).part_ : ct=2 ' don't set lineptr
-if linetype=4 orelse linetype=1 then varname2_=lparts(1).part_ : ct=3 : lineptr=2
-if linetype=5 then varname2_=lparts(ct).part_ : ct+=2 ' continued after if/else
-
-suffix2_=right$(varname2_,1)
-expr()
-if varnum>0 then					' try to find a variable
-  for i=0 to varnum-1
-    if variables(i).name=varname2_ then j=i : exit for
-  next i
-endif
-if  j=-1 andalso varnum<maxvars then   			' not found, add a new one
-  variables(varnum).name=varname2_
-  j=varnum
-  varnum+=1
-endif
-if varnum>=maxvars then
-  err_=45
-else  
-  t1.result.uresult=j: t1.result_type=fun_assign  
-  cl.compiledline(lineptr)=t1:  lineptr+=1 
-  if linetype=3 orelse linetype=4 then cl.compiledline(lineptr).result_type=token_end
-  for i=lineptr to 1 step -1: if cl.compiledline(i).result_type=token_adr andalso cl.compiledline(i-1).result_type=fun_getvar then cl.compiledline(i-1).result_type=fun_getaddr
-  next i
-' print "In compile_immediate_assign: " : for i=0 to lineptr: print compiledline(i).result_type;" ";compiledline(i).result.uresult;" ";compiledline(i).result.twowords(1) : next i
-  endif
-return err_
-end function
-
-' ------------------ compile the line that is calling a command, and save it if linenum>0, called from the interpreter 
-
-function compile (alinemajor as ulong, alineminor as ulong=0, cont as ulong=0) as ulong
-
-dim err_ as ulong
-'line header: num major, num minor,list start, list length, prev, next. That implements 2-way list of program lines 
-cl.ucompiledline(0)=alinemajor
-cl.ucompiledline(1)=alineminor		' this is for the future when maybe linenums will be optional.
-
-' cont: 
-' 0 - this is the first part of the line that will continue
-' 1 - this is the continuation of the line
-' 2 - this is the last continued line
-' 3 - this is the one and only part
-
-err=compile_immediate(cont+1,alinemajor) 
-if err=0 andalso alinemajor>0 then
-  if cont=3 orelse cont=2 then 
-    if alinemajor >lastline then 
-      add_line_at_end(alinemajor)
-    else
-      deleteline(alinemajor)  
-      if alinemajor>lastline then add_line_at_end(alinemajor)  else insertline(alinemajor)   ' TODO: that's not optimal    
-    endif 
-  endif   
-endif 
-return err_
-end function
-
-' ------------------ compile the line that is assigning to a variable and save it if linenum>0, called from the interpreter 
-
-function compile_assign (alinemajor as ulong, alineminor as ulong=0, cont as ulong=0)  as ulong
-
-dim err_ as ulong
-
-cl.ucompiledline(0)=alinemajor
-cl.ucompiledline(1)=alineminor
-
-err_=compile_immediate_assign(cont+1) 
-if alinemajor>0 then
-  if cont=3 orelse cont=2 then 
-    if alinemajor >lastline then 
-      add_line_at_end(alinemajor)
-    else
-      deleteline(alinemajor)  
-      if alinemajor>lastline then add_line_at_end(alinemajor) else insertline(alinemajor)   
-    endif 
-  endif
-endif   
-return err_
-end function
-
-
+'---------------------------------------------------------------------------------------------------------------------------------------
+'------------------------------------------ The end of the precompiler  ----------------------------------------------------------------
+'---------------------------------------------------------------------------------------------------------------------------------------
 
 '---------------------------------------------------------------------------------------------------------------------------------------
 '
@@ -3423,67 +2281,67 @@ end function
 '
 '---------------------------------------------------------------------------------------------------------------------------------------
 
+function expr() as ulong 
 
-' Get a function result 
+' On input: ct = current token position
+' On output: new ct and compiled line filled with the expression converted to RPN
+' Returns the error code
 
-function getfun(m as integer) as ulong
- 
-dim as ulong oldct,numpar,err_ 
-dim t2 as expr_result
-oldct=ct
-numpar=0
-if lparts(ct+1).token=token_lpar then
-  ct+=1 											' omit this lpar, this is for expr list
-  do
-    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
-    if lparts(ct).token=token_lpar then ct+=1 : err_=expr() : ct+=1 else err_=expr()
-    if err_>0 then return err_
-    numpar+=1
-  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate err_or if end
-  if lparts(ct).token=token_end then return 14
-endif  
-t2.result.uresult=numpar
-t2.result_type=lparts(oldct).token  ' todo here: expression lists..... 
-cl.compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate err_or
-if m=-1 then t2.result_type=fun_negative: cl.compiledline(lineptr)=t2: lineptr+=1
+dim t3 as expr_result
+dim op as integer
+dim err as ulong
+
+op=lparts(ct).token : if op=token_end then t3.result.uresult=29 : t3.result_type=result_error : compiledline(lineptr)=t3 : lineptr+=1: return 29
+t3.result.uresult=0
+err=addsub()             			' call higher priority operator check. It will itself call muldiv, which then calls getval/getvar 
+if err>0 then return err
+op = lparts(ct).token				' Lowest priority : comparison operators
+do while (op = token_eq orelse op = token_gt orelse op = token_lt orelse op=token_ge orelse op=token_le orelse op=token_ne)
+  ct+=1
+  err=addsub() : if err>0 then return err
+  t3.result_type=op: compiledline(lineptr)=t3: lineptr+=1
+  op = lparts(ct).token
+  loop
+return 0  
+end function
+
+' Second level operators : add, sub, logic
+
+function addsub() as ulong
+
+dim t3 as expr_result
+dim op as integer
+dim err as ulong
+
+t3.result.uresult=0
+err=muldiv() : if err>0 then return err           			 
+op = lparts(ct).token				 
+do while (op = token_plus orelse op = token_minus orelse op = token_and orelse op=token_or)
+  ct+=1
+  err=muldiv() : if err>0 then return err   
+  t3.result_type=op: compiledline(lineptr)=t3: lineptr+=1
+  op = lparts(ct).token
+  loop
 return 0
 end function
-  
-  
-function getvar(m as integer) as ulong
 
-dim as integer i,j,numpar,err_  
-dim t2 as expr_result
-dim as string varname_,suffix_  
+' Third level operators : mul,div,shift,power
 
-varname_=lparts(ct).part_
-j=-1
+function muldiv() as ulong
 
-for i=0 to varnum-1
-  if variables(i).name=varname_ then j=i : exit for
-next i
-if  j=-1 andalso varnum<maxvars then   
-  variables(varnum).name=varname_
-  variables(varnum).value.iresult=0
-  variables(varnum).vartype=result_int
-  j=varnum
-  varnum+=1 
-endif     
-numpar=0
-if lparts(ct+1).token=token_lpar then								' check if it is an array
-  ct+=1 										                       	' omit this lpar, this is for expr list
-  do
-    ct+=1  									                     		': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
-    if lparts(ct).token=token_lpar then ct+=1 : err_=expr() : ct+=1 else err_=expr()
-    if err_>0 then return err_
-    numpar+=1
-  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate err_or if end
-    if lparts(ct).token=token_end then return 14
-endif  
-t2.result.twowords(1)=numpar
-t2.result_type=fun_getvar:t2.result.twowords(0)=j
-cl.compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate err_or
-if m=-1 then t2.result_type=fun_negative: cl.compiledline(lineptr)=t2: lineptr+=1
+dim t3 as expr_result 
+dim op as integer
+dim err as ulong
+
+t3.result.uresult=0
+err=getvalue() : if err>0 then return err     
+op = lparts(ct).token
+do while (op = token_mul orelse op = token_div orelse op = token_fdiv orelse op=token_mod orelse op=token_shl orelse op=token_shr orelse op=token_power)
+  ct+=1
+  err=getvalue() :if err>0 then return err   
+  t3.result_type=op: compiledline(lineptr)=t3: lineptr+=1
+  op = lparts(ct).token
+  loop
 return 0
 end function
 
@@ -3492,7 +2350,7 @@ end function
 function getvalue()  as ulong
 
 dim t1 as expr_result
-dim as integer op,m,err_,l,i 
+dim op,m,err as integer
 
 m=1											' for negative numbers
 t1.result.uresult=0: t1.result_type=result_uint
@@ -3500,114 +2358,108 @@ op=lparts(ct).token
 if op=token_minus then m=-1: ct+=1 : op=lparts(ct).token				' '-' operator found
 select case op
   case token_decimal
-    if m=1 then t1.result.uresult=m*valint(lparts(ct).part_): t1.result_type=result_int  
-    if m=-1 then t1.result.iresult=m*valint(lparts(ct).part_): t1.result_type=result_int 	' todo token_int64?
-    cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+    if m=1 then t1.result.uresult=m*val%(lparts(ct).part$): t1.result_type=result_int  
+    if m=-1 then t1.result.iresult=m*val%(lparts(ct).part$): t1.result_type=result_int 	' todo token_int64?
+    compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_integer
-    if left$(lparts(ct).part_,1)="$" then lparts(ct).part_="&h"+right$(lparts(ct).part_,len(lparts(ct).part_)-1)
-    if left$(lparts(ct).part_,1)="%" then lparts(ct).part_="&b"+right$(lparts(ct).part_,len(lparts(ct).part_)-1)
-    t1.result.iresult=m*valint(lparts(ct).part_)
+    if left$(lparts(ct).part$,1)="$" then lparts(ct).part$="&h"+right$(lparts(ct).part$,len(lparts(ct).part$)-1)
+    if left$(lparts(ct).part$,1)="%" then lparts(ct).part$="&b"+right$(lparts(ct).part$,len(lparts(ct).part$)-1)
+    t1.result.iresult=m*val%(lparts(ct).part$)
     t1.result_type=result_int  
-    cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+    compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_float
-    if m=1 then t1.result.fresult=1.0*val(lparts(ct).part_): t1.result_type=result_float  
-    if m=-1 then t1.result.fresult=-1.0*val(lparts(ct).part_): t1.result_type=result_float
-    cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+    if m=1 then t1.result.fresult=1.0*val(lparts(ct).part$): t1.result_type=result_float  
+    if m=-1 then t1.result.fresult=-1.0*val(lparts(ct).part$): t1.result_type=result_float
+    compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_string
-    l=len(lparts(ct).part_)    								' place the literal in the psram
-    memtop=(memtop-l-4) and &hFFFFFFFC
+    l=len(lparts(ct).part$)    								' place the literal in the psram
+    memtop=(memtop-l-4) and $FFFFFFFC
     pslpoke memtop,l
-    for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part_,i,1)) : next i
+    for i=1 to l : pspoke memtop+3+i, asc(mid$(lparts(ct).part$,i,1)) : next i
     t1.result.uresult=memtop
     t1.result_type=result_string2  
-    cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+    compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_channel
-    t1.result_type=token_channel: t1.result.iresult=valint(lparts(ct).part_)
-    cl.compiledline(lineptr)=t1: lineptr+=1 :ct+=1
+    t1.result_type=token_channel: t1.result.iresult=val%(lparts(ct).part$)
+    compiledline(lineptr)=t1: lineptr+=1 :ct+=1
   case token_name 				
-    err_=getvar(m) : ct+=1 : if err_>0 then return err_ 
+    err=getvar(m) : ct+=1 : if err>0 then return err 
   case token_lpar
     ct+=1
-    err_=expr() : if err_>0 then return err_ 
+    err=expr() : if err>0 then return err 
     if lparts(ct).token=token_rpar then ct+=1
   case else
-    err_=getfun(m) : ct+=1 : if err_>0 then return err_ 
+    err=getfun(m) : ct+=1 : if err>0 then return err 
 end select  
 return 0  
 end function
 
+' Get a function result 
 
-' Third level operators : mul,div,shift,power
-
-function muldiv() as ulong
-
-dim t3 as expr_result 
-dim op as integer
-dim err_ as ulong
-
-t3.result.uresult=0
-err_=getvalue() : if err_>0 then return err_     
-op = lparts(ct).token
-do while (op = token_mul orelse op = token_div orelse op = token_fdiv orelse op=token_mod orelse op=token_shl orelse op=token_shr orelse op=token_power)
-  ct+=1
-  err_=getvalue() :if err_>0 then return err_   
-  t3.result_type=op: cl.compiledline(lineptr)=t3: lineptr+=1
-  op = lparts(ct).token
-  loop
+function getfun(m as integer) as ulong
+ 
+dim oldct,numpar,err as ulong
+dim t2 as expr_result
+oldct=ct
+numpar=0
+if lparts(ct+1).token=token_lpar then
+  ct+=1 											' omit this lpar, this is for expr list
+  do
+    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
+    if lparts(ct).token=token_lpar then ct+=1 : err=expr() : ct+=1 else err=expr()
+    if err>0 then return err
+    numpar+=1
+  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate error if end
+  if lparts(ct).token=token_end then return 14
+endif  
+t2.result.uresult=numpar
+t2.result_type=lparts(oldct).token  ' todo here: expression lists..... 
+compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate error
+if m=-1 then t2.result_type=fun_negative: compiledline(lineptr)=t2: lineptr+=1
 return 0
 end function
+  
+  
+function getvar(m as integer) as ulong
 
+dim i,j,numpar,err as integer
+dim t2 as expr_result
+dim varname$,suffix$  as string
 
-' Second level operators : add, sub, logic
+varname$=lparts(ct).part$
+j=-1
 
-function addsub() as ulong
-
-dim t3 as expr_result
-dim op as integer
-dim err_ as ulong
-
-t3.result.uresult=0
-err_=muldiv() : if err_>0 then return err_           			 
-op = lparts(ct).token				 
-do while (op = token_plus orelse op = token_minus orelse op = token_and orelse op=token_or)
-  ct+=1
-  err_=muldiv() : if err_>0 then return err_   
-  t3.result_type=op: cl.compiledline(lineptr)=t3: lineptr+=1
-  op = lparts(ct).token
-  loop
+for i=0 to varnum-1
+  if variables(i).name=varname$ then j=i : exit
+next i
+if  j=-1 andalso varnum<maxvars then   
+  variables(varnum).name=varname$
+  variables(varnum).value.iresult=0
+  variables(varnum).vartype=result_int
+  j=varnum
+  varnum+=1 
+endif     
+numpar=0
+if lparts(ct+1).token=token_lpar then								' check if it is an array
+  ct+=1 											' omit this lpar, this is for expr list
+  do
+    ct+=1  											': print "In getfun, ct=",ct,"lparts(ct).token=",lparts(ct).token, "part$=",lparts(ct).part$
+    if lparts(ct).token=token_lpar then ct+=1 : err=expr() : ct+=1 else err=expr()
+    if err>0 then return err
+    numpar+=1
+  loop until lparts(ct).token=token_rpar orelse lparts(ct).token=token_end  ' generate error if end
+    if lparts(ct).token=token_end then return 14
+endif  
+t2.result.twowords(1)=numpar
+t2.result_type=fun_getvar:t2.result.twowords(0)=j
+compiledline(lineptr)=t2: lineptr+=1   ' if t2.result.uresult=-1, generate error
+if m=-1 then t2.result_type=fun_negative: compiledline(lineptr)=t2: lineptr+=1
 return 0
 end function
-
-
-function expr() as ulong 
-
-' On input: ct = current token position
-' On output: new ct and compiled line filled with the expression converted to RPN
-' Returns the err_or code
-
-dim t3 as expr_result
-dim op as integer
-dim err_ as ulong
-
-op=lparts(ct).token : if op=token_end then t3.result.uresult=29 : t3.result_type=result_error : cl.compiledline(lineptr)=t3 : lineptr+=1: return 29
-t3.result.uresult=0
-err_=addsub()             			' call higher priority operator check. It will itself call muldiv, which then calls getval/getvar 
-if err_>0 then return err_
-op = lparts(ct).token				' Lowest priority : comparison operators
-do while (op = token_eq orelse op = token_gt orelse op = token_lt orelse op=token_ge orelse op=token_le orelse op=token_ne)
-  ct+=1
-  err_=addsub() : if err_>0 then return err_
-  t3.result_type=op: cl.compiledline(lineptr)=t3: lineptr+=1
-  op = lparts(ct).token
-  loop
-return 0  
-end function
-
 
 '----------------------------------------------------------------------------------------------------------------------------------------
 '--------------------------------------------- End of expression evaluator --------------------------------------------------------------
 '----------------------------------------------------------------------------------------------------------------------------------------
-
 
 
 '----------------------------------------------------------------------------------------------------------------------------------------
@@ -3620,7 +2472,7 @@ end function
 '----------------------------------------- A main execute line function ----------------------------------------------------------------
 '---------------------------------------------------------------------------------------------------------------------------------------
 
-function execute_line (astart as integer=0) as integer
+function execute_line (astart=0 as integer) as integer
 
 '' This executes a line either in immediate mode or loaded from PSRAM in the program executing mode
 
@@ -3628,8 +2480,8 @@ dim cmd as asub
 
 runptr2=0
 for lineptr_e=astart to lineptr-1
-  cmd=commands(cl.compiledline(lineptr_e).result_type and 255)
-  cmd()
+  cmd=commands(compiledline(lineptr_e).result_type and 255)
+  cmd
 next lineptr_e
 return runptr2
 end function
@@ -3685,7 +2537,7 @@ select case t1.result_type
   case result_int:  return t1.result.iresult
   case result_uint: return t1.result.uresult
   case result_float: return round(t1.result.fresult)
-  case result_string: return round(val(*t1.result.sresult))
+  case result_string: return round(val(t1.result.sresult))
   case result_string2: return round(val(convertstring(t1.result.uresult))) 
   case result_channel: return t1.result.iresult
   case else: return 0
@@ -3702,8 +2554,8 @@ select case t1.result_type
   case result_int:  s=t1.result.iresult : return s
   case result_uint: s=t1.result.uresult : return s
   case result_float: return t1.result.fresult
-  case result_string: return val(*t1.result.sresult)
-  case result_string2: return val(convertstring(t1.result.uresult)) ' :r=result_int ??????? what's r??
+  case result_string: return val(t1.result.sresult)
+  case result_string2: return val(convertstring(t1.result.uresult)) :r=result_int
   case else: return 0.0
 end select
 end function
@@ -3715,17 +2567,90 @@ end function
 '----------------------------------------------------------------------------------------------------------------------------------------
 
 sub csave_block(address as ulong)
-' to be rewritten fro a rpi5
+
+for i=0 to 63 step 2
+  do: loop until lpeek(base+64*7)>32768
+  q=lpeek(address+4*i)
+     for bit=0 to 31
+      if (q and (1 shl bit)) then sample(4*bit)=127: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=128 else sample(4*bit)=128: sample(4*bit+1)=128 : sample(4*bit+2)=127 : sample (4*bit+3)=127
+    next bit  
+  do: loop until lpeek(base+64*7)<32768
+  q=lpeek(address+4+4*i)
+     for bit=0 to 31
+      if (q and (1 shl bit)) then sample(128+4*bit)=127: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=128 else sample(128+4*bit)=128: sample(128+4*bit+1)=128 : sample(128+4*bit+2)=127 : sample (128+4*bit+3)=127
+    next bit  
+next i
+do: loop until lpeek(base+64*7)>32768
+for i=0 to 127: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
+next i
+
+do: loop until lpeek(base+64*7)<32768
+for i=128 to 255: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
+next i
 end sub
 
 sub csave_addtoblock(d as ubyte, force as ubyte)
-' to be rewritten for rpi5
+
+if force=0 then
+  block(blockptr)=d
+  blockptr+=1
+  if blockptr>=255 then
+    csave_block(varptr(block(0)))
+    blockptr=0
+    waitms(300)
+  endif
+else
+  block(blockptr)=d
+  if blockptr<255 then for i=blockptr to 255 : block(i)=0 : next i 
+  csave_block(varptr(block(0)))
+  blockptr=0
+  waitms(300)
+endif
 end sub  
 
 '----------------------- csave
 
 sub test_csave
-' to be rewritten for rpi5
+
+dim i,j as integer
+dim qqq as ulong
+ 
+dim linebuf(127) as ubyte ' todo : 127
+dim name$ as string
+dim t1 as expr_result
+dim saveptr as ulong
+dim header(5) as ulong
+'dim fileheader,savestart, saveptr as ulong
+
+if pslpeek(programstart)=$FFFFFFFF then printerror(27): return
+t1=pop()
+if t1.result_type<>result_string then name$=loadname else name$=t1.result.sresult
+
+' prepare 1 kHz header wave
+
+for i=0 to 255: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
+next i
+audio.play8(7,varptr(sample),8000,16384,256,0)
+waitms 3000 
+
+blockptr=0
+csave_addtoblock($72,0): csave_addtoblock($62,0): csave_addtoblock($61,0): csave_addtoblock($0D,0) ' rba+ver(13)
+for i=1 to len(name$): csave_addtoblock(asc(mid$(name$,i,1)),0) : next i : csave_addtoblock(0,0) 
+csave_addtoblock($72,0): csave_addtoblock($62,0): csave_addtoblock($73,0): csave_addtoblock($0D,0) ' rbs+ver(13)
+
+saveptr=programstart
+do
+
+  psram.read1(varptr(header(0)),saveptr,24)
+  psram.read1(varptr(linebuf(0)),header(2),header(3))  
+  csave_addtoblock(header(3),0) ' that's always <255
+  for i=0 to header(3)-1: csave_addtoblock(linebuf(i),0)  :next i
+  saveptr=header(5)
+loop until header(5)=$7FFFFFFF
+
+csave_addtoblock(0,1)
+
+dpoke base+7*64+20,0
 end sub
 
 '----------------------------------------------------------------------------------------------------------------------------------------
@@ -3747,7 +2672,7 @@ t1=pop()
 if t1.result_type=result_int then 
   t1.result.iresult=abs(t1.result.iresult)
 'uresult is always positive
-elseif t1.result_type=result_float then 
+else if t1.result_type=result_float then 
   t1.result.fresult=abs(t1.result.fresult)
 else 
   t1.result_type=result_error : t1.result.uresult=40
@@ -3762,7 +2687,7 @@ sub do_acos
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "acos: "; : printerror(39) : return
 t1=pop()
 t1.result.fresult=acos(converttofloat(t1))*trig_coeff2
@@ -3775,14 +2700,13 @@ end sub
 sub do_asc
 
 dim t1 as expr_result
-dim as ulong numpar,arg 
-dim s as string 
+dim numpar,arg as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "asc: "; : printerror(39) : return
-t1=pop() : if t1.result_type=result_string2 then s=convertstring(t1.result.uresult) :t1.result.sresult=@s : t1.result_type=result_string
+t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then print "asc: "; : printerror(15) : return 
-t1.result.iresult=asc(*t1.result.sresult)
+t1.result.iresult=asc(t1.result.sresult)
 t1.result_type=result_int
 push t1  
 end sub
@@ -3794,7 +2718,7 @@ sub do_asin
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "asin: "; : printerror(39) : return
 t1=pop()
 t1.result.fresult=asin(converttofloat(t1))*trig_coeff2
@@ -3809,10 +2733,10 @@ sub do_atn
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "atn: "; : printerror(39) : return
 t1=pop()
-t1.result.fresult=atn(converttofloat(t1))*trig_coeff2
+t1.result.fresult=atan(converttofloat(t1))*trig_coeff2
 t1.result_type=result_float   
 push t1  
 end sub
@@ -3821,7 +2745,7 @@ end sub
 
 sub do_beep
 
-dim as expr_result t1,t2 
+dim t1,t2 as expr_result
 dim freq as ulong
 dim sample(1) as ubyte
 
@@ -3829,10 +2753,10 @@ t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
 sample(0)=127: sample(1)=128
-'''''''audio.play8(7,varptr(sample),freq*2,16384,2,0) ' todo!!!!!
+audio.play8(7,varptr(sample),freq*2,16384,2,0)
 push t2
-'' do_waitms
-'--------  audio.stop(7)
+do_waitms
+audio.stop(7)
 end sub
 
 '-------------------- blit
@@ -3842,15 +2766,15 @@ sub do_blit
 
 dim t1 as expr_result
 dim p(9) as ulong
-dim as integer i,numpar 
+dim i,numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar<>10 andalso numpar<>6 then print "blit: "; : printerror (39,runheader(0)) : return
 for i=numpar-1 to 0 step -1: t1=pop() : p(i)=converttoint(t1): next i
 if numpar=10 then 
-'  blit(p(0),p(1),p(2),p(3),p(4),p(5),p(6),p(7),p(8),p(9)) 
+  v.blit(p(0),p(1),p(2),p(3),p(4),p(5),p(6),p(7),p(8),p(9))
 else
- ' blit(v.buf_ptr,p(0),p(1),p(2),p(3),1024,v.buf_ptr,p(4),p(5),1024)  
+  v.blit(v.buf_ptr,p(0),p(1),p(2),p(3),1024,v.buf_ptr,p(4),p(5),1024) 
 endif  
 end sub
 
@@ -3860,13 +2784,13 @@ end sub
 sub do_bin
 
 dim t1 as expr_result
-dim as ulong numpar,arg,num 
+dim numpar,arg,num as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>2 orelse numpar=0 then print "bin$: "; : printerror(39) : return
 if numpar=2 then t1=pop() : num=converttoint(t1) else num=0
 t1=pop() : arg=converttoint(t1)
-*t1.result.sresult=bin(arg,num)
+t1.result.sresult=bin$(arg,num)
 t1.result_type=result_string
 push t1  
 end sub
@@ -3874,16 +2798,16 @@ end sub
 '-------------------- box
 
 sub do_box
-dim as expr_result t1,t2,t3,t4 
+dim t1,t2,t3,t4 as expr_result 
 
 t4=pop()
 t3=pop()
 t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) andalso (t4.result_type=result_int orelse t4.result_type=result_uint) then
-   box(t1.result.iresult,t2.result.iresult,t3.result.iresult,t4.result.iresult,plot_color) : return
+   v.box(t1.result.iresult,t2.result.iresult,t3.result.iresult,t4.result.iresult,plot_color) : return
 else
-   box(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
+   v.box(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
 endif   
 end sub
 
@@ -3892,55 +2816,76 @@ end sub
 sub do_brun
 
 dim t1 as expr_result
+dim pos,r,psramptr as integer
+dim filename, fullfilename as string
 
 t1=pop() 
-if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string
 if t1.result_type=result_string then
-'todo for rpi5
-endif
+  filename=t1.result.sresult
+  if left$(filename,1)="/" then 
+    fullfilename=filename
+  else
+    fullfilename="/sd/bin/"+filename  
+  endif  
+  open fullfilename for input as #9
+  r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return
+  let pos=1: let r=0 : let psramptr=0
+  do
+    get #9,pos,block(0),1024,r : pos+=r	
+    psram.write(varptr(block(0)),psramptr,1024)	
+    psramptr+=r   									' move the buffer to the RAM and update RAM position. Todo: this can be done all at once
+  loop until r<>1024  orelse psramptr>=$7C000  					        ' do until eof or memory full
+  cpustop(audiocog)									' stop all driver cogs except PSRAM
+  cpustop(videocog)
+  cpustop(usbcog)
+  cpustop(housekeeper_cog)
+  let loadingcog=cpu(@loadcog,@pslock) 							' start loading cog
+  cpustop(cpuid())									' stop itself
+  endif  
 end sub
 
 '-------------------- cd
 
 sub do_cd
 
-dim as integer slash,err_  
-dim as string newdir_,filename 
+dim slash,err as integer
+dim newdir$,filename as string
 dim t1 as expr_result
 
-filename = dir("*", fbNormal or fbDirectory )   
+filename = dir$("*", fbNormal or fbDirectory )   
 t1=pop()
-if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then printerror(15): return
-newdir_=*t1.result.sresult
-if newdir_=".." then 
-  slash=instrrev(currentdir_,"/",len(currentdir_) ) 
-  if slash>1 then newdir_=left$(currentdir_,slash-1) else newdir_="/"
-  err_=chdir(newdir_)
-  if err_<>0 andalso err_<>5 then print "System error ";err_;": " ;errors_(53) : chdir(currentdir_) else currentdir_=newdir_
-  write1 "Current directory: ": writeln currentdir_
+newdir$=t1.result.sresult
+if newdir$=".." then 
+  slash=instrrev(len(currentdir$),currentdir$,"/") 
+  if slash>1 then newdir$=left$(currentdir$,slash-1) else newdir$="/"
+  chdir newdir$
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
   return
 endif  
-if left$(newdir_,1)="/" then 
-  err_=chdir(newdir_)
-  if err_<>0 andalso err_<>5 then write1 "System error ":write1(str$(err_)): write1(": "):writeln errors_(53) : chdir(currentdir_) else currentdir_=newdir_
-  write1 "Current directory: ":writeln(currentdir_)
+if left$(newdir$,1)="/" then 
+  chdir(newdir$)
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
   return
 else
-  if currentdir_<>"/" then newdir_=currentdir_+"/"+newdir_ else newdir_=currentdir_+newdir_ 
-  if right$(newdir_,1)="/" then newdir_=left$(newdir_,len(newdir_)-1)
-  err_=chdir(newdir_)
-  if err_<>0 andalso err_<>5 then write1 "System error ":write1(str$(err_)): write1(": "):writeln errors_(53) : chdir(currentdir_) else currentdir_=newdir_
-  write1 "Current directory: ":writeln(currentdir_)
+  if currentdir$<>"/" then newdir$=currentdir$+"/"+newdir$ else newdir$=currentdir$+newdir$ 
+  if right$(newdir$,1)="/" then newdir$=left$(newdir$,len(newdir$)-1)
+  chdir(newdir$)
+  err=geterr() : if err<>0 andalso err<>5 then print "System error ";err;": " ;errors$(53) : chdir(currentdir$) else currentdir$=newdir$
+  print "Current directory: ";currentdir$
 endif
 end sub
 
 '-------------------- changefreq
 
-sub do_changefreq 'todo
+sub do_changefreq
 
 dim t1 as expr_result
-dim  as integer channel,lfreq,skip,i,period,amode
+dim channel,lfreq,skip,i,period,amode as integer
 dim ps as ulong
 dim freq as single
 
@@ -3962,23 +2907,23 @@ else
   channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) 
 endif
 
-''todo
 
-'ps=skip shl 16+period
-'if (lpeek(base+64*channel+8) and $0800_0000)=0 then 
-'  lpoke base+64*channel+24,ps
-'else
-'  dpoke base+64*channel+24,round(3546895/freq) 
-'  dpoke base+64*channel+26,256
-'endif 
+
+ps=skip shl 16+period
+if (lpeek(base+64*channel+8) and $0800_0000)=0 then 
+  lpoke base+64*channel+24,ps
+else
+  dpoke base+64*channel+24,round(3546895/freq) 
+  dpoke base+64*channel+26,256
+endif 
 end sub
 
 '-------------------- changepan
 
-sub do_changepan  'todo
+sub do_changepan
 
 dim t1 as expr_result
-dim as integer channel,pan
+dim channel,pan as integer
 
 t1=pop()
 pan=8192+round(8192*converttofloat(t1)) 
@@ -3986,7 +2931,7 @@ if pan<0 then pan=0
 if pan>16384 then pan=16384
 t1=pop()
 channel=converttoint(t1) mod 8
-'' dpoke base+64*channel+22,pan
+dpoke base+64*channel+22,pan
 end sub
 
 '-------------------- changevol
@@ -3994,13 +2939,13 @@ end sub
 sub do_changevol
 
 dim t1 as expr_result
-dim as integer channel,vol 
+dim channel,vol as integer
 
 t1=pop()
 vol=round(converttofloat(t1)*1000) mod 16384
 t1=pop()
 channel=converttoint(t1) mod 8
-''''''''dpoke base+64*channel+20,vol
+dpoke base+64*channel+20,vol
 end sub
 
 '-------------------- changewav
@@ -4008,18 +2953,18 @@ end sub
 sub do_changewav
 
 dim t1 as expr_result
-dim as integer channel,wave 
+dim channel,wave as integer
 
 t1=pop()
 wave=converttoint(t1)
 if wave<0 then wave=0
 t1=pop()
 channel=converttoint(t1) mod 8
-'if wave <32 then 
-'  lpoke base+64*channel+8,2048*wave+$8000_0000 
-'else
-'  lpoke base+64*channel+8,$8800_0000 
-'endif
+if wave <32 then 
+  lpoke base+64*channel+8,2048*wave+$8000_0000 
+else
+  lpoke base+64*channel+8,$8800_0000 
+endif
 end sub
 
 '-------------------- chr$
@@ -4027,12 +2972,12 @@ end sub
 sub do_chr
 
 dim t1 as expr_result
-dim as ulong numpar,arg
+dim numpar,arg as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "chr$: "; : printerror(39) : return
 t1=pop() : arg=converttoint(t1)
-*t1.result.sresult=chr$(arg)
+t1.result.sresult=chr$(arg)
 t1.result_type=result_string
 push t1  
 end sub
@@ -4041,15 +2986,15 @@ end sub
 
 sub do_circle
 
-dim as expr_result t1,t2,t3 
+dim t1,t2,t3 as expr_result 
 
 t3=pop()
 t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) andalso (t2.result_type=result_int orelse t2.result_type=result_uint) andalso (t3.result_type=result_int orelse t3.result_type=result_uint) then
-   ecircle(t1.result.iresult,t2.result.iresult,t3.result.iresult,plot_color) : return
+   v.circle(t1.result.iresult,t2.result.iresult,t3.result.iresult,plot_color) : return
 else
-   ecircle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
+   v.circle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
 endif   
 end sub
 
@@ -4067,10 +3012,10 @@ end sub
 
 sub do_close
 
-dim as integer numpar, channel 
+dim numpar, channel as integer
 dim  t1 as expr_result
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 t1=pop()
 if t1.result_type<>result_channel then print "channel# expected" : return  
 channel  = t1.result.iresult
@@ -4080,56 +3025,53 @@ end sub
 '-------------------- cls
 
 sub do_cls
-cls1(ink,paper): plot_color=ink
+cls(ink,paper): plot_color=ink
 end sub
 
 
 '-------------------- coginit
 
-function do_coginit_2(cog as integer,addrval as integer,ptra_val as integer) as integer
+function do_coginit_2(cog,addrval,ptra_val as integer) as integer
 
-cog=0 ' todo for rpi5 (=new thread!!)
- 'asm
- 'setq ptra_val
- 'coginit cog,addrval wc
- 'end asm
+ asm
+ setq ptra_val
+ coginit cog,addrval wc
+ end asm
  
 return cog 
 end function
 
 sub do_coginit
-''''''todo!!!!
 
-dim  as integer numpar,ptra_val,addrval,cog
-'dim tempbuf(4095) as ubyte
+dim numpar,ptra_val,addrval,cog as integer
+dim tempbuf(4095) as ubyte
 dim t1 as expr_result
-'numpar=compiledline(lineptr_e).result.uresult
-'if numpar<2 orelse numpar>3 then print "coginit: "; : printerror(39) : return
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<2 orelse numpar>3 then print "coginit: "; : printerror(39) : return
 t1=pop()
-'ptra_val=converttoint(t1)
+ptra_val=converttoint(t1)
 t1=pop()
-'addrval=converttoint(t1)
+addrval=converttoint(t1)
 if numpar=3 then 
   t1=pop()
-'  cog=converttoint(t1)
-'else
-'  cog=16
+  cog=converttoint(t1)
+else
+  cog=16
 endif
     
-'if addrval>$80000 then psram.read1(varptr(tempbuf(0)),addrval,4096) : addrval=varptr(tempbuf(0))
-'cog=do_coginit_2(cog,addrval,ptra_val)
-''t1.result.uresult=cog
-'t1.result_type=result_int
-'push t1
+if addrval>$80000 then psram.read1(varptr(tempbuf(0)),addrval,4096) : addrval=varptr(tempbuf(0))
+cog=do_coginit_2(cog,addrval,ptra_val)
+t1.result.uresult=cog
+t1.result_type=result_int
+push t1
 end sub
 
 '-------------------- cogstop
 
-'todo!
 sub do_cogstop
 dim t1 as expr_result
 t1=pop()
-'cpustop(converttoint(t1))
+cpustop(converttoint(t1))
 end sub
 
 '-------------------- color
@@ -4146,34 +3088,33 @@ end sub
 
 sub do_copy
 
-dim as expr_result t1,t2 
-dim as string filename_1,filename_2
-dim as integer r
+dim t1,t2 as expr_result
+dim filename_1,filename_2 as string
 
 t1=pop()
 t2=pop()
 if t2.result_type=result_string2 then 
   filename_1=convertstring(t2.result.uresult)
-elseif t2.result_type=result_string then 
-  filename_1=*t2.result.sresult
+else if t2.result_type=result_string then 
+  filename_1=t2.result.sresult
 else 
   printerror(15,runheader(0)) : return
 endif
 if t1.result_type=result_string2 then 
   filename_2=convertstring(t1.result.uresult)
-elseif t1.result_type=result_string then 
-  filename_2=*t1.result.sresult
+else if t1.result_type=result_string then 
+  filename_2=t1.result.sresult
 else 
   printerror(15,runheader(0)) : return
 endif
 
-err=open (filename_1 for input as #9) '': if err_<>0 then print "System error - ";err_; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_1 : close #9 : return
-err=open (filename_2 for output as #8) '': if err_<>0 then print "System error - ";err_; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_2  : close #8 : return
+open filename_1 for input as #9 : err=geterr(): if err<>0 then print "System error - ";err; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_1 : close #9 : return
+open filename_2 for output as #8 : err=geterr(): if err<>0 then print "System error - ";err; " in line ";runheader(0);": ";strerror$(err);", file name: ";filename_2  : close #8 : return
 
 do
   get #9,,block(0),1024,r
   put #8,,block(0),r
-loop until r<>1024 
+loop until r<>1024  
 close #8
 close #9
 
@@ -4186,7 +3127,7 @@ sub do_cos
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "cos: "; : printerror(39) : return
 t1=pop()
 t1.result.fresult=cos(trig_coeff*converttofloat(t1))
@@ -4200,7 +3141,7 @@ sub do_cursor
 
 dim t1 as expr_result
 t1=pop()
-if t1.result.uresult=0 then  setspritesize(17,0,0) else setspritesize(17,8,16) 
+if t1.result.uresult=0 then  v.setspritesize(17,0,0) else v.setspritesize(17,8,16) 
 end sub
 
 '-------------------- defchar
@@ -4208,16 +3149,16 @@ end sub
 sub do_defchar
 
 dim t1 as expr_result
-dim as ulong c,cptr_ 
-dim buf(15) as ubyte
+dim c,cptr as ulong
+dim buf as ubyte(15)
 
-t1=pop() : cptr_=converttoint(t1)
+t1=pop() : cptr=converttoint(t1)
 t1=pop() : c=converttoint(t1)
-if cptr_<&h80000 then 
- ' v.defchar(c,cptr_)    todo
+if cptr<$80000 then 
+  v.defchar(c,cptr)
 else
- ' for i=0 to 15: buf(i)=pspeek(cptr_+i): next i
- ' v.defchar(c,varptr(buf))
+  for i=0 to 15: buf(i)=pspeek(cptr+i): next i
+  v.defchar(c,varptr(buf))
 endif      
 end sub
 
@@ -4225,20 +3166,20 @@ end sub
 
 sub do_defenv
 
-dim as integer a,d,s,r,numpar,i,channel,wptr 
-dim as single aa,dd,ss,rr,fulltime,timeunit,da,dr
+dim a,d,s,r,numpar,i,channel,wptr  as integer
+dim aa,dd,ss,rr,fulltime,timeunit,da,dr as single 
 dim t1 as expr_result
 dim s1 as string
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar<>2 andalso numpar<>5 then return 			' TODO and print error
 
 if numpar=2 then						' env from .h2 or from a pointer
   t1=pop()
   if t1.result_type=result_string2 then 
     s1=convertstring(t1.result.uresult)
-  elseif t1.result_type=result_string then 
-    s1=*t1.result.sresult
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
   else 
     s1=""
     wptr=converttoint(t1)
@@ -4246,16 +3187,16 @@ if numpar=2 then						' env from .h2 or from a pointer
   if s1<>"" then 
     t1=pop()
     channel=converttoint(t1) 
-    close #9 : r=open( "/sd/media/h/"+s1 for input as #9)
-   ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
+    close #9 : open "/sd/media/h/"+s1 for input as #9
+    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
     get #9,17,envbuf8(channel,0),256
     for i=255 to 0 step -1 : envbuf(channel,i)=envbuf8(channel,i)*256 : next i
     close #9
     envbuf(channel,255)=0                                                              
     return
   else
-    if wptr < &h80000 then 
-      for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i): next i   '''''''''''''''''''''''''''''''''''''''''''''''''''
+    if wptr < $80000 then 
+      for i=0 to 255: envbuf(channel,i)=dpeek(wptr+2*i): next i
     else
       for i=0 to 255: envbuf(channel,i)=psdpeek(wptr+2*i) : next i
     endif
@@ -4289,14 +3230,14 @@ end sub
 '-------------------- defsnd
 
 sub do_defsnd
-dim as integer numpar,i,j,par,channel,wptr
-dim as single  even,odd, max,spl,qqq
+dim numpar,i,j,par,channel,wptr as integer
+dim even,odd, max,spl,qqq as single 
 dim t1 as expr_result
 dim s as string
 dim harm(15) as single
 dim sample as short
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 
 ' defsnd channel, string - tries to load from /media/s an s2 file from PC-Softsynth
 ' defsnd channel, h1,h2.... h15 - defines harmonics
@@ -4309,8 +3250,8 @@ if numpar=2 then
   t1=pop()
   if t1.result_type=result_string2 then 
     s=convertstring(t1.result.uresult)
-  elseif t1.result_type=result_string then 
-    s=*t1.result.sresult
+  else if t1.result_type=result_string then 
+    s=t1.result.sresult
   else 
     s=""
     wptr=converttoint(t1)
@@ -4319,13 +3260,13 @@ if numpar=2 then
     t1=pop()
     channel=converttoint(t1) : if channel>31 then return
     close #9 : open "/sd/media/s/"+s for input as #9
-  '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''  r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
+    r=geterr() : if r then print "System error ";r;": ";strerror$(r) :close #9 : return   
     for i=0 to 1024 : get #9,17+2*i,sample,1 : psdpoke 2048*channel+2*i, sample : next i
     close #9
     return
   else
-    if wptr < (&h80000 - 2048) then 
-      for i=0 to 1023: psdpoke 2048*channel+2*i,psdpeek(wptr+2*i): next i
+    if wptr < ($80000 - 2048) then 
+      for i=0 to 1023: psdpoke 2048*channel+2*i,dpeek(wptr+2*i): next i
     else
       for i=0 to 1023 : psdpoke 2048*channel+2*i,psdpeek(wptr+2*i) : next i
     endif
@@ -4368,8 +3309,8 @@ end sub
 
 sub do_defsprite
 
-dim as expr_result t1,t2,t3,t4,t5  	' todo parameters # control, more formats
-dim as integer a1,a2,a3,a4,a5,x,y 
+dim t1,t2,t3,t4,t5 as expr_result  	' todo parameters # control, more formats
+dim a1,a2,a3,a4,a5 as integer
 
 t5=pop()
 t4=pop()
@@ -4378,14 +3319,14 @@ t2=pop()
 t1=pop()
 a1=converttoint(t1) : a2=converttoint(t2) : a3=converttoint(t3) : a4=converttoint(t4) : a5=converttoint(t5) ' do convert, defsprite is not a racing command
 if sprite(a1)<> nil then delete(sprite(a1))	' todo: check parameters for limits
-sprite(a1)=new ubyte(a4*a5-1) ' todo now sprites are in machine.bytes
+sprite(a1)=new ubyte(a4*a5-1)
 for y=a3 to a3+a5-1
   for x=a2 to a4+a2-1
-''''''''''''''''''''''''''''''''''''''    sprite(a1)(x-a2)+(y-a3)*(a4))=pspeek(v.buf_ptr+x+1024*y)
+    sprite(a1,(x-a2)+(y-a3)*(a4))=pspeek(v.buf_ptr+x+1024*y)
   next x
 next y
-'''''''''setspriteptr(a1,sprite(a1))
-setspritesize(a1,a4,a5)
+v.setspriteptr(a1,sprite(a1))
+v.setspritesize(a1,a4,a5)
 end sub
 
 '-------------------- deg
@@ -4399,22 +3340,22 @@ end sub
 
 sub do_delete
 
-dim err_ as integer
-dim filename_ as string
+dim err as integer
+dim filename$ as string
 dim t1 as expr_result
 
 t1=pop()
-if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then printerror(15): return
-if currentdir_<>"/" then filename_=currentdir_+"/"+*t1.result.sresult else filename_="/"+*t1.result.sresult
-kill filename_
-'''''''''''''''''''''''err=geterr() : if err<>0 then print "Cannot delete file or file doesn't exist: system error "; err
+if currentdir$<>"/" then filename$=currentdir$+"/"+t1.result.sresult else filename$="/"+t1.result.sresult
+kill filename$
+err=geterr() : if err<>0 then print "Cannot delete file or file doesn't exist: system error "; err
 end sub
 
 '-------------------- dir
 
 sub do_dir
-/' todo
+
 dim filename as string
 dim px,py,i,j,n,swapped as integer
 dim filelist(128) as string
@@ -4467,7 +3408,6 @@ for i=0 to n-1
 next i  
 if n>=128  then print "More than 128 entries found: clean your directory"
 print
-'/
 end sub
 
 '-------------------- dpeek
@@ -4475,11 +3415,11 @@ end sub
 sub do_dpeek
 
 dim t1 as  expr_result
-dim as ulong a, r 
+dim a, r as ulong
 
 t1=pop()
 a=converttoint(t1)
-if a<&h80000 then r=psdpeek(a) else r=psdpeek(a)
+if a<$80000 then r=dpeek(a) else r=psdpeek(a)
 t1.result_type=result_uint : t1.result.uresult=r : push t1
 end sub 
 
@@ -4487,25 +3427,25 @@ end sub
 
 sub do_dpoke
 
-dim as expr_result t1,t2
-dim as ulong a,v
+dim t1,t2 as expr_result
+dim a,v as ulong
 
 t1=pop() 'value
 t2=pop() 
 a=converttoint(t2) : v=converttoint(t1)
-if a<&h80000 then psdpoke a,v else psdpoke a,v
+if a<$80000 then dpoke a,v else psdpoke a,v
 end sub
 '-------------------- draw
 
 sub do_draw
-dim as expr_result t1,t2 
-dim as integer x,y
+dim t1,t2 as expr_result 
+dim x,y as integer
 
 t2=pop()
 t1=pop()
 x=converttoint(t1)
 y=converttoint(t2)
-draw1(plot_x,plot_y,x,y,plot_color) 
+v.draw(plot_x,plot_y,x,y,plot_color) 
 plot_x=x
 plot_y=y
 end sub
@@ -4520,11 +3460,11 @@ end sub
 
 sub do_end
 lineptr_e=lineptr-1
-runptr=&h7FFFFFFF
+runptr=$7FFF_FFFF
 end sub
 
 '-------------------- enter
-declare sub do_load(amode as integer=0)  
+
 sub do_enter
 do_load(1234)
 end sub
@@ -4534,67 +3474,67 @@ end sub
 sub do_error
 
 dim r as ulong
-r=cl.compiledline(lineptr_e).result.uresult
-'''''''''''''''''''''''''''''''''''''''''''''''print "Error ";r;": ";errors$(r)
+r=compiledline(lineptr_e).result.uresult
+print "Error ";r;": ";errors$(r)
 end sub
 
 '-------------------- fcircle
 
 sub do_fcircle
-dim as expr_result  t1,t2,t3
+dim t1,t2,t3 as expr_result 
 
 t3=pop()
 t2=pop()
 t1=pop()
-fcircle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
+v.fcircle(converttoint(t1), converttoint(t2), converttoint(t3),plot_color)
 end sub
 
 '-------------------- fill
 
 sub do_fill
-dim as expr_result t1,t2,t3,t4
+dim t1,t2,t3,t4 as expr_result 
 
 t4=pop()
 t3=pop()
 t2=pop()
 t1=pop()
-fill(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4))
+v.fill(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4))
 end sub
 
 '-------------------- findfirst
 
 sub do_findfirst
 
-dim  as ulong numpar,c1
+dim numpar,c1 as ulong
 dim t1 as expr_result
-dim as string s1,s2
+dim s1,s2 as string
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar=2 then
   t1=pop()
   if t1.result_type=result_string2 then 
     s2=convertstring(t1.result.uresult) 
-  elseif t1.result_type=result_string then 
-    s2=*t1.result.sresult
+  else if t1.result_type=result_string then 
+    s2=t1.result.sresult
   else 
-   ''''' print "findfirst: "; : printerror(30) : return  
+    print "findfirst: "; : printerror(30) : return  
   endif  
   t1=pop()
   if t1.result_type=result_string2 then 
     s1=convertstring(t1.result.uresult) 
-  elseif t1.result_type=result_string then 
-    s1=*t1.result.sresult
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
   else 
-  ''''  print "findfirst: "; : printerror(30) : return  
+    print "findfirst: "; : printerror(30) : return  
   endif  
-elseif numpar=1 then
+else if numpar=1 then
   t1=pop()
   if t1.result_type=result_string2 then 
     s1=convertstring(t1.result.uresult) 
-  elseif t1.result_type=result_string then 
-    s1=*t1.result.sresult
+  else if t1.result_type=result_string then 
+    s1=t1.result.sresult
   else 
-    ''''''''print "findfirst: "; : printerror(30) : return  
+    print "findfirst: "; : printerror(30) : return  
   endif  
   s2=""
 else  
@@ -4603,14 +3543,14 @@ endif
 
 if s2="" then
   c1=fbDirectory or fbNormal
-elseif lcase$(s2)="dir" then 
+else if lcase$(s2)="dir" then 
   c1=fbDirectory
 else 
   c1=fbNormal
 endif  
-s2=dir(s1,c1)
+s2=dir$(s1,c1)
 t1.result_type=result_string
-*t1.result.sresult=s2
+t1.result.sresult=s2
 push t1
 
 end sub
@@ -4623,10 +3563,10 @@ sub do_findnext
 dim t1 as expr_result
 dim s2 as string
 
-if cl.compiledline(lineptr_e).result.uresult>0 then print "findnext: "; : printerror(39) : return    
-s2=dir()
+if compiledline(lineptr_e).result.uresult>0 then print "findnext: "; : printerror(39) : return    
+s2=dir$()
 t1.result_type=result_string
-*t1.result.sresult=s2
+t1.result.sresult=s2
 push t1
 
 end sub
@@ -4639,8 +3579,8 @@ dim t1 as expr_result
 
 t1=pop() 
 if t1.result_type=result_float then t1.result.iresult=t1.result.fresult
-if t1.result_type=result_string then t1.result.iresult=val(*t1.result.sresult)
-font=t1.result.iresult''''''''''''''''' : v.setfontfamily(font*4)
+if t1.result_type=result_string then t1.result.iresult=val(t1.result.sresult)
+font=t1.result.iresult : v.setfontfamily(font*4)
 end sub
 
 '-------------------- for
@@ -4653,7 +3593,7 @@ fortop+=1
 t1=pop() : fortable(fortop).varnum=t1.result.iresult
 t1=pop() : fortable(fortop).stepval=converttoint(t1)
 t1=pop() : fortable(fortop).endval=converttoint(t1)
-if cl.compiledline(lineptr_e).result_type=token_end then	' end of line after for, set the pointer to the start of the next line
+if compiledline(lineptr_e).result_type=token_end then	' end of line after for, set the pointer to the start of the next line
   fortable(fortop).lineptr=runptr
   fortable(fortop).cmdptr=0
 else
@@ -4665,13 +3605,13 @@ end sub
 '-------------------- frame
 
 sub do_frame
-dim as expr_result  t1,t2,t3,t4
+dim t1,t2,t3,t4 as expr_result 
 
 t4=pop()
 t3=pop()
 t2=pop()
 t1=pop()
-frame(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
+v.frame(converttoint(t1), converttoint(t2), converttoint(t3), converttoint(t4),plot_color)
 end sub
 
 '-------------------- framebuf
@@ -4680,7 +3620,7 @@ sub do_framebuf
 
 dim t1 as expr_result 
 
-t1.result_type=result_uint : t1.result.uresult=bufptr
+t1.result_type=result_uint : t1.result.uresult=v.buf_ptr
 push t1
 end sub
 '-------------------- fre
@@ -4688,7 +3628,6 @@ end sub
 sub do_fre
 
 dim t1 as  expr_result
-dim r as integer
 
 r=memtop-programptr
 t1.result_type=result_uint : t1.result.uresult=r : push t1
@@ -4698,25 +3637,25 @@ end sub
 
 sub do_get		' get  #chn,addr,(amount,(pos))
 
-dim as integer numpar,channel,amount,adr,i,j,r,pos1
+dim numpar,channel,amount,adr,i,j,r as integer
 dim  t1 as expr_result
 
-numpar=cl.compiledline(lineptr_e).result.uresult
-if numpar=4  then t1=pop() : pos1=converttoint(t1)   else pos1=-1
+numpar=compiledline(lineptr_e).result.uresult
+if numpar=4  then t1=pop() : pos=converttoint(t1)   else pos=-1
 if numpar>=3  then t1=pop() : amount=converttoint(t1) else amount=1
 if numpar>=2  then t1=pop() : adr=converttoint(t1)
 t1=pop() : channel=converttoint(t1)
 getres(j)=0
 if pos>=0 then
   for i=0 to  amount/1024
-    get #channel,pos1+1,block(0),amount,r
-    if adr<&h80000 then for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
+    get #channel,pos+1,block(0),amount,r
+    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
     getres(j)+=r
   next  i  
 else
   for i=0 to  amount/1024
     get #channel,,block(0),amount,r
-    if adr<&h80000 then for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
+    if adr<$80000 then for j=0 to r-1 : poke adr+1024*i+j,block(j):  next j else  for j=0 to r-1 : pspoke adr+1024*i+j,block(j):  next j  
     getres(j)+=r
   next  i  
 endif  
@@ -4729,10 +3668,10 @@ sub do_getcolor
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "getcolor "; : printerror(39) : return
 t1=pop()
-''''''''''''''''''''''''''''''''''''''''t1.result.iresult=(getpalettecolor(converttoint(t1)) shr 8) and $&hFFFFFF
+t1.result.iresult=(v.getpalettecolor(converttoint(t1)) shr 8) and $FFFFFF
 t1.result_type=result_uint
 push t1  
 end sub
@@ -4744,7 +3683,7 @@ sub do_getenvsustain
 dim t1 as expr_result
 dim numpar as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "getenvsustain: "; : printerror(39) : return
 t1=pop()
 t1.result.iresult=suspoints(converttoint(t1))
@@ -4756,7 +3695,7 @@ end sub
 
 sub do_getnotevalue
 
-dim as single r,notebase,noteexp
+dim r,notebase,noteexp as single
 dim a as integer
 dim t1 as expr_result
 
@@ -4772,34 +3711,62 @@ end sub
 
 sub do_getpixel
 
-dim as expr_result t1,t2 
-dim as ulong numpar,a1,a2
+dim t1,t2 as expr_result
+dim numpar,a1,a2 as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar<>2 then print "getpixel: "; : printerror(39) : return
 t2=pop()
 t1=pop()
 a1=converttoint(t1) : a2=converttoint(t2)
-t1.result.uresult=pspeek(bufptr+a1+1024*a2)
+t1.result.uresult=pspeek(v.buf_ptr+a1+1024*a2)
 t1.result_type=result_uint
 push t1
 end sub
+
+
+sub do_getrealfreq
+
+dim numpar as ulong
+dim t1 as expr_result
+dim a1 as single
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>1 then print "getrealfreq: "; : printerror(39) : return
+t1=pop() 
+a1=channels(converttoint(t1)).realfreq
+t1.result.fresult=a1
+t1.result_type=result_float
+push t1
+end sub
+
 
 '-------------------- gettime
 
 sub do_gettime
 
-dim as ulong hi2, lo2
+dim hi2, lo2 as ulong
 
 dim t1 as expr_result
-'''''''''''''''''''hi2,lo2=do_gettime2()  ''''' todo do something to get clock ticks
+hi2,lo2=do_gettime2()
 t1.result_type=result_uint
 t1.result.twowords(0)=lo2
 t1.result.twowords(1)=hi2
 push t1
 end sub
 
+'----- A helper for gettime
 
+function do_gettime2() as ulong,ulong
+
+dim lo1, hi1 as ulong
+
+const asm 
+   getct hi1 wc
+   getct lo1
+end asm   
+return hi1, lo1
+end function  
 
 '-------------------- gosub
 
@@ -4808,7 +3775,7 @@ sub do_gosub()
 dim t1 as expr_result
 dim i as integer
 gosubtop+=1
-if cl.compiledline(lineptr_e+1).result_type=token_end then
+if compiledline(lineptr_e+1).result_type=token_end then
   gosubtable(gosubtop).lineptr=runptr
   gosubtable(gosubtop).cmdptr=0
 else
@@ -4820,18 +3787,17 @@ end sub
 '--------------------- goto
 
 '------- fast goto
-declare sub do_find_goto
 
 sub do_fast_goto
 
-dim as ulong testptr,flag
+dim testptr,flag as ulong
 
-testptr=cl.compiledline(lineptr_e).result.uresult
+testptr=compiledline(lineptr_e).result.uresult
 flag=pslpeek(testptr)' :print " In goto:",flag , testptr : waitms(1000)
-if flag=cl.compiledline(lineptr_e).result.twowords(1) then
+if flag=compiledline(lineptr_e).result.twowords(1) then
   runptr=testptr
   lineptr_e=lineptr-1
-  if runheader(5)=&h7FFFFFFF  then runheader(5)=0
+  if runheader(5)=$7FFF_FFFF  then runheader(5)=0
 else
   do_find_goto  
 endif  
@@ -4841,23 +3807,23 @@ end sub
 
 sub do_find_goto
 
-dim  as integer gotoline,gotoptr,oldgotoptr
+dim gotoline,gotoptr,oldgotoptr as integer
 dim gotoheader(5) as ulong
 
-gotoline=cl.compiledline(lineptr_e).result.twowords(1)
+gotoline=compiledline(lineptr_e).result.twowords(1)
 gotoptr=programstart
 do
-  memmove(@gotoheader(0),@machine.bytes(gotoptr),24)  : 
-  if gotoheader(0)<>&hFFFFFFFF then
+  psram.read1(varptr(gotoheader),gotoptr,24)  : 
+  if gotoheader(0)<>$FFFFFFFF then
     oldgotoptr=gotoptr
     gotoptr=gotoheader(5)
   endif
-  loop until gotoheader(5)=&h7FFFFFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
 
 if gotoheader(0)=gotoline then
-    cl.compiledline(lineptr_e).result.uresult=oldgotoptr ' we got the pointer
-    cl.compiledline(lineptr_e).result_type=token_fast_goto
-    memmove(@cl.compiledline(lineptr_e),@machine.bytes(oldrunptr+(2+lineptr_e)*compiledslot),compiledslot)   
+    compiledline(lineptr_e).result.uresult=oldgotoptr ' we got the pointer
+    compiledline(lineptr_e).result_type=token_fast_goto
+    psram.write(varptr(compiledline(lineptr_e)),oldrunptr+(2+lineptr_e)*compiledslot,compiledslot)   
     do_fast_goto
   else
     printerror(38)
@@ -4868,23 +3834,23 @@ end sub
 
 sub do_slow_goto
 
-dim  as integer gotoline,gotoptr,oldgotoptr
+dim gotoline,gotoptr,oldgotoptr as integer
 dim gotoheader(5) as ulong
 dim t1 as expr_result
 
 t1=pop() : gotoline=converttoint(t1)
 gotoptr=programstart
 do
-  memmove(@gotoheader(0),@machine.bytes(gotoptr),24)  : 
-  if gotoheader(0)<>&hFFFFFFFF then
+  psram.read1(varptr(gotoheader),gotoptr,24)  : 
+  if gotoheader(0)<>$FFFFFFFF then
     oldgotoptr=gotoptr
     gotoptr=gotoheader(5)
   endif
-  loop until gotoheader(5)=&h7FFFFFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
+  loop until gotoheader(5)=$7FFF_FFFF orelse gotoheader(0)=-1 orelse gotoheader(0)=gotoline
 if gotoheader(0)=gotoline then  
    runptr=oldgotoptr
    lineptr_e=lineptr-1
-  if runheader(5)=&h7FFFFFFF  then runheader(5)=0 
+  if runheader(5)=$7FFF_FFFF  then runheader(5)=0 
   endif
 end sub
 
@@ -4893,13 +3859,13 @@ end sub
 sub do_hex
 
 dim t1 as expr_result
-dim as ulong numpar,arg,num
+dim numpar,arg,num as ulong
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar>2 orelse numpar=0 then print "hex$: "; : printerror(39) : return
 if numpar=2 then t1=pop() : num=converttoint(t1) else num=8
 t1=pop() : arg=converttoint(t1)
-*t1.result.sresult=hex$(arg,num)
+t1.result.sresult=hex$(arg,num)
 t1.result_type=result_string
 push t1  
 end sub
@@ -4909,44 +3875,40 @@ end sub
 sub do_if
 
 dim t1 as expr_result
-dim i as integer
-
 t1=pop()
 ' if uresult=0, jump over else
 if t1.result.uresult = 0 then 
   for i=lineptr_e to lineptr-1
-    t1=cl.compiledline(i)
+    t1=compiledline(i)
     if t1.result_type=token_else then lineptr_e=i : return
   next i  
   lineptr_e=lineptr-1
 endif
 end sub
 
-' ----------------  inkey$''''''''''''''''''todo!!!!!!!!!
+' ----------------  inkey$
 
 sub do_inkey
 
 dim t1 as expr_result
-dim  as integer key,leds
-
-'''''''''''''''let key=kbm.get_key() ''''''''''''''''''''''''''''''''''''
-'if key<>0 andalso key<&h80000000 andalso (key and 255) <&hE0 then  
- '' if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len) 
-' endif
-if key<>0 andalso key<&h80000000 andalso (key and 255) <&hE0 then
+let key=kbm.get_key() 
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then  
+  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len) 
+ endif
+if key<>0 andalso key<$80000000 andalso (key and 255) <$E0 then
   if leds and 2 = 2 then 
     if key>96 andalso key<123 then
       key-=32
-    elseif key>64 andalso key<91 then 
+    else if key>64 andalso key<91 then 
       key+=32
-    elseif key>22 andalso key<32 then 
+    else if key>22 andalso key<32 then 
       key-=9
-    elseif key>13 andalso key<23 then 
-      key+=39
+    else if key>13 andalso key<23 then 
+      key4+=39
     endif
   endif
-endif
-''t1.result.sresult=chr$(scantochar(key)) else t1.result.sresult=""
+
+t1.result.sresult=chr$(scantochar(key)) else t1.result.sresult=""
 t1.result_type=result_string
 push t1
 end sub 
@@ -4958,7 +3920,7 @@ sub do_ink
 dim t1 as expr_result
 
 t1=pop() 
-ink=converttoint(t1) : setwritecolors(ink,paper) : setcursorcolor(ink)
+ink=converttoint(t1) : v.setwritecolors(ink,paper) : v.setcursorcolor(ink)
 end sub
 
 ' ----------------  int
@@ -4970,7 +3932,7 @@ dim t1 as expr_result
 t1=pop()
 select case t1.result_type
   case result_float: t1.result.iresult=int(t1.result.fresult)
-  case result_string: t1.result.iresult=int(val(*t1.result.sresult))
+  case result_string: t1.result.iresult=int(val(t1.result.sresult))
   case result_string2: t1.result.iresult=int(val(convertstring(t1.result.uresult))) 
 end select
 t1.result_type=result_int
@@ -4980,36 +3942,36 @@ end sub
 ' ----------------  input
 
 sub do_input
-dim  as string line_,part_
-dim  as ulong numpar,comma,stringaddr,vartype,esize
+dim line$,part$ as string
+dim numpar,comma,stringaddr,vartype,esize as ulong
 dim t1 as expr_result
 dim fval as single
 dim args(64) as string
-dim as integer i,j,l,cpx,cpy
+dim i,j,l,cpx,cpy as integer
 
-numpar=cl.compiledline(lineptr_e).result.uresult
+numpar=compiledline(lineptr_e).result.uresult
 if numpar<1 orelse numpar>64 then print "In input: ";: printerror(39,runheader(0)) : return
 i=numpar-1
-cpx=cursor_x/2 : cpy=cursor_y
+cpx=v.cursor_x/2 : cpy=v.cursor_y
 do
 
-  line_=edit()
+  line$=edit()
 
-  if cursor_y=cpy+1 then
-    line_=trim$(right$(line_,len(line_)-cpx+editor_spaces)) 
+  if v.cursor_y=cpy+1 then
+    line$=trim$(right$(line$,len(line$)-cpx+editor_spaces)) 
   else
-   line$=trim$(line_) 
+   line$=trim$(line$) 
   endif
   do
-   comma=instr(1,line_,",")  
+   comma=instr(1,line$,",")  
    if comma>0  then 
-     part$=left$(line_,comma-1): line_=right$(line+,len(line_)-comma)  
+     part$=left$(line$,comma-1): line$=right$(line$,len(line$)-comma)  
    else 
-     part$=trim$(line_) : line_=""
+     part$=trim$(line$) : line$=""
    endif
-   args(i)=part_  
+   args(i)=part$  
    i=i-1
-   loop until i<0 orelse line_=""
+   loop until i<0 orelse line$=""
 loop until i<0
 
 for i=0 to numpar-1
@@ -5847,11 +4809,11 @@ if amode>0 then
   skip=round(2^(lfreq+amode))                     '''' this const + const 2 lines lower=18
   if skip>32768 then i=skip/32768: skip=32768 else i=1
   period=round((3528000/freq)/(i*(2^(18-amode-lfreq))))  ' should be 3546895 but I use 338688000 for 44100 Hz samples
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) : print period, skip, channels(channel).realfreq
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) ': print period, skip, channels(channel).realfreq
 else
   period=24 '147000 Hz
   skip=round(1024*256*(freq/147000.0))
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) : print period, skip, channels(channel).realfreq
+  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) ': print period, skip, channels(channel).realfreq
 endif
 
 speed=round(speed_coeff/slen)
@@ -6315,6 +5277,18 @@ if t1.result_type=result_string then
 endif  
 end sub
 
+' ------------------ setamode
+
+sub do_setamode
+
+dim t1,t2 as expr_result
+
+t1=pop() 
+t2=pop()  
+channels(converttoint(t2)).amode=converttoint(t1)
+end sub
+
+
 ' ------------------ setcolor
 
 sub do_setcolor
@@ -6511,6 +5485,31 @@ else
 endif    
 end sub
 
+
+sub do_str
+
+dim t1 as expr_result
+dim numpar as ulong
+dim s as string
+
+numpar=compiledline(lineptr_e).result.uresult
+if numpar<>1 then print "str$: "; : printerror(39) : return
+
+t1=pop()
+if t1.result_type=result_int then 
+  s=str$(t1.result.iresult)
+else if t1.result_type=result_uint then 
+  s=str$(t1.result.uresult)
+else if t1.result_type=result_float then 
+  s=str$(t1.result.fresult)
+else if t1.result_type=result_string2 then 
+  s=convertstring(t1.result.uresult)
+else if t1.result_type=result_string then 
+  s=t1.result.sresult
+endif
+    t1.result.sresult=s : t1.result_type=result_string : push t1 : return 
+  
+end sub
 ' ------------------ strig
 
 sub do_strig
@@ -7370,6 +6369,9 @@ commands(token_defchar)=@do_defchar
 commands(token_restorepalette)=@do_restorepalette
 commands(token_findfirst)=@do_findfirst
 commands(token_findnext)=@do_findnext
+commands(token_setamode)=@do_setamode
+commands(token_getrealfreq)=@do_getrealfreq
+commands(token_str)=@do_str
 
 end sub
 
@@ -7491,9 +6493,69 @@ v.write("Error " ): v.write(v.inttostr(err)) : v.write(" - ")  : v.write(errors$
 if linenum>0 then v.write(" in line " ): v.writeln(v.inttostr(linenum)) else v.writeln("")
 end sub
 
+'' ------------------------------- Hardware start/stop/initialization 
+
+sub startpsram
+pscog=psram.startx(0, 1024, 11, 7)
+mbox=psram.getMailbox(0)
+end sub
+
+sub startaudio
+audiocog,base=audio.start(mbox,0,$7F700)
+end sub 
+
+sub stopaudio
+cpustop(audiocog)
+audiocog=-1
+end sub
+
+sub cls(fg=154,bg=147)
+v.cls(fg,bg)
+end sub
+
+function startvideo(mode=64, pin=0, mb=0) 'todo return a cog#
+
+videocog=v.start(pin,mbox)
+for thecog=0 to 7:psram.setQos(thecog, 80 << 16) :next thecog
+psram.setQoS(videocog, $0400f400) 
+open SendRecvDevice(@v.putchar, nil, nil) as #0
+return videocog
+waitms(100)
+end function
 
 #define plot v.plot1
 
+'' ------------------------------- Convenient psram peek/poke
+
+sub pslpoke(addr as ulong,value as ulong)
+psram.write(varptr(value),addr,4)
+end sub
+
+sub psdpoke(addr as ulong,value as ulong)
+psram.write(varptr(value),addr,2)
+end sub
+
+sub pspoke(addr as ulong,value as ulong)
+psram.write(varptr(value),addr,1)
+end sub
+
+function pspeek(adr as ulong) as ubyte
+dim res as ubyte
+psram.read1(varptr(res),adr,1)
+return res
+end function
+
+function pslpeek(adr as ulong) as ulong
+dim res as ulong
+psram.read1(varptr(res),adr,4)
+return res
+end function
+
+function psdpeek(adr as ulong) as ulong
+dim res as ushort
+psram.read1(varptr(res),adr,2)
+return res
+end function
 
 '' ------------------------------- More convenient video driver function aliases
 
@@ -7527,6 +6589,136 @@ end select
 end function
 
 '' ------------------------------- USB keyboard scan to char translation table
+
+dim shared as ubyte keys(511)={
+ 0,0,0,0, 			 
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 97,65,23,14,_
+ 98,66,0,0,_
+ 99,67,25,16,_
+ 100,68,0,0,_
+ 101,69,24,15,_
+ 102,70,0,0,_
+ 103,71,0,0,_
+ 104,72,0,0,_
+ 105,73,0,0,_
+ 106,74,0,0,_
+ 107,75,0,0,_
+ 108,76,31,22,_
+ 109,77,0,0,_
+ 110,78,26,17,_
+ 111,79,30,21,_
+ 112,80,0,0,_
+ 113,81,0,0,_
+ 114,82,0,0,_
+ 115,83,27,18,_
+ 116,84,0,0,_
+ 117,85,0,0,_
+ 118,86,0,0,_
+ 119,87,0,0,_
+ 120,88,28,19,_
+ 121,89,0,0,_
+ 122,90,29,20,_
+ 49,33,4,0,_
+ 50,64,5,0,_
+ 51,35,6,0,_
+ 52,36,7,0,_
+ 53,37,8,0,_
+ 54,94,9,0,_
+ 55,38,10,0,_
+ 56,42,11,0,_
+ 57,40,12,0,_
+ 48,41,13,0,_
+ 141,141,0,0,_
+ 155,155,0,0,_
+ 136,136,0,0,_
+ 137,137,0,0,_
+ 32,32,0,0,_
+ 45,95,0,0,_
+ 61,43,0,0,_
+ 91,123,0,0,_
+ 93,125,0,0,_
+ 92,124,0,0,_
+ 35,126,0,0,_
+ 59,58,0,0,_
+ 39,34,0,0,_
+ 96,126,3,0,_
+ 44,60,0,0,_
+ 46,62,0,0,_
+ 47,63,0,0,_
+ 185,185,0,0,_
+ 186,0,0,0,_
+ 187,0,0,0,_
+ 188,0,0,0,_
+ 189,0,0,0,_
+ 190,0,0,0,_
+ 191,0,0,0,_
+ 192,0,0,0,_
+ 193,0,0,0,_
+ 194,0,0,0,_
+ 195,0,0,0,_
+ 196,0,0,0,_
+ 197,0,0,0,_
+ 198,0,0,0,_
+ 199,0,0,0,_
+ 200,0,0,0,_
+ 201,0,0,0,_
+ 202,0,0,0,_
+ 203,0,0,0,_
+ 127,127,0,0,_
+ 204,0,0,0,_
+ 205,0,0,0,_
+ 206,0,0,0,_
+ 207,0,0,0,_
+ 208,0,0,0,_
+ 209,0,0,0,_
+ 210,0,0,0,_
+ 47,47,0,0,_
+ 42,42,0,0,_
+ 45,45,0,0,_
+ 43,43,0,0,_
+ 141,141,0,0,_
+ 49,49,0,0,_
+ 50,50,0,0,_
+ 51,51,0,0,_
+ 52,52,0,0,_
+ 53,53,0,0,_
+ 54,54,0,0,_
+ 55,55,0,0,_
+ 56,56,0,0,_
+ 57,57,0,0,_
+ 48,48,0,0,_
+ 46,127,0,0,_
+ 92,124,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 61,61,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0}
 
 
  '' ------------------------------ Atari 8-bit sounds, mouse definition
@@ -7582,56 +6774,3 @@ buf2            long    16384
 		end asm
 		
 '----- The end ---------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-'mousefilename= dir("/dev/input/by-id/*event-mouse",&hff)
-'print mousefilename
-
-'name:='/dev/input/by-id/'+name;
-a=1
-
-
-
-'sleep(1000,1)
-'for j=0 to 255 :for i=1 to 255 : 
-'putpixel(j,i,((i+j) mod 256)) 
-' next i : next j
-
- 'draw1(100,100,300,200,120)
- 'fcircle (300,300,100,40)
- 'ecircle(500,500,99,200)
- 'fill(500,500,120,0)
- 'putcharxycf(300,300,65,200)
- 'putcharxycg(308,300,98,15,0)
- 'outtextxycg(300,100,"Hello,World",248,0)
- 'sleep(3000,1)
-' cls1(154,147)
-' outtextxycf(16,16,"RPi5 Retromachine Basic v. 0.01",154)
-' outtextxycf(16,32,"1073741824 basic bytes free",154)
-' outtextxycf(16,64,"Ready",154)
-' fcircle(300,300,100,40)
-' translate_screen
-'dim r as string
-'do :open pipe ("vcgencmd measure_clock arm") for input as #1
-' line input #1,r :close #1 : sleep(1000,1) : loop until a=0
-'dim errr as integer
-' errr=open("/dev/input/by-id/"+mousefilename for input as #4) : print errr
-'   dim il as integer
-' get #4,0,mouserecord.m(0),16,il
-' do
-' if il<>0 then print mouserecord.m2.d1, mouserecord.m2.d2 else print il
-' loop until a=0
-'dim as integer mx,my
-'screen 21
-'getmouse(mx,my)
-'scrollup2
-'setcursorpos(128,20)
-'writeln("dupakwas")
-do : sleep(500,1): loop until a=0
