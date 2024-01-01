@@ -51,6 +51,7 @@ dim shared as integer font_family=0
 dim shared as integer write_color=154, write_background=147
 dim shared as integer cursor_x=0,cursor_y=0, cursorshape=14, cursorcolor=154
 dim shared as integer leading_spaces=2, st_lines=37
+dim shared as integer vblank=0
 ' read definitions
 dim shared fonts(3*4096-1) as ubyte
 open "st4font.def" for input as #3
@@ -74,6 +75,10 @@ open "ataripalettep2.def" for input as #3
 get #3,0,ataripalette()
 close #3
 for i=0 to 255 : ataripalette(i)=ataripalette(i) shr 8 : next i ' the p2 palette has been shifted left as rrggbb00
+
+dim shared as ulong keyq(256)
+dim shared as integer keyqs=0,keyqe=0
+
 
 sub putpixel(x as ulong,y as ulong,c as ubyte)
 machine.bytes(bufptr+x+1024*y)=c
@@ -384,6 +389,7 @@ for i = aend-amount to aend-1
 next i
 
 end sub    
+
 ' a version for text scrolling in Basic shifted 4 lines down
 
 sub scrollup2() 
@@ -402,6 +408,25 @@ memmove(@machine.bytes(textbufptr),@machine.bytes(textbufptr+128),36*128)
 clear(machine.bytes(textbufptr+(36*128)),32,128) 
 end sub
 
+ 
+''----------- Scroll the screen one line down 
+
+sub scrolldown(start as integer=0)
+
+dim i as integer	
+memmove(@machine.bytes(bufptr+(20+start*16)*1024),@machine.bytes(bufptr+(4+start*16)),(580-start)*1024)    
+memmove(@machine.bytes(textbufptr+128*(start+1)),@machine.bytes(textbufptr+128*start),(36-start)*128)
+
+for i = (start*16)+4 to (start*16)+19
+   fastline(0,1023,i,write_background)  
+next i   
+for i=0 to 127
+   machine.bytes(textbufptr+128*start+i)=32
+next i    
+   
+end sub
+   
+    
 
 '*************************************************************************
 '                                                                        *
@@ -622,6 +647,43 @@ write1(text)
 crlf
 end sub
 
+
+sub setfontfamily(afontnum as integer)
+
+font_family=afontnum
+end sub
+
+'*************************************************************************
+'                                                                        *
+'  VBlank functions                                                      *
+'                                                                        *
+'*************************************************************************
+
+sub waitvbl(amount as integer) 
+
+''---------- Wait for start of vblank. Amount=delay in frames
+
+dim i as integer
+for i= 1 to amount
+  do: sleep(1,1) : loop until vblank=0
+  do: sleep(1,1) : loop until vblank=1
+  next i
+end sub
+
+
+sub waitvblend(amount as integer)  
+
+''---------- Wait for end of vblank. Amount=delay in frames
+
+dim i as integer
+for i= 1 to amount
+  do: sleep(1,1) : loop until vblank=0
+  do: sleep(1,1) : loop until vblank=1
+  next i
+end sub
+
+
+
 /'    
 
 
@@ -638,17 +700,6 @@ end sub
 
 ''--------- Set a font offset. TODO: remove, use byte#1 instead
 
-pub setfontfamily(afontnum)
-
-font_family:=afontnum
-'if afontnum==8
-'  font_ptr:=@amiga_font
-
-if afontnum==4
-  font_ptr:=@st_font
-if afontnum==0
-  font_ptr:=@vga_font
-  
 
 ''--------- Get a pointer to a font definition
 
@@ -678,32 +729,6 @@ repeat i from 0 to 15
 
 
 
-'*************************************************************************
-'                                                                        *
-'  VBlank functions                                                      *
-'                                                                        *
-'*************************************************************************
-
-pub waitvbl(amount) | i
-
-''---------- Wait for start of vblank. Amount=delay in frames
-
-repeat i from 1 to amount
-  repeat until vblank==0
-    waitus(100)
-  repeat until vblank==1
-    waitus(100)
-
-
-pub waitvblend(amount) | i
-
-''---------- Wait for end of vblank. Amount=delay in frames
-
-repeat i from 1 to amount
-  repeat until vblank==1
-    waitus(100)
-  repeat until vblank==0
-    waitus(100)
 
 '*************************************************************************
 '                                                                        *
@@ -818,23 +843,6 @@ write(text)
 crlf
 
  
- 
-''----------- Scroll the screen one line down 
-
-pub scrolldown(start=0) | i
-
-repeat i from 579 to (start*16)+4
-  ram.read1($7E800, s_buf_ptr+i*4*s_cpl1, 4*s_cpl1)
-  ram.write($7E800, s_buf_ptr+(i+16)*4*s_cpl1, 4*s_cpl1)
-
-repeat i from (start*16)+4 to (start*16)+19
-   fastline(0,1023,i,write_background)    
-   
-repeat i from 35 to start
-  ram.read1($7E800, textbuf_ptr+(i*128), 128)
-  ram.write($7E800, textbuf_ptr+(i+1)*128,128)
-repeat i from 0 to 127
-  ram.fill((textbuf_ptr+start*128+i),32,1,0,1)      
 
 ''----------- Set cursor at the first character in a new line, scroll if needed 
 
@@ -1073,7 +1081,6 @@ dim as integer sy,sx,spt,sw,sh,so,i
 p2p=@t2(0)
 p3p=@machine.bytes(0)
 pp=@ataripalette(0)
-<<<<<<< Updated upstream
 for i=0 to 17-((frames/16) mod 2)
   sx=sprites(i).x
   sy=sprites(i).y
@@ -1086,10 +1093,6 @@ for i=0 to 17-((frames/16) mod 2)
   if sy>=600 then goto a201 
   ' correct the y and the rest of coordinates to not draw outside the screen
 
-=======
-sw=1920*1080
-#if (defined (__FB_ARM__ )) and  (defined (__FB_64BIT__))
->>>>>>> Stashed changes
       asm
       ldr x0,p2p          ' main sdl fb
       ldr w1,spt           ' sprite pointer
@@ -1122,12 +1125,160 @@ a104: subs w3,w3,#1
       cmp w7,#0
       b.ne a102
       end asm
-<<<<<<< Updated upstream
 a201: next i
-=======
-#endif
->>>>>>> Stashed changes
 end sub
+
+
+dim shared as ubyte keys(511)={_
+ 0,0,0,0,_ 			 
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 97,65,23,14,_
+ 98,66,0,0,_
+ 99,67,25,16,_
+ 100,68,0,0,_
+ 101,69,24,15,_
+ 102,70,0,0,_
+ 103,71,0,0,_
+ 104,72,0,0,_
+ 105,73,0,0,_
+ 106,74,0,0,_
+ 107,75,0,0,_
+ 108,76,31,22,_
+ _
+ 109,77,0,0,_
+ 110,78,26,17,_
+ 111,79,30,21,_
+ 112,80,0,0,_
+ 113,81,0,0,_
+ 114,82,0,0,_
+ 115,83,27,18,_
+ 116,84,0,0,_
+ 117,85,0,0,_
+ 118,86,0,0,_
+ 119,87,0,0,_
+ 120,88,28,19,_
+ 121,89,0,0,_
+ 122,90,29,20,_
+ 49,33,4,0,_
+ 50,64,5,0,_
+ _
+ 51,35,6,0,_
+ 52,36,7,0,_
+ 53,37,8,0,_
+ 54,94,9,0,_
+ 55,38,10,0,_
+ 56,42,11,0,_
+ 57,40,12,0,_
+ 48,41,13,0,_
+ 141,141,0,0,_
+ 155,155,0,0,_
+ 136,136,0,0,_
+ 137,137,0,0,_
+ 32,32,0,0,_
+ 45,95,0,0,_
+ 61,43,0,0,_
+ 91,123,0,0,_
+ _
+ 93,125,0,0,_
+ 92,124,0,0,_
+ 35,126,0,0,_
+ 59,58,0,0,_
+ 39,34,0,0,_
+ 96,126,3,0,_
+ 44,60,0,0,_
+ 46,62,0,0,_
+ 47,63,0,0,_
+ 0,0,0,0,_
+ 186,0,0,0,_
+ 187,0,0,0,_
+ 188,0,0,0,_
+ 189,0,0,0,_
+ 190,0,0,0,_
+ 191,0,0,0,_
+_
+ 192,0,0,0,_
+ 193,0,0,0,_
+ 194,0,0,0,_
+ 195,0,0,0,_
+ 196,0,0,0,_
+ 197,0,0,0,_
+ 198,0,0,0,_
+ 199,0,0,0,_
+ 200,0,0,0,_
+ 201,0,0,0,_
+ 202,0,0,0,_
+ 203,0,0,0,_
+ 127,127,0,0,_
+ 204,0,0,0,_
+ 205,0,0,0,_
+ 206,0,0,0,_
+ 207,0,0,0,_
+ 208,0,0,0,_
+ 209,0,0,0,_
+ 0,0,0,0,_
+ 47,47,0,0,_
+ 42,42,0,0,_
+ 45,45,0,0,_
+ 43,43,0,0,_
+ 141,141,0,0,_
+ 49,49,0,0,_
+ 50,50,0,0,_
+ 51,51,0,0,_
+ 52,52,0,0,_
+ 53,53,0,0,_
+ 54,54,0,0,_
+ 55,55,0,0,_
+ 56,56,0,0,_
+ 57,57,0,0,_
+ 48,48,0,0,_
+ 46,127,0,0,_
+ 92,124,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 61,61,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0,_
+ 0,0,0,0}
+
+function scantochar(keycode as ulong) as ubyte
+
+var modifier=keycode shr  16
+keycode=keycode and 255 
+
+if keycode<128 then
+select case (modifier) 'Rs=2 Ls=1 Ra=200 La=100 Rc=80 Lc=40 Win=400 CL=2000 NL=1000 SL=8000
+case 0,&h2001            : return keys(4*(keycode and 127)) ' nothing or shift+caps
+case 1,2,&h2000         : return keys(4*(keycode and 127)+1) ' shift
+case &h200 	            : return keys(4*(keycode and 127)+2) ' RAlt
+case &h201,&h202,&h2200 : return keys(4*(keycode and 127)+3) ' RAlt+shift
+end select
+else
+return 0
+endif
+end function
 
 
 
@@ -1160,14 +1311,16 @@ do
  ' if updated=1 then
     updated=0
     frames+=1
+    vblank=0
     translate_screen
     sdl_getmousestate(@sprites(16).x,@sprites(16).y)
     sprite1
     SDL_UpdateTexture(sdlTexture, NULL, @t2(0), 1280 * 4)
+    vblank=1
     SDL_RenderClear(renderer)
     SDL_RenderCopy(renderer, sdltexture, NULL, NULL)
     SDL_RenderPresent(renderer)
-
+  
  '   sleep(200,1)
  '    SDL_RenderPresent(renderer)
  'endif
@@ -1177,8 +1330,15 @@ do
       case SDL_QUIT_
 	      exit do
       case SDL_KEYDOWN
-        if event.key.keysym.sym = SDLK_ESCAPE then exit do
-      
+        if event.key.keysym.sym = SDLK_ESCAPE then 
+          exit do
+        else
+          var ch=event.key.keysym.scancode+(event.key.keysym.mod_ shl 16)
+          if (keyqe-keyqs)<>-1 andalso (keyqe-keyqs)<>255 andalso ch>0 then 
+            keyq(keyqe)=ch
+            keyqe=(keyqe+1) mod 256
+          endif
+        endif  
     end select
   wend 
 
@@ -1651,6 +1811,12 @@ declare function execute_line (astart as integer=0) as integer
 declare function expr() as ulong 
 declare function getaddr() as ulong
 
+declare sub pslpoke(a as ulong, v as ulong)
+declare function pslpeek(a as ulong) as ulong
+declare sub psdpoke(a as ulong, v as ushort)
+declare function psdpeek(a as ulong) as ushort
+declare sub pspoke(a as ulong, v as ubyte)
+declare function pspeek(a as ulong) as ubyte
 
 '----------------------------------------------------------------------------
 '-----------------------------Program start ---------------------------------
@@ -1701,119 +1867,112 @@ open "/sd/bas/autorun.bas" for input as #9
 close #9
 if err=0 then line_="run autorun.bas" : interpret
 
+function get_key() as ulong
+
+dim r as ulong
+
+if keyqe<>keyqs then
+  r=keyq(keyqs)
+  keyqs=(keyqs+1) mod 256
+  return r
+else
+  return 0   
+endif  
+end function
+
 ''-------------------------------------------------------------------------------------------------------
 '                     A full screen editor for programming and entering data
 ''-------------------------------------------------------------------------------------------------------
-
+ 
 function edit() as string
 
 dim as ulong key,key2,key3,key4,rpt,rptcnt,ch
-dim as integer i
+dim as integer i,j
 dim line_ as string
 rpt=0 : rptcnt=0 : key=0 : key2=0 : key3=0 : key4=0 
 do
-'waitvbl
-'' Do key repeat
-
-'let key=kbm.get_key() 
-'let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-'if key>0 andalso key<4 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): audio.stop(7)
-'if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
-'if key>$80000000 then rptcnt=0 : rpt=0
-'if key=0 andalso rpt=1 then rptcnt+=1
-'if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
-
-'' there is a key pressed and it needs to be processed
-
-if key3<>0 then
+  key3=get_key() 
+  if key3<>0 then
 '  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
-'  let key4=scantochar(key3)          
-'  if leds and 2 = 2 then 						' caps lock
-'    if key4>96 andalso key4<123 then                 
-'      key4-=32
-'    else if key4>64 andalso key4<91 then 
-'      key4+=32
-'    else if key4>22 andalso key4<32 then 				' 2x9 slots from #13 to #31 for intenational chars. 
-'      key4-=9								' ST type font used has Polish characters there
-'    else if key4>13 andalso key4<23 then 				
-'      key4+=39
-'    endif
+    key4=scantochar(key3)          
   endif
  
   if key4>0 andalso key4<127 andalso  cursor_x<254 then		' put the char on the screen 
     if do_insert then							' move the characters right
       for i=   textbufptr+128*cursor_y+127 to textbufptr+128*cursor_y+(cursor_x/2)+1 step -1 : pspoke i,pspeek(i-1) : next i 
-      let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+      j=0 : for i=textbufptr+128*cursor_y+(cursor_x/2) to textbufptr+128*cursor_y+127: putcharxycgf(cursor_x+2*j,16*cursor_y+4,pspeek(i),write_color,write_background) : j+=1 : next i 
     endif
-    v.putchar(key4)
+    putchar(key4)
   endif  
-  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): audio.stop(7) 'end of line reached
+''  if key4>0 andalso key4<127 andalso cursor_x=254 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): audio.stop(7) 'end of line reached
  
   if key4=key_enter then 						' get the line from the  screen and return it
-    line$="" 
+    line_="" 
     for i=editor_spaces to 127
-      ch=pspeek(v.textbuf_ptr+128*v.cursor_y+i) 
-      line$=line$+chr$(ch)
+      ch=pspeek(textbufptr+128*cursor_y+i) 
+      line_=line_+chr$(ch)
     next i
-    if do_insert andalso v.cursor_y<35 then v.scrolldown(v.cursor_y+1)
-    v.crlf() 
-    return  line$
+    if do_insert andalso cursor_y<35 then scrolldown(cursor_y+1)
+    crlf() 
+    return line_
     endif 
   
   ' process tab, bksp, arrows, pgup/down, home,end
   
   key4=key3 and 255
   
-  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then audio.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): audio.stop(0)  	' tab
-  if key4=77 then i=127 : do: 															' end
-    if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then 
-      if i<127 then v.setcursorx(2*i+2) else v.setcursorx(254)
-      exit loop
+  ''if key4 = 43 andalso cursor_x>=240 andalso keyclick=1 then audio.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): audio.stop(0)  	' tab
+  if key4=77 then ' end
+    i=127 
+    do															
+    if pspeek(textbufptr+128*cursor_y+i)<>32 then 
+      if i<127 then setcursorx(2*i+2) else setcursorx(254)
+      exit do
       endif 
     i=i-1
   loop until i=editor_spaces
-  if i=editor_spaces then v.setcursorx(2*editor_spaces)
+  if i=editor_spaces then setcursorx(2*editor_spaces)
     
-  if key4=74 then v.setcursorx(editor_spaces*2)													' home
-  if key4=75 then v.setcursory(0)														' pgup
-  if key4=78 then v.setcursory(36) 														' pgdn, todo: parameter instead 36
+  if key4=74 then setcursorx(editor_spaces*2)													' home
+  if key4=75 then setcursory(0)														' pgup
+  if key4=78 then setcursory(36) 														' pgdn, todo: parameter instead 36
   if key4=76 then 																' del
-    for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
-    let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+    for i=textbufptr+128*cursor_y+(cursor_x/2) to textbufptr+128*cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke textbufptr+128*cursor_y+127,32
+    j=0 : for i=textbufptr+128*cursor_y+(cursor_x/2) to textbufptr+128*cursor_y+127: putcharxycgf(cursor_x+2*j,16*cursor_y+4,pspeek(i),write_color,write_background) : j+=1 : next i 
   endif
 
   if key4 = 42 then  'backspace
-    if v.cursor_x>editor_spaces*2 then 
-      position v.cursor_x-2,v.cursor_y
-      for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke v.textbuf_ptr+128*v.cursor_y+127,32
-      let j=0 : for i=v.textbuf_ptr+128*v.cursor_y+(v.cursor_x/2) to v.textbuf_ptr+128*v.cursor_y+127: v.putcharxycgf(v.cursor_x+2*j,16*v.cursor_y+4,pspeek(i),v.write_color,v.write_background) : j+=1 : next i 
+    if cursor_x>editor_spaces*2 then 
+      position cursor_x-2,cursor_y
+      for i=textbufptr+128*cursor_y+(cursor_x/2) to textbufptr+128*cursor_y+127 : pspoke i,pspeek(i+1) : next i : pspoke textbufptr+128*cursor_y+127,32
+      j=0 : for i=textbufptr+128*cursor_y+(cursor_x/2) to textbufptr+128*cursor_y+127: putcharxycgf(cursor_x+2*j,16*cursor_y+4,pspeek(i),write_color,write_background) : j+=1 : next i 
     else
-      line$="" : v.cursor_x=4
+      line_="" : cursor_x=4
     endif   
   endif   
 
   if key4=82 then 						' arrow up
-    cy=v.getcursory()-1 : if cy<0 then cy=0 
-    v.setcursory(cy)
+    cy=getcursory()-1 : if cy<0 then cy=0 
+    setcursory(cy)
   endif   
   if key4=81 then						' arrow down,  todo: remove hardcoded 36
-    cy=v.getcursory()+1 : if cy>36  then cy=36
-    v.setcursory(cy)
+    cy=getcursory()+1 : if cy>36  then cy=36
+    setcursory(cy)
   endif
   if key4=80 then
-    cx=v.getcursorx()-2 					' arrow left
+    cx=getcursorx()-2 					' arrow left
     if cx<editor_spaces then cx=editor_spaces			
-    v.setcursorx(cx)
+    setcursorx(cx)
   endif
   if key4=79 then						' arrow right
-    cx=v.getcursorx()+2 
+    cx=getcursorx()+2 
     if cx>254  then cx=254 
-    v.setcursorx(cx)
+    setcursorx(cx)
   endif
 
   if key4=73 then 						' ins
     do_insert=not do_insert 
-    if do_insert then v.setcursorshape(14) else  v.setcursorshape(0)
+    if do_insert then setcursorshape(14) else  setcursorshape(0)
   endif
 key3=0 
 endif
@@ -4994,7 +5153,7 @@ dim  as ulong numpar,comma,stringaddr,vartype,esize
 dim t1 as expr_result
 dim fval as single
 dim args(64) as string
-dim as integer i,j,l,cpx,cpy
+dim as integer i,j,l,cpx,cpy,r
 
 numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar<1 orelse numpar>64 then print "In input: ";: printerror(39,runheader(0)) : return
@@ -5007,14 +5166,14 @@ do
   if cursor_y=cpy+1 then
     line_=trim$(right$(line_,len(line_)-cpx+editor_spaces)) 
   else
-   line$=trim$(line_) 
+   line_=trim$(line_) 
   endif
   do
    comma=instr(1,line_,",")  
    if comma>0  then 
-     part$=left$(line_,comma-1): line_=right$(line+,len(line_)-comma)  
+     part_=left$(line_,comma-1): line_=right$(line_,len(line_)-comma)  
    else 
-     part$=trim$(line_) : line_=""
+     part_=trim$(line_) : line_=""
    endif
    args(i)=part_  
    i=i-1
@@ -5028,8 +5187,8 @@ for i=0 to numpar-1
   if isdec(args(i)) then r=result_uint 
   if not isnum(args(i)) then 
     r=result_string2
-    l=len(part$)    								' place the literal in the psram
-    memtop=(memtop-l-4) and $FFFFFFFC
+    l=len(part_)    								' place the literal in the psram
+    memtop=(memtop-l-4) and &hFFFFFFFC
     pslpoke memtop,l
     for j=1 to l : pspoke memtop+3+j, asc(mid$(args(i),j,1)) : next j
     stringaddr=memtop 
@@ -5051,25 +5210,25 @@ for i=0 to numpar-1
     case array_string		: esize=5 ' dummy, for string
     case else			: esize=12
   end select
-  if esize=12 andalso t1.result.uresult<$80000 then
-    if r=result_int then lpoke t1.result.uresult, val%(args(i))
-    if r=result_uint then lpoke t1.result.uresult, val%(args(i))
-    if r=result_float then fval=val(args(i)): lpoke t1.result.uresult,lpeek(varptr(fval))
-    if r=result_string2 then lpoke t1.result.uresult,stringaddr
-    lpoke t1.result.uresult+8,r
+  if esize=12 andalso t1.result.uresult<&h80000 then
+    '''''''if r=result_int then pslpoke t1.result.uresult, valint(args(i))
+    ''''''if r=result_uint then pslpoke t1.result.uresult, valint(args(i))
+    '''''''''''''''''''if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,pslpeek(varptr(fval))
+    '''''''if r=result_string2 then pslpoke t1.result.uresult,stringaddr
+    '''''''lpoke t1.result.uresult+8,r
   endif
-  if esize=12 andalso t1.result.uresult>=$80000 then
-    if r=result_int then pslpoke t1.result.uresult, val%(args(i))
-    if r=result_uint then pslpoke t1.result.uresult, val%(args(i))
-    if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+  if esize=12 andalso t1.result.uresult>=&h80000 then
+    if r=result_int then pslpoke t1.result.uresult, valint(args(i))
+    if r=result_uint then pslpoke t1.result.uresult, valint(args(i))
+    ''if r=result_float then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
     if r=result_string2 then pslpoke t1.result.uresult,stringaddr
     pslpoke t1.result.uresult+8,r
   endif
   if esize=5 andalso r=result_string2 then pslpoke t1.result.uresult,stringaddr
-  if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,val%(args(i))
-  if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,val%(args(i))
-  if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,val%(args(i))
-  if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
+  if esize=4 andalso r<>result_string2 then pslpoke t1.result.uresult,valint(args(i))
+  if esize=2 andalso r<>result_string2 then psdpoke t1.result.uresult,valint(args(i))
+  if esize=1 andalso r<>result_string2 then pspoke t1.result.uresult,valint(args(i))
+  '''''if esize=6 andalso r<>result_string2 then fval=val(args(i)): pslpoke t1.result.uresult,lpeek(varptr(fval))
 next i 
 
 end sub
@@ -5079,14 +5238,14 @@ end sub
 sub do_left
 
 dim t1 as expr_result
-dim numpar,arg as ulong
+dim as ulong numpar,arg  
 
-numpar=compiledline(lineptr_e).result.uresult
+numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar<>2  then print "left$: "; : printerror(39) : return
 t1=pop() : arg=converttoint(t1)
-t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+t1=pop(): if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then print "left$: "; : printerror(15) : return 
-t1.result.sresult=left$(t1.result.sresult,arg)
+*t1.result.sresult=left$(*t1.result.sresult,arg)
 push t1  
 end sub
 
@@ -5095,11 +5254,11 @@ end sub
 sub do_len
 
 dim t1 as expr_result
-dim numpar,arg as ulong
+dim as ulong numpar,arg 
 
-numpar=compiledline(lineptr_e).result.uresult
+numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar>1 orelse numpar=0 then print "len: "; : printerror(39) : return
-t1=pop() : if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+t1=pop() : if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then print "len: "; : printerror(15) : return 
 t1.result.iresult=len(t1.result.sresult)
 t1.result_type=result_int
@@ -5109,74 +5268,75 @@ end sub
 ' ----------------  list
 
 sub do_list
-dim numpar, startline,endline
+dim as integer numpar, startline,endline
 dim t1 as expr_result
 dim aend as integer
 dim newlist as integer
-dim header as ulong(5)
+dim header(5) as ulong 
 dim linebuf(127) as ubyte
+dim listptr as integer 
 
-startline=0 : endline=$7FFFFFFF
-numpar=compiledline(lineptr_e).result.uresult
+startline=0 : endline=&h7FFFFFFF
+numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar=1 then t1=pop() : startline=converttoint(t1)
 if numpar=2 then t1=pop() : endline=converttoint(t1) : t1=pop() : startline=converttoint(t1)
 
 
 print
-let listptr=programstart 
+listptr=programstart 
 do 
-  psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
+  '''''psram.read1(varptr(header),listptr,24) ': print header(0),header(1),header(2),header(3),header(4),header(5), programstart : waitms 7000 : waitms 7000 : waitms 7000
   
-  if header(0)<> $FFFFFFFF then
-    longfill(linebuf,0,64)
-    psram.read1(varptr(linebuf),header(2),header(3))
-    if header(0)>=startline andalso header(0)<=endline then v.writeln(varptr(linebuf))  
+  if header(0)<> &hFFFFFFFF then
+ ''''   longfill(linebuf,0,64)
+    ''''''''psram.read1(varptr(linebuf),header(2),header(3))
+   '' if header(0)>=startline andalso header(0)<=endline then writeln(varptr(linebuf))  
     listptr=header(5)
     endif
 
-loop until header(5)=$7FFF_FFFF orelse header(0)=-1
+loop until header(5)=&h7FFFFFFF orelse header(0)=-1
 end sub
 
+declare sub do_new()
 '-------------------- load
 
-sub do_load(amode=0 as integer)  
+sub do_load(amode as integer=0)  
 
 dim t1 as expr_result
-dim i, r, amount,numpar as integer
-dim header,linelength as ulong
-dim line2 as ubyte(125)
-dim line2$ as string 
+dim as integer i, r, amount,numpar
+dim as ulong header,linelength
+dim line2(125) as ubyte
+dim line2_ as string 
 
 inload=1
-numpar=compiledline(lineptr_e).result.uresult
-lpoke varptr(line2$),varptr(line2)
-if numpar>0 then t1=pop() else t1.result.sresult=loadname : t1.result_type=result_string 
+numpar=cl.compiledline(lineptr_e).result.uresult
+''''''''lpoke varptr(line2$),varptr(line2)
+if numpar>0 then t1=pop() else *t1.result.sresult=loadname : t1.result_type=result_string 
 'print "popped "; t1.result.uresult, t1.result_type
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string ': print t1.result.sresult
+if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult): t1.result_type=result_string ': print t1.result.sresult
 if t1.result_type=result_string then
   if amode<>1234 then do_new
-  if t1.result.sresult="" then t1.result.sresult=loadname else loadname=t1.result.sresult
-  close #9: open currentdir$+"/"+t1.result.sresult for input as #9
-  r=geterr() 
+  if *t1.result.sresult="" then *t1.result.sresult=loadname else loadname=*t1.result.sresult
+  close #9: 
+  r=open ((currentdir_+"/"+*t1.result.sresult) for input as #9)
   if r then 
-    close #9: open currentdir$+"/"+t1.result.sresult+".bas" for input as #9 
-    r=geterr() 
+    close #9: r=open ((currentdir_+"/"+*t1.result.sresult+".bas") for input as #9) 
     if r then 
-      print "System error ";r;": ";strerror$(r) :close #9 : return
+      print "System error ";r;": " :close #9 : return
     else
       loadname=loadname+".bas"
     endif
   endif      
-  close #9: open currentdir$+"/"+loadname for input as #9
+  close #9: open currentdir_+"/"+loadname for input as #9
   do
-    line input #9,line$
+    line input #9,line_
     interpret
-  loop until line$=""
+  loop until line_=""
   close #9   
 else
   printerror(30)  ' line$="": for j=0 to header(3)-1: line$+=chr$(linebuf(j)): next j
 endif
-print "Loaded ";currentdir$+"/"+loadname
+writeln "Loaded "+currentdir_+"/"+loadname
 inload=0
 end sub
 
@@ -5186,18 +5346,18 @@ sub do_log
 
 dim t1  as expr_result
 dim numpar as ulong
-dim base as single
+dim base_ as single
 
-numpar=compiledline(lineptr_e).result.uresult
+numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar=0 orelse numpar>2 then print "log: "; : printerror(39) : return
 if numpar=2 then 
   t1=pop()
-  base=log(converttofloat(t1))
+  base_=log(converttofloat(t1))
 else
-  base=1.0
+  base_=1.0
 endif
 t1=pop()
-t1.result.fresult=log(converttofloat(t1))/base
+t1.result.fresult=log(converttofloat(t1))/base_
 t1.result_type=result_float
 push t1
 end sub
@@ -5207,11 +5367,11 @@ end sub
 sub do_lpeek
 
 dim t1 as  expr_result
-dim a, r as ulong
+dim as ulong a, r 
 
 t1=pop()
 a=converttoint(t1)
-if a<$80000 then r=lpeek(a) else r=pslpeek(a)
+if a<&h80000 then r=pslpeek(a) else r=pslpeek(a) '''''''''''
 t1.result_type=result_uint : t1.result.uresult=r : push t1
 end sub 
 
@@ -5219,13 +5379,13 @@ end sub
 
 sub do_lpoke
 
-dim t1,t2 as expr_result
-dim a,v as ulong
+dim as expr_result t1,t2
+dim as ulong a,v
 
 t1=pop() 'value
 t2=pop() 
 a=converttoint(t2) : v=converttoint(t1)
-if a<$80000 then lpoke a,v else pslpoke a,v
+if a<&h80000 then pslpoke a,v else pslpoke a,v '''''''''''''''''''''''''
 end sub
 
 '-------------------- memlo
@@ -5253,15 +5413,16 @@ end sub
 sub do_mid
 
 dim t1 as expr_result
-dim numpar,arg1,arg2 as ulong
+dim as ulong numpar
+dim as ulong arg1,arg2
 
-numpar=compiledline(lineptr_e).result.uresult
+numpar=cl.compiledline(lineptr_e).result.uresult
 if numpar<>3  then print "mid$: "; : printerror(39) : return
 t1=pop() : arg2=converttoint(t1)
 t1=pop() : arg1=converttoint(t1)
-t1=pop(): if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+t1=pop(): if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then print "mid$: "; : printerror(15) : return 
-t1.result.sresult=mid$(t1.result.sresult,arg1,arg2)
+*t1.result.sresult=mid$(*t1.result.sresult,arg1,arg2)
 push t1  
 end sub
 
@@ -5269,17 +5430,17 @@ end sub
 
 sub do_mkdir
 
-dim err as integer
-dim filename$ as string
+dim err_ as integer
+dim filename_ as string
 dim t1 as expr_result
 
 t1=pop()
-if t1.result_type=result_string2 then t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
+if t1.result_type=result_string2 then *t1.result.sresult=convertstring(t1.result.uresult) : t1.result_type=result_string
 if t1.result_type<>result_string then printerror(15): return
-filename$=t1.result.sresult
-err=mkdir(filename$)
+filename_=*t1.result.sresult
+err_=mkdir(filename_)
 'err=geterr() : 
-if err<>0 then print "Cannot create a directory: system error "; err
+if err<>0 then print "Cannot create a directory: system error "; err_
 end sub
 
 '-------------------- mode
@@ -5288,18 +5449,18 @@ sub do_mode
 dim t1 as expr_result
 t1=pop() 
 if t1.result_type=result_float then t1.result.iresult=t1.result.fresult
-if t1.result_type=result_string then t1.result.iresult=val(t1.result.sresult)
+if t1.result_type=result_string then t1.result.iresult=val(*t1.result.sresult)
 select case t1.result.iresult
-   case 0: font=1 :ink=154 : keyclick=1 : paper=147 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atari_spl : spl_len=1684+4
-   case 1: font=0 :ink=23 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 2: font=0 :ink=181 : keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 3: font=0 :ink=15 :  keyclick=0 : paper=0 : v.setfontfamily(0) : v.setwritecolors(ink,paper)
-   case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : v.setfontfamily(4) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
-   case 5: font=2 :ink=1 :  keyclick=1  : paper=7 : v.setfontfamily(8) : v.setwritecolors(ink,paper) : keyclick_spl=@atarist_spl : spl_len=1684+4
+   case 0: font=1 :ink=154 : keyclick=1 : paper=147 : setfontfamily(4) : setwritecolors(ink,paper) ': keyclick_spl=@atari_spl : spl_len=1684+4
+   case 1: font=0 :ink=23 :  keyclick=0 : paper=0 : setfontfamily(0) : setwritecolors(ink,paper)
+   case 2: font=0 :ink=181 : keyclick=0 : paper=0 : setfontfamily(0) : setwritecolors(ink,paper)
+   case 3: font=0 :ink=15 :  keyclick=0 : paper=0 : setfontfamily(0) : setwritecolors(ink,paper)
+   case 4: font=1 :ink=1 :  keyclick=1  : paper=14 : setfontfamily(4) : setwritecolors(ink,paper) ': keyclick_spl=@atarist_spl : spl_len=1684+4
+   case 5: font=2 :ink=1 :  keyclick=1  : paper=7 : setfontfamily(8) : setwritecolors(ink,paper) ' : keyclick_spl=@atarist_spl : spl_len=1684+4
 end select
 nostalgic_mode=t1.result.iresult
-free$=decuns$(memtop-programptr)+" BASIC bytes free"
-v.cls(ink,paper) : v.writeln("") : v.writeln(ver$) : v.writeln(free$) ' todo free has to be computed in the real time
+free_=str$(memtop-programptr)+" BASIC bytes free"
+cls1(ink,paper) : writeln("") : writeln(ver_) : writeln(free_) ' todo free has to be computed in the real time
 end sub
 
 '-------------------- mouse
@@ -5309,7 +5470,7 @@ sub do_mouse
 dim t1 as expr_result
 
 t1=pop()
-if t1.result.uresult=0 then v.setspritesize(16,0,0) else v.setspritesize(16,32,32)
+if t1.result.uresult=0 then setspritesize(16,0,0) else setspritesize(16,32,32)
 end sub
 
 '-------------------- mousek
