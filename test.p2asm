@@ -1,0 +1,1896 @@
+con
+	_clkfreq = 160000000
+	_clkmode = 16779259
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 160000000
+	long	0 ' clock mode: will default to $10007fb
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, ptr_stackspace_
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779256
+	waitx	##200000
+	mov	pa, ##16779259
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##160000000, #20
+	jmp	#skip_clock_set_
+	orgf	128
+skip_clock_set_
+	call	#_program
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra++
+	rdlong	result1, ptra++
+	setq	#3
+	rdlong	arg01, ptra
+	sub	ptra, #4
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    mov	fcache_tmpb_,ptrb
+    pop	ptrb
+    altd	pa,ret_instr_
+    mov	 0-0, ret_instr_
+    setq	pa
+    rdlong	$0, ptrb++
+    push	ptrb
+    mov ptrb,fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
+ret_instr_
+    _ret_ cmp inb,#0
+fcache_tmpb_
+    long 0
+fcache_load_ptr_
+    long FCACHE_LOAD_
+builtin_bytefill_
+        shr	arg03, #1 wc
+ if_c   wrbyte	arg02, arg01
+ if_c   add	arg01, #1
+        movbyts	arg02, #0
+builtin_wordfill_
+        shr	arg03, #1 wc
+ if_c   wrword	arg02, arg01
+ if_c   add	arg01, #2
+        setword	arg02, arg02, #1
+builtin_longfill_
+        wrfast	#0,arg01
+        cmp	arg03, #0 wz
+ if_nz  rep	#1, arg03
+ if_nz  wflong	arg02
+        ret
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    altd  COUNT_, #511
+    setq #0-0
+    wrlong local01, ptra++
+pushregs_done_
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra++
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    setq   #2
+    rdlong COUNT_, --ptra
+    djf    COUNT_, #popregs__ret
+    setq   COUNT_
+    rdlong local01, --ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+divide_
+       abs     muldivb_,muldivb_     wcz      'abs(y)
+       wrc     itmp2_                         'store sign of y
+       abs     muldiva_,muldiva_     wc       'abs(x)
+       qdiv    muldiva_, muldivb_             'queue divide
+ if_c  xor     itmp2_,#1                      'store sign of x
+       getqx   muldivb_                       'get quotient
+       getqy   muldiva_                       'get remainder
+       negc    muldiva_,muldiva_              'restore sign, remainder (sign of x)
+       testb   itmp2_,#0             wc       'restore sign, division result
+ _ret_ negc    muldivb_,muldivb_     
+
+__heap_ptr
+	long	@__heap_base
+__methods__
+	long	@__methodtable__
+itmp1_
+	long	0
+itmp2_
+	long	0
+objptr
+	long	@objmem
+ptr___system__dat__
+	long	@__system__dat_
+ptr_stackspace_
+	long	@stackspace
+result1
+	long	0
+result2
+	long	1
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+_program
+	mov	COUNT_, #41
+	call	#pushregs_
+' 
+' var1:=@var2
+	mov	result2, objptr
+	add	result2, #4
+	wrlong	result2, objptr
+' word[var2+17*12+4]:=8
+	add	objptr, #4
+	rdlong	local01, objptr
+	add	local01, #208
+	wrword	#8, local01
+' var2[0]:=$deadbeef
+	wrlong	##-559038737, objptr
+	sub	objptr, #4
+' 
+' test2.start
+' print varptr(test2.var2(0))
+	mov	arg01, #0
+	call	#__system___getiolock_0087
+	mov	arg01, result1
+	call	#__system___lockmem
+	mov	local02, objptr
+	add	local02, #4
+	mov	arg01, #0
+	mov	local03, #0
+	mov	local04, #16
+	call	#__system___gettxfunc
+	mov	local05, result1 wz
+ if_ne	bith	local03, #58
+ if_ne	mov	arg01, local05
+ if_ne	mov	arg02, local03
+ if_ne	mov	arg03, local02
+ if_ne	mov	arg04, #16
+ if_ne	call	#__system___fmtnum
+	mov	arg01, #0
+	mov	arg02, #10
+	mov	arg03, #0
+	call	#__system___basic_print_char
+	mov	arg01, #0
+	call	#__system___getiolock_0087
+	wrlong	#0, result1
+' print hex$(test2.var2(0))
+	mov	arg01, #0
+	call	#__system___getiolock_0087
+	mov	arg01, result1
+	call	#__system___lockmem
+	mov	result1, #0
+	add	objptr, #4
+	rdlong	local06, objptr
+	sub	objptr, #4
+	mov	local07, #1
+	mov	local08, #16
+	mov	local09, #1
+	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
+LR__0001
+	mov	local10, #0
+	cmp	local08, local06 wcz
+ if_be	neg	local10, #1
+	cmp	local09, local08 wc
+	subx	local11, local11
+	test	local10, local11 wz
+ if_ne	qmul	local08, #16
+ if_ne	mov	local09, local08
+ if_ne	add	local07, #1
+ if_ne	getqx	local08
+ if_ne	jmp	#LR__0001
+LR__0002
+	fle	local07, #32 wc
+	mov	arg01, local07
+	add	arg01, #2
+	mov	local09, arg01
+	mov	local12, arg01 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0027
+	add	local12, #23
+	andn	local12, #15
+	shr	local12, #4
+	mov	arg01, ptr___system__dat__
+	add	arg01, #28
+	call	#__system___lockmem
+	mov	arg01, local12
+	mov	arg02, #0
+	call	#__system___gc_tryalloc
+	mov	local13, result1 wz
+ if_ne	jmp	#LR__0020
+	call	#__system___gc_ptrs
+	mov	local14, result2
+	mov	local15, result1
+	mov	arg01, local15
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local17, result1 wz
+	mov	local18, #0
+	cogid	local18
+ if_e	jmp	#LR__0005
+	callpa	#(@LR__0004-@LR__0003)>>2,fcache_load_ptr_
+LR__0003
+	cmps	local17, local14 wc
+ if_ae	jmp	#LR__0005
+	mov	arg02, local17
+	add	arg02, #2
+	rdword	arg02, arg02
+	andn	arg02, #32
+	mov	arg01, local17
+	add	arg01, #2
+	wrword	arg02, arg01
+	mov	arg01, local17
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local17, result1 wz
+ if_ne	jmp	#LR__0003
+LR__0004
+LR__0005
+	mov	local19, #0
+	mov	arg01, #0
+	call	#__system____topofstack
+	mov	local20, result1
+	mov	local21, local19
+	call	#__system___gc_ptrs
+	mov	local22, result1
+	mov	local23, result2
+LR__0006
+	cmps	local21, local20 wc
+ if_ae	jmp	#LR__0007
+	rdlong	arg03, local21
+	add	local21, #4
+	mov	arg02, local23
+	mov	arg01, local22
+	call	#__system___gc_isvalidptr
+	mov	local24, result1 wz
+ if_e	jmp	#LR__0006
+	mov	arg01, local24
+	mov	result1, #0
+	add	arg01, #2
+	rdword	arg01, arg01
+	cmp	arg01, ##27791 wz
+ if_e	neg	result1, #1
+	cmp	result1, #0 wz
+ if_e	mov	local25, local24
+ if_e	add	local25, #2
+ if_e	rdword	local26, local25
+ if_e	andn	local26, #15
+ if_e	or	local26, #46
+ if_e	add	local24, #2
+ if_e	wrword	local26, local24
+	jmp	#LR__0006
+LR__0007
+	call	#__system___gc_ptrs
+	mov	local27, result1
+	mov	local28, result2
+	mov	local29, #495
+LR__0008
+	'.live	local29
+	alts	local29, #0
+	mov	local30, local29
+	mov	arg01, local27
+	mov	arg02, local28
+	mov	arg03, local30
+	call	#__system___gc_isvalidptr
+	cmp	result1, #0 wz
+ if_ne	mov	local31, result1
+ if_ne	add	local31, #2
+ if_ne	rdword	local32, local31
+ if_ne	or	local32, #32
+ if_ne	add	result1, #2
+ if_ne	wrword	local32, result1
+	sub	local29, #1
+	cmps	local29, #0 wc
+ if_ae	jmp	#LR__0008
+	mov	arg01, local15
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local15, result1 wz
+ if_e	jmp	#LR__0019
+LR__0009
+	mov	local17, local15
+	mov	arg01, local17
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local15, result1
+	mov	local19, local17
+	add	local19, #2
+	rdword	arg02, local19
+	test	arg02, #32 wz
+ if_e	test	arg02, #16 wz
+ if_ne	jmp	#LR__0018
+	getnib	arg02, arg02, #0
+	cmp	arg02, local18 wz
+ if_ne	cmp	arg02, #14 wz
+ if_ne	jmp	#LR__0017
+	mov	local33, local17
+	call	#__system___gc_ptrs
+	mov	local34, result1
+	mov	local35, result2
+	mov	arg02, local33
+	add	arg02, #2
+	wrword	##27791, arg02
+	mov	local36, local33
+	mov	arg01, local33
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local37, result1
+	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+LR__0010
+	add	local36, #4
+	rdword	arg02, local36 wz
+	mov	arg01, local34
+ if_e	mov	result1, #0
+ if_ne	shl	arg02, #4
+ if_ne	add	arg01, arg02
+ if_ne	mov	result1, arg01
+	mov	local36, result1 wz
+ if_e	jmp	#LR__0012
+	mov	arg01, local36
+	mov	result1, #0
+	add	arg01, #2
+	rdword	arg01, arg01
+	cmp	arg01, ##27791 wz
+ if_e	neg	result1, #1
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0010
+LR__0011
+LR__0012
+	cmp	local36, #0 wz
+ if_e	mov	local36, local34
+	mov	arg02, local36
+	add	arg02, #6
+	mov	arg01, local33
+	rdword	arg02, arg02
+	add	arg01, #6
+	wrword	arg02, arg01
+	mov	arg02, local33 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local34
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	arg02, local36
+	add	arg02, #6
+	wrword	result1, arg02
+	cmp	local36, local34 wz
+ if_e	jmp	#LR__0014
+	mov	arg01, local36
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	cmp	result1, local33 wz
+ if_ne	jmp	#LR__0013
+	rdword	local37, local36
+	rdword	arg02, local33
+	add	local37, arg02
+	wrword	local37, local36
+	mov	local37, local33
+	add	local37, #2
+	wrword	#0, local37
+	mov	arg01, local33
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local37, result1
+	cmps	local37, local35 wc
+ if_b	mov	arg02, local36 wz
+ if_c_and_z	mov	result1, #0
+ if_c_and_nz	sub	arg02, local34
+ if_c_and_nz	shr	arg02, #4
+ if_c_and_nz	mov	result1, arg02
+ if_b	mov	arg02, local37
+ if_b	add	arg02, #4
+ if_b	wrword	result1, arg02
+	mov	arg02, local33
+	add	arg02, #6
+	mov	result2, local36
+	rdword	arg02, arg02
+	add	result2, #6
+	wrword	arg02, result2
+	add	local33, #6
+	wrword	#0, local33
+	mov	local33, local36
+LR__0013
+LR__0014
+	mov	arg01, local33
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	arg02, result1 wz
+ if_e	jmp	#LR__0016
+	cmps	arg02, local35 wc
+ if_ae	jmp	#LR__0016
+	mov	arg01, arg02
+	mov	result1, #0
+	add	arg01, #2
+	rdword	arg01, arg01
+	cmp	arg01, ##27791 wz
+ if_e	neg	result1, #1
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0016
+	mov	local36, local33
+	rdword	local37, local36
+	mov	arg01, arg02
+	rdword	local33, arg01
+	add	local37, local33
+	wrword	local37, local36
+	mov	local37, arg01
+	add	local37, #6
+	mov	local33, local36
+	rdword	local37, local37
+	add	local33, #6
+	wrword	local37, local33
+	mov	local37, arg01
+	add	local37, #2
+	wrword	#170, local37
+	mov	local37, arg01
+	add	local37, #6
+	wrword	#0, local37
+	rdword	local16, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local16, #4
+ if_ne	add	arg01, local16
+ if_ne	mov	result1, arg01
+	mov	local37, result1 wz
+ if_e	jmp	#LR__0015
+	cmps	local37, local35 wc
+ if_b	mov	arg02, local36 wz
+ if_c_and_z	mov	result1, #0
+ if_c_and_nz	sub	arg02, local34
+ if_c_and_nz	shr	arg02, #4
+ if_c_and_nz	mov	result1, arg02
+ if_b	mov	local36, local37
+ if_b	add	local36, #4
+ if_b	wrword	result1, local36
+LR__0015
+LR__0016
+	mov	local15, local37
+LR__0017
+LR__0018
+	cmp	local15, #0 wz
+ if_ne	cmps	local15, local14 wc
+ if_c_and_nz	jmp	#LR__0009
+LR__0019
+	mov	arg01, local12
+	mov	arg02, #0
+	call	#__system___gc_tryalloc
+	mov	local13, result1
+LR__0020
+	mov	arg01, ptr___system__dat__
+	add	arg01, #28
+	wrlong	#0, arg01
+	cmp	local13, #0 wz
+ if_e	jmp	#LR__0026
+	shl	local12, #4
+	sub	local12, #8
+	abs	local38, local12 wc
+	shr	local38, #2
+	negc	local39, local38 wz
+	mov	local40, local13
+ if_e	jmp	#LR__0025
+	callpa	#(@LR__0023-@LR__0021)>>2,fcache_load_ptr_
+LR__0021
+	rep	@LR__0024, local39
+LR__0022
+	wrlong	#0, local40
+	add	local40, #4
+LR__0023
+LR__0024
+LR__0025
+LR__0026
+	mov	result1, local13
+LR__0027
+	mov	local08, result1 wz
+ if_e	cmps	local09, #1 wc
+ if_nc_and_z	mov	result1, #0
+ if_c_or_nz	mov	result1, local08
+	mov	local10, result1
+	mov	local11, local07
+	add	local11, local10
+	wrbyte	#0, local11
+	callpa	#(@LR__0029-@LR__0028)>>2,fcache_load_ptr_
+LR__0028
+	cmp	local07, #1 wc
+ if_b	jmp	#LR__0030
+	qdiv	local06, #16
+	sub	local07, #1
+	mov	local11, local07
+	add	local11, local10
+	getqy	local41
+	cmp	local41, #10 wc
+ if_b	add	local41, #48
+ if_ae	add	local41, #55
+	wrbyte	local41, local11
+	getqx	local06
+	jmp	#LR__0028
+LR__0029
+LR__0030
+	mov	arg01, #0
+	call	#__system___gettxfunc
+	mov	local41, result1 wz
+ if_ne	cmp	local10, #0 wz
+ if_ne	mov	arg01, local41
+ if_ne	mov	arg02, #0
+ if_ne	mov	arg03, local10
+ if_ne	call	#__system___fmtstr
+	mov	arg01, #0
+	mov	arg02, #10
+	mov	arg03, #0
+	call	#__system___basic_print_char
+	mov	arg01, #0
+	call	#__system___getiolock_0087
+	wrlong	#0, result1
+	mov	ptra, fp
+	call	#popregs_
+_program_ret
+	ret
+hubexit
+	jmp	#cogexit
+
+__system___setbaud
+	rdlong	muldiva_, #20
+	mov	muldivb_, arg01
+	call	#divide_
+	callpa	#(@LR__0041-@LR__0040)>>2,fcache_load_ptr_
+LR__0040
+	rdpin	result1, #62 wc
+	subx	result2, result2
+ if_b	jmp	#LR__0040
+LR__0041
+	dirl	#62
+	dirl	#63
+	wrlong	muldivb_, ptr___system__dat__
+	shl	muldivb_, #16
+	mov	arg02, #7
+	add	arg02, muldivb_
+	wrpin	#124, #62
+	wxpin	arg02, #62
+	wrpin	#62, #63
+	add	arg02, #20
+	wxpin	arg02, #63
+	dirh	#62
+	dirh	#63
+__system___setbaud_ret
+	ret
+
+__system___txraw
+	mov	COUNT_, #1
+	call	#pushregs_
+	mov	local01, arg01
+	callpa	#(@LR__0051-@LR__0050)>>2,fcache_load_ptr_
+LR__0050
+	rdpin	result1, #62 wc
+	subx	result2, result2
+ if_b	jmp	#LR__0050
+LR__0051
+	rdlong	result1, ptr___system__dat__ wz
+ if_e	mov	arg01, ##230400
+ if_e	call	#__system___setbaud
+	drvl	#62
+	wypin	local01, #62
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+__system___txraw_ret
+	ret
+
+__system___rxraw
+	mov	COUNT_, #13
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, ptr___system__dat__ wz
+ if_e	mov	arg01, ##230400
+ if_e	call	#__system___setbaud
+	cmp	local01, #0 wz
+ if_ne	rdlong	local03, #20
+ if_ne	shr	local03, #10
+ if_ne	qmul	local01, local03
+ if_ne	getct	result1
+	neg	local04, #1
+	mov	local05, #63
+	mov	local06, #0
+	add	ptr___system__dat__, #4
+	rdlong	local07, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+ if_ne	getqx	local08
+ if_ne	add	result1, local08
+ if_ne	mov	local09, result1
+ if_e	mov	local09, #0
+LR__0060
+	testb	local07, #8 wc
+	testbn	local07, #9 andc
+	shr	local07, #10
+ if_b	mov	local06, #1
+ if_ae	testp	#63 wz
+ if_nc_and_z	mov	local06, #1
+ if_nc_and_z	rdpin	local07, #63
+ if_nc_and_z	shr	local07, #4
+LR__0061
+	mov	local02, #0
+	cmp	local06, #0 wz
+ if_ne	neg	local02, #1
+	mov	local10, #0
+	mov	local03, #0
+	cmp	local01, #0 wz
+ if_ne	neg	local03, #1
+	mov	local08, #0
+	mov	local11, #0
+	mov	local12, local09
+	getct	result1
+	mov	local13, result1
+	sub	local12, local13
+	cmps	local12, #0 wc
+ if_b	not	local11, #0
+	cmp	local11, #0 wz
+ if_ne	not	local08, #0
+	test	local03, local08 wz
+ if_ne	not	local10, #0
+	or	local02, local10 wz
+ if_e	jmp	#LR__0060
+	cmp	local06, #0 wz
+ if_ne	mov	local04, local07
+ if_ne	getbyte	local04, local04, #0
+	add	ptr___system__dat__, #4
+	wrlong	local07, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+	mov	result1, local04
+	mov	ptra, fp
+	call	#popregs_
+__system___rxraw_ret
+	ret
+
+__system____topofstack
+	mov	COUNT_, #0
+	call	#pushregs_
+	add	ptra, #8
+	add	fp, #4
+	wrlong	arg01, fp
+	mov	result1, fp
+	sub	fp, #4
+	mov	ptra, fp
+	call	#popregs_
+__system____topofstack_ret
+	ret
+
+__system___lockmem
+	mov	result1, #0
+	cogid	result1
+	add	result1, #256
+LR__0070
+	rdlong	_var01, arg01 wz
+ if_e	wrlong	result1, arg01
+ if_e	rdlong	_var01, arg01
+ if_e	rdlong	_var01, arg01
+	cmp	_var01, result1 wz
+ if_ne	jmp	#LR__0070
+__system___lockmem_ret
+	ret
+
+__system___tx
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	cmp	local01, #10 wz
+ if_ne	jmp	#LR__0080
+	add	ptr___system__dat__, #8
+	rdlong	local02, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	local02, #2 wz
+ if_ne	mov	arg01, #13
+ if_ne	call	#__system___txraw
+LR__0080
+	mov	arg01, local01
+	call	#__system___txraw
+	mov	ptra, fp
+	call	#popregs_
+__system___tx_ret
+	ret
+
+__system___rx
+	mov	COUNT_, #1
+	call	#pushregs_
+LR__0090
+	mov	arg01, #0
+	call	#__system___rxraw
+	mov	local01, result1
+	cmp	local01, ##-1 wz
+ if_e	jmp	#LR__0090
+	cmp	local01, #13 wz
+ if_ne	jmp	#LR__0091
+	add	ptr___system__dat__, #8
+	rdlong	result1, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	result1, #2 wz
+ if_ne	mov	local01, #10
+LR__0091
+	add	ptr___system__dat__, #8
+	rdlong	arg01, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	arg01, #1 wz
+ if_e	jmp	#LR__0094
+	cmp	local01, #127 wz
+ if_ne	jmp	#LR__0092
+	mov	arg01, #8
+	call	#__system___tx
+	jmp	#LR__0093
+LR__0092
+	mov	arg01, local01
+	call	#__system___tx
+LR__0093
+LR__0094
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+__system___rx_ret
+	ret
+
+__system___basic_print_char
+	mov	COUNT_, #3
+	call	#pushregs_
+	mov	local01, arg02
+	call	#__system___gettxfunc
+	mov	local02, result1 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0100
+	mov	local03, local02
+	zerox	local02, #19
+	shr	local03, #20
+	shl	local03, #2
+	add	local03, __methods__
+	rdlong	local03, local03
+	mov	arg01, local01
+	mov	local01, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local01
+	mov	result1, #1
+LR__0100
+	mov	ptra, fp
+	call	#popregs_
+__system___basic_print_char_ret
+	ret
+
+__system___fmtchar
+	mov	COUNT_, #0
+	call	#pushregs_
+	add	ptra, #16
+	add	fp, #12
+	wrlong	arg03, fp
+	getbyte	arg03, arg03, #0
+	wrlong	arg03, fp
+	mov	arg03, fp
+	sub	fp, #12
+	call	#__system___fmtstr
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtchar_ret
+	ret
+
+__system___fmtstr
+	mov	COUNT_, #9
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	getbyte	arg04, local02, #0
+	mov	arg01, local03
+	mov	local04, arg01
+	callpa	#(@LR__0111-@LR__0110)>>2,fcache_load_ptr_
+LR__0110
+	rdbyte	result1, local04 wz
+ if_ne	add	local04, #1
+ if_ne	jmp	#LR__0110
+LR__0111
+	sub	local04, arg01
+	cmp	arg04, #0 wz
+ if_ne	fles	local04, arg04 wcz
+	mov	arg02, local02
+	mov	arg03, local04
+	mov	arg01, local01
+	mov	arg04, #2
+	call	#__system___fmtpad
+	mov	local05, result1
+	cmps	local05, #0 wc
+ if_b	mov	result1, local05
+ if_b	jmp	#LR__0114
+	cmps	local04, #1 wc
+ if_b	jmp	#LR__0113
+	mov	local06, local04
+LR__0112
+	mov	local07, local01
+	mov	local08, local01
+	zerox	local07, #19
+	shr	local08, #20
+	shl	local08, #2
+	add	local08, __methods__
+	rdlong	local08, local08
+	rdbyte	arg01, local03
+	mov	local09, objptr
+	mov	objptr, local07
+	add	local03, #1
+	call	local08
+	mov	objptr, local09
+	mov	local09, result1
+	cmps	local09, #0 wc
+ if_b	mov	result1, local09
+ if_b	jmp	#LR__0114
+	add	local05, local09
+	djnz	local06, #LR__0112
+LR__0113
+	mov	arg02, local02
+	mov	arg03, local04
+	mov	arg01, local01
+	mov	arg04, #1
+	call	#__system___fmtpad
+	mov	local09, result1
+	cmps	local09, #0 wc
+ if_b	mov	result1, local09
+ if_ae	add	local05, local09
+ if_ae	mov	result1, local05
+LR__0114
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtstr_ret
+	ret
+
+__system___fmtnum
+	mov	COUNT_, #15
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, arg04
+	mov	local05, ptra
+	mov	local06, local05
+	mov	local07, #0
+	mov	local08, local02
+	shr	local08, #16
+	and	local08, #63
+	getbyte	local09, local02, #0
+	mov	local10, local02
+	shr	local10, #26
+	and	local10, #3
+	mov	local11, local10
+	cmps	local08, #1 wc
+	add	ptra, #68
+ if_ae	sub	local08, #1
+	cmps	local09, #65 wc
+ if_b	cmp	local09, #0 wz
+ if_nc_or_z	mov	local09, #64
+	cmp	local11, #3 wz
+ if_e	mov	local11, #0
+ if_ne	cmps	local03, #0 wc
+ if_c_and_nz	mov	local11, #4
+ if_c_and_nz	neg	local03, local03
+	cmp	local11, #0 wz
+ if_e	jmp	#LR__0123
+	mov	local07, #1
+	cmp	local08, local09 wz
+ if_ne	jmp	#LR__0121
+	djnz	local08, #LR__0120
+	mov	arg01, local01
+	mov	arg02, local02
+	mov	arg03, #35
+	call	#__system___fmtchar
+	jmp	#LR__0128
+LR__0120
+LR__0121
+	cmp	local11, #2 wz
+ if_e	mov	local10, local06
+ if_e	add	local06, #1
+ if_e	wrbyte	#32, local10
+ if_e	jmp	#LR__0122
+	cmp	local11, #4 wz
+ if_e	wrbyte	#45, local06
+ if_e	add	local06, #1
+ if_ne	wrbyte	#43, local06
+ if_ne	add	local06, #1
+LR__0122
+LR__0123
+	mov	local10, local07
+	mov	local12, local06
+	mov	arg02, local03
+	mov	arg03, local04
+	mov	arg04, local08
+	mov	arg05, #0
+	testbn	local02, #29 wz
+ if_ne	mov	arg05, #1
+	cmps	arg05, #0 wz
+	mov	arg05, local12
+	mov	local13, #0
+ if_ne	mov	local14, #55
+ if_e	mov	local14, #87
+LR__0124
+	qdiv	arg02, arg03
+	getqy	local15
+	qdiv	arg02, arg03
+	cmp	local15, #10 wc
+ if_b	add	local15, #48
+ if_ae	add	local15, local14
+	wrbyte	local15, arg05
+	add	arg05, #1
+	add	local13, #1
+	getqx	arg02
+	cmp	arg02, #0 wz
+ if_ne	jmp	#LR__0124
+	cmp	local13, arg04 wc
+ if_b	jmp	#LR__0124
+	wrbyte	#0, arg05
+	mov	arg01, local12
+	call	#__system___strrev
+	add	local10, local13
+	cmps	local10, local09 wcz
+ if_be	jmp	#LR__0127
+	callpa	#(@LR__0126-@LR__0125)>>2,fcache_load_ptr_
+LR__0125
+	mov	local10, local09
+	cmps	local10, #1 wc
+	sub	local09, #1
+ if_ae	mov	local10, local06
+ if_ae	add	local06, #1
+ if_ae	wrbyte	#35, local10
+ if_ae	jmp	#LR__0125
+LR__0126
+	wrbyte	#0, local06
+LR__0127
+	mov	arg01, local01
+	mov	arg02, local02
+	mov	arg03, local05
+	call	#__system___fmtstr
+LR__0128
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtnum_ret
+	ret
+
+__system___gc_ptrs
+	mov	_var01, __heap_ptr
+	mov	_var02, _var01
+	add	_var02, ##5992
+	rdlong	result2, _var01 wz
+ if_ne	jmp	#LR__0130
+	mov	result2, _var02
+	sub	result2, _var01
+	wrword	#1, _var01
+	mov	result1, _var01
+	add	result1, #2
+	wrword	##27792, result1
+	mov	result1, _var01
+	add	result1, #4
+	wrword	#0, result1
+	mov	result1, _var01
+	add	result1, #6
+	wrword	#1, result1
+	add	_var01, #16
+	abs	result2, result2 wc
+	shr	result2, #4
+	negc	result2, result2
+	wrword	result2, _var01
+	mov	result2, _var01
+	add	result2, #2
+	wrword	##27791, result2
+	mov	result2, _var01
+	add	result2, #4
+	wrword	#0, result2
+	mov	result2, _var01
+	add	result2, #6
+	wrword	#0, result2
+	sub	_var01, #16
+LR__0130
+	mov	result1, _var01
+	mov	result2, _var02
+__system___gc_ptrs_ret
+	ret
+
+__system___gc_tryalloc
+	mov	COUNT_, #11
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	call	#__system___gc_ptrs
+	mov	local03, result1
+	mov	local04, result2
+	mov	local05, local03
+	mov	local06, #0
+	callpa	#(@LR__0141-@LR__0140)>>2,fcache_load_ptr_
+LR__0140
+	mov	local07, local05
+	add	local05, #6
+	rdword	arg02, local05 wz
+	mov	arg01, local03
+ if_e	mov	result1, #0
+ if_ne	shl	arg02, #4
+ if_ne	add	arg01, arg02
+ if_ne	mov	result1, arg01
+	mov	local05, result1 wz
+ if_ne	rdword	local06, local05
+	cmp	local05, #0 wz
+ if_ne	cmps	local05, local04 wc
+ if_a	jmp	#LR__0142
+ if_ne	cmps	local01, local06 wcz
+ if_a	jmp	#LR__0140
+LR__0141
+LR__0142
+	cmp	local05, #0 wz
+ if_e	mov	result1, local05
+ if_e	jmp	#LR__0145
+	mov	result2, local05
+	add	result2, #6
+	rdword	local08, result2
+	cmps	local01, local06 wc
+ if_ae	jmp	#LR__0144
+	wrword	local01, local05
+	mov	arg01, local05
+	mov	local08, local01
+	shl	local08, #4
+	add	arg01, local08
+	sub	local06, local01
+	wrword	local06, arg01
+	mov	local08, arg01
+	add	local08, #2
+	wrword	##27791, local08
+	mov	arg02, local05 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local08, arg01
+	add	local08, #4
+	wrword	result1, local08
+	mov	local08, local05
+	add	local08, #6
+	mov	arg02, arg01
+	rdword	local08, local08
+	add	arg02, #6
+	wrword	local08, arg02
+	mov	local09, arg01
+	mov	arg02, local09 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local08, result1
+	rdword	local10, arg01 wz
+ if_e	mov	result1, #0
+ if_ne	shl	local10, #4
+ if_ne	add	arg01, local10
+ if_ne	mov	result1, arg01
+	mov	local11, result1 wz
+ if_e	jmp	#LR__0143
+	cmps	local11, local04 wc
+ if_b	mov	arg02, local09 wz
+ if_c_and_z	mov	result1, #0
+ if_c_and_nz	sub	arg02, local03
+ if_c_and_nz	shr	arg02, #4
+ if_c_and_nz	mov	result1, arg02
+ if_b	add	local11, #4
+ if_b	wrword	result1, local11
+LR__0143
+LR__0144
+	add	local07, #6
+	wrword	local08, local07
+	mov	local09, ##27776
+	or	local09, local02
+	mov	result1, #0
+	cogid	result1
+	or	local09, result1
+	mov	local11, local05
+	add	local11, #2
+	wrword	local09, local11
+	mov	local09, local03
+	add	local09, #8
+	mov	local11, local05
+	rdword	local09, local09
+	add	local11, #6
+	wrword	local09, local11
+	mov	arg02, local05 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	add	local03, #8
+	wrword	result1, local03
+	add	local05, #8
+	mov	result1, local05
+LR__0145
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_tryalloc_ret
+	ret
+
+__system___gc_isvalidptr
+	bitl	arg03, #248
+	sub	arg03, #8
+	cmps	arg03, arg01 wc
+ if_b	jmp	#LR__0150
+	cmps	arg03, arg02 wc
+ if_b	jmp	#LR__0151
+LR__0150
+	mov	result1, #0
+	jmp	#__system___gc_isvalidptr_ret
+LR__0151
+	mov	_var01, arg03
+	xor	_var01, arg01
+	test	_var01, #15 wz
+ if_ne	mov	result1, #0
+ if_ne	jmp	#__system___gc_isvalidptr_ret
+	mov	_var01, arg03
+	add	_var01, #2
+	rdword	_var01, _var01
+	and	_var01, ##65472
+	cmp	_var01, ##27776 wz
+ if_ne	mov	result1, #0
+ if_e	mov	result1, arg03
+__system___gc_isvalidptr_ret
+	ret
+
+__system____default_getc
+	mov	COUNT_, #7
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, local01
+	add	local01, #8
+	rdlong	arg03, local01
+	sub	local01, #8
+	test	arg03, #8 wz
+ if_ne	mov	arg01, local01
+ if_ne	call	#__system____default_flush
+	add	local01, #8
+	rdlong	arg03, local01
+	or	arg03, #4
+	wrlong	arg03, local01
+	sub	local01, #8
+	rdlong	local03, local02 wz
+ if_ne	jmp	#LR__0160
+	mov	local04, local01
+	rdlong	local05, local04
+	add	local05, #8
+	rdlong	local06, local05 wz
+	sub	local05, #8
+ if_e	add	local05, #16
+ if_e	mov	local06, local05
+ if_e	sub	local05, #4
+ if_e	wrlong	local06, local05
+ if_e	sub	local05, #4
+ if_e	wrlong	##1024, local05
+ if_e	sub	local05, #8
+	add	local04, #20
+	rdlong	local07, local04
+	mov	local03, local07
+	sub	local04, #20
+	zerox	local03, #19
+	shr	local07, #20
+	shl	local07, #2
+	add	local07, __methods__
+	rdlong	local07, local07
+	mov	arg01, local04
+	add	local05, #12
+	rdlong	arg02, local05
+	sub	local05, #4
+	rdlong	arg03, local05
+	sub	local05, #8
+	mov	local01, objptr
+	mov	objptr, local03
+	call	local07
+	mov	objptr, local01
+	mov	local03, result1
+	cmps	local03, #0 wc
+ if_b	neg	result1, #1
+ if_ae	wrlong	local03, local05
+ if_ae	add	local05, #12
+ if_ae	rdlong	local07, local05
+ if_ae	sub	local05, #8
+ if_ae	wrlong	local07, local05
+ if_ae	add	local04, #8
+ if_ae	rdlong	local06, local04
+ if_ae	or	local06, #4
+ if_ae	wrlong	local06, local04
+ if_ae	mov	result1, local03
+	mov	local03, result1
+LR__0160
+	cmps	local03, #1 wc
+ if_b	neg	result1, #1
+ if_ae	sub	local03, #1
+ if_ae	wrlong	local03, local02
+ if_ae	add	local02, #4
+ if_ae	rdlong	local03, local02
+ if_ae	rdbyte	result1, local03
+ if_ae	add	local03, #1
+ if_ae	wrlong	local03, local02
+	mov	ptra, fp
+	call	#popregs_
+__system____default_getc_ret
+	ret
+
+__system____default_putc
+	mov	COUNT_, #6
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	rdlong	local03, local02
+	add	local02, #8
+	rdlong	arg02, local02
+	sub	local02, #8
+	test	arg02, #4 wz
+ if_ne	mov	arg01, local02
+ if_ne	call	#__system____default_flush
+	add	local02, #8
+	rdlong	local04, local02
+	or	local04, #8
+	wrlong	local04, local02
+	rdlong	local05, local03
+	add	local03, #12
+	rdlong	arg02, local03
+	sub	local03, #12
+	mov	result1, local05
+	add	result1, arg02
+	wrbyte	local01, result1
+	getbyte	local01, local01, #0
+	add	local05, #1
+	wrlong	local05, local03
+	sub	local02, #2
+	rdword	local06, local02 wz
+	sub	local02, #6
+ if_ne	add	local03, #8
+ if_ne	rdlong	local04, local03
+ if_ne	cmp	local05, local04 wz
+ if_e	jmp	#LR__0170
+	cmp	local01, #10 wz
+ if_e	cmp	local06, #1 wz
+ if_ne	jmp	#LR__0171
+LR__0170
+	mov	arg01, local02
+	call	#__system____default_flush
+	cmp	result1, #0 wz
+ if_ne	neg	local01, #1
+LR__0171
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+__system____default_putc_ret
+	ret
+
+__system____default_flush
+	mov	COUNT_, #7
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, local01
+	rdlong	local03, local02
+	add	local01, #8
+	rdlong	result2, local01
+	sub	local01, #8
+	test	result2, #8 wz
+ if_e	jmp	#LR__0182
+	cmps	local03, #1 wc
+ if_b	jmp	#LR__0184
+	add	local01, #8
+	rdlong	result2, local01
+	sub	local01, #8
+	test	result2, #128 wz
+ if_e	jmp	#LR__0181
+	add	local01, #8
+	rdlong	arg03, local01
+	sub	local01, #8
+	test	arg03, #256 wz
+ if_e	jmp	#LR__0180
+	add	local01, #48
+	rdlong	local04, local01
+	mov	local05, local04
+	sub	local01, #48
+	zerox	local05, #19
+	shr	local04, #20
+	shl	local04, #2
+	add	local04, __methods__
+	rdlong	local04, local04
+	mov	arg01, local01
+	mov	arg02, #0
+	mov	arg03, #0
+	mov	arg04, #2
+	mov	local06, objptr
+	mov	objptr, local05
+	call	local04
+	mov	objptr, local06
+	add	local01, #8
+	rdlong	local06, local01
+	andn	local06, #256
+	wrlong	local06, local01
+	sub	local01, #8
+LR__0180
+LR__0181
+	add	local01, #24
+	rdlong	local04, local01
+	mov	local05, local04
+	sub	local01, #24
+	zerox	local05, #19
+	shr	local04, #20
+	shl	local04, #2
+	add	local04, __methods__
+	rdlong	local04, local04
+	add	local02, #12
+	rdlong	arg02, local02
+	sub	local02, #12
+	mov	arg01, local01
+	mov	arg03, local03
+	mov	local06, objptr
+	mov	objptr, local05
+	call	local04
+	mov	objptr, local06
+	jmp	#LR__0184
+LR__0182
+	add	local01, #8
+	rdlong	local06, local01
+	sub	local01, #8
+	test	local06, #4 wz
+ if_ne	cmp	local03, #0 wz
+ if_e	jmp	#LR__0183
+	neg	arg02, local03
+	mov	arg03, arg02
+	sar	arg03, #31
+	add	local01, #48
+	rdlong	local04, local01
+	mov	local05, local04
+	sub	local01, #48
+	zerox	local05, #19
+	shr	local04, #20
+	shl	local04, #2
+	add	local04, __methods__
+	rdlong	local04, local04
+	mov	arg01, local01
+	mov	arg04, #1
+	mov	local06, objptr
+	mov	objptr, local05
+	call	local04
+	mov	objptr, local06
+LR__0183
+LR__0184
+	wrlong	#0, local02
+	add	local02, #4
+	wrlong	#0, local02
+	add	local01, #8
+	rdlong	local07, local01
+	andn	local07, #12
+	wrlong	local07, local01
+	mov	result1, #0
+	mov	ptra, fp
+	call	#popregs_
+__system____default_flush_ret
+	ret
+
+__system____getftab
+	cmp	arg01, #10 wc
+ if_b	qmul	arg01, #52
+ if_ae	mov	result1, #0
+ if_b	mov	arg01, ptr___system__dat__
+ if_b	add	arg01, #40
+ if_b	getqx	result1
+ if_b	add	result1, arg01
+__system____getftab_ret
+	ret
+
+__system___strrev
+	rdbyte	_var01, arg01 wz
+ if_e	jmp	#__system___strrev_ret
+	mov	_var02, arg01
+	callpa	#(@LR__0191-@LR__0190)>>2,fcache_load_ptr_
+LR__0190
+	rdbyte	_var01, _var02 wz
+ if_ne	add	_var02, #1
+ if_ne	jmp	#LR__0190
+LR__0191
+	sub	_var02, #1
+	callpa	#(@LR__0193-@LR__0192)>>2,fcache_load_ptr_
+LR__0192
+	cmps	_var02, arg01 wcz
+ if_a	rdbyte	_var03, arg01
+ if_a	mov	_var01, arg01
+ if_a	rdbyte	_var04, _var02
+ if_a	add	arg01, #1
+ if_a	wrbyte	_var04, _var01
+ if_a	mov	_var01, _var02
+ if_a	sub	_var02, #1
+ if_a	wrbyte	_var03, _var01
+ if_a	jmp	#LR__0192
+LR__0193
+__system___strrev_ret
+	ret
+
+__system___fmtpad
+	mov	COUNT_, #6
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	getbyte	arg01, local02, #1
+	shr	local02, #22
+	and	local02, #3 wz
+	mov	local04, #0
+ if_e	mov	local02, #1
+	test	local02, arg04 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0203
+	subr	local03, arg01
+	cmps	local03, #1 wc
+ if_b	mov	result1, #0
+ if_b	jmp	#LR__0203
+	cmp	local02, #3 wz
+ if_ne	jmp	#LR__0200
+	cmp	arg04, #1 wz
+	wrz	local02
+	add	local03, local02
+	abs	local03, local03 wc
+	shr	local03, #1
+	negc	local03, local03
+LR__0200
+	cmps	local03, #1 wc
+ if_b	jmp	#LR__0202
+	mov	local05, local03
+LR__0201
+	mov	local02, local01
+	mov	local06, local01
+	zerox	local02, #19
+	shr	local06, #20
+	shl	local06, #2
+	add	local06, __methods__
+	rdlong	local06, local06
+	mov	arg01, #32
+	mov	local03, objptr
+	mov	objptr, local02
+	call	local06
+	mov	objptr, local03
+	mov	local06, result1
+	cmps	local06, #0 wc
+ if_b	mov	result1, local06
+ if_b	jmp	#LR__0203
+	add	local04, local06
+	djnz	local05, #LR__0201
+LR__0202
+	mov	result1, local04
+LR__0203
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtpad_ret
+	ret
+
+__system___getiolock_0087
+	mov	COUNT_, #1
+	call	#pushregs_
+	call	#__system____getftab
+	mov	local01, result1 wz
+ if_e	jmp	#LR__0210
+	add	local01, #8
+	rdlong	result1, local01 wz
+	sub	local01, #8
+ if_ne	jmp	#LR__0211
+LR__0210
+	mov	result1, ptr___system__dat__
+	add	result1, #36
+	jmp	#LR__0212
+LR__0211
+	add	local01, #12
+	mov	result1, local01
+LR__0212
+	mov	ptra, fp
+	call	#popregs_
+__system___getiolock_0087_ret
+	ret
+
+__system___gettxfunc
+	mov	COUNT_, #1
+	call	#pushregs_
+	call	#__system____getftab
+	mov	local01, result1 wz
+ if_e	jmp	#LR__0220
+	add	local01, #8
+	rdlong	arg02, local01 wz
+	sub	local01, #8
+ if_ne	jmp	#LR__0221
+LR__0220
+	mov	result1, #0
+	jmp	#LR__0222
+LR__0221
+	bith	local01, #52
+	mov	result1, local01
+LR__0222
+	mov	ptra, fp
+	call	#popregs_
+__system___gettxfunc_ret
+	ret
+
+__system___rxtxioctl_0137
+	cmp	arg02, #256 wz
+ if_e	jmp	#LR__0230
+	cmp	arg02, #257 wz
+ if_e	jmp	#LR__0231
+	jmp	#LR__0232
+LR__0230
+	add	ptr___system__dat__, #8
+	rdlong	result1, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	wrlong	result1, arg03
+	mov	result1, #0
+	jmp	#LR__0233
+LR__0231
+	rdlong	arg01, arg03
+	add	ptr___system__dat__, #8
+	wrlong	arg01, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	mov	result1, #0
+	jmp	#LR__0233
+LR__0232
+	add	ptr___system__dat__, #32
+	wrlong	#10, ptr___system__dat__
+	sub	ptr___system__dat__, #32
+	neg	result1, #1
+LR__0233
+__system___rxtxioctl_0137_ret
+	ret
+
+__system____dummy_flush_0138
+	mov	result1, #0
+__system____dummy_flush_0138_ret
+	ret
+
+' 	
+' 	FUNCTION pfunc(c as integer) as integer
+__system____strs_cl_pfunc_
+' 		if (i < 16) then
+	add	objptr, #4
+	rdlong	result1, objptr
+	sub	objptr, #4
+	cmps	result1, #16 wc
+ if_ae	jmp	#LR__0240
+	rdlong	result1, objptr
+	add	objptr, #4
+	rdlong	_var01, objptr
+	add	_var01, result1
+	wrbyte	arg01, _var01
+	rdlong	result1, objptr
+	add	result1, #1
+	wrlong	result1, objptr
+	sub	objptr, #4
+' 			p(i) = c
+' 			i = i+1
+' 			return 1
+	mov	result1, #1
+	jmp	#__system____strs_cl_pfunc__ret
+LR__0240
+' 			return -1
+	neg	result1, #1
+__system____strs_cl_pfunc__ret
+	ret
+
+__system___struct__s_vfs_file_t_putchar_
+	mov	COUNT_, #4
+	call	#pushregs_
+	add	objptr, #28
+	rdlong	local01, objptr wz
+	sub	objptr, #28
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0250
+	add	objptr, #28
+	rdlong	local02, objptr
+	mov	local03, local02
+	sub	objptr, #28
+	zerox	local03, #19
+	shr	local02, #20
+	shl	local02, #2
+	add	local02, __methods__
+	rdlong	local02, local02
+	mov	arg02, objptr
+	mov	local04, objptr
+	mov	objptr, local03
+	call	local02
+	mov	objptr, local04
+'     return (i < 0) ? 0 : 1;
+	cmps	result1, #0 wc
+ if_b	mov	local01, #0
+ if_ae	mov	local01, #1
+	mov	result1, local01
+LR__0250
+	mov	ptra, fp
+	call	#popregs_
+__system___struct__s_vfs_file_t_putchar__ret
+	ret
+
+__system___struct__s_vfs_file_t_getchar_
+	mov	COUNT_, #3
+	call	#pushregs_
+	add	objptr, #32
+	rdlong	arg01, objptr wz
+	sub	objptr, #32
+ if_e	neg	result1, #1
+ if_e	jmp	#LR__0260
+'     return getcf(__this);
+	add	objptr, #32
+	rdlong	local01, objptr
+	mov	local02, local01
+	sub	objptr, #32
+	zerox	local02, #19
+	shr	local01, #20
+	shl	local01, #2
+	add	local01, __methods__
+	rdlong	local01, local01
+	mov	arg01, objptr
+	mov	local03, objptr
+	mov	objptr, local02
+	call	local01
+	mov	objptr, local03
+LR__0260
+	mov	ptra, fp
+	call	#popregs_
+__system___struct__s_vfs_file_t_getchar__ret
+	ret
+
+__system___struct___bas_wrap_sender_tx_
+	mov	COUNT_, #3
+	call	#pushregs_
+	rdlong	local01, objptr
+	mov	local02, local01
+	zerox	local01, #19
+	shr	local02, #20
+	shl	local02, #2
+	add	local02, __methods__
+	rdlong	local02, local02
+	mov	local03, objptr
+	mov	objptr, local01
+	call	local02
+	mov	objptr, local03
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+__system___struct___bas_wrap_sender_tx__ret
+	ret
+
+__system___struct___bas_wrap_sender_rx_
+	mov	COUNT_, #3
+	call	#pushregs_
+	add	objptr, #4
+	rdlong	local01, objptr
+	mov	local02, local01
+	sub	objptr, #4
+	zerox	local02, #19
+	shr	local01, #20
+	shl	local01, #2
+	add	local01, __methods__
+	rdlong	local01, local01
+	mov	local03, objptr
+	mov	objptr, local02
+	call	local01
+	mov	objptr, local03
+	mov	ptra, fp
+	call	#popregs_
+__system___struct___bas_wrap_sender_rx__ret
+	ret
+
+__system___struct___bas_wrap_sender_close_
+	mov	COUNT_, #3
+	call	#pushregs_
+	add	objptr, #8
+	rdlong	local01, objptr
+	mov	local02, local01
+	sub	objptr, #8
+	zerox	local02, #19
+	shr	local01, #20
+	shl	local01, #2
+	add	local01, __methods__
+	rdlong	local01, local01
+	mov	local03, objptr
+	mov	objptr, local02
+	call	local01
+	mov	objptr, local03
+	mov	ptra, fp
+	call	#popregs_
+__system___struct___bas_wrap_sender_close__ret
+	ret
+
+LR__0270
+	byte	" !!! corrupted heap??? !!! "
+	byte	0
+LR__0271
+	byte	" !!! out of heap memory !!! "
+	byte	0
+LR__0272
+	byte	" !!! corrupted heap !!! "
+	byte	0
+	alignl
+__system__dat_
+	byte	$00[8]
+	byte	$03, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[24]
+	byte	$01, $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00
+	long	(9 {__system___tx})<<20
+	long	(10 {__system___rx})<<20
+	byte	$00, $00, $00, $00
+	long	(11 {__system___rxtxioctl_0137})<<20
+	long	(12 {__system____dummy_flush_0138})<<20
+	byte	$00[8]
+	byte	$01, $00, $00, $00, $02, $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00
+	long	(9 {__system___tx})<<20
+	long	(10 {__system___rx})<<20
+	byte	$00, $00, $00, $00
+	long	(11 {__system___rxtxioctl_0137})<<20
+	long	(12 {__system____dummy_flush_0138})<<20
+	byte	$00[8]
+	byte	$01, $00, $00, $00, $02, $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00
+	long	(9 {__system___tx})<<20
+	long	(10 {__system___rx})<<20
+	byte	$00, $00, $00, $00
+	long	(11 {__system___rxtxioctl_0137})<<20
+	long	(12 {__system____dummy_flush_0138})<<20
+	byte	$00[368]
+__methodtable__
+	long	@__system___struct___bas_wrap_sender_tx_
+	long	@__system___struct___bas_wrap_sender_rx_
+	long	@__system___struct___bas_wrap_sender_close_
+	long	@__system___struct__s_vfs_file_t_putchar_
+	long	@__system___struct__s_vfs_file_t_getchar_
+	long	@__system____strs_cl_pfunc_
+	long	@__system____default_putc
+	long	@__system____default_getc
+	long	@__system____default_flush
+	long	@__system___tx
+	long	@__system___rx
+	long	@__system___rxtxioctl_0137
+	long	@__system____dummy_flush_0138
+__heap_base
+	long	0[1502]
+objmem
+	long	0[65]
+stackspace
+	long	0[1]
+	org	COG_BSS_START
+_var01
+	res	1
+_var02
+	res	1
+_var03
+	res	1
+_var04
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+arg05
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+local04
+	res	1
+local05
+	res	1
+local06
+	res	1
+local07
+	res	1
+local08
+	res	1
+local09
+	res	1
+local10
+	res	1
+local11
+	res	1
+local12
+	res	1
+local13
+	res	1
+local14
+	res	1
+local15
+	res	1
+local16
+	res	1
+local17
+	res	1
+local18
+	res	1
+local19
+	res	1
+local20
+	res	1
+local21
+	res	1
+local22
+	res	1
+local23
+	res	1
+local24
+	res	1
+local25
+	res	1
+local26
+	res	1
+local27
+	res	1
+local28
+	res	1
+local29
+	res	1
+local30
+	res	1
+local31
+	res	1
+local32
+	res	1
+local33
+	res	1
+local34
+	res	1
+local35
+	res	1
+local36
+	res	1
+local37
+	res	1
+local38
+	res	1
+local39
+	res	1
+local40
+	res	1
+local41
+	res	1
+muldiva_
+	res	1
+muldivb_
+	res	1
+	fit	480

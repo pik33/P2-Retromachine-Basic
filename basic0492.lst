@@ -44309,6 +44309,7 @@
 24c08 00c 01 0D FA F8 | 	getbyte	_var07, _var02, #3
 24c0c 00d 09 0D 0A 52 |  if_ne	cmp	_var07, arg01 wz
 24c10 00e 01 04 66 A6 |  if_e	neg	_var03, #1
+24c14 00f             | 	fit	128
 24c14 00f             | LR__2962
 24c14                 | 	orgh
 24c14     02 FB 01 F6 | 	mov	result1, _var03

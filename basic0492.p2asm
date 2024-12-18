@@ -39878,6 +39878,7 @@ LR__2961
 	getbyte	_var07, _var02, #3
  if_ne	cmp	_var07, arg01 wz
  if_e	neg	_var03, #1
+	fit	128
 LR__2962
 	orgh
 	mov	result1, _var03
