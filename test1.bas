@@ -1,3 +1,4 @@
-print time$
+dim test2 as class using "objtest.spin2"
 
-print a$
+test2.start
+print test2.trigger(0)

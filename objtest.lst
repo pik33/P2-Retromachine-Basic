@@ -16,44 +16,45 @@
       ...             
 003f8     00 00 00 00 
 003fc     00 00 00 00 | 	orgh	$400
-00400     00 4E 05 06 |  _ret_	mov	result1, #0
+00400     00 4C 05 06 |  _ret_	mov	result1, #0
 00404 000             | 	org	0
 00404 000             | entry
 00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
 00408 001 0C 02 90 5D |  if_ne	jmp	#spininit
-0040c 002 A6 F0 03 F6 | 	mov	ptra, ptr_stackspace_
-00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
-00414 004 EC 01 90 5D |  if_ne	jmp	#skip_clock_set_
-00418 005 00 00 64 FD | 	hubset	#0
-0041c 006 04 80 80 FF 
-00420 007 00 90 66 FD | 	hubset	##16779592
-00424 008 86 01 80 FF 
-00428 009 1F 80 66 FD | 	waitx	##200000
-0042c 00a 04 80 00 FF 
-00430 00b 4B ED 07 F6 | 	mov	pa, ##16779595
-00434 00c 00 EC 63 FD | 	hubset	pa
-00438 00d 18 EC 67 FC | 	wrlong	pa, #24
-0043c 00e 96 98 80 FF 
-00440 00f 14 00 6E FC | 	wrlong	##20000000, #20
-00444 010 BC 01 90 FD | 	jmp	#skip_clock_set_
-00448 011 00 00 00 00 
+0040c 002 A5 F0 03 F6 | 	mov	ptra, objptr
+00410 003 00 F1 07 F1 | 	add	ptra, #256
+00414 004 14 EC 0F FB | 	rdlong	pa, #20 wz
+00418 005 E8 01 90 5D |  if_ne	jmp	#skip_clock_set_
+0041c 006 00 00 64 FD | 	hubset	#0
+00420 007 04 80 80 FF 
+00424 008 00 90 66 FD | 	hubset	##16779592
+00428 009 86 01 80 FF 
+0042c 00a 1F 80 66 FD | 	waitx	##200000
+00430 00b 04 80 00 FF 
+00434 00c 4B ED 07 F6 | 	mov	pa, ##16779595
+00438 00d 00 EC 63 FD | 	hubset	pa
+0043c 00e 18 EC 67 FC | 	wrlong	pa, #24
+00440 00f 96 98 80 FF 
+00444 010 14 00 6E FC | 	wrlong	##20000000, #20
+00448 011 B8 01 90 FD | 	jmp	#skip_clock_set_
+0044c 012 00 00 00 00 
       ...             
 005fc 07e 00 00 00 00 
 00600 07f 00 00 00 00 | 	orgf	128
 00604 080             | skip_clock_set_
-00604 080 A4 06 A0 FD | 	call	#_start
+00604 080 A0 06 A0 FD | 	call	#_start
 00608 081             | cogexit
 00608 081 38 01 80 FF 
 0060c 082 1F 00 66 FD | 	waitx	##160000
-00610 083 01 52 61 FD | 	cogid	arg01
-00614 084 03 52 61 FD | 	cogstop	arg01
+00610 083 01 50 61 FD | 	cogid	arg01
+00614 084 03 50 61 FD | 	cogstop	arg01
 00618 085             | spininit
 00618 085 61 4B 05 FB | 	rdlong	objptr, ptra++
-0061c 086 61 4F 05 FB | 	rdlong	result1, ptra++
+0061c 086 61 4D 05 FB | 	rdlong	result1, ptra++
 00620 087 28 06 64 FD | 	setq	#3
-00624 088 00 53 05 FB | 	rdlong	arg01, ptra
+00624 088 00 51 05 FB | 	rdlong	arg01, ptra
 00628 089 04 F0 87 F1 | 	sub	ptra, #4
-0062c 08a 2D 4E 61 FD | 	call	result1
+0062c 08a 2D 4C 61 FD | 	call	result1
 00630 08b D4 FF 9F FD | 	jmp	#cogexit
 00634 08c             | FCACHE_LOAD_
 00634 08c F9 2D 01 F6 |     mov	fcache_tmpb_,ptrb
@@ -72,72 +73,59 @@
 00660 097             | fcache_load_ptr_
 00660 097 8C 00 00 00 |     long FCACHE_LOAD_
 00664 098             | builtin_bytefill_
-00664 098 01 56 55 F0 |         shr	arg03, #1 wc
-00668 099 A9 54 41 CC |  if_c   wrbyte	arg02, arg01
-0066c 09a 01 52 05 C1 |  if_c   add	arg01, #1
-00670 09b 00 54 FD F9 |         movbyts	arg02, #0
+00664 098 01 54 55 F0 |         shr	arg03, #1 wc
+00668 099 A8 52 41 CC |  if_c   wrbyte	arg02, arg01
+0066c 09a 01 50 05 C1 |  if_c   add	arg01, #1
+00670 09b 00 52 FD F9 |         movbyts	arg02, #0
 00674 09c             | builtin_wordfill_
-00674 09c 01 56 55 F0 |         shr	arg03, #1 wc
-00678 09d A9 54 51 CC |  if_c   wrword	arg02, arg01
-0067c 09e 02 52 05 C1 |  if_c   add	arg01, #2
-00680 09f AA 54 29 F9 |         setword	arg02, arg02, #1
+00674 09c 01 54 55 F0 |         shr	arg03, #1 wc
+00678 09d A8 52 51 CC |  if_c   wrword	arg02, arg01
+0067c 09e 02 50 05 C1 |  if_c   add	arg01, #2
+00680 09f A9 52 29 F9 |         setword	arg02, arg02, #1
 00684 0a0             | builtin_longfill_
-00684 0a0 A9 00 88 FC |         wrfast	#0,arg01
-00688 0a1 00 56 0D F2 |         cmp	arg03, #0 wz
-0068c 0a2 AB 02 D8 5C |  if_nz  rep	#1, arg03
-00690 0a3 17 54 61 5D |  if_nz  wflong	arg02
+00684 0a0 A8 00 88 FC |         wrfast	#0,arg01
+00688 0a1 00 54 0D F2 |         cmp	arg03, #0 wz
+0068c 0a2 AA 02 D8 5C |  if_nz  rep	#1, arg03
+00690 0a3 17 52 61 5D |  if_nz  wflong	arg02
 00694 0a4 2D 00 64 FD |         ret
 00698 0a5             | 
 00698 0a5             | objptr
-00698 0a5 D8 06 00 00 | 	long	@objmem
-0069c 0a6             | ptr_stackspace_
-0069c 0a6 DC 07 00 00 | 	long	@stackspace
-006a0 0a7             | result1
-006a0 0a7 00 00 00 00 | 	long	0
-006a4 0a8             | COG_BSS_START
-006a4 0a8             | 	fit	480
-006a4                 | 	orgh
-006a4                 | hubentry
-006a4                 | 
-006a4                 | ' 
-006a4                 | ' pub start
-006a4                 | _start
-006a4                 | ' 
-006a4                 | ' var1:=@var2
-006a4     A5 50 01 F6 | 	mov	_var01, objptr
-006a8     04 50 05 F1 | 	add	_var01, #4
-006ac     A5 50 61 FC | 	wrlong	_var01, objptr
-006b0                 | ' word[var2+17*12+4]:=8			 
-006b0     04 4A 05 F1 | 	add	objptr, #4
-006b4     A5 50 01 FB | 	rdlong	_var01, objptr
-006b8     D0 50 05 F1 | 	add	_var01, #208
-006bc     A8 10 58 FC | 	wrword	#8, _var01
-006c0                 | ' word[var2+17*12+6]:=16
-006c0     A5 50 01 FB | 	rdlong	_var01, objptr
-006c4     04 4A 85 F1 | 	sub	objptr, #4
-006c8     D2 50 05 F1 | 	add	_var01, #210
-006cc     A8 20 58 FC | 	wrword	#16, _var01
-006d0                 | _start_ret
-006d0     2D 00 64 FD | 	ret
-006d4                 | hubexit
-006d4     81 00 80 FD | 	jmp	#cogexit
-006d8                 | objmem
-006d8     00 00 00 00 
-      ...             
-007d4     00 00 00 00 
-007d8     00 00 00 00 | 	long	0[65]
-007dc                 | stackspace
-007dc     00 00 00 00 | 	long	0[1]
-007e0 0a8             | 	org	COG_BSS_START
-007e0 0a8             | _var01
-007e0 0a8             | 	res	1
-007e0 0a9             | arg01
-007e0 0a9             | 	res	1
-007e0 0aa             | arg02
-007e0 0aa             | 	res	1
-007e0 0ab             | arg03
-007e0 0ab             | 	res	1
-007e0 0ac             | arg04
-007e0 0ac             | 	res	1
-007e0 0ad             | 	fit	480
-007e0 0ad             | 
+00698 0a5 C0 06 00 00 | 	long	@objmem
+0069c 0a6             | result1
+0069c 0a6 00 00 00 00 | 	long	0
+006a0 0a7             | COG_BSS_START
+006a0 0a7             | 	fit	480
+006a0                 | 	orgh
+006a0                 | hubentry
+006a0                 | 
+006a0                 | ' 
+006a0                 | ' pub start
+006a0                 | _start
+006a0                 | ' 
+006a0                 | ' trigger[0]:=$deadbeef
+006a0     DF 56 6F FF 
+006a4     EF 4E 05 F6 | 	mov	_var01, ##-559038737
+006a8     DF 56 EF FF 
+006ac     A5 DE 69 FC | 	wrlong	##-559038737, objptr
+006b0                 | ' debug(uhex(trigger))
+006b0     A7 00 00 F6 | 	mov	0-0, _var01
+006b4     36 02 64 FD | 	brk	#1
+006b8                 | _start_ret
+006b8     2D 00 64 FD | 	ret
+006bc                 | hubexit
+006bc     81 00 80 FD | 	jmp	#cogexit
+006c0                 | objmem
+006c0     00 00 00 00 | 	long	0[1]
+006c4 0a7             | 	org	COG_BSS_START
+006c4 0a7             | _var01
+006c4 0a7             | 	res	1
+006c4 0a8             | arg01
+006c4 0a8             | 	res	1
+006c4 0a9             | arg02
+006c4 0a9             | 	res	1
+006c4 0aa             | arg03
+006c4 0aa             | 	res	1
+006c4 0ab             | arg04
+006c4 0ab             | 	res	1
+006c4 0ac             | 	fit	480
+006c4 0ac             | 

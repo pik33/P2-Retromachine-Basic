@@ -15,7 +15,8 @@ dat
 entry
 	cmp	ptra, #0 wz
  if_ne	jmp	#spininit
-	mov	ptra, ptr_stackspace_
+	mov	ptra, objptr
+	add	ptra, #256
 	rdlong	pa, #20 wz
  if_ne	jmp	#skip_clock_set_
 	hubset	#0
@@ -76,8 +77,6 @@ builtin_longfill_
 
 objptr
 	long	@objmem
-ptr_stackspace_
-	long	@stackspace
 result1
 	long	0
 COG_BSS_START
@@ -89,27 +88,17 @@ hubentry
 ' pub start
 _start
 ' 
-' var1:=@var2
-	mov	_var01, objptr
-	add	_var01, #4
-	wrlong	_var01, objptr
-' word[var2+17*12+4]:=8			 
-	add	objptr, #4
-	rdlong	_var01, objptr
-	add	_var01, #208
-	wrword	#8, _var01
-' word[var2+17*12+6]:=16
-	rdlong	_var01, objptr
-	sub	objptr, #4
-	add	_var01, #210
-	wrword	#16, _var01
+' trigger[0]:=$deadbeef
+	mov	_var01, ##-559038737
+	wrlong	##-559038737, objptr
+' debug(uhex(trigger))
+	mov	0-0, _var01
+	brk	#1
 _start_ret
 	ret
 hubexit
 	jmp	#cogexit
 objmem
-	long	0[65]
-stackspace
 	long	0[1]
 	org	COG_BSS_START
 _var01
