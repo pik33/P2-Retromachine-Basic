@@ -110,6 +110,59 @@ cog:=coginit(16,@audio,@mailboxaddr)
 waitms(10)
 return cog,base
 
+
+pub play(channel,sample,splfreq,vol,len,loop=-1) |base2
+
+base2:=@channel0[0]+64*channel
+long[base2+20]:=sample+$C0000000 
+long[base2+28]:= len
+if loop >=0 
+  long[base2+24]:= loop
+else
+  long[base2+24]:= len
+word[base2+32]:=vol
+long[base2+36]:= splfreq*389566
+
+    
+pub playtoend8(channel,sample,splfreq,vol,len) |base2,i
+
+base2:=@channel1[0]+64*channel
+long[base2]:=0
+long[base2+8]:=sample+$40000000 
+long[base2+12]:= len
+long[base2+16]:= len+1
+word[base2+20]:=vol
+word[base2+24]:= 3546895/splfreq 
+word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+'long[base2+28]:=$40000000
+repeat 
+  i:=long[base2]
+until (i >>8) >=len
+word[base2+20]:=0
+
+pub play8(channel,sample,splfreq,vol,len,loop=-1) |base2,i
+
+base2:=@channel1[0]+64*channel
+long[base2]:=0
+long[base2+8]:=sample+$40000000 
+if loop>=0
+  long[base2+12]:=loop
+  long[base2+16]:= len
+else
+  long[base2+12]:= len
+  long[base2+16]:= len+1
+word[base2+20]:=vol
+word[base2+24]:= 3546895 /splfreq 
+word[base2+26]:=256 ' todo: use skip to make accurate sample rate
+'long[base2+28]:=$40000000
+
+    
+pub stop(channel) 'silence it
+
+word[@channel1[0]+64*channel+32]:=0
+
+
+
 ' a simple play procedure to not poke everything. 
 
 
@@ -123,10 +176,7 @@ pub play16(channel,sample,splfreq,vol,len,loop,delay) | base2
 base2:=@channel0[0]+64*channel
 long[base2+20]:=sample+$C0000000 
 long[base2+28]:= len
-'if loop >=0 
-'  long[base2+24]:= loop
-'else
-'  long[base2+24]:= len
+long[base2+24]:= loop
 word[base2+32]:=vol
 long[base2+36]:= splfreq*389566
 waitms(delay)
@@ -162,7 +212,7 @@ audio       	org     0
 '---------------------------------------------------------------------------------
 
 loop       	mov 	    cn,#15 '7
-
+              '  waitx ##33000000
 '----------------------------------------------------------------------------------
 '------------- Get parameters and execute commands if any -------------------------
 '----------------------------------------------------------------------------------
@@ -262,8 +312,9 @@ p410        	testb   sstart0, #27 wz
             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
    	if_ge   sub     pointer0h,lend0       
         if_ge   add     pointer0h,lstart0
-        	
-        	'   debug(udec(pointer0h))	
+            	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+        if_ge   mov	pointer0h,lend0	
+        	   debug(udec(lstart0,lend0,pointer0h))	
                        	
             	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
            	add     qq,sstart0            

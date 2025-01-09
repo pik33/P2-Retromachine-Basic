@@ -1,0 +1,1476 @@
+con
+	_clkfreq = 338695652
+	_clkmode = 28773115
+' _clkfreq=338688000
+' c4=262
+	c4 = 262
+' d4=294
+	d4 = 294
+' e4=330
+	e4 = 330
+' f4=349
+	f4 = 349
+' g4=392
+	g4 = 392
+' a4=440
+	a4 = 440
+' h4=494
+	h4 = 494
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 338695652
+	long	0 ' clock mode: will default to $1b70afb
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, ptr_stackspace_
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##28773112
+	waitx	##200000
+	mov	pa, ##28773115
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##338695652, #20
+	jmp	#skip_clock_set_
+	orgf	192
+skip_clock_set_
+	call	#_drivertest
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra++
+	rdlong	result1, ptra++
+	setq	#3
+	rdlong	arg01, ptra
+	sub	ptra, #4
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    mov	fcache_tmpb_,ptrb
+    pop	ptrb
+    altd	pa,ret_instr_
+    mov	 0-0, ret_instr_
+    setq	pa
+    rdlong	$0, ptrb++
+    push	ptrb
+    mov ptrb,fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
+ret_instr_
+    _ret_ cmp inb,#0
+fcache_tmpb_
+    long 0
+fcache_load_ptr_
+    long FCACHE_LOAD_
+builtin_bytefill_
+        shr	arg03, #1 wc
+ if_c   wrbyte	arg02, arg01
+ if_c   add	arg01, #1
+        movbyts	arg02, #0
+builtin_wordfill_
+        shr	arg03, #1 wc
+ if_c   wrword	arg02, arg01
+ if_c   add	arg01, #2
+        setword	arg02, arg02, #1
+builtin_longfill_
+        wrfast	#0,arg01
+        cmp	arg03, #0 wz
+ if_nz  rep	#1, arg03
+ if_nz  wflong	arg02
+        ret
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    altd  COUNT_, #511
+    setq #0-0
+    wrlong local01, ptra++
+pushregs_done_
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra++
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    setq   #2
+    rdlong COUNT_, --ptra
+    djf    COUNT_, #popregs__ret
+    setq   COUNT_
+    rdlong local01, --ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+objptr
+	long	@objmem
+ptr__Audio2_003_dat__
+	long	@_Audio2_003_dat_
+ptr__dat__
+	long	@_dat_
+ptr_stackspace_
+	long	@stackspace
+result1
+	long	0
+result2
+	long	1
+result3
+	long	2
+result4
+	long	3
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' 
+' pub drivertest()   : cog,base,i,j
+_drivertest
+	mov	COUNT_, #4
+	call	#pushregs_
+' ' prepare 8-bit saw wave
+' repeat i from $40000 to $407FF step 2
+	decod	local01, #18
+	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
+LR__0001
+'   j:=@waveform+i-$40000+16
+	mov	local02, ptr__dat__
+	add	local02, local01
+	sub	local02, ##262128
+'   word[i]:=word[j]
+	rdword	local02, local02
+	wrword	local02, local01
+	add	local01, #2
+	cmps	local01, ##264192 wc
+ if_b	jmp	#LR__0001
+LR__0002
+'  ' debug(sdec(word[i]))
+' ' start the driver. It will generate scope data at $60000. It will not use any PSRAM
+' repeat i from $41000 to $411FF step 2
+	mov	local01, ##266240
+	add	ptr__dat__, ##2064
+	callpa	#(@LR__0004-@LR__0003)>>2,fcache_load_ptr_
+LR__0003
+'   j:=@envelope+((i-$41000)>>1)+16
+	mov	local02, ptr__dat__
+	mov	arg07, local01
+	sub	arg07, ##266240
+	shr	arg07, #1
+	add	local02, arg07
+	add	local02, #16
+'   word[i]:=byte[j]<<8
+	rdbyte	local02, local02
+	shl	local02, #8
+	wrword	local02, local01
+	add	local01, #2
+	cmps	local01, ##266752 wc
+ if_b	jmp	#LR__0003
+LR__0004
+	sub	ptr__dat__, ##2064
+'   
+' cog, base:=audio.start(0,$60000,$61000)
+	mov	arg01, #0
+	mov	arg02, ##393216
+	mov	arg03, ##397312
+	call	#_Audio2_003_start
+	mov	local03, result2
+' 'debug(udec(cog,base))
+' 
+' {{Channel registers:
+' }}
+' 
+' ' tell it to play
+' 
+' repeat i from 0 to 15 
+	mov	local01, #0
+	callpa	#(@LR__0006-@LR__0005)>>2,fcache_load_ptr_
+LR__0005
+'   long[base+24+64*i]:=0                ' loop start point
+	mov	local02, local03
+	add	local02, #24
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	#0, local02
+'   long[base+28+64*i]:=$800              '
+	mov	local02, local03
+	add	local02, #28
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	##2048, local02
+'   word[base+32+64*i]:=0                ' max volume
+	mov	local02, local03
+	add	local02, #32
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrword	#0, local02
+'   long[base+20+64*i]:=$C0040000        ' sample pointer
+	mov	local02, local03
+	add	local02, #20
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	##-1073479680, local02
+'   long[base+36+64*i]:=$100000
+	mov	local02, local03
+	add	local02, #36
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	##1048576, local02
+'   long[base+44+64*i]:=$41000
+	mov	local02, local03
+	add	local02, #44
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	##266240, local02
+'   long[base+48+64*i]:=$8000
+	mov	local02, local03
+	add	local02, #48
+	mov	arg07, local01
+	shl	arg07, #6
+	add	local02, arg07
+	wrlong	##32768, local02
+'   long[base+52+64*i]:=256
+	mov	local02, local03
+	add	local02, #52
+	mov	local04, local01
+	shl	local04, #6
+	add	local02, local04
+	wrlong	#256, local02
+	add	local01, #1
+	cmps	local01, #16 wc
+ if_b	jmp	#LR__0005
+LR__0006
+' 
+' 
+' '
+' repeat
+LR__0007
+'    audio.play16(0,$40000,c4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #0
+	decod	arg02, #18
+	mov	arg03, #262
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(1,$40000,d4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #1
+	decod	arg02, #18
+	mov	arg03, #294
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(2,$40000,e4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #2
+	decod	arg02, #18
+	mov	arg03, #330
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(3,$40000,f4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #3
+	decod	arg02, #18
+	mov	arg03, #349
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(4,$40000,g4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #4
+	decod	arg02, #18
+	mov	arg03, #392
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(5,$40000,a4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #5
+	decod	arg02, #18
+	mov	arg03, #440
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(6,$40000,h4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #6
+	decod	arg02, #18
+	mov	arg03, #494
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(7,$40000,2*c4,4096,2048,0,400) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #7
+	decod	arg02, #18
+	mov	arg03, ##524
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #400
+	call	#_Audio2_003_play16
+'    audio.play16(8,$40000,2*c4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #8
+	decod	arg02, #18
+	mov	arg03, ##524
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(9,$40000,h4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #9
+	decod	arg02, #18
+	mov	arg03, #494
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(10,$40000,a4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #10
+	decod	arg02, #18
+	mov	arg03, #440
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(11,$40000,g4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #11
+	decod	arg02, #18
+	mov	arg03, #392
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(12,$40000,f4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #12
+	decod	arg02, #18
+	mov	arg03, #349
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(13,$40000,e4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #13
+	decod	arg02, #18
+	mov	arg03, #330
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(14,$40000,d4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #14
+	decod	arg02, #18
+	mov	arg03, #294
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #200
+	call	#_Audio2_003_play16
+'    audio.play16(15,$40000, c4,4096,2048,0,400) '16(channel,sample,splfreq,vol,len,loop,delay)    
+	mov	arg01, #15
+	decod	arg02, #18
+	mov	arg03, #262
+	decod	arg04, #12
+	decod	arg05, #11
+	mov	arg06, #0
+	mov	arg07, #400
+	call	#_Audio2_003_play16
+	jmp	#LR__0007
+	mov	ptra, fp
+	call	#popregs_
+_drivertest_ret
+	ret
+
+' 
+' 
+' 
+' '--------------------------------------------------------------
+' '---------- Init the variables, start the cog. ----------------
+' '--------------------------------------------------------------
+' 
+' pub start(mbox,scope,cache) :cog,base | iii
+_Audio2_003_start
+	mov	COUNT_, #4
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' ' mbox: PSRAM mailbox or 0 if no PSRAM
+' ' scope: a pointer to 640 long oscilloscope data in HUB wor visualization
+' ' cache: a pointer to 2 KB long HUB cache for PSRAM audio data
+' 
+' mailboxaddr:=mbox 
+	wrlong	local01, objptr
+' scope_ptr:=scope
+	add	objptr, #4
+	wrlong	arg02, objptr
+' cache_ptr:=cache
+	add	objptr, #4
+	wrlong	arg03, objptr
+' base:=@channel0[0]
+	add	objptr, #4
+	mov	local02, objptr
+' 
+' repeat iii from 0 to 15
+	mov	local03, #0
+	sub	objptr, #12
+	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+LR__0010
+'   long[base+64*iii]:=0
+	mov	local01, local02
+	mov	result2, local03
+	shl	result2, #6
+	add	local01, result2
+	wrlong	#0, local01
+'   long[base+64*iii+4]:=0  		
+	mov	local01, local02
+	mov	result2, local03
+	shl	result2, #6
+	add	local01, result2
+	add	local01, #4
+	wrlong	#0, local01
+'   long[base+64*iii+8]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #8
+	wrlong	#0, local04
+'   long[base+64*iii+12]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #12
+	wrlong	#0, local04
+'   long[base+64*iii+16]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #16
+	wrlong	#0, local04
+'   long[base+64*iii+20]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #20
+	wrlong	#0, local04
+'   long[base+64*iii+24]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #24
+	wrlong	#0, local04
+'   long[base+64*iii+28]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #28
+	wrlong	#0, local04
+'   word[base+64*iii+32]:=8192
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #32
+	wrword	##8192, local04
+'   word[base+64*iii+34]:=8192
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #34
+	wrword	##8192, local04
+'   long[base+64*iii+36]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #36
+	wrlong	#0, local04
+'   long[base+64*iii+40]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #40
+	wrlong	#0, local04
+'   long[base+64*iii+44]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #44
+	wrlong	#0, local04
+'   long[base+64*iii+48]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #48
+	wrlong	#0, local04
+'   long[base+64*iii+52]:=0
+	mov	local04, local02
+	mov	local01, local03
+	shl	local01, #6
+	add	local04, local01
+	add	local04, #52
+	wrlong	#0, local04
+	add	local03, #1
+	cmps	local03, #16 wc
+ if_b	jmp	#LR__0010
+LR__0011
+'   
+' cog:=coginit(16,@audio,@mailboxaddr)
+	mov	arg02, ptr__Audio2_003_dat__
+	mov	arg03, objptr
+	mov	local04, #16
+	setq	arg03
+	coginit	local04, arg02 wc
+ if_b	neg	local04, #1
+' waitms(10)
+	mov	arg01, #10
+	call	#__system___waitms
+' return cog,base
+	mov	result2, local02
+	mov	result1, local04
+	mov	ptra, fp
+	call	#popregs_
+_Audio2_003_start_ret
+	ret
+
+' 
+' 
+' pub play16(channel,sample,splfreq,vol,len,loop,delay) | base2
+_Audio2_003_play16
+	qmul	arg03, ##389566
+' 
+' base2:=@channel0[0]+64*channel
+	mov	arg03, objptr
+	add	arg03, #12
+	shl	arg01, #6
+	add	arg03, arg01
+' long[base2+20]:=sample+$C0000000 
+	add	arg02, ##-1073741824
+	mov	arg01, arg03
+	add	arg01, #20
+	wrlong	arg02, arg01
+' long[base2+28]:= len
+	mov	arg02, arg03
+	add	arg02, #28
+	wrlong	arg05, arg02
+' long[base2+24]:= loop
+	mov	arg05, arg03
+	add	arg05, #24
+	wrlong	arg06, arg05
+' word[base2+32]:=vol
+	mov	arg06, arg03
+	add	arg06, #32
+	wrword	arg04, arg06
+' long[base2+36]:= splfreq*389566
+	add	arg03, #36
+' waitms(delay)
+	mov	arg01, arg07
+	getqx	arg07
+	wrlong	arg07, arg03
+	call	#__system___waitms
+_Audio2_003_play16_ret
+	ret
+hubexit
+	jmp	#cogexit
+
+__system___waitms
+	mov	_var01, arg01
+	getct	_var02
+	rdlong	_var03, #20
+	callpa	#(@LR__0021-@LR__0020)>>2,fcache_load_ptr_
+LR__0020
+	cmps	_var01, ##1000 wc
+ if_b	jmp	#LR__0022
+	add	_var02, _var03
+	mov	arg01, _var02
+	addct1	arg01, #0
+	waitct1
+	sub	_var01, ##1000
+	jmp	#LR__0020
+LR__0021
+LR__0022
+	cmps	_var01, #1 wc
+ if_b	jmp	#LR__0023
+	qmul	_var01, _var03
+	mov	arg03, ##1000
+	getqy	result1
+	getqx	arg01
+	setq	result1
+	qdiv	arg01, arg03
+	getqx	arg01
+	addct1	arg01, _var02
+	waitct1
+LR__0023
+__system___waitms_ret
+	ret
+	alignl
+_dat_
+'-' waveform file "glocke.s2"
+	byte	$73, $32, $00, $04, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $ab, $04, $52, $09, $f4, $0d, $8c, $12, $19, $17, $97, $1b, $03, $20
+	byte	$5b, $24, $9c, $28, $c3, $2c, $ce, $30, $ba, $34, $86, $38, $2f, $3c, $b3, $3f
+	byte	$10, $43, $45, $46, $51, $49, $31, $4c, $e5, $4e, $6b, $51, $c3, $53, $ed, $55
+	byte	$e7, $57, $b2, $59, $4d, $5b, $b8, $5c, $f4, $5d, $00, $5f, $df, $5f, $8f, $60
+	byte	$13, $61, $6a, $61, $97, $61, $9a, $61, $76, $61, $2b, $61, $bb, $60, $28, $60
+	byte	$74, $5f, $a1, $5e, $b0, $5d, $a4, $5c, $7f, $5b, $43, $5a, $f3, $58, $90, $57
+	byte	$1c, $56, $9b, $54, $0e, $53, $77, $51, $d8, $4f, $34, $4e, $8d, $4c, $e5, $4a
+	byte	$3d, $49, $97, $47, $f6, $45, $5a, $44, $c7, $42, $3c, $41, $bc, $3f, $47, $3e
+	byte	$e0, $3c, $86, $3b, $3c, $3a, $01, $39, $d6, $37, $bd, $36, $b5, $35, $bf, $34
+	byte	$db, $33, $09, $33, $49, $32, $9a, $31, $fe, $30, $73, $30, $f8, $2f, $8e, $2f
+	byte	$34, $2f, $e8, $2e, $aa, $2e, $79, $2e, $55, $2e, $3b, $2e, $2c, $2e, $25, $2e
+	byte	$26, $2e, $2d, $2e, $39, $2e, $49, $2e, $5c, $2e, $70, $2e, $84, $2e, $96, $2e
+	byte	$a6, $2e, $b2, $2e, $b8, $2e, $b9, $2e, $b2, $2e, $a2, $2e, $88, $2e, $64, $2e
+	byte	$34, $2e, $f7, $2d, $ae, $2d, $55, $2d, $ef, $2c, $78, $2c, $f2, $2b, $5c, $2b
+	byte	$b5, $2a, $fd, $29, $34, $29, $5a, $28, $6e, $27, $72, $26, $65, $25, $47, $24
+	byte	$19, $23, $dc, $21, $8f, $20, $34, $1f, $cb, $1d, $54, $1c, $d2, $1a, $44, $19
+	byte	$ac, $17, $0b, $16, $61, $14, $b0, $12, $fa, $10, $3f, $0f, $80, $0d, $c0, $0b
+	byte	$ff, $09, $3e, $08, $80, $06, $c5, $04, $0f, $03, $5f, $01, $b6, $ff, $16, $fe
+	byte	$81, $fc, $f7, $fa, $7a, $f9, $0b, $f8, $ab, $f6, $5c, $f5, $1e, $f4, $f2, $f2
+	byte	$db, $f1, $d7, $f0, $e9, $ef, $11, $ef, $4f, $ee, $a5, $ed, $13, $ed, $98, $ec
+	byte	$36, $ec, $ed, $eb, $bd, $eb, $a5, $eb, $a7, $eb, $c1, $eb, $f3, $eb, $3d, $ec
+	byte	$9f, $ec, $17, $ed, $a6, $ed, $4a, $ee, $03, $ef, $d0, $ef, $ae, $f0, $9f, $f1
+	byte	$a0, $f2, $af, $f3, $cd, $f4, $f6, $f5, $2a, $f7, $68, $f8, $ad, $f9, $f8, $fa
+	byte	$47, $fc, $99, $fd, $ec, $fe, $3f, $00, $8f, $01, $da, $02, $21, $04, $5f, $05
+	byte	$95, $06, $c0, $07, $de, $08, $ef, $09, $f1, $0a, $e2, $0b, $c1, $0c, $8d, $0d
+	byte	$45, $0e, $e8, $0e, $75, $0f, $ea, $0f, $48, $10, $8e, $10, $bb, $10, $cf, $10
+	byte	$ca, $10, $ab, $10, $73, $10, $22, $10, $b9, $0f, $36, $0f, $9d, $0e, $ec, $0d
+	byte	$25, $0d, $49, $0c, $59, $0b, $56, $0a, $42, $09, $1d, $08, $eb, $06, $ab, $05
+	byte	$61, $04, $0e, $03, $b4, $01, $54, $00, $f2, $fe, $8f, $fd, $2d, $fc, $ce, $fa
+	byte	$75, $f9, $24, $f8, $de, $f6, $a3, $f5, $78, $f4, $5d, $f3, $55, $f2, $63, $f1
+	byte	$87, $f0, $c5, $ef, $1e, $ef, $93, $ee, $27, $ee, $db, $ed, $b1, $ed, $aa, $ed
+	byte	$c7, $ed, $09, $ee, $71, $ee, $01, $ef, $b8, $ef, $98, $f0, $a0, $f1, $d1, $f2
+	byte	$2b, $f4, $ad, $f5, $58, $f7, $2b, $f9, $25, $fb, $45, $fd, $8b, $ff, $f5, $01
+	byte	$82, $04, $31, $07, $01, $0a, $ee, $0c, $f9, $0f, $1e, $13, $5c, $16, $b1, $19
+	byte	$1a, $1d, $95, $20, $20, $24, $b8, $27, $5a, $2b, $05, $2f, $b6, $32, $6a, $36
+	byte	$1e, $3a, $d0, $3d, $7d, $41, $22, $45, $be, $48, $4d, $4c, $cd, $4f, $3c, $53
+	byte	$98, $56, $dd, $59, $0b, $5d, $1e, $60, $15, $63, $ee, $65, $a8, $68, $40, $6b
+	byte	$b5, $6d, $07, $70, $32, $72, $38, $74, $16, $76, $cc, $77, $59, $79, $bd, $7a
+	byte	$f7, $7b, $07, $7d, $ee, $7d, $aa, $7e, $3d, $7f, $a6, $7f, $e7, $7f, $ff, $7f
+	byte	$f0, $7f, $ba, $7f, $5f, $7f, $df, $7e, $3b, $7e, $75, $7d, $8f, $7c, $89, $7b
+	byte	$65, $7a, $25, $79, $ca, $77, $57, $76, $cb, $74, $2b, $73, $76, $71, $b0, $6f
+	byte	$d9, $6d, $f3, $6b, $01, $6a, $04, $68, $fd, $65, $ef, $63, $dc, $61, $c4, $5f
+	byte	$a9, $5d, $8d, $5b, $71, $59, $57, $57, $40, $55, $2d, $53, $20, $51, $19, $4f
+	byte	$19, $4d, $22, $4b, $34, $49, $50, $47, $76, $45, $a8, $43, $e5, $41, $2e, $40
+	byte	$83, $3e, $e4, $3c, $51, $3b, $cb, $39, $51, $38, $e3, $36, $81, $35, $2a, $34
+	byte	$de, $32, $9d, $31, $65, $30, $37, $2f, $11, $2e, $f4, $2c, $dd, $2b, $cc, $2a
+	byte	$c1, $29, $bb, $28, $b7, $27, $b7, $26, $b7, $25, $b9, $24, $ba, $23, $ba, $22
+	byte	$b7, $21, $b1, $20, $a6, $1f, $97, $1e, $81, $1d, $64, $1c, $3f, $1b, $12, $1a
+	byte	$db, $18, $9a, $17, $4f, $16, $f8, $14, $95, $13, $27, $12, $ab, $10, $23, $0f
+	byte	$8e, $0d, $ec, $0b, $3c, $0a, $7f, $08, $b6, $06, $df, $04, $fc, $02, $0d, $01
+	byte	$12, $ff, $0c, $fd, $fb, $fa, $e1, $f8, $be, $f6, $94, $f4, $62, $f2, $2a, $f0
+	byte	$ed, $ed, $ad, $eb, $6b, $e9, $27, $e7, $e4, $e4, $a3, $e2, $65, $e0, $2c, $de
+	byte	$fa, $db, $cf, $d9, $ae, $d7, $98, $d5, $8f, $d3, $95, $d1, $aa, $cf, $d1, $cd
+	byte	$0c, $cc, $5b, $ca, $c1, $c8, $3e, $c7, $d5, $c5, $86, $c4, $53, $c3, $3e, $c2
+	byte	$46, $c1, $6e, $c0, $b7, $bf, $20, $bf, $ac, $be, $5a, $be, $2c, $be, $21, $be
+	byte	$3a, $be, $77, $be, $d8, $be, $5d, $bf, $07, $c0, $d4, $c0, $c4, $c1, $d6, $c2
+	byte	$0a, $c4, $5f, $c5, $d4, $c6, $67, $c8, $18, $ca, $e5, $cb, $cd, $cd, $cd, $cf
+	byte	$e5, $d1, $12, $d4, $53, $d6, $a5, $d8, $06, $db, $75, $dd, $ef, $df, $71, $e2
+	byte	$fa, $e4, $88, $e7, $16, $ea, $a5, $ec, $30, $ef, $b6, $f1, $34, $f4, $a8, $f6
+	byte	$10, $f9, $69, $fb, $b2, $fd, $e7, $ff, $08, $02, $12, $04, $03, $06, $da, $07
+	byte	$95, $09, $32, $0b, $b1, $0c, $0f, $0e, $4c, $0f, $68, $10, $60, $11, $35, $12
+	byte	$e6, $12, $73, $13, $dc, $13, $21, $14, $41, $14, $3e, $14, $18, $14, $d0, $13
+	byte	$66, $13, $dc, $12, $33, $12, $6c, $11, $89, $10, $8b, $0f, $75, $0e, $47, $0d
+	byte	$04, $0c, $ae, $0a, $47, $09, $d2, $07, $50, $06, $c5, $04, $32, $03, $9a, $01
+	byte	$00, $00, $66, $fe, $ce, $fc, $3b, $fb, $b0, $f9, $2e, $f8, $b9, $f6, $52, $f5
+	byte	$fc, $f3, $b9, $f2, $8b, $f1, $75, $f0, $77, $ef, $94, $ee, $cd, $ed, $24, $ed
+	byte	$9a, $ec, $30, $ec, $e8, $eb, $c2, $eb, $bf, $eb, $df, $eb, $24, $ec, $8d, $ec
+	byte	$1a, $ed, $cb, $ed, $a0, $ee, $98, $ef, $b4, $f0, $f1, $f1, $4f, $f3, $ce, $f4
+	byte	$6b, $f6, $26, $f8, $fd, $f9, $ee, $fb, $f8, $fd, $19, $00, $4e, $02, $97, $04
+	byte	$f0, $06, $58, $09, $cc, $0b, $4a, $0e, $d0, $10, $5b, $13, $ea, $15, $78, $18
+	byte	$06, $1b, $8f, $1d, $11, $20, $8b, $22, $fa, $24, $5b, $27, $ad, $29, $ee, $2b
+	byte	$1b, $2e, $33, $30, $33, $32, $1b, $34, $e8, $35, $99, $37, $2c, $39, $a1, $3a
+	byte	$f6, $3b, $2a, $3d, $3c, $3e, $2c, $3f, $f9, $3f, $a3, $40, $28, $41, $89, $41
+	byte	$c6, $41, $df, $41, $d4, $41, $a6, $41, $54, $41, $e0, $40, $49, $40, $92, $3f
+	byte	$ba, $3e, $c2, $3d, $ad, $3c, $7a, $3b, $2b, $3a, $c2, $38, $3f, $37, $a5, $35
+	byte	$f4, $33, $2f, $32, $56, $30, $6b, $2e, $71, $2c, $68, $2a, $52, $28, $31, $26
+	byte	$06, $24, $d4, $21, $9b, $1f, $5d, $1d, $1c, $1b, $d9, $18, $95, $16, $53, $14
+	byte	$13, $12, $d6, $0f, $9e, $0d, $6c, $0b, $42, $09, $1f, $07, $05, $05, $f4, $02
+	byte	$ee, $00, $f3, $fe, $04, $fd, $21, $fb, $4a, $f9, $81, $f7, $c4, $f5, $14, $f4
+	byte	$72, $f2, $dd, $f0, $55, $ef, $d9, $ed, $6b, $ec, $08, $eb, $b1, $e9, $66, $e8
+	byte	$25, $e7, $ee, $e5, $c1, $e4, $9c, $e3, $7f, $e2, $69, $e1, $5a, $e0, $4f, $df
+	byte	$49, $de, $46, $dd, $46, $dc, $47, $db, $49, $da, $49, $d9, $49, $d8, $45, $d7
+	byte	$3f, $d6, $34, $d5, $23, $d4, $0c, $d3, $ef, $d1, $c9, $d0, $9b, $cf, $63, $ce
+	byte	$22, $cd, $d6, $cb, $7f, $ca, $1d, $c9, $af, $c7, $35, $c6, $af, $c4, $1c, $c3
+	byte	$7d, $c1, $d2, $bf, $1b, $be, $58, $bc, $8a, $ba, $b0, $b8, $cc, $b6, $de, $b4
+	byte	$e7, $b2, $e7, $b0, $e0, $ae, $d3, $ac, $c0, $aa, $a9, $a8, $8f, $a6, $73, $a4
+	byte	$57, $a2, $3c, $a0, $24, $9e, $11, $9c, $03, $9a, $fc, $97, $ff, $95, $0d, $94
+	byte	$27, $92, $50, $90, $8a, $8e, $d5, $8c, $35, $8b, $a9, $89, $36, $88, $db, $86
+	byte	$9b, $85, $77, $84, $71, $83, $8b, $82, $c5, $81, $21, $81, $a1, $80, $46, $80
+	byte	$10, $80, $01, $80, $19, $80, $5a, $80, $c3, $80, $56, $81, $12, $82, $f9, $82
+	byte	$09, $84, $43, $85, $a7, $86, $34, $88, $ea, $89, $c8, $8b, $ce, $8d, $f9, $8f
+	byte	$4b, $92, $c0, $94, $58, $97, $12, $9a, $eb, $9c, $e2, $9f, $f5, $a2, $23, $a6
+	byte	$68, $a9, $c4, $ac, $33, $b0, $b3, $b3, $42, $b7, $de, $ba, $83, $be, $30, $c2
+	byte	$e2, $c5, $96, $c9, $4a, $cd, $fb, $d0, $a6, $d4, $48, $d8, $e0, $db, $6b, $df
+	byte	$e6, $e2, $4f, $e6, $a4, $e9, $e2, $ec, $07, $f0, $12, $f3, $ff, $f5, $cf, $f8
+	byte	$7e, $fb, $0b, $fe, $75, $00, $bb, $02, $db, $04, $d5, $06, $a8, $08, $53, $0a
+	byte	$d5, $0b, $2f, $0d, $60, $0e, $68, $0f, $48, $10, $ff, $10, $8f, $11, $f7, $11
+	byte	$39, $12, $56, $12, $4f, $12, $25, $12, $d9, $11, $6d, $11, $e2, $10, $3b, $10
+	byte	$79, $0f, $9d, $0e, $ab, $0d, $a3, $0c, $88, $0b, $5d, $0a, $22, $09, $dc, $07
+	byte	$8b, $06, $32, $05, $d3, $03, $71, $02, $0e, $01, $ac, $ff, $4c, $fe, $f2, $fc
+	byte	$9f, $fb, $55, $fa, $15, $f9, $e3, $f7, $be, $f6, $aa, $f5, $a7, $f4, $b7, $f3
+	byte	$db, $f2, $14, $f2, $63, $f1, $ca, $f0, $47, $f0, $de, $ef, $8d, $ef, $55, $ef
+	byte	$36, $ef, $31, $ef, $45, $ef, $72, $ef, $b8, $ef, $16, $f0, $8b, $f0, $18, $f1
+	byte	$bb, $f1, $73, $f2, $3f, $f3, $1e, $f4, $0f, $f5, $11, $f6, $22, $f7, $40, $f8
+	byte	$6b, $f9, $a1, $fa, $df, $fb, $26, $fd, $71, $fe, $c1, $ff, $14, $01, $67, $02
+	byte	$b9, $03, $08, $05, $53, $06, $98, $07, $d6, $08, $0a, $0a, $33, $0b, $51, $0c
+	byte	$60, $0d, $61, $0e, $52, $0f, $30, $10, $fd, $10, $b6, $11, $5a, $12, $e9, $12
+	byte	$61, $13, $c3, $13, $0d, $14, $3f, $14, $59, $14, $5b, $14, $43, $14, $13, $14
+	byte	$ca, $13, $68, $13, $ed, $12, $5b, $12, $b1, $11, $ef, $10, $17, $10, $29, $0f
+	byte	$25, $0e, $0e, $0d, $e2, $0b, $a4, $0a, $55, $09, $f5, $07, $86, $06, $09, $05
+	byte	$7f, $03, $ea, $01, $4a, $00, $a1, $fe, $f1, $fc, $3b, $fb, $80, $f9, $c2, $f7
+	byte	$01, $f6, $40, $f4, $80, $f2, $c1, $f0, $06, $ef, $50, $ed, $9f, $eb, $f5, $e9
+	byte	$54, $e8, $bc, $e6, $2e, $e5, $ac, $e3, $35, $e2, $cc, $e0, $71, $df, $24, $de
+	byte	$e7, $dc, $b9, $db, $9b, $da, $8e, $d9, $92, $d8, $a6, $d7, $cc, $d6, $03, $d6
+	byte	$4b, $d5, $a4, $d4, $0e, $d4, $88, $d3, $11, $d3, $ab, $d2, $52, $d2, $09, $d2
+	byte	$cc, $d1, $9c, $d1, $78, $d1, $5e, $d1, $4e, $d1, $47, $d1, $48, $d1, $4e, $d1
+	byte	$5a, $d1, $6a, $d1, $7c, $d1, $90, $d1, $a4, $d1, $b7, $d1, $c7, $d1, $d3, $d1
+	byte	$da, $d1, $db, $d1, $d4, $d1, $c5, $d1, $ab, $d1, $87, $d1, $56, $d1, $18, $d1
+	byte	$cc, $d0, $72, $d0, $08, $d0, $8d, $cf, $02, $cf, $66, $ce, $b7, $cd, $f7, $cc
+	byte	$25, $cc, $41, $cb, $4b, $ca, $43, $c9, $2a, $c8, $ff, $c6, $c4, $c5, $7a, $c4
+	byte	$20, $c3, $b9, $c1, $44, $c0, $c4, $be, $39, $bd, $a6, $bb, $0a, $ba, $69, $b8
+	byte	$c3, $b6, $1b, $b5, $73, $b3, $cc, $b1, $28, $b0, $89, $ae, $f2, $ac, $65, $ab
+	byte	$e4, $a9, $70, $a8, $0d, $a7, $bd, $a5, $81, $a4, $5c, $a3, $50, $a2, $5f, $a1
+	byte	$8c, $a0, $d8, $9f, $45, $9f, $d5, $9e, $8a, $9e, $66, $9e, $69, $9e, $96, $9e
+	byte	$ed, $9e, $71, $9f, $21, $a0, $00, $a1, $0c, $a2, $48, $a3, $b3, $a4, $4e, $a6
+	byte	$19, $a8, $13, $aa, $3d, $ac, $95, $ae, $1b, $b1, $cf, $b3, $af, $b6, $bb, $b9
+	byte	$f0, $bc, $4d, $c0, $d1, $c3, $7a, $c7, $46, $cb, $32, $cf, $3d, $d3, $64, $d7
+	byte	$a5, $db, $fd, $df, $69, $e4, $e7, $e8, $74, $ed, $0c, $f2, $ae, $f6, $55, $fb
+'-' envelope file "percus.h2"
+	byte	$68, $32, $00, $01, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$ff, $fd, $fc, $fa, $f8, $f6, $f4, $f2, $f0, $ee, $ec, $ea, $e8, $e6, $e4, $e1
+	byte	$df, $dd, $db, $d8, $d6, $d4, $d1, $cf, $cc, $ca, $c7, $c5, $c2, $bf, $bd, $ba
+	byte	$b7, $b5, $b2, $b0, $ad, $aa, $a7, $a5, $a2, $a0, $9d, $9b, $99, $97, $95, $93
+	byte	$91, $8f, $8d, $8c, $8a, $88, $86, $84, $82, $80, $7e, $7d, $7b, $79, $78, $76
+	byte	$75, $73, $72, $70, $6f, $6e, $6d, $6b, $6a, $68, $67, $66, $64, $63, $62, $60
+	byte	$5f, $5e, $5c, $5b, $5a, $59, $58, $57, $56, $55, $54, $53, $52, $51, $50, $4f
+	byte	$4e, $4d, $4c, $4c, $4b, $4a, $49, $48, $47, $46, $45, $44, $43, $42, $41, $40
+	byte	$3f, $3e, $3d, $3d, $3c, $3c, $3b, $3a, $3a, $39, $38, $38, $37, $36, $36, $35
+	byte	$34, $34, $33, $32, $31, $31, $30, $2f, $2f, $2e, $2d, $2d, $2c, $2b, $2b, $2a
+	byte	$29, $29, $28, $27, $27, $26, $25, $25, $24, $24, $23, $22, $22, $21, $20, $20
+	byte	$1f, $1e, $1e, $1e, $1d, $1d, $1d, $1c, $1c, $1b, $1b, $1a, $19, $19, $18, $17
+	byte	$17, $16, $15, $15, $14, $13, $13, $12, $11, $11, $10, $0f, $0f, $0e, $0d, $0d
+	byte	$0c, $0c, $0b, $0b, $0b, $0a, $0a, $0a, $09, $09, $09, $08, $08, $08, $07, $07
+	byte	$07, $06, $06, $06, $05, $05, $05, $04, $04, $04, $03, $03, $03, $02, $02, $02
+	byte	$01, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	alignl
+_Audio2_003_dat_
+'-' 
+'-' audio       	org     0
+'-' 
+'-'             	rdlong  mailbox2, ptra++     ' get start address of all mailboxes
+	byte	$61, $6f, $05, $fb
+'-'             	rdlong  scbase, ptra++       ' get start address of scope buffer
+	byte	$61, $c5, $05, $fb
+'-'             	rdlong  hubptr, ptra++       ' get start address of PSRAM cache
+	byte	$61, $d1, $05, $fb
+'-' 
+'-'             	cogid   pa                   ' compute cogid
+	byte	$01, $ec, $63, $fd
+'-'             	mul     pa, #12              ' and mailbox spacing
+	byte	$0c, $ec, $07, $fa
+'-'             	add     mailbox2, pa         ' add offset to find this COG's mailbox
+	byte	$f6, $6f, $01, $f1
+'-'             	mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
+	byte	$b7, $6c, $01, $f6
+'-' 
+'-'             	mov     ptrb,#0              ' A tail pointer for the buffer
+	byte	$00, $f2, $07, $f6
+'-'             	wrpin   dac2,#left           ' PWM DACs at 44100@339 MHz
+	byte	$0e, $ce, $05, $fc
+'-'             	wxpin   sr44100,#left     	 ' 30*256
+	byte	$0e, $d2, $15, $fc
+'-'             	wrpin   dac2,#right
+	byte	$0f, $ce, $05, $fc
+'-'             	wxpin   sr44100,#right    
+	byte	$0f, $d2, $15, $fc
+'-'             	dirh    #left addpins 1
+	byte	$41, $9c, $64, $fd
+'-'             	setse1  #%001<<6 + left      ' Set the event - DAC empty
+	byte	$20, $9c, $64, $fd
+'-'  
+'-'             
+'-' '---------------------------------------------------------------------------------        
+'-' '----------------- The main loop -------------------------------------------------
+'-' '---------------------------------------------------------------------------------
+'-' 
+'-' loop       	mov 	    cn,#15 '7
+	byte	$0f, $aa, $05, $f6
+'-'               '  waitx ##33000000
+'-' '----------------------------------------------------------------------------------
+'-' '------------- Get parameters and execute commands if any -------------------------
+'-' '----------------------------------------------------------------------------------
+'-' 
+'-' 
+'-' p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
+	byte	$d5, $62, $01, $f6
+'-'             	shl     channeladd,#6
+	byte	$06, $62, $65, $f0
+'-'             	add     ptra,channeladd
+	byte	$b1, $f0, $03, $f1
+'-' 
+'-'             	setq    #13                       	' read parameters
+	byte	$28, $1a, $64, $fd
+'-'             	rdlong  pointer0,ptra
+	byte	$00, $79, $05, $fb
+'-' p408        	bitl    command0,#31 wcz	      	' bit #31 command - set the DAC sample rate
+	byte	$1f, $8c, $1d, $f4
+'-'     	if_nc   jmp     #p404                     	' if not set, proceed
+	byte	$2c, $00, $90, $3d
+'-'             	mov     qq,command0             	' get the new rate
+	byte	$c6, $66, $01, $f6
+'-'             	wxpin   qq,#left addpins 1        	' and program the pins
+	byte	$4e, $66, $15, $fc
+'-'             	getbyte qq,qq,#0 		      	' check if the rate is n*256
+	byte	$b3, $66, $e1, $f8
+'-'             	cmp     qq,#0 wz                         
+	byte	$00, $66, $0d, $f2
+'-'     	if_z    wrpin   dac2,#left addpins 1      	' if yes, set PWM DAC mode
+	byte	$4e, $ce, $05, $ac
+'-'     	if_nz   wrpin   dac,#left addpins 1       	' else set noise DAC mode
+	byte	$4e, $cc, $05, $5c
+'-'                 
+'-'                	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+	byte	$1e, $82, $1d, $f4
+'-'     	if_z    mov     pointer0, #0  
+	byte	$00, $78, $05, $a6
+'-'     	if_z    mov     pointer0h, #0  
+	byte	$00, $7a, $05, $a6
+'-'     	if_z    mov     envph0, #0  
+	byte	$00, $80, $05, $a6
+'-'     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+	byte	$05, $83, $65, $ac
+'-'     	
+'-' p404        	mov     qq,sstart0		     	' check if start>$80000
+	byte	$c1, $66, $01, $f6
+'-' 		and 	qq,##$7FFFFFF 
+	byte	$ff, $ff, $03, $ff, $ff, $67, $05, $f5
+'-'                 cmp 	qq,##$80000 wcz
+	byte	$00, $04, $00, $ff, $00, $66, $1d, $f2
+'-'     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
+	byte	$b7, $6c, $01, $36
+'-'     	if_lt   mov     mailbox,#0                	' if not, use HUB 
+	byte	$00, $6c, $05, $c6
+'-' 
+'-' p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
+	byte	$c4, $a4, $39, $f9
+'-'     	    	getword avol0,volpan0,#0
+	byte	$c4, $a2, $31, $f9
+'-'     	    	
+'-' '----------------------------------------------------------------------------------
+'-' '------------- Compute the envelope, if exists ------------------------------------
+'-' '----------------------------------------------------------------------------------
+'-'             
+'-'             	cmp     envptr0,#0 wcz     		' read the pointer
+	byte	$00, $8e, $1d, $f2
+'-'     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
+	byte	$20, $00, $00, $af, $00, $f4, $05, $a6
+'-'     	if_z    jmp     #p410				' and run away	
+	byte	$54, $00, $90, $ad
+'-' 
+'-'            	add     envph0,envspd0			' envelope PA update
+	byte	$c8, $80, $01, $f1
+'-'            	           
+'-'       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
+	byte	$c0, $f0, $01, $f6
+'-' 		shr     envhi,#6			' leave 10 bits in hi
+	byte	$06, $f0, $45, $f0
+'-' 	   	getword envlo,envhi,#0              	' and 16 bit in lo
+	byte	$f8, $f2, $31, $f9
+'-' 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
+	byte	$10, $f0, $45, $f0
+'-' 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
+	byte	$c9, $f0, $19, $f2
+'-' 	    	'debug(udec(envhi,envlen0))
+'-'     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
+	byte	$c9, $f0, $01, $36
+'-'     	if_ge   mov     envlo,#0
+	byte	$00, $f2, $05, $36
+'-'     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
+	byte	$c9, $80, $01, $36
+'-'     	if_ge   shl     envph0,#22
+	byte	$16, $80, $65, $30
+'-' 
+'-'             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
+	byte	$f8, $f4, $01, $f6
+'-'             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
+	byte	$01, $f4, $65, $f0
+'-'             	add 	envs1,envptr0                   ' and add it to the pointer
+	byte	$c7, $f4, $01, $f1
+'-'             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
+	byte	$fa, $f4, $01, $fb
+'-'             	getword envs2,envs1,#1			' then separate them		
+	byte	$fa, $f6, $39, $f9
+'-'            	getword envs1,envs1,#0
+	byte	$fa, $f4, $31, $f9
+'-'             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
+	byte	$f9, $f6, $01, $fa
+'-'             	not     envlo
+	byte	$f9, $f2, $21, $f6
+'-'             	mul     envs1,envlo
+	byte	$f9, $f4, $01, $fa
+'-'             	add     envs1,envs2
+	byte	$fb, $f4, $01, $f1
+'-'             	shr     envs1,#18			' we need only 14 bits for scas
+	byte	$12, $f4, $45, $f0
+'-'               
+'-' '----------------------------------------------------------------------------------
+'-' '------------- Generate the noise if bit 27 of the pointer is set -----------------
+'-' '----------------------------------------------------------------------------------
+'-' 
+'-' p410        	testb   sstart0, #27 wz
+	byte	$1b, $82, $0d, $f4
+'-'     	if_z    getrnd  spl
+	byte	$1b, $68, $61, $ad
+'-'     	if_z    jmp     #p406
+	byte	$9c, $00, $90, $ad
+'-'     	
+'-' '----------------------------------------------------------------------------------
+'-' '------------- Get the sample -----------------------------------------------------
+'-' '----------------------------------------------------------------------------------    	
+'-'  
+'-' 		mov	oldptrh,pointer0h
+	byte	$bd, $a6, $01, $f6
+'-'            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
+	byte	$c5, $9e, $f9, $f8
+'-'            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
+	byte	$08, $8a, $65, $f0
+'-'            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
+	byte	$c5, $78, $19, $f1
+'-'            	                                                                                                     'debug(udec(afreq0))  
+'-'            	addx	pointer0h,afreq0  
+	byte	$cf, $7a, $21, $f1
+'-'                                                                                                           '       	debug(udec(pointer0h, pointer0))
+'-' 		cmp	pointer0h,oldptrh wcz
+	byte	$d3, $7a, $19, $f2
+'-' 
+'-' 	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
+	byte	$50, $00, $90, $ad
+'-'      	
+'-'             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
+	byte	$1f, $82, $0d, $f4
+'-'      	if_z    shl     pointer0h,#1        
+	byte	$01, $7a, $65, $a0
+'-'             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
+	byte	$1c, $82, $0d, $f4
+'-'      	if_z    shl     pointer0h,#1        
+	byte	$01, $7a, $65, $a0
+'-' 												'debug(udec(pointer0h))
+'-'             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+	byte	$c3, $7a, $19, $f2
+'-'    	if_ge   sub     pointer0h,lend0       
+	byte	$c3, $7a, $81, $31
+'-'         if_ge   add     pointer0h,lstart0
+	byte	$c2, $7a, $01, $31
+'-'             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+	byte	$c3, $7a, $19, $f2
+'-'         if_ge   mov	pointer0h,lend0	
+	byte	$c3, $7a, $01, $36
+'-'         	   debug(udec(lstart0,lend0,pointer0h))	
+'-'                        	
+'-'             	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
+	byte	$bd, $66, $01, $f6
+'-'            	add     qq,sstart0            
+	byte	$c1, $66, $01, $f1
+'-'            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
+	byte	$ff, $6d, $5d, $f2
+'-'     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
+	byte	$b3, $68, $e1, $ea
+'-'     	if_gt   call    #cache_read
+	byte	$f0, $00, $b0, $1d
+'-'                 testb   sstart0,#31 wz 
+	byte	$1f, $82, $0d, $f4
+'-'     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
+	byte	$08, $68, $65, $50
+'-'         if_z    shr     pointer0h,#1
+	byte	$01, $7a, $45, $a0
+'-'                testb   sstart0,#28 wz            
+	byte	$1c, $82, $0d, $f4
+'-'     	if_z    shr     pointer0h,#1    
+	byte	$01, $7a, $45, $a0
+'-'                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
+	byte	$b4, $7e, $41, $f9
+'-'                 
+'-'            
+'-'                 
+'-'                 
+'-' p411	      	getword spl,rawspl0,#1
+	byte	$bf, $68, $39, $f9
+'-' 		getword oldspl,rawspl0,#1		' then separate them		
+	byte	$bf, $9c, $39, $f9
+'-' 		mov	envlo,pointer0
+	byte	$bc, $f2, $01, $f6
+'-' 		shr 	envlo,#18
+	byte	$12, $f2, $45, $f0
+'-' '		     debug(udec(spl))
+'-' 
+'-' 		
+'-'             	scas    oldspl,envlo                     	' and do linear interpolation
+	byte	$f9, $9c, $31, $fa
+'-'             	mov 	oldspl,0-0
+	byte	$00, $9c, $01, $f6
+'-'             	not     envlo
+	byte	$f9, $f2, $21, $f6
+'-'           	and     envlo,##$3FFF
+	byte	$1f, $00, $00, $ff, $ff, $f3, $05, $f5
+'-'            	scas    spl,envlo
+	byte	$f9, $68, $31, $fa
+'-'             	mov     spl,0-0
+	byte	$00, $68, $01, $f6
+'-'                 add     spl, oldspl
+	byte	$ce, $68, $01, $f1
+'-' 
+'-'          		
+'-' 		 
+'-' p406        	scas    spl, envs1
+	byte	$fa, $68, $31, $fa
+'-'             	mov     spl,0-0
+	byte	$00, $68, $01, $f6
+'-'             	scas    spl,avol0                 	' apply volume
+	byte	$d1, $68, $31, $fa
+'-'             	mov     spl,0-0
+	byte	$00, $68, $01, $f6
+'-'  
+'-'             	scas    spl,apan0                 	' apply pan
+	byte	$d2, $68, $31, $fa
+'-'             	mov     ls0,0-0
+	byte	$00, $b4, $01, $f6
+'-'             	mov     qq,##16384
+	byte	$20, $00, $00, $ff, $00, $66, $05, $f6
+'-'             	sub     qq,apan0
+	byte	$d2, $66, $81, $f1
+'-'             	scas    spl,qq
+	byte	$b3, $68, $31, $fa
+'-'             	mov     rs0, 0-0
+	byte	$00, $b6, $01, $f6
+'-'             	
+'-'             	
+'-'      
+'-'                 setword sample0,rs0,#1           ' pack samples into long
+	byte	$db, $7c, $29, $f9
+'-'                 setword sample0,ls0,#0
+	byte	$da, $7c, $21, $f9
+'-'                 
+'-'                 add  lsample,ls0
+	byte	$da, $70, $01, $f1
+'-'                 add  rsample,rs0
+	byte	$db, $72, $01, $f1
+'-'                 
+'-'             
+'-'             bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointers needs resetting  
+	byte	$1e, $82, $1d, $f4
+'-'     if_z    mov     pointer0, #0  
+	byte	$00, $78, $05, $a6
+'-'     if_z    mov     pointer0h, #0  
+	byte	$00, $7a, $05, $a6
+'-'     if_z    mov     envph0, #0  
+	byte	$00, $80, $05, $a6
+'-'     if_z    wrlong  sstart0, ptra[5]          ' reset bit #30 in hub
+	byte	$05, $83, $65, $ac
+'-' 
+'-' 
+'-'             
+'-' p403        setq #4                          ' write new pointer, sample values and env pointer to the hub
+	byte	$28, $08, $64, $fd
+'-' 
+'-'             wrlong  pointer0,ptra
+	byte	$00, $79, $65, $fc
+'-'             sub     ptra, channeladd         ' reset the pointer to channel parameters
+	byte	$b1, $f0, $83, $f1
+'-'                       
+'-' 
+'-'             djnf    cn, #p401
+	byte	$8a, $ab, $7d, $fb
+'-'             bitnot rsample,#15
+	byte	$0f, $72, $e5, $f4
+'-'             bitnot lsample, #15
+	byte	$0f, $70, $e5, $f4
+'-'             
+'-'             waitse1
+	byte	$24, $28, $60, $fd
+'-'    '         waitx ##33800000
+'-'      
+'-'             
+'-'             wypin   lsample,#left        '2      
+	byte	$0e, $70, $25, $fc
+'-'             
+'-'             wypin   rsample,#right       '4
+	byte	$0f, $72, $25, $fc
+'-'             mov rsample,#0
+	byte	$00, $72, $05, $f6
+'-'             mov lsample, #0
+	byte	$00, $70, $05, $f6
+'-' 
+'-'  
+'-' 		
+'-' 	    cmp     scbase,#0 wz
+	byte	$00, $c4, $0d, $f2
+'-'     if_z    jmp #p302	   
+	byte	$20, $00, $90, $ad
+'-'  
+'-'  
+'-'             incmod  scope,#1 wc            '  todo: scope speed instead of const  
+	byte	$01, $ca, $15, $f7
+'-'    if_c    mov scptr2,scptr
+	byte	$e3, $c8, $01, $c6
+'-'     if_c    shl scptr2,#2
+	byte	$02, $c8, $65, $c0
+'-'     if_c    add scptr2,scbase     
+	byte	$e2, $c8, $01, $c1
+'-'             wrlong scptr2,#$60
+	byte	$60, $c8, $65, $fc
+'-'     if_c    wrlong oldsample,scptr2
+	byte	$e4, $bc, $61, $cc
+'-'     if_c    incmod scptr,##639
+	byte	$01, $00, $00, $cf, $7f, $c6, $05, $c7
+'-' 			    
+'-' 
+'-'             
+'-'             
+'-'             
+'-'             
+'-'             
+'-'  p302           jmp     #loop            'loop
+	byte	$dc, $fd, $9f, $fd
+'-' 
+'-' '----------------------------------------------------------------------------------
+'-' '------------- This is the end of the main loop -----------------------------------
+'-' '----------------------------------------------------------------------------------
+'-' 
+'-' '----------------------------------------------------------------------------------
+'-' '------------- PSRAM cache ----------- --------------------------------------------
+'-' '----------------------------------------------------------------------------------
+'-' 
+'-' ' There are 8 cache pointers for 8 channels
+'-' ' if 24 higher bits of address=cache, then get a word from the cache
+'-' ' else load the cache from PSRAM, update the pointer, then read a sample
+'-' 
+'-' 
+'-' cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
+	byte	$b3, $ea, $e1, $f8
+'-'             
+'-' 	   	mov     addrhi,qq		
+	byte	$b3, $ec, $01, $f6
+'-' 	    	shr     addrhi,#8		        ' get 24 upper bits
+	byte	$08, $ec, $45, $f0
+'-' 	    	alts    cn,#cache1            
+	byte	$ea, $aa, $95, $f9
+'-' 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
+	byte	$00, $ec, $09, $f2
+'-'     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+	byte	$34, $00, $90, $ad
+'-' 	
+'-' p702	    	altd    cn,#cache1			' cache miss. 
+	byte	$ea, $aa, $8d, $f9
+'-' 	    	mov     0-0,addrhi                  	' update the pointer
+	byte	$f6, $00, $00, $f6
+'-' 	    	mov     cmd,addrhi			' prepare the mailbox
+	byte	$f6, $e4, $01, $f6
+'-' 	    	shl     cmd,#8
+	byte	$08, $e4, $65, $f0
+'-'             	setnib  cmd, #%1011, #7             	' read burst from the external memory
+	byte	$0b, $e4, $3d, $f8
+'-'             	mov     hubaddr,cn                  	' to the channel cache
+	byte	$d5, $e6, $01, $f6
+'-'             	shl     hubaddr,#8                  	'
+	byte	$08, $e6, $65, $f0
+'-'             	add     hubaddr,hubptr 
+	byte	$e8, $e6, $01, $f1
+'-'             	mov     count,#256                  	' 256 bytes
+	byte	$00, $e9, $05, $f6
+'-'             	setq    #2                          	' write 3 longs
+	byte	$28, $04, $64, $fd
+'-'             	wrlong  cmd, mailbox                	' run it
+	byte	$b6, $e4, $61, $fc
+'-' poll1       	rdlong  cmd, mailbox                	' poll mailbox for result
+	byte	$b6, $e4, $01, $fb
+'-'             	tjs     cmd, #poll1                 	' retry until valid 
+	byte	$fe, $e5, $b5, $fb
+'-'             
+'-' 	
+'-' p701	    	mov     qq,cn				' cache hit
+	byte	$d5, $66, $01, $f6
+'-' 	    	shl     qq,#8				' compute the cache start
+	byte	$08, $66, $65, $f0
+'-' 	    	add     qq,hubptr
+	byte	$e8, $66, $01, $f1
+'-' 	    	add	qq,addrlo			' add 8 lower bits to the cache addredd
+	byte	$f5, $66, $01, $f1
+'-'     	_ret_   rdword  spl,qq                      	' read a long from the cache
+	byte	$b3, $68, $e1, $0a
+'-'           
+'-'   
+'-' 
+'-' 
+'-' '---------------------------------------------------------------------------
+'-' '------- Variables ---------------------------------------------------------
+'-' '---------------------------------------------------------------------------
+'-' 
+'-' ' constants
+'-' 
+'-' a40000000   long $40000000
+	byte	$00, $00, $00, $40
+'-' a41000000   long $41000000  ' this const has to be immediately before time0 due to djnz loop initial pointer pointing one long before
+	byte	$00, $00, $00, $41
+'-' 
+'-' 
+'-' 
+'-' 
+'-' 
+'-' channeladd long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' front       long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ' temporary variables 
+'-' qq          long 0
+	byte	$00, $00, $00, $00
+'-' spl         long 0
+	byte	$00, $00, $00, $00
+'-' zero        long 0
+	byte	$00, $00, $00, $00
+'-' mailbox     long 0
+	byte	$00, $00, $00, $00
+'-' mailbox2 long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ' Interrupt ISR variables
+'-' 
+'-' lsample     long 0
+	byte	$00, $00, $00, $00
+'-' rsample     long 0
+	byte	$00, $00, $00, $00
+'-' lsnext      long 0
+	byte	$00, $00, $00, $00
+'-' rsnext      long 0 
+	byte	$00, $00, $00, $00
+'-' 
+'-' ' channel parameter block
+'-' 
+'-' pointer0    long 0   
+	byte	$00, $00, $00, $00
+'-' pointer0h   long 0  
+	byte	$00, $00, $00, $00
+'-' sample0     long 0
+	byte	$00, $00, $00, $00
+'-' rawspl0	    long 0
+	byte	$00, $00, $00, $00
+'-' envph0	    long 0
+	byte	$00, $00, $00, $00
+'-' sstart0     long 0     ' start pointer and type at bit 31
+	byte	$00, $00, $00, $00
+'-' lstart0     long 0
+	byte	$00, $00, $00, $00
+'-' lend0       long 0
+	byte	$00, $00, $00, $00
+'-' volpan0     long 0
+	byte	$00, $00, $00, $00
+'-' freqskip0   long 0
+	byte	$00, $00, $00, $00
+'-' command0    long 0
+	byte	$00, $00, $00, $00
+'-' envptr0	    long 0
+	byte	$00, $00, $00, $00
+'-' envspd0	    long 0
+	byte	$00, $00, $00, $00
+'-' envlen0	    long 0
+	byte	$00, $00, $00, $00
+'-' res5	    long 0
+	byte	$00, $00, $00, $00
+'-' res6	    long 0
+	byte	$00, $00, $00, $00
+'-' res7	    long 0
+	byte	$00, $00, $00, $00
+'-' res8	    long 0
+	byte	$00, $00, $00, $00
+'-' oldspl		long 0
+	byte	$00, $00, $00, $00
+'-' afreq0      long 0
+	byte	$00, $00, $00, $00
+'-' askip0      long 0
+	byte	$00, $00, $00, $00
+'-' avol0       long 0
+	byte	$00, $00, $00, $00
+'-' apan0       long 0
+	byte	$00, $00, $00, $00
+'-' oldptrh	    long 0
+	byte	$00, $00, $00, $00
+'-' oldt0       long $FFFFFFFF    'Temporary time variables
+	byte	$ff, $ff, $ff, $ff
+'-' cn          long 0
+	byte	$00, $00, $00, $00
+'-' ct          long 0
+	byte	$00, $00, $00, $00
+'-' dt0         long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ' Samples
+'-' oldls       long 0
+	byte	$00, $00, $00, $00
+'-' oldrs       long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ls0         long 0
+	byte	$00, $00, $00, $00
+'-' rs0         long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ls          long 0    
+	byte	$00, $00, $00, $00
+'-' rs          long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' oldsample   long 0
+	byte	$00, $00, $00, $00
+'-' newsample   long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' nrsample    long 0
+	byte	$00, $00, $00, $00
+'-' nlsample    long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' scbase long 0
+	byte	$00, $00, $00, $00
+'-' scptr long 0
+	byte	$00, $00, $00, $00
+'-' scptr2 long 0
+	byte	$00, $00, $00, $00
+'-' scope long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' dac         long %10111_00000000_01_00010_0     'random dither, as 90 cycles period needed
+	byte	$44, $00, $17, $00
+'-' dac2        long %10111_00000000_01_00011_0     'pwm, left here for the future use, if any   
+	byte	$46, $00, $17, $00
+'-' 
+'-' hubptr      long $71800
+	byte	$00, $18, $07, $00
+'-' sr44100     long 30*256
+	byte	$00, $1e, $00, $00
+'-' cache1      long 0
+	byte	$00, $00, $00, $00
+'-' cache2      long 0
+	byte	$00, $00, $00, $00
+'-' cache3      long 0
+	byte	$00, $00, $00, $00
+'-' cache4      long 0
+	byte	$00, $00, $00, $00
+'-' cache5      long 0
+	byte	$00, $00, $00, $00
+'-' cache6      long 0
+	byte	$00, $00, $00, $00
+'-' cache7      long 0
+	byte	$00, $00, $00, $00
+'-' cache8      long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' 
+'-' cmd         long 0
+	byte	$00, $00, $00, $00
+'-' hubaddr     long 0
+	byte	$00, $00, $00, $00
+'-' count       long 256
+	byte	$00, $01, $00, $00
+'-' addrlo long 0
+	byte	$00, $00, $00, $00
+'-' addrhi long 0
+	byte	$00, $00, $00, $00
+'-' pointer00 long 0
+	byte	$00, $00, $00, $00
+'-' envhi long 0
+	byte	$00, $00, $00, $00
+'-' envlo long 0
+	byte	$00, $00, $00, $00
+'-' envs1 long 0
+	byte	$00, $00, $00, $00
+'-' envs2 long 0
+	byte	$00, $00, $00, $00
+'-' noise0 long 0
+	byte	$00, $00, $00, $00
+'-' 
+'-' ct1 long 0
+	byte	$00, $00, $00, $00
+'-' ct2 long 0
+	byte	$00, $00, $00, $00
+'-' null  			long 	0,0           ' for channel reset
+	byte	$00, $00, $00, $00, $00, $00, $00, $00
+objmem
+	long	0[259]
+stackspace
+	long	0[1]
+	org	COG_BSS_START
+_var01
+	res	1
+_var02
+	res	1
+_var03
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+arg05
+	res	1
+arg06
+	res	1
+arg07
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+local04
+	res	1
+	fit	480

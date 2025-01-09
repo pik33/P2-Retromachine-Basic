@@ -34,14 +34,13 @@ dim psram as class using "psram.spin2"
 '#endif
 
 dim kbm as class using "usbnew.spin2"
-dim audio as class using "audio096.spin2"
-'dim audio as class using "sa001.spin2"
-
+'dim audio as class using "audio096.spin2"
+dim audio as class using "audio2-003.spin2"
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
 
-const ver$="P2 Retromachine BASIC version 0.49 beta 3"
+const ver$="P2 Retromachine BASIC version 0.51"
 const ver=49
 
 '' ------------------------------- Keyboard constants
@@ -546,7 +545,7 @@ waitvbl
 
 let key=kbm.get_key() 
 let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-if key>0 andalso key<4 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(10): audio.stop(7)
+if key>0 andalso key<4 andalso keyclick=1 then audio.play16(7,@atari2_spl,43,4096,0,1758,10) : audio.stop(7)
 if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
 if key>$80000000 then rptcnt=0 : rpt=0
 if key=0 andalso rpt=1 then rptcnt+=1
@@ -555,7 +554,7 @@ if key<$80000000 then if rptcnt=25 then key3=key2 : rptcnt=21
 '' there is a key pressed and it needs to be processed
 
 if key3<>0 then
-  if keyclick=1 then audio.play(7,keyclick_spl,44100,4096,spl_len)     	' make a click
+  if keyclick=1 then audio.play16(7,keyclick_spl,43,4096,spl_len,spl_len,0) ' make a click
   let key4=scantochar(key3)          
   if leds and 2 = 2 then 						' caps lock
     if key4>96 andalso key4<123 then                 
