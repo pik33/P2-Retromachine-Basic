@@ -138,11 +138,11 @@
 007e8 0f9 2C EC 63 FD |     jmp    pa
 007ec 0fa             | 
 007ec 0fa             | objptr
-007ec 0fa 4C 0E 00 00 | 	long	@objmem
+007ec 0fa E0 0E 00 00 | 	long	@objmem
 007f0 0fb             | ptr__dat__
-007f0 0fb 50 0A 00 00 | 	long	@_dat_
+007f0 0fb 0C 0B 00 00 | 	long	@_dat_
 007f4 0fc             | ptr_stackspace_
-007f4 0fc 58 12 00 00 | 	long	@stackspace
+007f4 0fc 4C 14 00 00 | 	long	@stackspace
 007f8 0fd             | result1
 007f8 0fd 00 00 00 00 | 	long	0
 007fc 0fe             | result2
@@ -152,8 +152,6 @@
 00800                 | 	orgh
 00800                 | hubentry
 00800                 | 
-00800                 | ' 
-00800                 | ' 
 00800                 | ' 
 00800                 | ' '--------------------------------------------------------------
 00800                 | ' '---------- Init the variables, start the cog. ----------------
@@ -184,7 +182,7 @@
 00828                 | ' repeat iii from 0 to 15
 00828     00 10 06 F6 | 	mov	local03, #0
 0082c     0C F4 85 F1 | 	sub	objptr, #12
-00830     D7 BC 48 FB | 	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
+00830     D7 1A 49 FB | 	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
 00834                 | LR__0001
 00834                 | '   long[base+64*iii]:=0
 00834     07 0D 02 F6 | 	mov	local01, local02
@@ -292,492 +290,514 @@
 00994     06 13 02 F1 | 	add	local04, local01
 00998     34 12 06 F1 | 	add	local04, #52
 0099c     09 01 68 FC | 	wrlong	#0, local04
-009a0     01 10 06 F1 | 	add	local03, #1
-009a4     10 10 56 F2 | 	cmps	local03, #16 wc
-009a8     88 FE 9F CD |  if_b	jmp	#LR__0001
-009ac                 | LR__0002
-009ac                 | '   
-009ac                 | ' cog:=coginit(16,@audio,@mailboxaddr)
-009ac     FB 06 02 F6 | 	mov	arg02, ptr__dat__
-009b0     FA 08 02 F6 | 	mov	arg03, objptr
-009b4     10 12 06 F6 | 	mov	local04, #16
-009b8     28 08 62 FD | 	setq	arg03
-009bc     03 13 F2 FC | 	coginit	local04, arg02 wc
-009c0     01 12 66 C6 |  if_b	neg	local04, #1
-009c4                 | ' waitms(10)
-009c4     0A 04 06 F6 | 	mov	arg01, #10
-009c8     18 00 B0 FD | 	call	#__system___waitms
-009cc                 | ' return cog,base
-009cc     07 FD 01 F6 | 	mov	result2, local02
-009d0     09 FB 01 F6 | 	mov	result1, local04
-009d4     E7 F0 03 F6 | 	mov	ptra, fp
-009d8     F2 00 A0 FD | 	call	#popregs_
-009dc                 | _start_ret
-009dc     2D 00 64 FD | 	ret
-009e0                 | hubexit
-009e0     C1 00 80 FD | 	jmp	#cogexit
-009e4                 | 
-009e4                 | __system___waitms
-009e4     02 FF 01 F6 | 	mov	_var01, arg01
-009e8     1A 00 62 FD | 	getct	_var02
-009ec     14 02 06 FB | 	rdlong	_var03, #20
-009f0     D7 14 48 FB | 	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
-009f4                 | LR__0010
-009f4     01 00 00 FF 
-009f8     E8 FF 55 F2 | 	cmps	_var01, ##1000 wc
-009fc     1C 00 90 CD |  if_b	jmp	#LR__0012
-00a00     01 01 02 F1 | 	add	_var02, _var03
-00a04     00 05 02 F6 | 	mov	arg01, _var02
-00a08     00 04 66 FA | 	addct1	arg01, #0
-00a0c     24 22 60 FD | 	waitct1
-00a10     01 00 00 FF 
-00a14     E8 FF 85 F1 | 	sub	_var01, ##1000
-00a18     D8 FF 9F FD | 	jmp	#LR__0010
-00a1c                 | LR__0011
-00a1c                 | LR__0012
-00a1c     01 FE 55 F2 | 	cmps	_var01, #1 wc
-00a20     28 00 90 CD |  if_b	jmp	#LR__0013
-00a24     01 FF 01 FD | 	qmul	_var01, _var03
-00a28     01 00 00 FF 
-00a2c     E8 09 06 F6 | 	mov	arg03, ##1000
-00a30     19 FA 61 FD | 	getqy	result1
-00a34     18 04 62 FD | 	getqx	arg01
-00a38     28 FA 61 FD | 	setq	result1
-00a3c     04 05 12 FD | 	qdiv	arg01, arg03
-00a40     18 04 62 FD | 	getqx	arg01
-00a44     00 05 62 FA | 	addct1	arg01, _var02
-00a48     24 22 60 FD | 	waitct1
-00a4c                 | LR__0013
-00a4c                 | __system___waitms_ret
-00a4c     2D 00 64 FD | 	ret
-00a50                 | 	alignl
-00a50                 | _dat_
-00a50                 | 
-00a50                 | audio       	org     0
-00a50                 | 
-00a50     61 6B 05 FB |             	rdlong  mailbox2, ptra++     ' get start address of all mailboxes
-00a54     61 C1 05 FB |             	rdlong  scbase, ptra++       ' get start address of scope buffer
-00a58     61 CD 05 FB |             	rdlong  hubptr, ptra++       ' get start address of PSRAM cache
-00a5c                 | 
-00a5c     01 EC 63 FD |             	cogid   pa                   ' compute cogid
-00a60     0C EC 07 FA |             	mul     pa, #12              ' and mailbox spacing
-00a64     F6 6B 01 F1 |             	add     mailbox2, pa         ' add offset to find this COG's mailbox
-00a68     B5 68 01 F6 |             	mov     mailbox,mailbox2     ' we need 2 copies of this to ensble switching between hub and psram
-00a6c                 | 
-00a6c     00 F2 07 F6 |             	mov     ptrb,#0              ' A tail pointer for the buffer
-00a70     0E CA 05 FC |             	wrpin   dac2,#left           ' PWM DACs at 44100@339 MHz
-00a74     0E CE 15 FC |             	wxpin   sr44100,#left     	 ' 30*256
-00a78     0F CA 05 FC |             	wrpin   dac2,#right
-00a7c     0F CE 15 FC |             	wxpin   sr44100,#right    
-00a80     41 9C 64 FD |             	dirh    #left addpins 1
-00a84     20 9C 64 FD |             	setse1  #%001<<6 + left      ' Set the event - DAC empty
-00a88                 |  
-00a88                 |             
-00a88                 | '---------------------------------------------------------------------------------        
-00a88                 | '----------------- The main loop -------------------------------------------------
-00a88                 | '---------------------------------------------------------------------------------
-00a88                 | 
-00a88     0F A6 05 F6 | loop       	mov 	    cn,#15 '7
-00a8c                 | 
-00a8c                 | '----------------------------------------------------------------------------------
-00a8c                 | '------------- Get parameters and execute commands if any -------------------------
-00a8c                 | '----------------------------------------------------------------------------------
-00a8c                 | 
-00a8c                 | 
-00a8c     D3 5E 01 F6 | p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
-00a90     06 5E 65 F0 |             	shl     channeladd,#6
-00a94     AF F0 03 F1 |             	add     ptra,channeladd
-00a98                 | 
-00a98     28 1A 64 FD |             	setq    #13                       	' read parameters
-00a9c     00 75 05 FB |             	rdlong  pointer0,ptra
-00aa0     1F 88 1D F4 | p408        	bitl    command0,#31 wcz	      	' bit #31 command - set the DAC sample rate
-00aa4     2C 00 90 3D |     	if_nc   jmp     #p404                     	' if not set, proceed
-00aa8     C4 62 01 F6 |             	mov     qq,command0             	' get the new rate
-00aac     4E 62 15 FC |             	wxpin   qq,#left addpins 1        	' and program the pins
-00ab0     B1 62 E1 F8 |             	getbyte qq,qq,#0 		      	' check if the rate is n*256
-00ab4     00 62 0D F2 |             	cmp     qq,#0 wz                         
-00ab8     4E CA 05 AC |     	if_z    wrpin   dac2,#left addpins 1      	' if yes, set PWM DAC mode
-00abc     4E C8 05 5C |     	if_nz   wrpin   dac,#left addpins 1       	' else set noise DAC mode
-00ac0                 |                 
-00ac0     1E 7E 1D F4 |                	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
-00ac4     00 74 05 A6 |     	if_z    mov     pointer0, #0  
-00ac8     00 76 05 A6 |     	if_z    mov     pointer0h, #0  
-00acc     00 7C 05 A6 |     	if_z    mov     envph0, #0  
-00ad0     05 7F 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
-00ad4                 |     	
-00ad4     BF 62 01 F6 | p404        	mov     qq,sstart0		     	' check if start>$80000
-00ad8     FF FF 03 FF 
-00adc     FF 63 05 F5 | 		and 	qq,##$7FFFFFF 
-00ae0     00 04 00 FF 
-00ae4     00 62 1D F2 |                 cmp 	qq,##$80000 wcz
-00ae8     B5 68 01 36 |     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
-00aec     00 68 05 C6 |     	if_lt   mov     mailbox,#0                	' if not, use HUB 
-00af0                 | 
-00af0     C2 A0 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
-00af4     C2 9E 31 F9 |     	    	getword avol0,volpan0,#0
-00af8                 |     	    	
-00af8                 | '----------------------------------------------------------------------------------
-00af8                 | '------------- Compute the envelope, if exists ------------------------------------
-00af8                 | '----------------------------------------------------------------------------------
-00af8                 |             
-00af8     00 8A 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
-00afc     20 00 00 AF 
-00b00     00 F0 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
-00b04     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
-00b08                 | 
-00b08     C6 7C 01 F1 |            	add     envph0,envspd0			' envelope PA update
-00b0c                 |            	           
-00b0c     BE EC 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
-00b10     06 EC 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
-00b14     F6 EE 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
-00b18     10 EC 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
-00b1c     C7 EC 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
-00b20                 | 	    	'debug(udec(envhi,envlen0))
-00b20     C7 EC 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
-00b24     00 EE 05 36 |     	if_ge   mov     envlo,#0
-00b28     C7 7C 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
-00b2c     16 7C 65 30 |     	if_ge   shl     envph0,#22
-00b30                 | 
-00b30     F6 F0 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
-00b34     01 F0 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
-00b38     C5 F0 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
-00b3c     F8 F0 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
-00b40     F8 F2 39 F9 |             	getword envs2,envs1,#1			' then separate them		
-00b44     F8 F0 31 F9 |            	getword envs1,envs1,#0
-00b48     F7 F2 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
-00b4c     F7 EE 21 F6 |             	not     envlo
-00b50     F7 F0 01 FA |             	mul     envs1,envlo
-00b54     F9 F0 01 F1 |             	add     envs1,envs2
-00b58     12 F0 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
-00b5c                 |               
-00b5c                 | '----------------------------------------------------------------------------------
-00b5c                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
-00b5c                 | '----------------------------------------------------------------------------------
-00b5c                 | 
-00b5c     1B 7E 0D F4 | p410        	testb   sstart0, #27 wz
-00b60     1B 64 61 AD |     	if_z    getrnd  spl
-00b64     94 00 90 AD |     	if_z    jmp     #p406
-00b68                 |     	
-00b68                 | '----------------------------------------------------------------------------------
-00b68                 | '------------- Get the sample -----------------------------------------------------
-00b68                 | '----------------------------------------------------------------------------------    	
-00b68                 |  
-00b68     BB A2 01 F6 | 		mov	oldptrh,pointer0h
-00b6c     C3 9A F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
-00b70     08 86 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
-00b74     C3 74 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
-00b78                 |            	                                                                                                     'debug(udec(afreq0))  
-00b78     CD 76 21 F1 |            	addx	pointer0h,afreq0  
-00b7c                 |                                                                                                           '       	debug(udec(pointer0h, pointer0))
-00b7c     D1 76 19 F2 | 		cmp	pointer0h,oldptrh wcz
-00b80                 | 
-00b80     48 00 90 AD | 	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
-00b84                 |      	
-00b84     1F 7E 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
-00b88     01 76 65 A0 |      	if_z    shl     pointer0h,#1        
-00b8c     1C 7E 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
-00b90     01 76 65 A0 |      	if_z    shl     pointer0h,#1        
-00b94                 | 												'debug(udec(pointer0h))
-00b94     C1 76 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
-00b98     C1 76 81 31 |    	if_ge   sub     pointer0h,lend0       
-00b9c     C0 76 01 31 |         if_ge   add     pointer0h,lstart0
-00ba0                 |         	
-00ba0                 |         	'   debug(udec(pointer0h))	
-00ba0                 |                        	
-00ba0     BB 62 01 F6 |             	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
-00ba4     BF 62 01 F1 |            	add     qq,sstart0            
-00ba8     FF 69 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
-00bac     B1 64 E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
-00bb0     F0 00 B0 1D |     	if_gt   call    #cache_read
-00bb4     1F 7E 0D F4 |                 testb   sstart0,#31 wz 
-00bb8     08 64 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
-00bbc     01 76 45 A0 |         if_z    shr     pointer0h,#1
-00bc0     1C 7E 0D F4 |                testb   sstart0,#28 wz            
-00bc4     01 76 45 A0 |     	if_z    shr     pointer0h,#1    
-00bc8     B2 7A 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
-00bcc                 |                 
-00bcc                 |            
-00bcc                 |                 
-00bcc                 |                 
-00bcc     BD 64 39 F9 | p411	      	getword spl,rawspl0,#1
-00bd0     BD 98 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
-00bd4     BA EE 01 F6 | 		mov	envlo,pointer0
-00bd8     12 EE 45 F0 | 		shr 	envlo,#18
-00bdc                 | '		     debug(udec(spl))
-00bdc                 | 
-00bdc                 | 		
-00bdc     F7 98 31 FA |             	scas    oldspl,envlo                     	' and do linear interpolation
-00be0     00 98 01 F6 |             	mov 	oldspl,0-0
-00be4     F7 EE 21 F6 |             	not     envlo
-00be8     1F 00 00 FF 
-00bec     FF EF 05 F5 |           	and     envlo,##$3FFF
-00bf0     F7 64 31 FA |            	scas    spl,envlo
-00bf4     00 64 01 F6 |             	mov     spl,0-0
-00bf8     CC 64 01 F1 |                 add     spl, oldspl
-00bfc                 | 
-00bfc                 |          		
-00bfc                 | 		 
-00bfc     F8 64 31 FA | p406        	scas    spl, envs1
-00c00     00 64 01 F6 |             	mov     spl,0-0
-00c04     CF 64 31 FA |             	scas    spl,avol0                 	' apply volume
-00c08     00 64 01 F6 |             	mov     spl,0-0
-00c0c                 |  
-00c0c     D0 64 31 FA |             	scas    spl,apan0                 	' apply pan
-00c10     00 B0 01 F6 |             	mov     ls0,0-0
-00c14     20 00 00 FF 
-00c18     00 62 05 F6 |             	mov     qq,##16384
-00c1c     D0 62 81 F1 |             	sub     qq,apan0
-00c20     B1 64 31 FA |             	scas    spl,qq
-00c24     00 B2 01 F6 |             	mov     rs0, 0-0
-00c28                 |             	
-00c28                 |             	
-00c28                 |      
-00c28     D9 78 29 F9 |                 setword sample0,rs0,#1           ' pack samples into long
-00c2c     D8 78 21 F9 |                 setword sample0,ls0,#0
-00c30                 |                 
-00c30     D8 6C 01 F1 |                 add  lsample,ls0
-00c34     D9 6E 01 F1 |                 add  rsample,rs0
-00c38                 |                 
-00c38                 |             
-00c38     1E 7E 1D F4 |             bitl    sstart0, #30 wcz          ' if bit #30 of start pointer is set, the current pointers needs resetting  
-00c3c     00 74 05 A6 |     if_z    mov     pointer0, #0  
-00c40     00 76 05 A6 |     if_z    mov     pointer0h, #0  
-00c44     00 7C 05 A6 |     if_z    mov     envph0, #0  
-00c48     05 7F 65 AC |     if_z    wrlong  sstart0, ptra[5]          ' reset bit #30 in hub
-00c4c                 | 
-00c4c                 | 
-00c4c                 |             
-00c4c     28 08 64 FD | p403        setq #4                          ' write new pointer, sample values and env pointer to the hub
-00c50                 | 
-00c50     00 75 65 FC |             wrlong  pointer0,ptra
-00c54     AF F0 83 F1 |             sub     ptra, channeladd         ' reset the pointer to channel parameters
-00c58                 |                       
-00c58                 | 
-00c58     8C A7 7D FB |             djnf    cn, #p401
-00c5c     0F 6E E5 F4 |             bitnot rsample,#15
-00c60     0F 6C E5 F4 |             bitnot lsample, #15
-00c64                 |             
-00c64     24 28 60 FD |             waitse1
-00c68                 |    '         waitx ##33800000
-00c68                 |      
-00c68                 |             
-00c68     0E 6C 25 FC |             wypin   lsample,#left        '2      
-00c6c                 |             
-00c6c     0F 6E 25 FC |             wypin   rsample,#right       '4
-00c70     00 6E 05 F6 |             mov rsample,#0
-00c74     00 6C 05 F6 |             mov lsample, #0
-00c78                 | 
-00c78                 |  
-00c78                 | 		
-00c78     00 C0 0D F2 | 	    cmp     scbase,#0 wz
-00c7c     20 00 90 AD |     if_z    jmp #p302	   
-00c80                 |  
-00c80                 |  
-00c80     01 C6 15 F7 |             incmod  scope,#1 wc            '  todo: scope speed instead of const  
-00c84     E1 C4 01 C6 |    if_c    mov scptr2,scptr
-00c88     02 C4 65 C0 |     if_c    shl scptr2,#2
-00c8c     E0 C4 01 C1 |     if_c    add scptr2,scbase     
-00c90     60 C4 65 FC |             wrlong scptr2,#$60
-00c94     E2 B8 61 CC |     if_c    wrlong oldsample,scptr2
-00c98     01 00 00 CF 
-00c9c     7F C2 05 C7 |     if_c    incmod scptr,##639
-00ca0                 | 			    
-00ca0                 | 
-00ca0                 |             
-00ca0                 |             
-00ca0                 |             
-00ca0                 |             
-00ca0                 |             
-00ca0     E4 FD 9F FD |  p302           jmp     #loop            'loop
-00ca4                 | 
-00ca4                 | '----------------------------------------------------------------------------------
-00ca4                 | '------------- This is the end of the main loop -----------------------------------
-00ca4                 | '----------------------------------------------------------------------------------
-00ca4                 | 
-00ca4                 | '----------------------------------------------------------------------------------
-00ca4                 | '------------- PSRAM cache ----------- --------------------------------------------
-00ca4                 | '----------------------------------------------------------------------------------
-00ca4                 | 
-00ca4                 | ' There are 8 cache pointers for 8 channels
-00ca4                 | ' if 24 higher bits of address=cache, then get a word from the cache
-00ca4                 | ' else load the cache from PSRAM, update the pointer, then read a sample
-00ca4                 | 
-00ca4                 | 
-00ca4     B1 E6 E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
-00ca8                 |             
-00ca8     B1 E8 01 F6 | 	   	mov     addrhi,qq		
-00cac     08 E8 45 F0 | 	    	shr     addrhi,#8		        ' get 24 upper bits
-00cb0     E8 A6 95 F9 | 	    	alts    cn,#cache1            
-00cb4     00 E8 09 F2 | 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
-00cb8     34 00 90 AD |     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
-00cbc                 | 	
-00cbc     E8 A6 8D F9 | p702	    	altd    cn,#cache1			' cache miss. 
-00cc0     F4 00 00 F6 | 	    	mov     0-0,addrhi                  	' update the pointer
-00cc4     F4 E0 01 F6 | 	    	mov     cmd,addrhi			' prepare the mailbox
-00cc8     08 E0 65 F0 | 	    	shl     cmd,#8
-00ccc     0B E0 3D F8 |             	setnib  cmd, #%1011, #7             	' read burst from the external memory
-00cd0     D3 E2 01 F6 |             	mov     hubaddr,cn                  	' to the channel cache
-00cd4     08 E2 65 F0 |             	shl     hubaddr,#8                  	'
-00cd8     E6 E2 01 F1 |             	add     hubaddr,hubptr 
-00cdc     00 E5 05 F6 |             	mov     count,#256                  	' 256 bytes
-00ce0     28 04 64 FD |             	setq    #2                          	' write 3 longs
-00ce4     B4 E0 61 FC |             	wrlong  cmd, mailbox                	' run it
-00ce8     B4 E0 01 FB | poll1       	rdlong  cmd, mailbox                	' poll mailbox for result
-00cec     FE E1 B5 FB |             	tjs     cmd, #poll1                 	' retry until valid 
-00cf0                 |             
-00cf0                 | 	
-00cf0     D3 62 01 F6 | p701	    	mov     qq,cn				' cache hit
-00cf4     08 62 65 F0 | 	    	shl     qq,#8				' compute the cache start
-00cf8     E6 62 01 F1 | 	    	add     qq,hubptr
-00cfc     F3 62 01 F1 | 	    	add	qq,addrlo			' add 8 lower bits to the cache addredd
-00d00     B1 64 E1 0A |     	_ret_   rdword  spl,qq                      	' read a long from the cache
-00d04                 |           
-00d04                 |   
-00d04                 | 
-00d04                 | 
-00d04                 | '---------------------------------------------------------------------------
-00d04                 | '------- Variables ---------------------------------------------------------
-00d04                 | '---------------------------------------------------------------------------
-00d04                 | 
-00d04                 | ' constants
-00d04                 | 
-00d04     00 00 00 40 | a40000000   long $40000000
-00d08     00 00 00 41 | a41000000   long $41000000  ' this const has to be immediately before time0 due to djnz loop initial pointer pointing one long before
-00d0c                 | 
-00d0c                 | 
-00d0c                 | 
-00d0c                 | 
-00d0c                 | 
-00d0c     00 00 00 00 | channeladd long 0
-00d10                 | 
-00d10     00 00 00 00 | front       long 0
-00d14                 | 
-00d14                 | ' temporary variables 
-00d14     00 00 00 00 | qq          long 0
-00d18     00 00 00 00 | spl         long 0
-00d1c     00 00 00 00 | zero        long 0
-00d20     00 00 00 00 | mailbox     long 0
-00d24     00 00 00 00 | mailbox2 long 0
-00d28                 | 
-00d28                 | ' Interrupt ISR variables
-00d28                 | 
-00d28     00 00 00 00 | lsample     long 0
-00d2c     00 00 00 00 | rsample     long 0
-00d30     00 00 00 00 | lsnext      long 0
-00d34     00 00 00 00 | rsnext      long 0 
-00d38                 | 
-00d38                 | ' channel parameter block
-00d38                 | 
-00d38     00 00 00 00 | pointer0    long 0   
-00d3c     00 00 00 00 | pointer0h   long 0  
-00d40     00 00 00 00 | sample0     long 0
-00d44     00 00 00 00 | rawspl0	    long 0
-00d48     00 00 00 00 | envph0	    long 0
-00d4c     00 00 00 00 | sstart0     long 0     ' start pointer and type at bit 31
-00d50     00 00 00 00 | lstart0     long 0
-00d54     00 00 00 00 | lend0       long 0
-00d58     00 00 00 00 | volpan0     long 0
-00d5c     00 00 00 00 | freqskip0   long 0
-00d60     00 00 00 00 | command0    long 0
-00d64     00 00 00 00 | envptr0	    long 0
-00d68     00 00 00 00 | envspd0	    long 0
-00d6c     00 00 00 00 | envlen0	    long 0
-00d70     00 00 00 00 | res5	    long 0
-00d74     00 00 00 00 | res6	    long 0
-00d78     00 00 00 00 | res7	    long 0
-00d7c     00 00 00 00 | res8	    long 0
-00d80     00 00 00 00 | oldspl		long 0
-00d84     00 00 00 00 | afreq0      long 0
-00d88     00 00 00 00 | askip0      long 0
-00d8c     00 00 00 00 | avol0       long 0
-00d90     00 00 00 00 | apan0       long 0
-00d94     00 00 00 00 | oldptrh	    long 0
-00d98     FF FF FF FF | oldt0       long $FFFFFFFF    'Temporary time variables
-00d9c     00 00 00 00 | cn          long 0
-00da0     00 00 00 00 | ct          long 0
-00da4     00 00 00 00 | dt0         long 0
-00da8                 | 
-00da8                 | ' Samples
-00da8     00 00 00 00 | oldls       long 0
-00dac     00 00 00 00 | oldrs       long 0
-00db0                 | 
-00db0     00 00 00 00 | ls0         long 0
-00db4     00 00 00 00 | rs0         long 0
-00db8                 | 
-00db8     00 00 00 00 | ls          long 0    
-00dbc     00 00 00 00 | rs          long 0
-00dc0                 | 
-00dc0     00 00 00 00 | oldsample   long 0
-00dc4     00 00 00 00 | newsample   long 0
-00dc8                 | 
-00dc8     00 00 00 00 | nrsample    long 0
-00dcc     00 00 00 00 | nlsample    long 0
+009a0                 | '   freqs[iii]:=440000
+009a0     08 13 02 F6 | 	mov	local04, local03
+009a4     02 12 66 F0 | 	shl	local04, #2
+009a8     02 00 00 FF 
+009ac     0C F4 05 F1 | 	add	objptr, ##1036
+009b0     FA 12 02 F1 | 	add	local04, objptr
+009b4     5B 03 80 FF 
+009b8     09 81 69 FC | 	wrlong	##440000, local04
+009bc                 | '   delays[iii]:=0
+009bc     08 13 02 F6 | 	mov	local04, local03
+009c0     01 12 66 F0 | 	shl	local04, #1
+009c4     40 F4 05 F1 | 	add	objptr, #64
+009c8     FA 12 02 F1 | 	add	local04, objptr
+009cc     09 01 58 FC | 	wrword	#0, local04
+009d0                 | '   volumes[iii]:=4096
+009d0     08 13 02 F6 | 	mov	local04, local03
+009d4     01 12 66 F0 | 	shl	local04, #1
+009d8     20 F4 05 F1 | 	add	objptr, #32
+009dc     FA 12 02 F1 | 	add	local04, objptr
+009e0     08 00 80 FF 
+009e4     09 01 58 FC | 	wrword	##4096, local04
+009e8                 | '   waveforms[iii]:=0
+009e8     08 13 02 F6 | 	mov	local04, local03
+009ec     02 12 66 F0 | 	shl	local04, #2
+009f0     20 F4 05 F1 | 	add	objptr, #32
+009f4     FA 12 02 F1 | 	add	local04, objptr
+009f8     09 01 68 FC | 	wrlong	#0, local04
+009fc                 | '   envelopes[iii]:=0
+009fc     08 13 02 F6 | 	mov	local04, local03
+00a00     02 12 66 F0 | 	shl	local04, #2
+00a04     40 F4 05 F1 | 	add	objptr, #64
+00a08     FA 12 02 F1 | 	add	local04, objptr
+00a0c     09 01 68 FC | 	wrlong	#0, local04
+00a10                 | '   lengths[iii]:=1000
+00a10     08 13 02 F6 | 	mov	local04, local03
+00a14     01 12 66 F0 | 	shl	local04, #1
+00a18     40 F4 05 F1 | 	add	objptr, #64
+00a1c     FA 12 02 F1 | 	add	local04, objptr
+00a20     01 00 80 FF 
+00a24     09 D1 5B FC | 	wrword	##1000, local04
+00a28                 | '   pans[iii]:=8192
+00a28     08 13 02 F6 | 	mov	local04, local03
+00a2c     01 12 66 F0 | 	shl	local04, #1
+00a30     20 F4 05 F1 | 	add	objptr, #32
+00a34     FA 12 02 F1 | 	add	local04, objptr
+00a38     10 00 80 FF 
+00a3c     09 01 58 FC | 	wrword	##8192, local04
+00a40                 | '   sustains[iii]:=255
+00a40     08 13 02 F6 | 	mov	local04, local03
+00a44     01 12 66 F0 | 	shl	local04, #1
+00a48     20 F4 05 F1 | 	add	objptr, #32
+00a4c     FA 12 02 F1 | 	add	local04, objptr
+00a50     09 FF 59 FC | 	wrword	#255, local04
+00a54     01 10 06 F1 | 	add	local03, #1
+00a58     10 10 56 F2 | 	cmps	local03, #16 wc
+00a5c     02 00 00 FF 
+00a60     4C F5 85 F1 | 	sub	objptr, ##1356
+00a64     CC FD 9F CD |  if_b	jmp	#LR__0001
+00a68                 | LR__0002
+00a68                 | '   
+00a68                 | ' cog:=coginit(16,@audio,@mailboxaddr)
+00a68     FB 06 02 F6 | 	mov	arg02, ptr__dat__
+00a6c     FA 08 02 F6 | 	mov	arg03, objptr
+00a70     10 12 06 F6 | 	mov	local04, #16
+00a74     28 08 62 FD | 	setq	arg03
+00a78     03 13 F2 FC | 	coginit	local04, arg02 wc
+00a7c     01 12 66 C6 |  if_b	neg	local04, #1
+00a80                 | ' waitms(10)
+00a80     0A 04 06 F6 | 	mov	arg01, #10
+00a84     18 00 B0 FD | 	call	#__system___waitms
+00a88                 | ' return cog,base
+00a88     07 FD 01 F6 | 	mov	result2, local02
+00a8c     09 FB 01 F6 | 	mov	result1, local04
+00a90     E7 F0 03 F6 | 	mov	ptra, fp
+00a94     F2 00 A0 FD | 	call	#popregs_
+00a98                 | _start_ret
+00a98     2D 00 64 FD | 	ret
+00a9c                 | hubexit
+00a9c     C1 00 80 FD | 	jmp	#cogexit
+00aa0                 | 
+00aa0                 | __system___waitms
+00aa0     02 FF 01 F6 | 	mov	_var01, arg01
+00aa4     1A 00 62 FD | 	getct	_var02
+00aa8     14 02 06 FB | 	rdlong	_var03, #20
+00aac     D7 14 48 FB | 	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+00ab0                 | LR__0010
+00ab0     01 00 00 FF 
+00ab4     E8 FF 55 F2 | 	cmps	_var01, ##1000 wc
+00ab8     1C 00 90 CD |  if_b	jmp	#LR__0012
+00abc     01 01 02 F1 | 	add	_var02, _var03
+00ac0     00 05 02 F6 | 	mov	arg01, _var02
+00ac4     00 04 66 FA | 	addct1	arg01, #0
+00ac8     24 22 60 FD | 	waitct1
+00acc     01 00 00 FF 
+00ad0     E8 FF 85 F1 | 	sub	_var01, ##1000
+00ad4     D8 FF 9F FD | 	jmp	#LR__0010
+00ad8                 | LR__0011
+00ad8                 | LR__0012
+00ad8     01 FE 55 F2 | 	cmps	_var01, #1 wc
+00adc     28 00 90 CD |  if_b	jmp	#LR__0013
+00ae0     01 FF 01 FD | 	qmul	_var01, _var03
+00ae4     01 00 00 FF 
+00ae8     E8 09 06 F6 | 	mov	arg03, ##1000
+00aec     19 FA 61 FD | 	getqy	result1
+00af0     18 04 62 FD | 	getqx	arg01
+00af4     28 FA 61 FD | 	setq	result1
+00af8     04 05 12 FD | 	qdiv	arg01, arg03
+00afc     18 04 62 FD | 	getqx	arg01
+00b00     00 05 62 FA | 	addct1	arg01, _var02
+00b04     24 22 60 FD | 	waitct1
+00b08                 | LR__0013
+00b08                 | __system___waitms_ret
+00b08     2D 00 64 FD | 	ret
+00b0c                 | 	alignl
+00b0c                 | _dat_
+00b0c                 | 
+00b0c                 | audio       	org     0
+00b0c                 | 
+00b0c     61 69 05 FB |             	rdlong  mailbox2, ptra++     	' get start address of all mailboxes
+00b10     61 A1 05 FB |             	rdlong  scbase, ptra++       	' get start address of scope buffer
+00b14     61 AD 05 FB |             	rdlong  hubptr, ptra++       	' get start address of PSRAM cache
+00b18                 | 
+00b18     01 EC 63 FD |             	cogid   pa                   	' compute cogid
+00b1c     0C EC 07 FA |             	mul     pa, #12              	' and mailbox spacing
+00b20     F6 69 01 F1 |             	add     mailbox2, pa         	' add offset to find this COG's mailbox
+00b24     B4 66 01 F6 |             	mov     mailbox, mailbox2     	' we need 2 copies of this to enable switching between hub and psram
+00b28                 | 
+00b28     0E AA 05 FC |             	wrpin   dac2,#left           	' PWM DACs at 44100@339 MHz
+00b2c     0E AE 15 FC |             	wxpin   sr44100,#left      	' 30*256
+00b30     0F AA 05 FC |             	wrpin   dac2,#right
+00b34     0F AE 15 FC |             	wxpin   sr44100,#right    
+00b38     41 9C 64 FD |             	dirh    #left addpins 1
+00b3c     20 9C 64 FD |             	setse1  #%001<<6 + left      	' Set the event - DAC empty
+00b40                 |  
+00b40                 |             
+00b40                 | '---------------------------------------------------------------------------------        
+00b40                 | '----------------- The main loop -------------------------------------------------
+00b40                 | '---------------------------------------------------------------------------------
+00b40                 | 
+00b40     0F 98 05 F6 | loop       	mov 	    cn,#15 '7
+00b44                 |               					'  waitx ##33000000 		'for debug
+00b44                 |             
+00b44                 | '----------------------------------------------------------------------------------
+00b44                 | '------------- Get parameters and execute commands if any -------------------------
+00b44                 | '----------------------------------------------------------------------------------
+00b44                 | 
+00b44                 | 
+00b44     CC 60 01 F6 | p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
+00b48     06 60 65 F0 |             	shl     channeladd,#6
+00b4c     B0 F0 03 F1 |             	add     ptra,channeladd
+00b50                 | 
+00b50     28 1A 64 FD |             	setq    #13                       	' read parameters
+00b54     00 6F 05 FB |             	rdlong  pointer0,ptra
+00b58     1F 82 1D F4 | p408        	bitl    command0,#31 wcz	      	' bit #31 command - set the DAC sample rate
+00b5c     2C 00 90 3D |     	if_nc   jmp     #p404                     	' if not set, proceed
+00b60     C1 62 01 F6 |             	mov     qq,command0             	' get the new rate
+00b64     4E 62 15 FC |             	wxpin   qq,#left addpins 1        	' and program the pins
+00b68     B1 62 E1 F8 |             	getbyte qq,qq,#0 		      	' check if the rate is n*256
+00b6c     00 62 0D F2 |             	cmp     qq,#0 wz                         
+00b70     4E AA 05 AC |     	if_z    wrpin   dac2,#left addpins 1      	' if yes, set PWM DAC mode
+00b74     4E A8 05 5C |     	if_nz   wrpin   dac,#left addpins 1       	' else set noise DAC mode
+00b78                 |                 
+00b78     1E 78 1D F4 |                	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+00b7c     00 6E 05 A6 |     	if_z    mov     pointer0, #0  
+00b80     00 70 05 A6 |     	if_z    mov     pointer0h, #0  
+00b84     00 76 05 A6 |     	if_z    mov     envph0, #0  
+00b88     05 79 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+00b8c                 |     	
+00b8c     BC 62 01 F6 | p404        	mov     qq,sstart0		     	' check if start>$80000
+00b90     FF FF 03 FF 
+00b94     FF 63 05 F5 | 		and 	qq,##$7FFFFFF 
+00b98     00 04 00 FF 
+00b9c     00 62 1D F2 |                 cmp 	qq,##$80000 wcz
+00ba0     B4 66 01 36 |     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
+00ba4     00 66 05 C6 |     	if_lt   mov     mailbox,#0                	' if not, use HUB 
+00ba8                 | 
+00ba8     BF 94 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
+00bac     BF 92 31 F9 |     	    	getword avol0,volpan0,#0
+00bb0                 |     	    	
+00bb0                 | '----------------------------------------------------------------------------------
+00bb0                 | '------------- Compute the envelope, if exists ------------------------------------
+00bb0                 | '----------------------------------------------------------------------------------
+00bb0                 |             
+00bb0     00 84 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
+00bb4     20 00 00 AF 
+00bb8     00 E0 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
+00bbc     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
+00bc0                 | 
+00bc0     C3 76 01 F1 |            	add     envph0,envspd0			' envelope PA update
+00bc4                 |            	           
+00bc4     BB DC 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
+00bc8     06 DC 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
+00bcc     EE DE 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
+00bd0     10 DC 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
+00bd4     C4 DC 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
+00bd8                 | 	    											'debug(udec(envhi,envlen0))
+00bd8     C4 DC 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
+00bdc     00 DE 05 36 |     	if_ge   mov     envlo,#0
+00be0     C4 76 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
+00be4     16 76 65 30 |     	if_ge   shl     envph0,#22
+00be8                 | 
+00be8     EE E0 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
+00bec     01 E0 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
+00bf0     C2 E0 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
+00bf4     F0 E0 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
+00bf8     F0 E2 39 F9 |             	getword envs2,envs1,#1			' then separate them		
+00bfc     F0 E0 31 F9 |            	getword envs1,envs1,#0
+00c00     EF E2 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
+00c04     EF DE 21 F6 |             	not     envlo
+00c08     EF E0 01 FA |             	mul     envs1,envlo
+00c0c     F1 E0 01 F1 |             	add     envs1,envs2
+00c10     12 E0 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
+00c14                 |               
+00c14                 | '----------------------------------------------------------------------------------
+00c14                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
+00c14                 | '----------------------------------------------------------------------------------
+00c14                 | 
+00c14     1B 78 0D F4 | p410        	testb   sstart0, #27 wz
+00c18     1B 64 61 AD |     	if_z    getrnd  spl
+00c1c     9C 00 90 AD |     	if_z    jmp     #p406
+00c20                 |     	
+00c20                 | '----------------------------------------------------------------------------------
+00c20                 | '------------- Get the sample -----------------------------------------------------
+00c20                 | '----------------------------------------------------------------------------------    	
+00c20                 |  
+00c20     B8 96 01 F6 | 		mov	oldptrh,pointer0h
+00c24     C0 90 F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
+00c28     08 80 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
+00c2c     C0 6E 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
+00c30     C8 70 21 F1 |            	addx	pointer0h,afreq0  
+00c34     CB 70 19 F2 | 		cmp	pointer0h,oldptrh wcz
+00c38     50 00 90 AD | 	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
+00c3c                 |      	
+00c3c     1F 78 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
+00c40     01 70 65 A0 |      	if_z    shl     pointer0h,#1        
+00c44     1C 78 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
+00c48     01 70 65 A0 |      	if_z    shl     pointer0h,#1        
+00c4c                 | 												
+00c4c     BE 70 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+00c50     BE 70 81 31 |    	if_ge   sub     pointer0h,lend0       
+00c54     BD 70 01 31 |         if_ge   add     pointer0h,lstart0
+00c58     BE 70 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+00c5c     BE 70 01 36 |         if_ge   mov	pointer0h,lend0	
+00c60                 |  
+00c60     B8 62 01 F6 |              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
+00c64     BC 62 01 F1 |            	add     qq,sstart0            
+00c68     FF 67 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
+00c6c     B1 64 E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
+00c70     F8 00 B0 1D |     	if_gt   call    #cache_read
+00c74     1F 78 0D F4 |                 testb   sstart0,#31 wz 
+00c78     08 64 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
+00c7c     01 70 45 A0 |         if_z    shr     pointer0h,#1
+00c80     1C 78 0D F4 |                 testb   sstart0,#28 wz            
+00c84     01 70 45 A0 |     	if_z    shr     pointer0h,#1    
+00c88     B2 74 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
+00c8c                 |                   
+00c8c     BA 64 39 F9 | p411	      	getword spl,rawspl0,#1
+00c90     BA 8E 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
+00c94     B7 DE 01 F6 | 		mov	envlo,pointer0
+00c98     12 DE 45 F0 | 		shr 	envlo,#18
+00c9c                 | 	
+00c9c     EF 8E 31 FA |             	scas    oldspl,envlo                   	' and do linear interpolation
+00ca0     00 8E 01 F6 |             	mov 	oldspl,0-0
+00ca4     EF DE 21 F6 |             	not     envlo
+00ca8     1F 00 00 FF 
+00cac     FF DF 05 F5 |           	and     envlo,##$3FFF
+00cb0     EF 64 31 FA |            	scas    spl,envlo
+00cb4     00 64 01 F6 |             	mov     spl,0-0
+00cb8     C7 64 01 F1 |                 add     spl, oldspl
+00cbc                 | 	 
+00cbc     F0 64 31 FA | p406        	scas    spl, envs1
+00cc0     00 64 01 F6 |             	mov     spl,0-0
+00cc4     C9 64 31 FA |             	scas    spl,avol0                 	' apply volume
+00cc8     00 64 01 F6 |             	mov     spl,0-0
+00ccc                 |  
+00ccc     CA 64 31 FA |             	scas    spl,apan0                 	' apply pan
+00cd0     00 9A 01 F6 |             	mov     ls0,0-0
+00cd4     20 00 00 FF 
+00cd8     00 62 05 F6 |             	mov     qq,##16384
+00cdc     CA 62 81 F1 |             	sub     qq,apan0
+00ce0     B1 64 31 FA |             	scas    spl,qq
+00ce4     00 9C 01 F6 |             	mov     rs0, 0-0
+00ce8                 |       
+00ce8     CE 72 29 F9 |                 setword sample0,rs0,#1           	' pack samples into long
+00cec     CD 72 21 F9 |                 setword sample0,ls0,#0
+00cf0                 |                 
+00cf0     CD 6A 01 F1 |                 add  lsample,ls0
+00cf4     CE 6C 01 F1 |                 add  rsample,rs0
+00cf8                 |              
+00cf8     1E 78 1D F4 |             	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+00cfc     00 6E 05 A6 |     	if_z    mov     pointer0, #0  
+00d00     00 70 05 A6 |     	if_z    mov     pointer0h, #0  
+00d04     00 76 05 A6 |     	if_z    mov     envph0, #0  
+00d08     05 79 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+00d0c                 |             
+00d0c     28 08 64 FD | p403        	setq #4                          	' write new pointer, sample values and env pointer to the hub
+00d10     00 6F 65 FC | 	       	wrlong  pointer0,ptra
+00d14     B0 F0 83 F1 |             	sub     ptra, channeladd         	' reset the pointer to channel parameters
+00d18                 | 
+00d18     8A 99 7D FB |             	djnf    cn, #p401
+00d1c                 | 
+00d1c     0F 6C E5 F4 |             	bitnot rsample, #15
+00d20     0F 6A E5 F4 |             	bitnot lsample, #15
+00d24                 |   							'           	getct ct2  	'debug
+00d24                 |   							'          	sub ct2,ct1
+00d24                 |   							'          	debug(udec(ct2))
+00d24     24 28 60 FD |             	waitse1
+00d28                 |           
+00d28     0E 6A 25 FC |            	wypin   lsample, #left              
+00d2c     0F 6C 25 FC |                 wypin   rsample, #right        
+00d30                 | 
+00d30     B5 9E 21 F9 | 		setword oldsample, lsample,#0		' for oscilloscope
+00d34     B6 9E 29 F9 | 		setword oldsample, rsample,#1
+00d38                 | 		
+00d38     00 6C 05 F6 |             	mov rsample, #0
+00d3c     00 6A 05 F6 |             	mov lsample, #0
+00d40                 | 
+00d40                 | '----------------------------------------------------------------------------------
+00d40                 | '------------- Oscilloscope  -----------------------------------------------------
+00d40                 | '----------------------------------------------------------------------------------   
+00d40                 | 		
+00d40     00 A0 0D F2 | 	    	cmp     scbase,#0 wz
+00d44     20 00 90 AD |     	if_z    jmp #p302	   
+00d48                 |  
+00d48     01 A6 15 F7 |             	incmod  scope,#1 wc            		'  todo: scope speed instead of const  
+00d4c     D1 A4 01 C6 |     	if_c    mov scptr2,scptr
+00d50     02 A4 65 C0 |     	if_c    shl scptr2,#2
+00d54     D0 A4 01 C1 |     	if_c    add scptr2,scbase     
+00d58     60 A4 65 FC |             	wrlong scptr2,#$60
+00d5c     D2 9E 61 CC |     	if_c    wrlong oldsample,scptr2
+00d60     01 00 00 CF 
+00d64     7F A2 05 C7 |     	if_c    incmod scptr,##639
+00d68                 |             
+00d68     D4 FD 9F FD |  p302           jmp     #loop            'loop
+00d6c                 | 
+00d6c                 | '----------------------------------------------------------------------------------
+00d6c                 | '------------- This is the end of the main loop -----------------------------------
+00d6c                 | '----------------------------------------------------------------------------------
+00d6c                 | 
+00d6c                 | '----------------------------------------------------------------------------------
+00d6c                 | '------------- PSRAM cache ----------- --------------------------------------------
+00d6c                 | '----------------------------------------------------------------------------------
+00d6c                 | 
+00d6c                 | ' There are 16 cache pointers for 16 channels
+00d6c                 | ' if 24 higher bits of address=cache, then get a word from the cache
+00d6c                 | ' else load the cache from PSRAM, update the pointer, then read a sample
+00d6c                 | 
+00d6c                 | 
+00d6c     B1 D6 E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
+00d70                 |             
+00d70     B1 D8 01 F6 | 	   	mov     addrhi,qq		
+00d74     08 D8 45 F0 | 	    	shr     addrhi,#8		        ' get 24 upper bits
+00d78     D8 98 95 F9 | 	    	alts    cn,#cache1            
+00d7c     00 D8 09 F2 | 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
+00d80     34 00 90 AD |     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+00d84                 | 	
+00d84     D8 98 8D F9 | p702	    	altd    cn,#cache1			' cache miss. 
+00d88     EC 00 00 F6 | 	    	mov     0-0,addrhi                  	' update the pointer
+00d8c     EC D0 01 F6 | 	    	mov     cmd,addrhi			' prepare the mailbox
+00d90     08 D0 65 F0 | 	    	shl     cmd,#8
+00d94     0B D0 3D F8 |             	setnib  cmd, #%1011, #7             	' read burst from the external memory
+00d98     CC D2 01 F6 |             	mov     hubaddr,cn                  	' to the channel cache
+00d9c     08 D2 65 F0 |             	shl     hubaddr,#8                  	'
+00da0     D6 D2 01 F1 |             	add     hubaddr,hubptr 
+00da4     00 D5 05 F6 |             	mov     count,#256                  	' 256 bytes
+00da8     28 04 64 FD |             	setq    #2                          	' write 3 longs
+00dac     B3 D0 61 FC |             	wrlong  cmd, mailbox                	' run it
+00db0     B3 D0 01 FB | poll1       	rdlong  cmd, mailbox                	' poll mailbox for result
+00db4     FE D1 B5 FB |             	tjs     cmd, #poll1                 	' retry until valid 
+00db8                 |             
+00db8                 | 	
+00db8     CC 62 01 F6 | p701	    	mov     qq,cn				' cache hit
+00dbc     08 62 65 F0 | 	    	shl     qq,#8				' compute the cache start
+00dc0     D6 62 01 F1 | 	    	add     qq,hubptr
+00dc4     EB 62 01 F1 | 	    	add	qq,addrlo			' add 8 lower bits to the cache addredd
+00dc8     B1 64 E1 0A |     	_ret_   rdword  spl,qq                      	' read a long from the cache
+00dcc                 |           
+00dcc                 |   
+00dcc                 | 
+00dcc                 | 
+00dcc                 | '---------------------------------------------------------------------------
+00dcc                 | '------- Variables ---------------------------------------------------------
+00dcc                 | '---------------------------------------------------------------------------
+00dcc                 | 
+00dcc                 | ' constants
+00dcc                 | 
+00dcc     00 00 00 00 | channeladd 	long 0
 00dd0                 | 
-00dd0     00 00 00 00 | scbase long 0
-00dd4     00 00 00 00 | scptr long 0
-00dd8     00 00 00 00 | scptr2 long 0
-00ddc     00 00 00 00 | scope long 0
-00de0                 | 
-00de0     44 00 17 00 | dac         long %10111_00000000_01_00010_0     'random dither, as 90 cycles period needed
-00de4     46 00 17 00 | dac2        long %10111_00000000_01_00011_0     'pwm, left here for the future use, if any   
+00dd0                 | ' temporary variables 
+00dd0                 | 
+00dd0     00 00 00 00 | qq          	long 0
+00dd4     00 00 00 00 | spl         	long 0
+00dd8     00 00 00 00 | mailbox     	long 0
+00ddc     00 00 00 00 | mailbox2    	long 0
+00de0     00 00 00 00 | lsample     	long 0
+00de4     00 00 00 00 | rsample     	long 0
 00de8                 | 
-00de8     00 18 07 00 | hubptr      long $71800
-00dec     00 1E 00 00 | sr44100     long 30*256
-00df0     00 00 00 00 | cache1      long 0
-00df4     00 00 00 00 | cache2      long 0
-00df8     00 00 00 00 | cache3      long 0
-00dfc     00 00 00 00 | cache4      long 0
-00e00     00 00 00 00 | cache5      long 0
-00e04     00 00 00 00 | cache6      long 0
-00e08     00 00 00 00 | cache7      long 0
-00e0c     00 00 00 00 | cache8      long 0
-00e10                 | 
-00e10                 | 
-00e10     00 00 00 00 | cmd         long 0
-00e14     00 00 00 00 | hubaddr     long 0
-00e18     00 01 00 00 | count       long 256
-00e1c     00 00 00 00 | addrlo long 0
-00e20     00 00 00 00 | addrhi long 0
-00e24     00 00 00 00 | pointer00 long 0
-00e28     00 00 00 00 | envhi long 0
-00e2c     00 00 00 00 | envlo long 0
-00e30     00 00 00 00 | envs1 long 0
-00e34     00 00 00 00 | envs2 long 0
-00e38     00 00 00 00 | noise0 long 0
-00e3c                 | 
-00e3c     00 00 00 00 | ct1 long 0
-00e40     00 00 00 00 | ct2 long 0
-00e44     00 00 00 00 
-00e48     00 00 00 00 | null  			long 	0,0           ' for channel reset
-00e4c                 | objmem
-00e4c     00 00 00 00 
+00de8                 | ' channel parameter block
+00de8                 | 
+00de8     00 00 00 00 | pointer0    	long 0   
+00dec     00 00 00 00 | pointer0h   	long 0  
+00df0     00 00 00 00 | sample0     	long 0
+00df4     00 00 00 00 | rawspl0	    	long 0
+00df8     00 00 00 00 | envph0	    	long 0
+00dfc     00 00 00 00 | sstart0     	long 0     ' start pointer and type at bit 31
+00e00     00 00 00 00 | lstart0     	long 0
+00e04     00 00 00 00 | lend0       	long 0
+00e08     00 00 00 00 | volpan0     	long 0
+00e0c     00 00 00 00 | freqskip0   	long 0
+00e10     00 00 00 00 | command0    	long 0
+00e14     00 00 00 00 | envptr0	    	long 0
+00e18     00 00 00 00 | envspd0	    	long 0
+00e1c     00 00 00 00 | envlen0	    	long 0
+00e20     00 00 00 00 | res5	    	long 0
+00e24     00 00 00 00 | res6	    	long 0
+00e28                 | 
+00e28     00 00 00 00 | oldspl		long 0
+00e2c     00 00 00 00 | afreq0      	long 0
+00e30                 | 
+00e30     00 00 00 00 | avol0       	long 0
+00e34     00 00 00 00 | apan0       	long 0
+00e38     00 00 00 00 | oldptrh	    	long 0
+00e3c     00 00 00 00 | cn          	long 0
+00e40                 | 
+00e40                 | ' Samples
+00e40                 | 
+00e40     00 00 00 00 | ls0         	long 0
+00e44     00 00 00 00 | rs0         	long 0
+00e48                 | 
+00e48     00 00 00 00 | oldsample   	long 0
+00e4c                 | 
+00e4c     00 00 00 00 | scbase 		long 0
+00e50     00 00 00 00 | scptr 		long 0
+00e54     00 00 00 00 | scptr2		long 0
+00e58     00 00 00 00 | scope 		long 0
+00e5c                 | 
+00e5c     44 00 17 00 | dac         	long %10111_00000000_01_00010_0     	'random dither
+00e60     46 00 17 00 | dac2        	long %10111_00000000_01_00011_0     	'pwm
+00e64                 | 
+00e64     00 18 07 00 | hubptr      	long $71800
+00e68     00 1E 00 00 | sr44100     	long 30*256
+00e6c                 | 
+00e6c     00 00 00 00 | cache1      	long 0
+00e70     00 00 00 00 | cache2      	long 0
+00e74     00 00 00 00 | cache3      	long 0
+00e78     00 00 00 00 | cache4      	long 0
+00e7c     00 00 00 00 | cache5      	long 0
+00e80     00 00 00 00 | cache6      	long 0
+00e84     00 00 00 00 | cache7      	long 0
+00e88     00 00 00 00 | cache8      	long 0
+00e8c     00 00 00 00 | cache9      	long 0
+00e90     00 00 00 00 | cachea      	long 0
+00e94     00 00 00 00 | cacheb      	long 0
+00e98     00 00 00 00 | cachec      	long 0
+00e9c     00 00 00 00 | cached      	long 0
+00ea0     00 00 00 00 | cachee      	long 0
+00ea4     00 00 00 00 | cachef      	long 0
+00ea8     00 00 00 00 | cache0      	long 0
+00eac                 | 
+00eac     00 00 00 00 | cmd         	long 0
+00eb0     00 00 00 00 | hubaddr    	long 0
+00eb4     00 01 00 00 | count       	long 256
+00eb8                 | 
+00eb8     00 00 00 00 | addrlo 		long 0
+00ebc     00 00 00 00 | addrhi 		long 0
+00ec0     00 00 00 00 | pointer00 	long 0
+00ec4     00 00 00 00 | envhi 		long 0
+00ec8     00 00 00 00 | envlo 		long 0
+00ecc     00 00 00 00 | envs1 		long 0
+00ed0     00 00 00 00 | envs2 		long 0
+00ed4     00 00 00 00 | noise0 		long 0
+00ed8                 | 
+00ed8                 | 'ct1 		long 0
+00ed8                 | 'ct2 		long 0
+00ed8                 | 
+00ed8                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
+00ed8                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
+00ed8     00 00 00 00 
+00edc     00 00 00 00 | null  			long 	0,0           ' for channel reset
+00ee0                 | objmem
+00ee0     00 00 00 00 
       ...             
-01250     00 00 00 00 
-01254     00 00 00 00 | 	long	0[259]
-01258                 | stackspace
-01258     00 00 00 00 | 	long	0[1]
-0125c 0ff             | 	org	COG_BSS_START
-0125c 0ff             | _var01
-0125c 0ff             | 	res	1
-0125c 100             | _var02
-0125c 100             | 	res	1
-0125c 101             | _var03
-0125c 101             | 	res	1
-0125c 102             | arg01
-0125c 102             | 	res	1
-0125c 103             | arg02
-0125c 103             | 	res	1
-0125c 104             | arg03
-0125c 104             | 	res	1
-0125c 105             | arg04
-0125c 105             | 	res	1
-0125c 106             | local01
-0125c 106             | 	res	1
-0125c 107             | local02
-0125c 107             | 	res	1
-0125c 108             | local03
-0125c 108             | 	res	1
-0125c 109             | local04
-0125c 109             | 	res	1
-0125c 10a             | 	fit	480
-0125c 10a             | 
+01444     00 00 00 00 
+01448     00 00 00 00 | 	long	0[347]
+0144c                 | stackspace
+0144c     00 00 00 00 | 	long	0[1]
+01450 0ff             | 	org	COG_BSS_START
+01450 0ff             | _var01
+01450 0ff             | 	res	1
+01450 100             | _var02
+01450 100             | 	res	1
+01450 101             | _var03
+01450 101             | 	res	1
+01450 102             | arg01
+01450 102             | 	res	1
+01450 103             | arg02
+01450 103             | 	res	1
+01450 104             | arg03
+01450 104             | 	res	1
+01450 105             | arg04
+01450 105             | 	res	1
+01450 106             | local01
+01450 106             | 	res	1
+01450 107             | local02
+01450 107             | 	res	1
+01450 108             | local03
+01450 108             | 	res	1
+01450 109             | local04
+01450 109             | 	res	1
+01450 10a             | 	fit	480
+01450 10a             | 

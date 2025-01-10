@@ -545,7 +545,7 @@ waitvbl
 
 let key=kbm.get_key() 
 let leds=kbm.ledstates() 'numlock 1 capslock 2 scrollock 4
-if key>0 andalso key<4 andalso keyclick=1 then audio.play16(7,@atari2_spl,43,4096,0,1758,10) : audio.stop(7)
+if key>0 andalso key<4 andalso keyclick=1 then audio.play16(7,@atari2_spl,43,4096,1758,0,300) : audio.stop(7)
 if key>3 andalso key<$80000000 andalso (key and 255) <$E0 then key2=key : rpt=1 : key3=key2 
 if key>$80000000 then rptcnt=0 : rpt=0
 if key=0 andalso rpt=1 then rptcnt+=1
@@ -575,8 +575,11 @@ if key3<>0 then
     endif
     v.putchar(key4)
   endif  
-  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then audio.play(7,@atari2_spl,44100,4096,0,1758): waitms(300): audio.stop(7) 'end of line reached
- 
+  if key4>0 andalso key4<127 andalso v.cursor_x=254 andalso keyclick=1 then
+    audio.play16(7,@atari2_spl,43,4096,1758,0,300) 
+    audio.stop(7) 'end of line reached
+  endif
+    
   if key4=key_enter then 						' get the line from the  screen and return it
     line$="" 
     for i=editor_spaces to 127
