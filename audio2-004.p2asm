@@ -316,12 +316,12 @@ LR__0001
 	add	objptr, #32
 	add	local04, objptr
 	wrword	##8192, local04
-'   sustains[iii]:=256
+'   sustains[iii]:=255
 	mov	local04, local03
 	shl	local04, #1
 	add	objptr, #32
 	add	local04, objptr
-	wrword	#256, local04
+	wrword	#255, local04
 	add	local03, #1
 	cmps	local03, #16 wc
 	sub	objptr, ##1356

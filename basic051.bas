@@ -35,7 +35,7 @@ dim psram as class using "psram.spin2"
 
 dim kbm as class using "usbnew.spin2"
 'dim audio as class using "audio096.spin2"
-dim audio as class using "audio2-003.spin2"
+dim audio as class using "audio2-004.spin2"
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Constants --------------------------------------------
 ''-----------------------------------------------------------------------------------------
@@ -595,7 +595,7 @@ if key3<>0 then
   
   key4=key3 and 255
   
-  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then audio.play(0,@atari2_spl,44100,16384,0,1758): waitms(300): audio.stop(0)  	' tab
+  if key4 = 43 andalso v.cursor_x>=240 andalso keyclick=1 then audio.play16(7,@atari2_spl,43,4096,1758,0,300) : audio.stop(7)  			' tab
   if key4=77 then i=127 : do: 															' end
     if pspeek(v.textbuf_ptr+128*v.cursor_y+i)<>32 then 
       if i<127 then v.setcursorx(2*i+2) else v.setcursorx(254)
@@ -2749,13 +2749,13 @@ sub do_beep
 
 dim t1,t2 as expr_result
 dim freq as ulong
-dim sample(1) as ubyte
+dim sample(1) as short
 
 t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
-sample(0)=127: sample(1)=128
-audio.play8(7,varptr(sample),freq*2,16384,2,0)
+sample(0)=32767: sample(1)=-32767
+audio.beep(7,varptr(sample),freq,4096,4,0,0) 
 push t2
 do_waitms
 audio.stop(7)

@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/audio2-003.p2asm"
+00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/audio2-004.p2asm"
 00000                 | con
 00000                 | 	_clkfreq = 20000000
 00000                 | 	_clkmode = 16779595
@@ -337,12 +337,12 @@
 00a34     FA 12 02 F1 | 	add	local04, objptr
 00a38     10 00 80 FF 
 00a3c     09 01 58 FC | 	wrword	##8192, local04
-00a40                 | '   sustains[iii]:=256
+00a40                 | '   sustains[iii]:=255
 00a40     08 13 02 F6 | 	mov	local04, local03
 00a44     01 12 66 F0 | 	shl	local04, #1
 00a48     20 F4 05 F1 | 	add	objptr, #32
 00a4c     FA 12 02 F1 | 	add	local04, objptr
-00a50     09 01 5A FC | 	wrword	#256, local04
+00a50     09 FF 59 FC | 	wrword	#255, local04
 00a54     01 10 06 F1 | 	add	local03, #1
 00a58     10 10 56 F2 | 	cmps	local03, #16 wc
 00a5c     02 00 00 FF 

@@ -119,8 +119,8 @@ popregs__ret
 
 objptr
 	long	@objmem
-ptr__Audio2_003_dat__
-	long	@_Audio2_003_dat_
+ptr__Audio2_004_dat__
+	long	@_Audio2_004_dat_
 ptr__dat__
 	long	@_dat_
 ptr_stackspace_
@@ -139,10 +139,9 @@ COG_BSS_START
 hubentry
 
 ' 
-' 
 ' pub drivertest()   : cog,base,i,j
 _drivertest
-	mov	COUNT_, #4
+	mov	COUNT_, #2
 	call	#pushregs_
 ' ' prepare 8-bit saw wave
 ' repeat i from $40000 to $407FF step 2
@@ -188,8 +187,9 @@ LR__0004
 	mov	arg01, #0
 	mov	arg02, ##393216
 	mov	arg03, ##397312
-	call	#_Audio2_003_start
-	mov	local03, result2
+	add	objptr, #4
+	call	#_Audio2_004_start
+	sub	objptr, #4
 ' 'debug(udec(cog,base))
 ' 
 ' {{Channel registers:
@@ -197,107 +197,210 @@ LR__0004
 ' 
 ' ' tell it to play
 ' 
-' repeat i from 0 to 15 
-	mov	local01, #0
-	callpa	#(@LR__0006-@LR__0005)>>2,fcache_load_ptr_
-LR__0005
-'   long[base+24+64*i]:=0                ' loop start point
-	mov	local02, local03
-	add	local02, #24
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	#0, local02
-'   long[base+28+64*i]:=$800              '
-	mov	local02, local03
-	add	local02, #28
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	##2048, local02
-'   word[base+32+64*i]:=0                ' max volume
-	mov	local02, local03
-	add	local02, #32
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrword	#0, local02
-'   long[base+20+64*i]:=$C0040000        ' sample pointer
-	mov	local02, local03
-	add	local02, #20
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	##-1073479680, local02
-'   long[base+36+64*i]:=$100000
-	mov	local02, local03
-	add	local02, #36
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	##1048576, local02
-'   long[base+44+64*i]:=$41000
-	mov	local02, local03
-	add	local02, #44
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	##266240, local02
-'   long[base+48+64*i]:=$8000
-	mov	local02, local03
-	add	local02, #48
-	mov	arg09, local01
-	shl	arg09, #6
-	add	local02, arg09
-	wrlong	##32768, local02
-'   long[base+52+64*i]:=256
-	mov	local02, local03
-	add	local02, #52
-	mov	local04, local01
-	shl	local04, #6
-	add	local02, local04
-	wrlong	#256, local02
-	add	local01, #1
-	cmps	local01, #16 wc
- if_b	jmp	#LR__0005
-LR__0006
+' {{repeat i from 0 to 15 
+' }}
 ' 
+' sample[0]:=-32767
+	wrword	##32769, objptr
+' sample[1]:=32767
+	add	objptr, #2
+	wrword	##32767, objptr
+	sub	objptr, #2
+' audio.beep(0,@sample ,4408,4096,4,0,0) 
+	mov	arg01, #0
+	mov	arg02, objptr
+	mov	arg03, ##4408
+	decod	arg04, #12
+	mov	arg05, #4
+	mov	arg06, #0
+	mov	arg07, #0
+	add	objptr, #4
+	call	#_Audio2_004_beep
 ' 
-' '
 ' repeat
-LR__0007
-' '   audio.play(0,c4*1000,4000,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-'    audio.play(0,c4*1000,4000,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+LR__0005
+	jmp	#LR__0005
+' 
+' 
+' repeat
+LR__0006
+'    audio.play(0,c4*1000,200,4096,$40000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
 	mov	arg01, #0
 	mov	arg02, ##262000
-	mov	arg03, ##4000
+	mov	arg03, #200
 	decod	arg04, #12
 	decod	arg05, #18
 	mov	arg06, ##266240
 	mov	arg07, ##600
 	neg	arg08, #1
 	neg	arg09, #1
-	call	#_Audio2_003_play
-' '   audio.play(2,e4*1000,2000,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(3,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(4,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(5,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(6,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(7,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(8,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-' '   audio.play(9,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-'  
-'  ' audio.play16(0,$40000,c4,4096,2048,0,200) '16(channel,sample,splfreq,vol,len,loop,delay) 
-'    audio.play16(1,$40000,d4,4096,2048,0,4000) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	call	#_Audio2_004_play
+'    audio.play(1,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
 	mov	arg01, #1
-	decod	arg02, #18
-	mov	arg03, #294
+	mov	arg02, ##294000
+	mov	arg03, #200
 	decod	arg04, #12
-	decod	arg05, #11
-	mov	arg06, #0
-	mov	arg07, ##4000
-	call	#_Audio2_003_play16
-	jmp	#LR__0007
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(2,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #2
+	mov	arg02, ##330000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(3,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #3
+	mov	arg02, ##349000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(4,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #4
+	mov	arg02, ##392000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(5,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #5
+	mov	arg02, ##440000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(6,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #6
+	mov	arg02, ##494000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(7,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #7
+	mov	arg02, ##524000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(8,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #8
+	mov	arg02, ##524000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(9,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #9
+	mov	arg02, ##494000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(10,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #10
+	mov	arg02, ##440000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(11,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #11
+	mov	arg02, ##392000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(12,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #12
+	mov	arg02, ##349000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(13,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #13
+	mov	arg02, ##330000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(14,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #14
+	mov	arg02, ##294000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+'    audio.play(15,c4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+	mov	arg01, #15
+	mov	arg02, ##262000
+	mov	arg03, #200
+	decod	arg04, #12
+	decod	arg05, #18
+	mov	arg06, ##266240
+	mov	arg07, ##600
+	neg	arg08, #1
+	neg	arg09, #1
+	call	#_Audio2_004_play
+	jmp	#LR__0006
 	mov	ptra, fp
 	call	#popregs_
 _drivertest_ret
@@ -309,7 +412,7 @@ _drivertest_ret
 ' '--------------------------------------------------------------
 ' 
 ' pub start(mbox,scope,cache) :cog,base | iii
-_Audio2_003_start
+_Audio2_004_start
 	mov	COUNT_, #4
 	call	#pushregs_
 	mov	local01, arg01
@@ -481,12 +584,12 @@ LR__0010
 	add	objptr, #32
 	add	local04, objptr
 	wrword	##8192, local04
-'   sustains[iii]:=256
+'   sustains[iii]:=255
 	mov	local04, local03
 	shl	local04, #1
 	add	objptr, #32
 	add	local04, objptr
-	wrword	#256, local04
+	wrword	#255, local04
 	add	local03, #1
 	cmps	local03, #16 wc
 	sub	objptr, ##1356
@@ -494,7 +597,7 @@ LR__0010
 LR__0011
 '   
 ' cog:=coginit(16,@audio,@mailboxaddr)
-	mov	arg02, ptr__Audio2_003_dat__
+	mov	arg02, ptr__Audio2_004_dat__
 	mov	arg03, objptr
 	mov	local04, #16
 	setq	arg03
@@ -508,383 +611,267 @@ LR__0011
 	mov	result1, local04
 	mov	ptra, fp
 	call	#popregs_
-_Audio2_003_start_ret
+_Audio2_004_start_ret
 	ret
 
 ' 
 ' pub play (channel, frequency=-1, delay=-1, volume=-1, waveform=-1, envelope=-1, length=-1, pan=-1, sustain=-1) | base2
-_Audio2_003_play
-	mov	COUNT_, #2
+_Audio2_004_play
+	mov	COUNT_, #11
 	call	#pushregs_
-	add	ptra, #40
-	wrlong	arg01, fp
-	add	fp, #4
-	wrlong	arg02, fp
-	add	fp, #4
-	wrlong	arg03, fp
-	add	fp, #4
-	wrlong	arg04, fp
-	add	fp, #4
-	wrlong	arg05, fp
-	add	fp, #4
-	wrlong	arg06, fp
-	add	fp, #4
-	wrlong	arg07, fp
-	add	fp, #4
-	wrlong	arg08, fp
-	add	fp, #4
-	wrlong	arg09, fp
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, arg04
+	mov	local05, arg05
+	mov	local06, arg06
+	mov	local07, arg07
+	mov	local08, arg08
+	mov	local09, arg09
 ' 
 ' if frequency==(-1)
-	sub	fp, #28
-	rdlong	local01, fp
-	sub	fp, #4
-	cmp	local01, ##-1 wz
+	cmp	local02, ##-1 wz
  if_ne	jmp	#LR__0020
 '   frequency:=freqs[channel]
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1036
-	add	local01, local02
-	rdlong	local02, local01
-	add	fp, #4
-	wrlong	local02, fp
-	sub	fp, #4
+	mov	local02, local01
+	shl	local02, #2
+	mov	local10, objptr
+	add	local10, ##1036
+	add	local02, local10
+	rdlong	local02, local02
 	jmp	#LR__0021
 LR__0020
 ' else
 '   freqs[channel]:=frequency
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1036
-	add	local01, local02
-	add	fp, #4
-	rdlong	local02, fp
-	sub	fp, #4
-	wrlong	local02, local01
+	mov	local11, local01
+	shl	local11, #2
+	mov	local10, objptr
+	add	local10, ##1036
+	add	local11, local10
+	wrlong	local02, local11
 LR__0021
 '   
 ' if delay==(-1)
-	add	fp, #8
-	rdlong	local01, fp
-	sub	fp, #8
-	cmp	local01, ##-1 wz
+	cmp	local03, ##-1 wz
  if_ne	jmp	#LR__0022
 '   delay:=delays[channel]
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1100
-	add	local02, local01
-	rdword	local02, local02
-	add	fp, #8
-	wrlong	local02, fp
-	sub	fp, #8
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1100
+	add	local10, local11
+	rdword	local03, local10
 	jmp	#LR__0023
 LR__0022
 ' else
 '   delays[channel]:=delay
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1100
-	add	local02, local01
-	add	fp, #8
-	rdlong	local01, fp
-	sub	fp, #8
-	wrword	local01, local02
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1100
+	add	local10, local11
+	wrword	local03, local10
 LR__0023
 '   
 ' if volume==(-1)      
-	add	fp, #12
-	rdlong	local01, fp
-	sub	fp, #12
-	cmp	local01, ##-1 wz
+	cmp	local04, ##-1 wz
  if_ne	jmp	#LR__0024
 '   volume:=volumes[channel]
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1132
-	add	local02, local01
-	rdword	local02, local02
-	add	fp, #12
-	wrlong	local02, fp
-	sub	fp, #12
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1132
+	add	local10, local11
+	rdword	local04, local10
 	jmp	#LR__0025
 LR__0024
 ' else
 '   volumes[channel]:=volume
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1132
-	add	local02, local01
-	add	fp, #12
-	rdlong	local01, fp
-	sub	fp, #12
-	wrword	local01, local02
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1132
+	add	local10, local11
+	wrword	local04, local10
 LR__0025
 '   
 ' if waveform==(-1)
-	add	fp, #16
-	rdlong	local01, fp
-	sub	fp, #16
-	cmp	local01, ##-1 wz
+	cmp	local05, ##-1 wz
  if_ne	jmp	#LR__0026
 '   waveform:=waveforms[channel]
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1164
-	add	local01, local02
-	rdlong	local02, local01
-	add	fp, #16
-	wrlong	local02, fp
-	sub	fp, #16
+	mov	local11, local01
+	shl	local11, #2
+	mov	local10, objptr
+	add	local10, ##1164
+	add	local11, local10
+	rdlong	local05, local11
 	jmp	#LR__0027
 LR__0026
 ' else
 '   waveforms[channel]:=waveform
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1164
-	add	local01, local02
-	add	fp, #16
-	rdlong	local02, fp
-	sub	fp, #16
-	wrlong	local02, local01
+	mov	local11, local01
+	shl	local11, #2
+	mov	local10, objptr
+	add	local10, ##1164
+	add	local11, local10
+	wrlong	local05, local11
 LR__0027
 '   
 ' if envelope==(-1)
-	add	fp, #20
-	rdlong	local01, fp
-	sub	fp, #20
-	cmp	local01, ##-1 wz
+	cmp	local06, ##-1 wz
  if_ne	jmp	#LR__0028
-'   envelope:=envelopes[waveform]
-	add	fp, #16
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1228
-	add	local01, local02
-	rdlong	local02, local01
-	add	fp, #4
-	wrlong	local02, fp
-	sub	fp, #20
+'   envelope:=envelopes[channel]
+	mov	local11, local01
+	shl	local11, #2
+	mov	local10, objptr
+	add	local10, ##1228
+	add	local11, local10
+	rdlong	local06, local11
 	jmp	#LR__0029
 LR__0028
 ' else
-'   envelopes[waveform]:=envelope
-	add	fp, #16
-	rdlong	local01, fp
-	shl	local01, #2
-	mov	local02, objptr
-	add	local02, ##1228
-	add	local01, local02
-	add	fp, #4
-	rdlong	local02, fp
-	sub	fp, #20
-	wrlong	local02, local01
+'   envelopes[channel]:=envelope
+	mov	local11, local01
+	shl	local11, #2
+	mov	local10, objptr
+	add	local10, ##1228
+	add	local11, local10
+	wrlong	local06, local11
 LR__0029
 '   
 ' if length==(-1)
-	add	fp, #24
-	rdlong	local01, fp
-	sub	fp, #24
-	cmp	local01, ##-1 wz
+	cmp	local07, ##-1 wz
  if_ne	jmp	#LR__0030
 '   length:=lengths[channel]
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1292
-	add	local02, local01
-	rdword	local02, local02
-	add	fp, #24
-	wrlong	local02, fp
-	sub	fp, #24
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1292
+	add	local10, local11
+	rdword	local07, local10
 	jmp	#LR__0031
 LR__0030
 ' else
 '   lengths[channel]:=length
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1292
-	add	local02, local01
-	add	fp, #24
-	rdlong	local01, fp
-	sub	fp, #24
-	wrword	local01, local02
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1292
+	add	local10, local11
+	wrword	local07, local10
 LR__0031
 '   
 ' if pan==(-1)
-	add	fp, #28
-	rdlong	local01, fp
-	sub	fp, #28
-	cmp	local01, ##-1 wz
+	cmp	local08, ##-1 wz
  if_ne	jmp	#LR__0032
 '   pan:=pans[channel]
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1324
-	add	local02, local01
-	rdword	local02, local02
-	add	fp, #28
-	wrlong	local02, fp
-	sub	fp, #28
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1324
+	add	local10, local11
+	rdword	local08, local10
 	jmp	#LR__0033
 LR__0032
 ' else
 '   pans[channel]:=pan
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1324
-	add	local02, local01
-	add	fp, #28
-	rdlong	local01, fp
-	sub	fp, #28
-	wrword	local01, local02
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1324
+	add	local10, local11
+	wrword	local08, local10
 LR__0033
-'   
-' if sustain[channel]==(-1)
-	mov	local01, fp
-	add	local01, #32
-	rdlong	local02, fp
-	shl	local02, #2
-	add	local02, local01
-	rdlong	local02, local02
-	cmp	local02, ##-1 wz
+'  
+' if sustain==(-1)
+	cmp	local09, ##-1 wz
  if_ne	jmp	#LR__0034
 '   sustain:=sustains[channel]
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1356
-	add	local02, local01
-	rdword	local02, local02
-	add	fp, #32
-	wrlong	local02, fp
-	sub	fp, #32
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1356
+	add	local10, local11
+	rdword	local09, local10
 	jmp	#LR__0035
 LR__0034
 ' else
 '   sustains[channel]:=sustain
-	rdlong	local02, fp
-	shl	local02, #1
-	mov	local01, objptr
-	add	local01, ##1356
-	add	local02, local01
-	add	fp, #32
-	rdlong	local01, fp
-	sub	fp, #32
-	wrword	local01, local02
+	mov	local10, local01
+	shl	local10, #1
+	mov	local11, objptr
+	add	local11, ##1356
+	add	local10, local11
+	wrword	local09, local10
 LR__0035
-	add	fp, #24
-	rdlong	local02, fp
-	abs	local01, local02 wc
-	qdiv	##24347887, local01
+	abs	local11, local07 wc
+	qdiv	##24347887, local11
 '                 
 ' length:=24347887/length  
-	getqx	local01
-	negc	local01, local01
-	wrlong	local01, fp
-	sub	fp, #24
-	mov	local01, objptr
-	add	local01, #12
-	rdlong	local02, fp
-	shl	local02, #6
-	add	local01, local02
-	add	fp, #36
-	wrlong	local01, fp
-	sub	fp, #20
-	rdlong	local01, fp
-	add	local01, ##-1073741824
-	add	fp, #20
-	rdlong	local02, fp
-	add	local02, #20
-	wrlong	local01, local02
-	rdlong	local01, fp
-	add	local01, #28
-	wrlong	##2048, local01
-	rdlong	local01, fp
-	add	local01, #24
-	wrlong	#0, local01
-	rdlong	local01, fp
-	add	local01, #32
-	sub	fp, #24
-	rdlong	local02, fp
-	wrword	local02, local01
-	add	fp, #24
-	rdlong	local01, fp
-	add	local01, #32
-	sub	fp, #8
-	rdlong	local02, fp
-	wrword	local02, local01
-	sub	fp, #24
-	rdlong	local02, fp
+	getqx	local11
 	qmul	local02, #109
-'   
+	negc	local07, local11
+' debug(udec(sustain))
 ' base2:=@channel0[0]+64*channel
+	mov	local02, objptr
+	add	local02, #12
+	shl	local01, #6
+	add	local02, local01
 ' long[base2+20]:=waveform+$C0000000 
+	add	local05, ##-1073741824
+	mov	local10, local02
+	add	local10, #20
+	wrlong	local05, local10
 ' long[base2+28]:= 2048
+	mov	local11, local02
+	add	local11, #28
+	wrlong	##2048, local11
 ' long[base2+24]:= 0
+	mov	local11, local02
+	add	local11, #24
+	wrlong	#0, local11
 ' word[base2+32]:=volume
+	mov	local11, local02
+	add	local11, #32
+	wrword	local04, local11
 ' word[base2+32]:=pan
+	mov	local11, local02
+	add	local11, #32
+	wrword	local08, local11
 ' long[base2+36]:=((frequency*109)/1000)*3574 ' (frequency*389566)/1000  freq*3574*109/1000
-	getqx	local01
-	abs	local02, local01 wc
-	qdiv	local02, ##1000
-	getqx	local02
-	negc	local02, local02
-	qmul	local02, ##3574
-	add	fp, #32
-	rdlong	local02, fp
-	add	local02, #36
+	getqx	local11
+	abs	local10, local11 wc
+	qdiv	local10, ##1000
+	getqx	local10
+	negc	local10, local10
+	qmul	local10, ##3574
+	mov	local10, local02
+	add	local10, #36
 ' long[base2+44]:=envelope
+	mov	local11, local02
+	add	local11, #44
 ' long[base2+48]:=length
 ' long[base2+52]:=sustain
 ' waitms(delay)
-	getqx	local01
-	wrlong	local01, local02
-	rdlong	local01, fp
-	add	local01, #44
-	sub	fp, #16
-	rdlong	local02, fp
-	wrlong	local02, local01
-	add	fp, #16
-	rdlong	local01, fp
-	add	local01, #48
-	sub	fp, #12
-	rdlong	local02, fp
-	wrlong	local02, local01
-	add	fp, #12
-	rdlong	local01, fp
-	add	local01, #52
-	sub	fp, #4
-	rdlong	local02, fp
-	wrlong	local02, local01
-	sub	fp, #24
-	rdlong	arg01, fp
-	sub	fp, #8
+	mov	arg01, local03
+	getqx	local08
+	wrlong	local08, local10
+	wrlong	local06, local11
+	mov	local11, local02
+	add	local11, #48
+	wrlong	local07, local11
+	add	local02, #52
+	wrlong	local09, local02
 	call	#__system___waitms
 	mov	ptra, fp
 	call	#popregs_
-_Audio2_003_play_ret
+_Audio2_004_play_ret
 	ret
 
 ' 
-' 
-' pub play16(channel,sample,splfreq,vol,len,loop,delay) | base2
-_Audio2_003_play16
-	qmul	arg03, ##389566
+' pub beep(channel,sample,splfreq,vol,len,loop,delay) | base2
+_Audio2_004_beep
+	qmul	arg03, ##761
 ' 
 ' base2:=@channel0[0]+64*channel
 	mov	arg03, objptr
@@ -908,14 +895,14 @@ _Audio2_003_play16
 	mov	arg06, arg03
 	add	arg06, #32
 	wrword	arg04, arg06
-' long[base2+36]:= splfreq*389566
+' long[base2+36]:= splfreq*761
 	add	arg03, #36
 ' waitms(delay)
 	mov	arg01, arg07
 	getqx	arg07
 	wrlong	arg07, arg03
 	call	#__system___waitms
-_Audio2_003_play16_ret
+_Audio2_004_beep_ret
 	ret
 hubexit
 	jmp	#cogexit
@@ -1101,7 +1088,7 @@ _dat_
 	byte	$01, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 	alignl
-_Audio2_003_dat_
+_Audio2_004_dat_
 '-' 
 '-' audio       	org     0
 '-' 
@@ -1139,9 +1126,9 @@ _Audio2_003_dat_
 '-' '----------------- The main loop -------------------------------------------------
 '-' '---------------------------------------------------------------------------------
 '-' 
-'-' loop       	mov 	    cn,#15 '7
-	byte	$0f, $98, $05, $f6
-'-'               					'  waitx ##33000000 		'for debug
+'-' loop       	mov 	    cn,#0 '7
+	byte	$00, $98, $05, $f6
+'-'               					'   waitx ##3300000  		'for debug
 '-'             
 '-' '----------------------------------------------------------------------------------
 '-' '------------- Get parameters and execute commands if any -------------------------
@@ -1285,9 +1272,9 @@ _Audio2_003_dat_
 	byte	$c0, $6e, $19, $f1
 '-'            	addx	pointer0h,afreq0  
 	byte	$c8, $70, $21, $f1
-'-' 		cmp	pointer0h,oldptrh wcz
+'-'  		cmp	pointer0h,oldptrh wcz
 	byte	$cb, $70, $19, $f2
-'-' 	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
+'-'  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
 	byte	$50, $00, $90, $ad
 '-'      	
 '-'             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
@@ -1332,11 +1319,19 @@ _Audio2_003_dat_
 	byte	$01, $70, $45, $a0
 '-'                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
 	byte	$b2, $74, $41, $f9
+'-'              
+'-'              
+'-' 
+'-'              
 '-'                   
-'-' p411	      	getword spl,rawspl0,#1
-	byte	$ba, $64, $39, $f9
+'-' p411	      	getword spl,rawspl0,#0
+	byte	$ba, $64, $31, $f9
 '-' 		getword oldspl,rawspl0,#1		' then separate them		
 	byte	$ba, $8e, $39, $f9
+'-' 
+'-'          '    debug(uhex(pointer0h,pointer0,spl,oldspl))
+'-' 
+'-' 
 '-' 		mov	envlo,pointer0
 	byte	$b7, $de, $01, $f6
 '-' 		shr 	envlo,#18
@@ -1698,7 +1693,7 @@ _Audio2_003_dat_
 '-' null  			long 	0,0           ' for channel reset
 	byte	$00, $00, $00, $00, $00, $00, $00, $00
 objmem
-	long	0[347]
+	long	0[348]
 stackspace
 	long	0[1]
 	org	COG_BSS_START
@@ -1733,5 +1728,19 @@ local02
 local03
 	res	1
 local04
+	res	1
+local05
+	res	1
+local06
+	res	1
+local07
+	res	1
+local08
+	res	1
+local09
+	res	1
+local10
+	res	1
+local11
 	res	1
 	fit	480
