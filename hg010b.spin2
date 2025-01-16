@@ -490,6 +490,12 @@ else
         d+=bi
         y+=yi
       putpixel(x, y,c)
+      
+      
+      
+      
+      
+      
  
 pub fillpush(val) 
 fillstack[fillptr]:=val

@@ -330,6 +330,7 @@ dim envbuf(7,255) as ushort			' envelope buffer
 declare envbuf8 alias envbuf as ubyte(7,512)	' the same for 8-bit access
 dim notetable(11) as single			' one octave note frequencies		' 
 dim noteperiods(11) as integer			' Paula periods for notes, one octave
+dim beepsample as short(16)
 
 ''-----------------------------------------------------------------------------------------
 ''---------------------------------- Classes and types ------------------------------------
@@ -510,6 +511,7 @@ pinwrite 38,0 : pinwrite 39,0 ' LEDs off
 loadname="noname.bas"
 do_insert=-1
 inload=0
+for i=0 to 1 : beepsample(i)=32767  : next i : for i=2 to 3: beepsample(i)=-32767 : next i
 
 open "/sd/bas/autorun.bas" for input as #9
 err=geterr()
@@ -2632,7 +2634,7 @@ if t1.result_type<>result_string then name$=loadname else name$=t1.result.sresul
 
 for i=0 to 255: if i mod 8 < 4 then sample(i)=127 else sample(i)=128 
 next i
-audio.play8(7,varptr(sample),8000,16384,256,0)
+'audio.play8(7,varptr(sample),8000,16384,256,0)
 waitms 3000 
 
 blockptr=0
@@ -2749,13 +2751,12 @@ sub do_beep
 
 dim t1,t2 as expr_result
 dim freq as ulong
-dim sample(1) as short
+
 
 t2=pop()
 t1=pop()
 if (t1.result_type=result_int orelse t1.result_type=result_uint) then freq=t1.result.iresult else freq=converttoint(t1)
-sample(0)=32767: sample(1)=-32767
-audio.beep(7,varptr(sample),freq,4096,4,0,0) 
+audio.beep(7,varptr(beepsample),freq,4096,8,0,0) 
 push t2
 do_waitms
 audio.stop(7)
@@ -4781,7 +4782,7 @@ sub do_play
 
 ' play channel, freq, wait, volume, waveform, envelope, length, pan, sus
 
-dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period,amode as integer
+dim numpar,i,base2,channel,skip,speed, ipan, ivol,wave,env,delay,sus,lfreq, period,amode,ifreq as integer
 dim params(9) as single
 dim t1 as expr_result
 dim speed_coeff, freq,pan ,vol,slen as single
@@ -4803,46 +4804,21 @@ if params(5)<0 orelse params(5)>8.0 then env=channels(channel).env else env=roun
 if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else slen=params(6) : channels(channel).length=slen
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
-if params(9)<0 orelse params(8)>255 then amode=channels(channel).amode else amode= round(params(9)) : channels(channel).amode=amode
+if params(9)<0 orelse params(9)>255 then amode=channels(channel).amode else amode= round(params(9)) : channels(channel).amode=amode
 
-
-if amode>0 then
-  lfreq=int(log(freq)/log(2))
-  skip=round(2^(lfreq+amode))                     '''' this const + const 2 lines lower=18
-  if skip>32768 then i=skip/32768: skip=32768 else i=1
-  period=round((3528000/freq)/(i*(2^(18-amode-lfreq))))  ' should be 3546895 but I use 338688000 for 44100 Hz samples
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) ': print period, skip, channels(channel).realfreq
+ifreq=round(freq*1000)
+if wave <32 then 
+  wave=2048*wave+$C000_0000 
 else
-  period=24 '147000 Hz
-  skip=round(1024*256*(freq/147000.0))
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) ': print period, skip, channels(channel).realfreq
+  wave=$C800_0000 
 endif
-
+if env=8 then env=0 else env=varptr(envbuf(env,0))
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
-base2=base+64*channel
-if wave <32 then 
-  lpoke base2+8,2048*wave+$C000_0000 
-else
-  lpoke base2+8,$C800_0000 
-endif
-lpoke base2+16,2048
-lpoke base2+12,0
-dpoke base2+20,ivol 
-dpoke base2+22,ipan 
-if wave<32 then
-  dpoke base2+24,period 
-  dpoke base2+26,skip  
-else
-  dpoke base2+24,round(3546895/freq) 
-  dpoke base2+26,256
-endif 
-lpoke base2+28,$0000_0000
-lpoke base2+32,0 
-if env=8 then lpoke base2+36,0 else lpoke base2+36,varptr(envbuf(env,0))
-lpoke base2+40,speed 
-lpoke base2+44,sus 
+
+audio.play(channel,ifreq,delay,ivol,wave,env,round(slen),ipan,sus)
+
 if delay>0 then waitms(delay) 
 end sub
 

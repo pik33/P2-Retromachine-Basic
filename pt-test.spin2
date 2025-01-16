@@ -72,9 +72,11 @@ long #14..15 reserved, unused
 }}
 
 sample[0]:=-32767
-sample[1]:=32767
-audio.beep(0,@sample ,4408,4096,4,0,0) 
+sample[1]:=32767'
+''audio.beep(0,@sample ,4408,4096,4,0,0) 
 
+repeat i from 1 to 10000
+  audio.play(0,i,10,4096,$08000000,0,0)
 repeat
 
 

@@ -176,50 +176,6 @@ long[base2+48]:=length
 long[base2+52]:=sustain
 waitms(delay)
 
-pub play1(channel,sample,splfreq,vol,len,loop=-1) |base2
-
-base2:=@channel0[0]+64*channel
-long[base2+20]:=sample+$C0000000 
-long[base2+28]:= len
-if loop >=0 
-  long[base2+24]:= loop
-else
-  long[base2+24]:= len
-word[base2+32]:=vol
-long[base2+36]:= splfreq*389566
-
-    
-pub playtoend8(channel,sample,splfreq,vol,len) |base2,i
-
-base2:=@channel1[0]+64*channel
-long[base2]:=0
-long[base2+8]:=sample+$40000000 
-long[base2+12]:= len
-long[base2+16]:= len+1
-word[base2+20]:=vol
-word[base2+24]:= 3546895/splfreq 
-word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-'long[base2+28]:=$40000000
-repeat 
-  i:=long[base2]
-until (i >>8) >=len
-word[base2+20]:=0
-
-pub play8(channel,sample,splfreq,vol,len,loop=-1) |base2,i
-
-base2:=@channel1[0]+64*channel
-long[base2]:=0
-long[base2+8]:=sample+$40000000 
-if loop>=0
-  long[base2+12]:=loop
-  long[base2+16]:= len
-else
-  long[base2+12]:= len
-  long[base2+16]:= len+1
-word[base2+20]:=vol
-word[base2+24]:= 3546895 /splfreq 
-word[base2+26]:=256 ' todo: use skip to make accurate sample rate
-'long[base2+28]:=$40000000
 
     
 
@@ -248,7 +204,7 @@ long[base2+20]:=sample+$C0000000
 long[base2+28]:= len
 long[base2+24]:= loop
 word[base2+32]:= vol
-long[base2+36]:= splfreq*761
+long[base2+36]:= splfreq*1522
 waitms(delay)
 pub stop(channel) | base2 'silence it
 
@@ -363,20 +319,27 @@ p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs
 '------------- Generate the noise if bit 27 of the pointer is set -----------------
 '----------------------------------------------------------------------------------
 
-p410        	testb   sstart0, #27 wz
-    	if_z    getrnd  spl
-    	if_z    jmp     #p406
+
     	
 '----------------------------------------------------------------------------------
 '------------- Get the sample -----------------------------------------------------
 '----------------------------------------------------------------------------------    	
  
-		mov	oldptrh,pointer0h
+p410  		mov	oldptrh,pointer0h
            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
            	addx	pointer0h,afreq0  
- 		cmp	pointer0h,oldptrh wcz
+          	
+   	   	testb   sstart0, #27 wz
+    	if_nz	jmp #p412   	
+   	if_c  	getrnd  spl
+   	if_c	rolword rawspl0,spl,#0	
+   		getword spl,rawspl0,#0
+      	        jmp     #p406          	
+           	
+           	
+p412 		cmp	pointer0h,oldptrh wcz
  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
      	
             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
@@ -401,11 +364,7 @@ p410        	testb   sstart0, #27 wz
                 testb   sstart0,#28 wz            
     	if_z    shr     pointer0h,#1    
                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
-             
-             
-
-             
-                  
+              
 p411	      	getword spl,rawspl0,#0
 		getword oldspl,rawspl0,#1		' then separate them		
 
@@ -415,12 +374,12 @@ p411	      	getword spl,rawspl0,#0
 		mov	envlo,pointer0
 		shr 	envlo,#18
 	
-            	scas    oldspl,envlo                   	' and do linear interpolation
-            	mov 	oldspl,0-0
+            	scas    spl,envlo                   	' and do linear interpolation
+            	mov 	spl,0-0
             	not     envlo
           	and     envlo,##$3FFF
-           	scas    spl,envlo
-            	mov     spl,0-0
+           	scas    oldspl,envlo
+            	mov     oldspl,0-0
                 add     spl, oldspl
 	 
 p406        	scas    spl, envs1

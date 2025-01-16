@@ -325,7 +325,7 @@ it will return with a failure code notifying the caller of this outcome.
 Otherwise in either case, if the mailbox is free the new request list is launched for this COG.
 ................................................................................................
 }}
-PRI execList(m, listptr, nonBlocking) : r 
+PUB execList(m, listptr, nonBlocking) : r 
     ' check if non blocking is desired and we already have a pending request active
     if nonBlocking and (long[m] & $80000000) 
        return ERR_WOULD_BLOCK
