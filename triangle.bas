@@ -3,7 +3,7 @@ const pin=0
 
 dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
-
+dim hello as class using "hello.b"
 dim pscog,videocog as ubyte
 dim mbox as ulong
 
@@ -19,16 +19,16 @@ open SendRecvDevice(@v.putchar, nil, nil) as #0
 waitms(100)
 v.cls(154,147)
 print "Test ready"
+hello.program
 
-
-triangle (1,2,3,4,5,6) 'abc acb bac bca cab cba
-triangle (1,2,5,6,3,4) 'abc acb bac bca cab cba
-triangle (3,4,1,2,5,6) 'abc acb bac bca cab cba
-triangle (3,4,5,6,1,2) 'abc acb bac bca cab cba
-triangle (5,6,1,2,3,4) 'abc acb bac bca cab cba
-triangle (5,6,3,4,1,2) 'abc acb bac bca cab cba
-waitms(5000)
-testtriangle
+'triangle (1,2,3,4,5,6) 'abc acb bac bca cab cba
+'triangle (1,2,5,6,3,4) 'abc acb bac bca cab cba
+'triangle (3,4,1,2,5,6) 'abc acb bac bca cab cba
+'triangle (3,4,5,6,1,2) 'abc acb bac bca cab cba
+'triangle (5,6,1,2,3,4) 'abc acb bac bca cab cba
+'triangle (5,6,3,4,1,2) 'abc acb bac bca cab cba
+'waitms(5000)
+'testtriangle
 
 sub triangle(x1,y1,x2,y2,x3,y3)
 
@@ -61,7 +61,7 @@ for j=0 to 255
 end sub
 
 
-function sphere(xp,yp,zp,xc,yc,zc,r) as uint
+function sphere(xp,yp,zp,xc,yc,zc,r) as ulong
 
 return sqrt((xc-xp)*(xc-xp)+(yc-yp)*(yc-yp)+(zc-zp)*(zc-zp))-r
 end function
