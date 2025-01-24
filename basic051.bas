@@ -478,7 +478,7 @@ startpsram
 
 audiocog,base=audio.start(mbox,0,$7E000)
 waitms(50)
-dpoke base+20,16384
+'dpoke base+20,16384
 usbcog=kbm.start()
 startvideo
 

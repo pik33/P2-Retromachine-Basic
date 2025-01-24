@@ -3,19 +3,22 @@ const pin=0
 
 dim v as class using "hg010b.spin2"
 dim psram as class using "psram.spin2"
+dim kbm as class using "usbnew.spin2"
 dim hello as class using "hello.b"
-dim pscog,videocog as ubyte
+dim pscog,videocog,usbcog as ubyte
 dim mbox as ulong
 
 dim list as ulong(2400)
 
 pscog=psram.startx(0, 1024, 11, 7)
 mbox=psram.getMailbox(0)
-
+usbcog=kbm.start()
 videocog=v.start(pin,mbox)
 for thecog=0 to 7:psram.setQos(thecog, 80 << 16) :next thecog
 psram.setQoS(videocog, $0400f400) 
 open SendRecvDevice(@v.putchar, nil, nil) as #0
+send=v.putchar
+recv=kbm.get_key
 waitms(100)
 v.cls(154,147)
 print "Test ready"

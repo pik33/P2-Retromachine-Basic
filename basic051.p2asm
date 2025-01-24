@@ -35267,11 +35267,6 @@ _program
 	sub	objptr, ##29108
 	mov	arg01, #50
 	call	#__system___waitms
-	add	objptr, ##29108
-	rdlong	arg01, objptr
-	sub	objptr, ##29108
-	add	arg01, #20
-	wrword	##16384, arg01
 	call	#_usbnew_spin2_start
 	add	objptr, ##29096
 	wrlong	result1, objptr
@@ -36563,6 +36558,12 @@ LR__2766
 _hg010b_spin2_draw_ret
 	ret
 
+'       
+'       
+'       
+'       
+'       
+'       
 '  
 ' pub fillpush(val) 
 _hg010b_spin2_fillpush
@@ -45082,7 +45083,7 @@ __system___vfs_open_fat_handle
 	mov	objptr, local02
 	add	objptr, ##528
 	wrlong	local01, objptr
-' #line 4 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/diskio.cc"
+' #line 4 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/diskio.cc"
 ' 
 ' 
 ' vfs_file_t *fh;
@@ -47131,7 +47132,7 @@ _sdmm_cc_disk_initialize
 	add	objptr, #8
 	wrbyte	#1, objptr
 	sub	objptr, #20
-' #line 539 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 539 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 ' 		return RES_NOTRDY;
 	add	ptra, #12
  if_ne	mov	result1, #3
@@ -47404,10 +47405,10 @@ LR__4399
 	call	#_sdmm_cc_deselect_0858
 	wxpin	local10, local03
 	wrpin	local11, local05
-' #line 682 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 682 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 ' 		}
 ' 	}
-' #line 687 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 687 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 ' 	CardType = ty;
 ' 	s = ty ? 0 :  0x01 ;
 ' 	Stat = s;
@@ -47417,7 +47418,7 @@ LR__4399
 ' 
 ' 	_wxpin( PIN_CLK, ck_div );
 ' 	_wrpin( PIN_DI, spm_tx );
-' #line 700 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 700 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 ' 	return s;
 	mov	result1, local07
 LR__4400
@@ -48026,7 +48027,7 @@ _sdmm_cc_disk_setpins
 '     _pin_ss = pss;
 '     _pin_di = pdi;
 '     _pin_do = pdo;
-' #line 848 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 848 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 '     return 0;
 	mov	result1, #0
 _sdmm_cc_disk_setpins_ret
@@ -48046,7 +48047,7 @@ _sdmm_cc_disk_deinitialize
 	sub	objptr, #4
 	rdlong	arg01, objptr
 	sub	objptr, #12
-' #line 865 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 865 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 '         return RES_NOTRDY;
  if_ne	mov	result1, #3
  if_ne	jmp	#LR__4510
@@ -48063,7 +48064,7 @@ _sdmm_cc_disk_deinitialize
 	mov	arg01, #10
 	call	#__system___waitms
 '     }
-' #line 871 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/block/sdmm.cc"
+' #line 871 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/block/sdmm.cc"
 '     _pinclear(SMPIN_DO);
 '     _pinclear(PIN_DO);
 '     _pinclear(PIN_DI);
@@ -48383,7 +48384,7 @@ _fatfs_cc_ff_wtoupper
  if_ae	add	_var03, ##754
 	mov	_var04, _var03
 ' 		uc = (WORD)uni;
-' 		p = uc < 0x1000 ? cvt1 : cvt2;
+' 		p = uc < 0x1000 ? (WORD*) cvt1 : (WORD *) cvt2;
 ' 		for (;;) {
 LR__4560
 	rdword	_var05, _var04
@@ -48602,7 +48603,7 @@ _fatfs_cc_strncmp_ret
 	ret
 
 _fatfs_cc_strchr
-' #line 16 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/libc/string/strchr.c"
+' #line 16 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/libc/string/strchr.c"
 ' 	while ((c = *s++) != (char) charwanted)
 LR__4610
 	mov	_var01, arg01
@@ -55146,7 +55147,7 @@ _fatfs_cc_unixtime_1154
 '     date.tm_sec = (dostime & 0x1f) << 1;
 ' 
 '     t = mktime(&date);
-' #line 66 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 66 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return t;
 	mov	ptra, fp
 	call	#popregs_
@@ -55155,7 +55156,7 @@ _fatfs_cc_unixtime_1154_ret
 
 _fatfs_cc__set_dos_error_1156
 	mov	_var01, arg01
-' #line 82 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 82 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     switch (derr) {
 	fle	_var01, #20
 	jmprel	_var01
@@ -55321,7 +55322,7 @@ _fatfs_cc_v_opendir
 	mov	arg02, #16
 	call	#__system___gc_doalloc
 	mov	local03, result1 wz
-' #line 166 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 166 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '       return _seterror( 7 );
  if_e	add	ptr___system__dat__, #32
  if_e	wrlong	#7, ptr___system__dat__
@@ -55521,7 +55522,7 @@ LR__5313
 '     buf->st_blksize = 512;
 '     buf->st_blocks = (finfo.fsize + 511) / 512;
 '     buf->st_atime = buf->st_mtime = buf->st_ctime = unixtime(finfo.fdate, finfo.ftime);
-' #line 257 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 257 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return r;
 	mov	result1, local04
 LR__5314
@@ -55771,7 +55772,7 @@ LR__5354
 '     return _gc_free(ptr);
 	call	#__system___gc_free
 '     free(f);
-' #line 426 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 426 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(r);
 	mov	arg01, local07
 	call	#_fatfs_cc__set_dos_error_1156
@@ -55805,9 +55806,9 @@ _fatfs_cc_v_flush
 	call	#_fatfs_cc_f_sync
 	mov	arg01, result1
 '     }
-' #line 449 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 449 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     result = f_sync(f);
-' #line 453 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 453 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return _set_dos_error(result);
 	call	#_fatfs_cc__set_dos_error_1156
 LR__5360
@@ -55834,7 +55835,7 @@ _fatfs_cc_v_deinit
 	rdlong	arg02, objptr
 	sub	objptr, ##524
 	call	#__system___freepins
-' #line 474 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 474 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     _freepins(f_pinmask);
 '     return 0;
 	mov	result1, #0
@@ -55957,7 +55958,7 @@ _fatfs_cc_get_vfs
 ' 
 '     v->getcf = 0;
 '     v->putcf = 0;
-' #line 532 "C:/Users/Piotr/Downloads/flexprop-6.9.10/flexprop/include/filesys/fatfs/fatfs.cc"
+' #line 532 "C:/Users/Piotr/Downloads/flexprop-7.0.0/flexprop/include/filesys/fatfs/fatfs.cc"
 '     return v;
 	mov	result1, arg01
 	mov	ptra, fp
@@ -64215,148 +64216,82 @@ _usbnew_spin2_dat_
 '-' 
 '-' hdev_init_start
 '-' hdev_port       res     1
-'-' hdev_port       res     1
-'-' hdev_next_datax res     ((1+MAX_DEVICES)+3)/4 ' 1+7 byte
 '-' hdev_next_datax res     ((1+MAX_DEVICES)+3)/4 ' 1+7 byte
 '-' kbm_next_datax  res     1
-'-' kbm_next_datax  res     1
-'-' hub_intf_num    res     1
 '-' hub_intf_num    res     1
 '-' hub_next_datax  res     1
-'-' hub_next_datax  res     1
 '-' hub_status_chg  res     1
-'-' hub_status_chg  res     1
-'-' hub_port_status res     1
 '-' hub_port_status res     1
 '-' if HAVE_MOUSE
 '-' ms_intf_num     res     1
-'-' ms_intf_num     res     1
-'-' ms_in_max_pkt   res     1
 '-' ms_in_max_pkt   res     1
 '-' end
 '-' kb_intf_num     res     1
-'-' kb_intf_num     res     1
-'-' kb_interval     res     1
 '-' kb_interval     res     1
 '-' kb_in_max_pkt   res     1
-'-' kb_in_max_pkt   res     1
-'-' kb_max_index    res     1
 '-' kb_max_index    res     1
 '-' kb_led_states   res     1
-'-' kb_led_states   res     1
-'-' gp_intf_num     res     1
 '-' gp_intf_num     res     1
 '-' gp_interval     res     1
-'-' gp_interval     res     1
 '-' gp_max_index    res     1
-'-' gp_max_index    res     1
-'-' gp_descr_len    res     1+MAX_DEVICES
 '-' gp_descr_len    res     1+MAX_DEVICES
 '-' hdev_init_end
 '-' 
 '-' ' Initialized at cog startup:
 '-' hcog_base_addr  res     1         ' This object's start address in hub, read from PTRB at cog creation
-'-' hcog_base_addr  res     1         ' This object's start address in hub, read from PTRB at cog creation
-'-' iframe_ct_new   res     1
 '-' iframe_ct_new   res     1
 '-' iframe_ct_base  res     1
-'-' iframe_ct_base  res     1
-'-' utx_tweak       res     1         ' Sysclock speeds above ~120MHz need some fairy dust for USB tx
 '-' utx_tweak       res     1         ' Sysclock speeds above ~120MHz need some fairy dust for USB tx
 '-' 
 '-' ' This register block is reset to zero when a USB device connects
 '-' hreg_init_start
 '-' hstatus         res     1         ' Host status flags
-'-' hstatus         res     1         ' Host status flags
-'-' hctwait         res     1         ' Poll-based wait clocks
 '-' hctwait         res     1         ' Poll-based wait clocks
 '-' ip_delay        res     1         ' Inter-packet delay in bit periods for connected device speed
-'-' ip_delay        res     1         ' Inter-packet delay in bit periods for connected device speed
-'-' tat_wait        res     1         ' Maximum bus turn-around time in bit periods for connected device speed
 '-' tat_wait        res     1         ' Maximum bus turn-around time in bit periods for connected device speed
 '-' nak_retry       res     1         ' NAK retry count, unlimited retries if zero
-'-' nak_retry       res     1         ' NAK retry count, unlimited retries if zero
-'-' xfer_retry      res     1         ' Control transfer retry count
 '-' xfer_retry      res     1         ' Control transfer retry count
 '-' retry           res     1         ' Transaction retry count
-'-' retry           res     1         ' Transaction retry count
-'-' utx             res     1         ' Byte to transmit on USB
 '-' utx             res     1         ' Byte to transmit on USB
 '-' urx             res     1         ' LSByte receiver status flags, MSByte received data
-'-' urx             res     1         ' LSByte receiver status flags, MSByte received data
-'-' newb_flg        res     1         ' Receive "new byte" bit toggle detector
 '-' newb_flg        res     1         ' Receive "new byte" bit toggle detector
 '-' max_pkt_size    res     1         ' Maximum payload bytes allowed, likely to change on device connect.
-'-' max_pkt_size    res     1         ' Maximum payload bytes allowed, likely to change on device connect.
-'-' total_data      res     1         ' Total bytes to tx/rx in a transfer data stage
 '-' total_data      res     1         ' Total bytes to tx/rx in a transfer data stage
 '-' stage_data      res     1         ' Count of bytes sent/received so far during a data stage.
-'-' stage_data      res     1         ' Count of bytes sent/received so far during a data stage.
-'-' pkt_data        res     1         ' Payload size of an OUT packet or bytes received on IN
 '-' pkt_data        res     1         ' Payload size of an OUT packet or bytes received on IN
 '-' frame           res     1         ' USB 1ms frame counter value
-'-' frame           res     1         ' USB 1ms frame counter value
-'-' sof_pkt         res     1         ' ISR frame# packet and CRC5
 '-' sof_pkt         res     1         ' ISR frame# packet and CRC5
 '-' icrc            res     1         ' Only used by the 1ms frame output ISR routine
-'-' icrc            res     1         ' Only used by the 1ms frame output ISR routine
-'-' pkt_cnt         res     1         ' Count of DATAx packet payload bytes
 '-' pkt_cnt         res     1         ' Count of DATAx packet payload bytes
 '-' crc             res     1         ' Used for CRC16 calculation
-'-' crc             res     1         ' Used for CRC16 calculation
-'-' ep_addr_pid     res     1         ' Endpoint and device addresses for connected device
 '-' ep_addr_pid     res     1         ' Endpoint and device addresses for connected device
 '-' retval          res     1         ' Global success/fail return parameter
-'-' retval          res     1         ' Global success/fail return parameter
-'-' context_retval  res     1         ' Operation contextual return parameter
 '-' context_retval  res     1         ' Operation contextual return parameter
 '-' ' Device stuff
 '-' hdev_id         res     1+MAX_DEVICES
-'-' hdev_id         res     1+MAX_DEVICES
 '-' hdev_bcd        res     1
-'-' hdev_bcd        res     1
-'-' hdev_type       res     ((1+MAX_DEVICES)+3)/4 ' Configured device indicator
 '-' hdev_type       res     ((1+MAX_DEVICES)+3)/4 ' Configured device indicator
 '-' ' Keyboard/mouse stuff
 '-' hctrl_ep_addr   res     1
-'-' hctrl_ep_addr   res     1
-'-' hctrl_max_pkt   res     1
 '-' hctrl_max_pkt   res     1
 '-' hconfig_base    res     1
-'-' hconfig_base    res     1
-'-' hcon_tot_len    res     1         ' Size of the complete config descriptor chain
 '-' hcon_tot_len    res     1         ' Size of the complete config descriptor chain
 '-' hdev_intf_idx   res     1         ' Used during verbose descriptor terminal output
-'-' hdev_intf_idx   res     1         ' Used during verbose descriptor terminal output
-'-' hdev_class      res     1
 '-' hdev_class      res     1
 '-' hdev_subclass   res     1
-'-' hdev_subclass   res     1
-'-' hdev_protocol   res     1
 '-' hdev_protocol   res     1
 '-' hsearch_key     res     1         ' Descriptor type to search for in the config chain
-'-' hsearch_key     res     1         ' Descriptor type to search for in the config chain
-'-' hnext_desc      res     1         ' Offset from the config descriptor start address to the next descriptor in the chain
 '-' hnext_desc      res     1         ' Offset from the config descriptor start address to the next descriptor in the chain
 '-' hhub_ctrl_ep    res     1         ' Hub control endpoint address
-'-' hhub_ctrl_ep    res     1         ' Hub control endpoint address
-'-' hhub_ep_addr    res     1         ' Hub interface endpoint address
 '-' hhub_ep_addr    res     1         ' Hub interface endpoint address
 '-' hkbd_ctrl_ep    res     1         ' Keyboard control endpoint address
-'-' hkbd_ctrl_ep    res     1         ' Keyboard control endpoint address
-'-' hkbd_ep_addr    res     1         ' Keyboard interface endpoint address
 '-' hkbd_ep_addr    res     1         ' Keyboard interface endpoint address
 '-' if HAVE_MOUSE
 '-' hmouse_ep_addr  res     1 ' Mouse interface endpoint address
-'-' hmouse_ep_addr  res     1 ' Mouse interface endpoint address
 '-' end
 '-' hkbd_poll_cnt   res     1         ' Poll interval counter used for key auto-repeat
-'-' hkbd_poll_cnt   res     1         ' Poll interval counter used for key auto-repeat
-'-' hkbd_ledstates  res     1         ' Off/on state of keyboard LEDs
 '-' hkbd_ledstates  res     1         ' Off/on state of keyboard LEDs
 '-' hdev_ep_addr    res     1+MAX_DEVICES
-'-' hdev_ep_addr    res     1+MAX_DEVICES
-'-' hdev_out_addr   res     1
 '-' hdev_out_addr   res     1
 '-' 
 '-' if EMUPAD_MAX_PLAYER > 0
@@ -64369,148 +64304,80 @@ _usbnew_spin2_dat_
 '-' 
 '-' hidr_start
 '-' hidr_usage      res     1 ' <- can get trashed after parsing
-'-' hidr_usage      res     1 ' <- can get trashed after parsing
-'-' hidr_flags      res     1
 '-' hidr_flags      res     1
 '-' hidr_axis       res     4
-'-' hidr_axis       res     4
 '-' hidr_buttons    res     1
-'-' hidr_buttons    res     1
-'-' hidr_hats       res     1
 '-' hidr_hats       res     1
 '-' '' Above are actually useful values, 6 longs
 '-' hidr_type       res     1
-'-' hidr_type       res     1
-'-' hidr_id         res     1
 '-' hidr_id         res     1
 '-' hidr_offset     res     1
-'-' hidr_offset     res     1
-'-' hidr_usage_idx  res     1
 '-' hidr_usage_idx  res     1
 '-' ' below need to be push/pop'd
 '-' hidr_state      res     1
-'-' hidr_state      res     1
-'-' hidr_size       res     1
 '-' hidr_size       res     1
 '-' hidr_count      res     1
-'-' hidr_count      res     1
 '-' hidr_lminmax    res     1
-'-' hidr_lminmax    res     1
-'-' hidr_pminmax    res     1
 '-' hidr_pminmax    res     1
 '-' hidr_end
 '-' 
 '-' ' Variables dependent on the system freqency
 '-' _var_64_lower_  res     1
-'-' _var_64_lower_  res     1
-'-' _var_64_upper_  res     1
 '-' _var_64_upper_  res     1
 '-' _12Mbps_        res     1
-'-' _12Mbps_        res     1
-'-' _1_5Mbps_       res     1
 '-' _1_5Mbps_       res     1
 '-' _1ns16fp_       res     1         ' 1ns as 32,16 fixed point
-'-' _1ns16fp_       res     1         ' 1ns as 32,16 fixed point
-'-' _1us_           res     1         ' 1us
 '-' _1us_           res     1         ' 1us
 '-' _10us_          res     1         ' 10us
-'-' _10us_          res     1         ' 10us
-'-' _33us_          res     1         ' 33us
 '-' _33us_          res     1         ' 33us
 '-' _txn_err_       res     1         ' 250us
-'-' _txn_err_       res     1         ' 250us
-'-' _500us_         res     1         ' 500us
 '-' _500us_         res     1         ' 500us
 '-' _txn_ok_ls_     res     1         ' 666us timespan for LS transaction OK window
-'-' _txn_ok_ls_     res     1         ' 666us timespan for LS transaction OK window
-'-' _txn_ok_fs_     res     1         ' 850us timespan for FS transaction OK window
 '-' _txn_ok_fs_     res     1         ' 850us timespan for FS transaction OK window
 '-' _ip_delay_ls_   res     1         ' Low-Speed inter-packet 4 bit-time delay
-'-' _ip_delay_ls_   res     1         ' Low-Speed inter-packet 4 bit-time delay
-'-' _ip_delay_fs_   res     1         ' Full-Speed inter-packet 4 bit-time delay
 '-' _ip_delay_fs_   res     1         ' Full-Speed inter-packet 4 bit-time delay
 '-' _tat_wait_ls_   res     1         ' Low-Speed turnaround 22 bit-time wait
-'-' _tat_wait_ls_   res     1         ' Low-Speed turnaround 22 bit-time wait
-'-' _tat_wait_fs_   res     1         ' Full-Speed turnaround 28 bit-time wait
 '-' _tat_wait_fs_   res     1         ' Full-Speed turnaround 28 bit-time wait
 '-' _preamble_wait_ res     1
-'-' _preamble_wait_ res     1
-'-' _1ms_           res     1         ' 1ms
 '-' _1ms_           res     1         ' 1ms
 '-' _2ms_           res     1         ' 2ms
-'-' _2ms_           res     1         ' 2ms
-'-' _suspend_wait_  res     1         ' 3ms
 '-' _suspend_wait_  res     1         ' 3ms
 '-' _4ms_           res     1         ' 4ms
-'-' _4ms_           res     1         ' 4ms
-'-' _xfer_wait_     res     1         ' 5ms
 '-' _xfer_wait_     res     1         ' 5ms
 '-' _8ms_           res     1         ' 8ms timespan for keyboard/mouse interrupt IN transactions
-'-' _8ms_           res     1         ' 8ms timespan for keyboard/mouse interrupt IN transactions
-'-' _reset_hold_    res     1         ' 15ms
 '-' _reset_hold_    res     1         ' 15ms
 '-' _resume_hold_   res     1         ' Hold K-state for 20ms to signal device(s) to resume
-'-' _resume_hold_   res     1         ' Hold K-state for 20ms to signal device(s) to resume
-'-' _21ms_          res     1         ' 21ms
 '-' _21ms_          res     1         ' 21ms
 '-' _100ms_         res     1         ' 100ms
-'-' _100ms_         res     1         ' 100ms
-'-' _500ms_         res     1         ' 500ms
 '-' _500ms_         res     1         ' 500ms
 '-' _pulse_time_    res     1         ' Activity LED toggle interval, one sec connect wait, _500ms_ when connected
-'-' _pulse_time_    res     1         ' Activity LED toggle interval, one sec connect wait, _500ms_ when connected
-'-' _frame1ms_clks_ res     1         '_1ms +/- n clocks: calculated based on the current sysclock
 '-' _frame1ms_clks_ res     1         '_1ms +/- n clocks: calculated based on the current sysclock
 '-' '------------------------------------------------------------------------------
 '-' _usb_h_ls_nco_  res     1         ' USB smart pin modes dependent on sysclock
-'-' _usb_h_ls_nco_  res     1         ' USB smart pin modes dependent on sysclock
-'-' _usb_d_ls_nco_  res     1
 '-' _usb_d_ls_nco_  res     1
 '-' _usb_h_fs_nco_  res     1
-'-' _usb_h_fs_nco_  res     1
-'-' _usb_d_fs_nco_  res     1
 '-' _usb_d_fs_nco_  res     1
 '-' '------------------------------------------------------------------------------
 '-' ' Scratch registers
 '-' htmp            res     1         ' Scratch registers whose context remains within the same code block
-'-' htmp            res     1         ' Scratch registers whose context remains within the same code block
-'-' htmp1           res     1
 '-' htmp1           res     1
 '-' htmp2           res     1
-'-' htmp2           res     1
-'-' htmp3           res     1
 '-' htmp3           res     1
 '-' hrep            res     1         ' Repeat count
-'-' hrep            res     1         ' Repeat count
-'-' hsave0          res     1         ' Subroutine parameter saves
 '-' hsave0          res     1         ' Subroutine parameter saves
 '-' hsave1          res     1
-'-' hsave1          res     1
-'-' hsave2          res     1
 '-' hsave2          res     1
 '-' isrtmp1         res     1
-'-' isrtmp1         res     1
-'-' pkt_tmp         res     1         ' Tmp storage for routines that deal with datax packets
 '-' pkt_tmp         res     1         ' Tmp storage for routines that deal with datax packets
 '-' hr0             res     1         ' Multi-purpose registers
-'-' hr0             res     1         ' Multi-purpose registers
-'-' hr1             res     1
 '-' hr1             res     1
 '-' hr2             res     1
-'-' hr2             res     1
-'-' hr3             res     1
 '-' hr3             res     1
 '-' hpar1           res     1         ' Routine entry/exit parameters
-'-' hpar1           res     1         ' Routine entry/exit parameters
-'-' hpar2           res     1
 '-' hpar2           res     1
 '-' hpar3           res     1
-'-' hpar3           res     1
-'-' hct2            res     1         ' Function response bus turn-around timer
 '-' hct2            res     1         ' Function response bus turn-around timer
 '-' hct3            res     1         ' Keyboard/mouse poll timer
-'-' hct3            res     1         ' Keyboard/mouse poll timer
-'-' mod_cnt         res     1         ' Used in idle loops
 '-' mod_cnt         res     1         ' Used in idle loops
 '-' 
 '-'                 fit     $1F0
