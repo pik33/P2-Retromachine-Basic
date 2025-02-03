@@ -13,8 +13,8 @@
 #include "dir.bi"
 
 const HEAPSIZE=96000
-'#define PSRAM4
-#define PSRAM16
+#define PSRAM4
+'#define PSRAM16
 
 #ifdef PSRAM16
 'const _clkfreq = 344064000 '48000*28*256 - test
@@ -28,9 +28,9 @@ dim psram as class using "psram.spin2"
 '' this version doesn't support 4 bit: video driver needs synchroonizing. To do after reaching a beta phase
 
 '#ifdef PSRAM4
-'const _clkfreq = 340500000
-'dim v as class using "hg009-4.spin2"
-'dim psram as class using "psram4.spin2"
+const _clkfreq = 340500000
+dim v as class using "hg010b-4.spin2"
+dim psram as class using "psram4.spin2"
 '#endif
 
 dim kbm as class using "usbnew.spin2"

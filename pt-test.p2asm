@@ -225,13 +225,11 @@ LR__0005
 	add	local01, #1
 	cmp	local01, ##10001 wc
  if_b	jmp	#LR__0005
+' 
+' 
+' 
 ' repeat
 LR__0006
-	jmp	#LR__0006
-' 
-' 
-' repeat
-LR__0007
 '    audio.play(0,c4*1000,200,4096,$40000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
 	mov	arg01, #0
 	mov	arg02, ##262000
@@ -408,7 +406,7 @@ LR__0007
 	neg	arg08, #1
 	neg	arg09, #1
 	call	#_Audio2_004_play
-	jmp	#LR__0007
+	jmp	#LR__0006
 	mov	ptra, fp
 	call	#popregs_
 _drivertest_ret

@@ -74,7 +74,7 @@ entry
 	wrlong	pa, #24
 	wrlong	##340500000, #20
 	jmp	#skip_clock_set_
-	orgf	128
+	orgf	192
 skip_clock_set_
 	call	#_dummy
 cogexit

@@ -77,7 +77,7 @@ sample[1]:=32767'
 
 repeat i from 1 to 10000
   audio.play(0,i,10,4096,$08000000,0,0)
-repeat
+
 
 
 repeat

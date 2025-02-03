@@ -1,0 +1,434 @@
+con
+	_clkfreq = 160000000
+	_clkmode = 16779259
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 160000000
+	long	0 ' clock mode: will default to $10007fb
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, ptr_stackspace_
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779256
+	waitx	##200000
+	mov	pa, ##16779259
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##160000000, #20
+	jmp	#skip_clock_set_
+	orgf	192
+skip_clock_set_
+	call	#_program
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra++
+	rdlong	result1, ptra++
+	setq	#3
+	rdlong	arg01, ptra
+	sub	ptra, #4
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    mov	fcache_tmpb_,ptrb
+    pop	ptrb
+    altd	pa,ret_instr_
+    mov	 0-0, ret_instr_
+    setq	pa
+    rdlong	$0, ptrb++
+    push	ptrb
+    mov ptrb,fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
+ret_instr_
+    _ret_ cmp inb,#0
+fcache_tmpb_
+    long 0
+fcache_load_ptr_
+    long FCACHE_LOAD_
+builtin_bytefill_
+        shr	arg03, #1 wc
+ if_c   wrbyte	arg02, arg01
+ if_c   add	arg01, #1
+        movbyts	arg02, #0
+builtin_wordfill_
+        shr	arg03, #1 wc
+ if_c   wrword	arg02, arg01
+ if_c   add	arg01, #2
+        setword	arg02, arg02, #1
+builtin_longfill_
+        wrfast	#0,arg01
+        cmp	arg03, #0 wz
+ if_nz  rep	#1, arg03
+ if_nz  wflong	arg02
+        ret
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    altd  COUNT_, #511
+    setq #0-0
+    wrlong local01, ptra++
+pushregs_done_
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra++
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    setq   #2
+    rdlong COUNT_, --ptra
+    djf    COUNT_, #popregs__ret
+    setq   COUNT_
+    rdlong local01, --ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+divide_
+       abs     muldivb_,muldivb_     wcz      'abs(y)
+       wrc     itmp2_                         'store sign of y
+       abs     muldiva_,muldiva_     wc       'abs(x)
+       qdiv    muldiva_, muldivb_             'queue divide
+ if_c  xor     itmp2_,#1                      'store sign of x
+       getqx   muldivb_                       'get quotient
+       getqy   muldiva_                       'get remainder
+       negc    muldiva_,muldiva_              'restore sign, remainder (sign of x)
+       testb   itmp2_,#0             wc       'restore sign, division result
+ _ret_ negc    muldivb_,muldivb_     
+
+__methods__
+	long	@__methodtable__
+__recvreg
+	long	0
+__sendreg
+	long	0
+itmp1_
+	long	0
+itmp2_
+	long	0
+objptr
+	long	@objmem
+ptr___system__dat__
+	long	@__system__dat_
+ptr_stackspace_
+	long	@stackspace
+result1
+	long	0
+result2
+	long	1
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+_program
+	mov	COUNT_, #4
+	call	#pushregs_
+	mov	arg01, __sendreg
+	mov	arg02, #0
+	call	#__system___funcptr_cmp
+	cmp	result1, #0 wz
+ if_e	mov	__sendreg, objptr
+	mov	arg01, __recvreg
+	mov	arg02, #0
+	call	#__system___funcptr_cmp
+	cmp	result1, #0 wz
+ if_e	mov	arg01, objptr
+ if_e	decod	arg02, #20
+ if_e	bith	arg01, #20
+ if_e	mov	__recvreg, arg01
+	rdbyte	result1, objptr
+	add	result1, #1
+	wrbyte	result1, objptr
+	rdbyte	local01, objptr wz
+ if_e	jmp	#LR__0002
+LR__0001
+	mov	local01, objptr
+	mov	local02, __recvreg
+	mov	local03, __recvreg
+	zerox	local02, #19
+	shr	local03, #20
+	shl	local03, #2
+	add	local03, __methods__
+	rdlong	local03, local03
+	mov	local04, objptr
+	mov	objptr, local02
+	call	local03
+	wrbyte	result1, local01
+	mov	objptr, __sendreg
+	mov	local03, __sendreg
+	zerox	objptr, #19
+	shr	local03, #20
+	shl	local03, #2
+	add	local03, __methods__
+	rdlong	local03, local03
+	rdbyte	arg01, local04
+	call	local03
+	mov	objptr, local04
+	rdbyte	local01, objptr wz
+ if_ne	jmp	#LR__0001
+LR__0002
+	mov	ptra, fp
+	call	#popregs_
+_program_ret
+	ret
+hubexit
+	jmp	#cogexit
+
+__system___setbaud
+	rdlong	muldiva_, #20
+	mov	muldivb_, arg01
+	call	#divide_
+	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+LR__0010
+	rdpin	result1, #62 wc
+	subx	result2, result2
+ if_b	jmp	#LR__0010
+LR__0011
+	dirl	#62
+	dirl	#63
+	wrlong	muldivb_, ptr___system__dat__
+	shl	muldivb_, #16
+	mov	arg02, #7
+	add	arg02, muldivb_
+	wrpin	#124, #62
+	wxpin	arg02, #62
+	wrpin	#62, #63
+	add	arg02, #20
+	wxpin	arg02, #63
+	dirh	#62
+	dirh	#63
+__system___setbaud_ret
+	ret
+
+__system___txraw
+	mov	COUNT_, #1
+	call	#pushregs_
+	mov	local01, arg01
+	callpa	#(@LR__0021-@LR__0020)>>2,fcache_load_ptr_
+LR__0020
+	rdpin	result1, #62 wc
+	subx	result2, result2
+ if_b	jmp	#LR__0020
+LR__0021
+	rdlong	result1, ptr___system__dat__ wz
+ if_e	mov	arg01, ##2000000
+ if_e	call	#__system___setbaud
+	drvl	#62
+	wypin	local01, #62
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+__system___txraw_ret
+	ret
+
+__system___rxraw
+	mov	COUNT_, #13
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, ptr___system__dat__ wz
+ if_e	mov	arg01, ##2000000
+ if_e	call	#__system___setbaud
+	cmp	local01, #0 wz
+ if_e	jmp	#LR__0030
+	rdlong	local03, #20
+	shr	local03, #10
+	qmul	local01, local03
+	getct	result1
+	getqx	local04
+	add	result1, local04
+	mov	local05, result1
+	jmp	#LR__0031
+LR__0030
+	mov	local05, #0
+LR__0031
+	neg	local06, #1
+	mov	local07, #63
+	mov	local08, #0
+	add	ptr___system__dat__, #4
+	rdlong	local09, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+LR__0032
+	testb	local09, #8 wc
+	testbn	local09, #9 andc
+	shr	local09, #10
+ if_b	mov	local08, #1
+ if_ae	testp	#63 wz
+ if_nc_and_z	mov	local08, #1
+ if_nc_and_z	rdpin	local09, #63
+ if_nc_and_z	shr	local09, #4
+LR__0033
+	mov	local02, #0
+	cmp	local08, #0 wz
+ if_ne	neg	local02, #1
+	mov	local10, #0
+	mov	local03, #0
+	cmp	local01, #0 wz
+ if_ne	neg	local03, #1
+	mov	local04, #0
+	mov	local11, #0
+	mov	local12, local05
+	getct	result1
+	mov	local13, result1
+	sub	local12, local13
+	cmps	local12, #0 wc
+ if_b	not	local11, #0
+	cmp	local11, #0 wz
+ if_ne	not	local04, #0
+	test	local03, local04 wz
+ if_ne	not	local10, #0
+	or	local02, local10 wz
+ if_e	jmp	#LR__0032
+	cmp	local08, #0 wz
+ if_ne	mov	local06, local09
+ if_ne	getbyte	local06, local06, #0
+	add	ptr___system__dat__, #4
+	wrlong	local09, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+	mov	result1, local06
+	mov	ptra, fp
+	call	#popregs_
+__system___rxraw_ret
+	ret
+
+__system___funcptr_cmp
+	rdlong	result1, arg01
+	rdlong	_var01, arg02
+	sub	result1, _var01 wz
+ if_e	add	arg01, #4
+ if_e	rdlong	result1, arg01
+ if_e	add	arg02, #4
+ if_e	rdlong	_var01, arg02
+ if_e	sub	result1, _var01
+__system___funcptr_cmp_ret
+	ret
+
+__system___tx
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	cmp	local01, #10 wz
+ if_ne	jmp	#LR__0040
+	add	ptr___system__dat__, #8
+	rdlong	local02, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	local02, #2 wz
+ if_ne	mov	arg01, #13
+ if_ne	call	#__system___txraw
+LR__0040
+	mov	arg01, local01
+	call	#__system___txraw
+	mov	ptra, fp
+	call	#popregs_
+__system___tx_ret
+	ret
+
+__system___rx
+	mov	COUNT_, #1
+	call	#pushregs_
+LR__0050
+	mov	arg01, #0
+	call	#__system___rxraw
+	mov	local01, result1
+	cmp	local01, ##-1 wz
+ if_e	jmp	#LR__0050
+	cmp	local01, #13 wz
+ if_ne	jmp	#LR__0051
+	add	ptr___system__dat__, #8
+	rdlong	result1, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	result1, #2 wz
+ if_ne	mov	local01, #10
+LR__0051
+	add	ptr___system__dat__, #8
+	rdlong	arg01, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	arg01, #1 wz
+ if_e	jmp	#LR__0054
+	cmp	local01, #127 wz
+ if_ne	jmp	#LR__0052
+	mov	arg01, #8
+	call	#__system___tx
+	jmp	#LR__0053
+LR__0052
+	mov	arg01, local01
+	call	#__system___tx
+LR__0053
+LR__0054
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+__system___rx_ret
+	ret
+	alignl
+__system__dat_
+	byte	$00[8]
+	byte	$03, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00
+__methodtable__
+	long	@__system___tx
+	long	@__system___rx
+objmem
+	long	0[8192]
+stackspace
+	long	0[1]
+	org	COG_BSS_START
+_var01
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+local04
+	res	1
+local05
+	res	1
+local06
+	res	1
+local07
+	res	1
+local08
+	res	1
+local09
+	res	1
+local10
+	res	1
+local11
+	res	1
+local12
+	res	1
+local13
+	res	1
+muldiva_
+	res	1
+muldivb_
+	res	1
+	fit	480
