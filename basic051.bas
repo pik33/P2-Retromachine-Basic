@@ -13,8 +13,8 @@
 #include "dir.bi"
 
 const HEAPSIZE=96000
-#define PSRAM4
-'#define PSRAM16
+'#define PSRAM4
+#define PSRAM16
 
 #ifdef PSRAM16
 'const _clkfreq = 344064000 '48000*28*256 - test
@@ -27,11 +27,11 @@ dim psram as class using "psram.spin2"
 
 '' this version doesn't support 4 bit: video driver needs synchroonizing. To do after reaching a beta phase
 
-'#ifdef PSRAM4
+#ifdef PSRAM4
 const _clkfreq = 340500000
 dim v as class using "hg010b-4.spin2"
 dim psram as class using "psram4.spin2"
-'#endif
+#endif
 
 dim kbm as class using "usbnew.spin2"
 'dim audio as class using "audio096.spin2"
@@ -4805,10 +4805,11 @@ if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else s
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
 if params(9)<0 orelse params(9)>255 then amode=channels(channel).amode else amode= round(params(9)) : channels(channel).amode=amode
+print wave
 
 ifreq=round(freq*1000)
 if wave <32 then 
-  wave=2048*wave+$C000_0000 
+  wave=2048*wave+$C200_0000 
 else
   wave=$C800_0000 
 endif
@@ -4818,7 +4819,8 @@ ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
 
 audio.play(channel,ifreq,delay,ivol,wave,env,round(slen),ipan,sus)
-
+ '  audio.play(1,440000,200,4096,$2000000,$0,600) 
+print channel, ifreq, delay, ivol,hex$(wave),env,slen,ipan, sus
 if delay>0 then waitms(delay) 
 end sub
 

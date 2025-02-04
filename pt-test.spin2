@@ -9,7 +9,7 @@ a4=440
 h4=494
 obj
 audio:"audio2-004.spin2"
-
+psram:"psram.spin2"
 var
 
 word sample[2]
@@ -24,7 +24,7 @@ repeat i from $40000 to $407FF step 2
 repeat i from $41000 to $411FF step 2
   j:=@envelope+((i-$41000)>>1)+16
   word[i]:=byte[j]<<8
-  
+psram.write($40000,$100000,2048)  
 cog, base:=audio.start(0,$60000,$61000)
 'debug(udec(cog,base))
 
@@ -75,13 +75,14 @@ sample[0]:=-32767
 sample[1]:=32767'
 ''audio.beep(0,@sample ,4408,4096,4,0,0) 
 
-repeat i from 1 to 10000
-  audio.play(0,i,10,4096,$08000000,0,0)
+'repeat i from 1 to 10000
+'  audio.play(0,i,10,4096,$08000000,0,0)
 
-
+audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+repeat
 
 repeat
-   audio.play(0,c4*1000,200,4096,$40000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+   audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
    audio.play(1,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
    audio.play(2,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
    audio.play(3,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 

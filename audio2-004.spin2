@@ -244,7 +244,7 @@ audio       	org     0
 '----------------- The main loop -------------------------------------------------
 '---------------------------------------------------------------------------------
 
-loop       	mov 	    cn,#15 '7
+loop       	mov 	    cn,#0 '15 '7
               					'   waitx ##3300000  		'for debug
             
 '----------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ p404        	mov     qq,sstart0		     	' check if start>$80000
                 cmp 	qq,##$80000 wcz
     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
     	if_lt   mov     mailbox,#0                	' if not, use HUB 
-
+ debug(uhex(sstart0,mailbox))
 p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
     	    	getword avol0,volpan0,#0
     	    	
@@ -368,7 +368,7 @@ p412 		cmp	pointer0h,oldptrh wcz
 p411	      	getword spl,rawspl0,#0
 		getword oldspl,rawspl0,#1		' then separate them		
 
-         '    debug(uhex(pointer0h,pointer0,spl,oldspl))
+          '  debug(uhex(pointer0h,pointer0,spl,oldspl))
 
 
 		mov	envlo,pointer0
@@ -459,7 +459,7 @@ p403        	setq #4                          	' write new pointer, sample value
 
 
 cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
-            
+            debug ("cache")
 	   	mov     addrhi,qq		
 	    	shr     addrhi,#8		        ' get 24 upper bits
 	    	alts    cn,#cache1            

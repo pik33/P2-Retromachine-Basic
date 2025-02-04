@@ -31,12 +31,12 @@
       ...             
 003f8     00 00 00 00 
 003fc     00 00 00 00 | 	orgh	$400
-00400     00 FC 05 06 |  _ret_	mov	result1, #0
+00400     00 FE 05 06 |  _ret_	mov	result1, #0
 00404 000             | 	org	0
 00404 000             | entry
 00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
 00408 001 0C 03 90 5D |  if_ne	jmp	#spininit
-0040c 002 FD F0 03 F6 | 	mov	ptra, ptr_stackspace_
+0040c 002 FE F0 03 F6 | 	mov	ptra, ptr_stackspace_
 00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
 00414 004 EC 02 90 5D |  if_ne	jmp	#skip_clock_set_
 00418 005 00 00 64 FD | 	hubset	#0
@@ -56,19 +56,19 @@
 006fc 0be 00 00 00 00 
 00700 0bf 00 00 00 00 | 	orgf	192
 00704 0c0             | skip_clock_set_
-00704 0c0 0C 08 A0 FD | 	call	#_drivertest
+00704 0c0 10 08 A0 FD | 	call	#_drivertest
 00708 0c1             | cogexit
 00708 0c1 38 01 80 FF 
 0070c 0c2 1F 00 66 FD | 	waitx	##160000
-00710 0c3 01 0A 62 FD | 	cogid	arg01
-00714 0c4 03 0A 62 FD | 	cogstop	arg01
+00710 0c3 01 0C 62 FD | 	cogid	arg01
+00714 0c4 03 0C 62 FD | 	cogstop	arg01
 00718 0c5             | spininit
 00718 0c5 61 F5 05 FB | 	rdlong	objptr, ptra++
-0071c 0c6 61 FD 05 FB | 	rdlong	result1, ptra++
+0071c 0c6 61 FF 05 FB | 	rdlong	result1, ptra++
 00720 0c7 28 06 64 FD | 	setq	#3
-00724 0c8 00 0B 06 FB | 	rdlong	arg01, ptra
+00724 0c8 00 0D 06 FB | 	rdlong	arg01, ptra
 00728 0c9 04 F0 87 F1 | 	sub	ptra, #4
-0072c 0ca 2D FC 61 FD | 	call	result1
+0072c 0ca 2D FE 61 FD | 	call	result1
 00730 0cb D4 FF 9F FD | 	jmp	#cogexit
 00734 0cc             | FCACHE_LOAD_
 00734 0cc F9 AD 01 F6 |     mov	fcache_tmpb_,ptrb
@@ -87,20 +87,20 @@
 00760 0d7             | fcache_load_ptr_
 00760 0d7 CC 00 00 00 |     long FCACHE_LOAD_
 00764 0d8             | builtin_bytefill_
-00764 0d8 01 0E 56 F0 |         shr	arg03, #1 wc
-00768 0d9 05 0D 42 CC |  if_c   wrbyte	arg02, arg01
-0076c 0da 01 0A 06 C1 |  if_c   add	arg01, #1
-00770 0db 00 0C FE F9 |         movbyts	arg02, #0
+00764 0d8 01 10 56 F0 |         shr	arg03, #1 wc
+00768 0d9 06 0F 42 CC |  if_c   wrbyte	arg02, arg01
+0076c 0da 01 0C 06 C1 |  if_c   add	arg01, #1
+00770 0db 00 0E FE F9 |         movbyts	arg02, #0
 00774 0dc             | builtin_wordfill_
-00774 0dc 01 0E 56 F0 |         shr	arg03, #1 wc
-00778 0dd 05 0D 52 CC |  if_c   wrword	arg02, arg01
-0077c 0de 02 0A 06 C1 |  if_c   add	arg01, #2
-00780 0df 06 0D 2A F9 |         setword	arg02, arg02, #1
+00774 0dc 01 10 56 F0 |         shr	arg03, #1 wc
+00778 0dd 06 0F 52 CC |  if_c   wrword	arg02, arg01
+0077c 0de 02 0C 06 C1 |  if_c   add	arg01, #2
+00780 0df 07 0F 2A F9 |         setword	arg02, arg02, #1
 00784 0e0             | builtin_longfill_
-00784 0e0 05 01 88 FC |         wrfast	#0,arg01
-00788 0e1 00 0E 0E F2 |         cmp	arg03, #0 wz
-0078c 0e2 07 03 D8 5C |  if_nz  rep	#1, arg03
-00790 0e3 17 0C 62 5D |  if_nz  wflong	arg02
+00784 0e0 06 01 88 FC |         wrfast	#0,arg01
+00788 0e1 00 10 0E F2 |         cmp	arg03, #0 wz
+0078c 0e2 08 03 D8 5C |  if_nz  rep	#1, arg03
+00790 0e3 17 0E 62 5D |  if_nz  wflong	arg02
 00794 0e4 2D 00 64 FD |         ret
 00798 0e5             | COUNT_
 00798 0e5 00 00 00 00 |     long 0
@@ -114,7 +114,7 @@
 007ac 0ea 03 CA 95 FB |     tjz  COUNT_, #pushregs_done_
 007b0 0eb FF CB 8D F9 |     altd  COUNT_, #511
 007b4 0ec 28 00 64 FD |     setq #0-0
-007b8 0ed 61 1D 66 FC |     wrlong local01, ptra++
+007b8 0ed 61 1F 66 FC |     wrlong local01, ptra++
 007bc 0ee             | pushregs_done_
 007bc 0ee 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
 007c0 0ef 61 CB 65 FC |     wrlong COUNT_, ptra++
@@ -126,1916 +126,2057 @@
 007d4 0f4 5F CB 05 FB |     rdlong COUNT_, --ptra
 007d8 0f5 02 CA 75 FB |     djf    COUNT_, #popregs__ret
 007dc 0f6 28 CA 61 FD |     setq   COUNT_
-007e0 0f7 5F 1D 06 FB |     rdlong local01, --ptra
+007e0 0f7 5F 1F 06 FB |     rdlong local01, --ptra
 007e4 0f8             | popregs__ret
 007e4 0f8 2A CC 61 FD |     push   RETADDR_
 007e8 0f9 2C EC 63 FD |     jmp    pa
 007ec 0fa             | 
 007ec 0fa             | objptr
-007ec 0fa A8 1F 00 00 | 	long	@objmem
+007ec 0fa B8 22 00 00 | 	long	@objmem
 007f0 0fb             | ptr__Audio2_004_dat__
-007f0 0fb C8 1B 00 00 | 	long	@_Audio2_004_dat_
+007f0 0fb 88 1C 00 00 | 	long	@_Audio2_004_dat_
 007f4 0fc             | ptr__dat__
-007f4 0fc A8 12 00 00 | 	long	@_dat_
-007f8 0fd             | ptr_stackspace_
-007f8 0fd 18 25 00 00 | 	long	@stackspace
-007fc 0fe             | result1
-007fc 0fe 00 00 00 00 | 	long	0
-00800 0ff             | result2
-00800 0ff 01 00 00 00 | 	long	1
-00804 100             | result3
-00804 100 02 00 00 00 | 	long	2
-00808 101             | result4
-00808 101 03 00 00 00 | 	long	3
-0080c 102             | COG_BSS_START
-0080c 102             | 	fit	480
-0080c                 | 	orgh
-0080c                 | hubentry
-0080c                 | 
-0080c                 | ' 
-0080c                 | ' pub drivertest()   : cog,base,i,j
-0080c                 | _drivertest
-0080c     02 CA 05 F6 | 	mov	COUNT_, #2
-00810     E8 00 A0 FD | 	call	#pushregs_
-00814                 | ' ' prepare 8-bit saw wave
-00814                 | ' repeat i from $40000 to $407FF step 2
-00814     12 1C C6 F9 | 	decod	local01, #18
-00818     D7 14 48 FB | 	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
-0081c                 | LR__0001
-0081c                 | '   j:=@waveform+i-$40000+16
-0081c     FC 1E 02 F6 | 	mov	local02, ptr__dat__
-00820     0E 1F 02 F1 | 	add	local02, local01
-00824     FF 01 00 FF 
-00828     F0 1F 86 F1 | 	sub	local02, ##262128
-0082c                 | '   word[i]:=word[j]
-0082c     0F 1F E2 FA | 	rdword	local02, local02
-00830     0E 1F 52 FC | 	wrword	local02, local01
-00834     02 1C 06 F1 | 	add	local01, #2
-00838     04 02 00 FF 
-0083c     00 1C 56 F2 | 	cmps	local01, ##264192 wc
-00840     D8 FF 9F CD |  if_b	jmp	#LR__0001
-00844                 | LR__0002
-00844                 | '  ' debug(sdec(word[i]))
-00844                 | ' ' start the driver. It will generate scope data at $60000. It will not use any PSRAM
-00844                 | ' repeat i from $41000 to $411FF step 2
-00844     08 02 00 FF 
-00848     00 1C 06 F6 | 	mov	local01, ##266240
-0084c     04 00 00 FF 
-00850     10 F8 05 F1 | 	add	ptr__dat__, ##2064
-00854     D7 1C 48 FB | 	callpa	#(@LR__0004-@LR__0003)>>2,fcache_load_ptr_
-00858                 | LR__0003
-00858                 | '   j:=@envelope+((i-$41000)>>1)+16
-00858     FC 1E 02 F6 | 	mov	local02, ptr__dat__
-0085c     0E 1B 02 F6 | 	mov	arg09, local01
-00860     08 02 00 FF 
-00864     00 1A 86 F1 | 	sub	arg09, ##266240
-00868     01 1A 46 F0 | 	shr	arg09, #1
-0086c     0D 1F 02 F1 | 	add	local02, arg09
-00870     10 1E 06 F1 | 	add	local02, #16
-00874                 | '   word[i]:=byte[j]<<8
-00874     0F 1F C2 FA | 	rdbyte	local02, local02
-00878     08 1E 66 F0 | 	shl	local02, #8
-0087c     0E 1F 52 FC | 	wrword	local02, local01
-00880     02 1C 06 F1 | 	add	local01, #2
-00884     09 02 00 FF 
-00888     00 1C 56 F2 | 	cmps	local01, ##266752 wc
-0088c     C8 FF 9F CD |  if_b	jmp	#LR__0003
-00890                 | LR__0004
-00890     04 00 00 FF 
-00894     10 F8 85 F1 | 	sub	ptr__dat__, ##2064
-00898                 | '   
-00898                 | ' cog, base:=audio.start(0,$60000,$61000)
-00898     00 0A 06 F6 | 	mov	arg01, #0
-0089c     00 03 00 FF 
-008a0     00 0C 06 F6 | 	mov	arg02, ##393216
-008a4     08 03 00 FF 
-008a8     00 0E 06 F6 | 	mov	arg03, ##397312
-008ac     04 F4 05 F1 | 	add	objptr, #4
-008b0     A8 03 B0 FD | 	call	#_Audio2_004_start
-008b4     04 F4 85 F1 | 	sub	objptr, #4
-008b8                 | ' 'debug(udec(cog,base))
-008b8                 | ' 
-008b8                 | ' {{Channel registers:
-008b8                 | ' }}
-008b8                 | ' 
-008b8                 | ' ' tell it to play
-008b8                 | ' 
-008b8                 | ' {{repeat i from 0 to 15 
-008b8                 | ' }}
-008b8                 | ' 
-008b8                 | ' sample[0]:=-32767
-008b8     40 00 80 FF 
-008bc     FA 02 58 FC | 	wrword	##32769, objptr
-008c0                 | ' sample[1]:=32767'
-008c0     02 F4 05 F1 | 	add	objptr, #2
-008c4     3F 00 80 FF 
-008c8     FA FE 5B FC | 	wrword	##32767, objptr
-008cc                 | ' ''audio.beep(0,@sample ,4408,4096,4,0,0) 
-008cc                 | ' 
-008cc                 | ' repeat i from 1 to 10000
-008cc     01 1C 06 F6 | 	mov	local01, #1
-008d0     02 F4 05 F1 | 	add	objptr, #2
-008d4                 | LR__0005
-008d4                 | '   audio.play(0,i,10,4096,$08000000,0,0)
-008d4     00 0A 06 F6 | 	mov	arg01, #0
-008d8     0E 0D 02 F6 | 	mov	arg02, local01
-008dc     0A 0E 06 F6 | 	mov	arg03, #10
-008e0     0C 10 C6 F9 | 	decod	arg04, #12
-008e4     1B 12 C6 F9 | 	decod	arg05, #27
-008e8     00 14 06 F6 | 	mov	arg06, #0
-008ec     00 16 06 F6 | 	mov	arg07, #0
-008f0     01 18 66 F6 | 	neg	arg08, #1
-008f4     01 1A 66 F6 | 	neg	arg09, #1
-008f8     FC 05 B0 FD | 	call	#_Audio2_004_play
-008fc     01 1C 06 F1 | 	add	local01, #1
-00900     13 00 00 FF 
-00904     11 1D 16 F2 | 	cmp	local01, ##10001 wc
-00908     C8 FF 9F CD |  if_b	jmp	#LR__0005
-0090c                 | ' 
-0090c                 | ' 
-0090c                 | ' 
-0090c                 | ' repeat
-0090c                 | LR__0006
-0090c                 | '    audio.play(0,c4*1000,200,4096,$40000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
-0090c     00 0A 06 F6 | 	mov	arg01, #0
-00910     FF 01 00 FF 
-00914     70 0D 06 F6 | 	mov	arg02, ##262000
-00918     C8 0E 06 F6 | 	mov	arg03, #200
-0091c     0C 10 C6 F9 | 	decod	arg04, #12
-00920     12 12 C6 F9 | 	decod	arg05, #18
-00924     08 02 00 FF 
-00928     00 14 06 F6 | 	mov	arg06, ##266240
-0092c     01 00 00 FF 
-00930     58 16 06 F6 | 	mov	arg07, ##600
-00934     01 18 66 F6 | 	neg	arg08, #1
-00938     01 1A 66 F6 | 	neg	arg09, #1
-0093c     B8 05 B0 FD | 	call	#_Audio2_004_play
-00940                 | '    audio.play(1,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00940     01 0A 06 F6 | 	mov	arg01, #1
-00944     3E 02 00 FF 
-00948     70 0C 06 F6 | 	mov	arg02, ##294000
-0094c     C8 0E 06 F6 | 	mov	arg03, #200
-00950     0C 10 C6 F9 | 	decod	arg04, #12
-00954     12 12 C6 F9 | 	decod	arg05, #18
-00958     08 02 00 FF 
-0095c     00 14 06 F6 | 	mov	arg06, ##266240
-00960     01 00 00 FF 
-00964     58 16 06 F6 | 	mov	arg07, ##600
-00968     01 18 66 F6 | 	neg	arg08, #1
-0096c     01 1A 66 F6 | 	neg	arg09, #1
-00970     84 05 B0 FD | 	call	#_Audio2_004_play
-00974                 | '    audio.play(2,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00974     02 0A 06 F6 | 	mov	arg01, #2
-00978     84 02 00 FF 
-0097c     10 0D 06 F6 | 	mov	arg02, ##330000
-00980     C8 0E 06 F6 | 	mov	arg03, #200
-00984     0C 10 C6 F9 | 	decod	arg04, #12
-00988     12 12 C6 F9 | 	decod	arg05, #18
-0098c     08 02 00 FF 
-00990     00 14 06 F6 | 	mov	arg06, ##266240
-00994     01 00 00 FF 
-00998     58 16 06 F6 | 	mov	arg07, ##600
-0099c     01 18 66 F6 | 	neg	arg08, #1
-009a0     01 1A 66 F6 | 	neg	arg09, #1
-009a4     50 05 B0 FD | 	call	#_Audio2_004_play
-009a8                 | '    audio.play(3,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-009a8     03 0A 06 F6 | 	mov	arg01, #3
-009ac     A9 02 00 FF 
-009b0     48 0D 06 F6 | 	mov	arg02, ##349000
-009b4     C8 0E 06 F6 | 	mov	arg03, #200
-009b8     0C 10 C6 F9 | 	decod	arg04, #12
-009bc     12 12 C6 F9 | 	decod	arg05, #18
-009c0     08 02 00 FF 
-009c4     00 14 06 F6 | 	mov	arg06, ##266240
-009c8     01 00 00 FF 
-009cc     58 16 06 F6 | 	mov	arg07, ##600
-009d0     01 18 66 F6 | 	neg	arg08, #1
-009d4     01 1A 66 F6 | 	neg	arg09, #1
-009d8     1C 05 B0 FD | 	call	#_Audio2_004_play
-009dc                 | '    audio.play(4,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-009dc     04 0A 06 F6 | 	mov	arg01, #4
-009e0     FD 02 00 FF 
-009e4     40 0D 06 F6 | 	mov	arg02, ##392000
-009e8     C8 0E 06 F6 | 	mov	arg03, #200
-009ec     0C 10 C6 F9 | 	decod	arg04, #12
-009f0     12 12 C6 F9 | 	decod	arg05, #18
-009f4     08 02 00 FF 
-009f8     00 14 06 F6 | 	mov	arg06, ##266240
-009fc     01 00 00 FF 
-00a00     58 16 06 F6 | 	mov	arg07, ##600
-00a04     01 18 66 F6 | 	neg	arg08, #1
-00a08     01 1A 66 F6 | 	neg	arg09, #1
-00a0c     E8 04 B0 FD | 	call	#_Audio2_004_play
-00a10                 | '    audio.play(5,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00a10     05 0A 06 F6 | 	mov	arg01, #5
-00a14     5B 03 00 FF 
-00a18     C0 0C 06 F6 | 	mov	arg02, ##440000
-00a1c     C8 0E 06 F6 | 	mov	arg03, #200
-00a20     0C 10 C6 F9 | 	decod	arg04, #12
-00a24     12 12 C6 F9 | 	decod	arg05, #18
-00a28     08 02 00 FF 
-00a2c     00 14 06 F6 | 	mov	arg06, ##266240
-00a30     01 00 00 FF 
-00a34     58 16 06 F6 | 	mov	arg07, ##600
-00a38     01 18 66 F6 | 	neg	arg08, #1
-00a3c     01 1A 66 F6 | 	neg	arg09, #1
-00a40     B4 04 B0 FD | 	call	#_Audio2_004_play
-00a44                 | '    audio.play(6,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00a44     06 0A 06 F6 | 	mov	arg01, #6
-00a48     C4 03 00 FF 
-00a4c     B0 0D 06 F6 | 	mov	arg02, ##494000
-00a50     C8 0E 06 F6 | 	mov	arg03, #200
-00a54     0C 10 C6 F9 | 	decod	arg04, #12
-00a58     12 12 C6 F9 | 	decod	arg05, #18
-00a5c     08 02 00 FF 
-00a60     00 14 06 F6 | 	mov	arg06, ##266240
-00a64     01 00 00 FF 
-00a68     58 16 06 F6 | 	mov	arg07, ##600
-00a6c     01 18 66 F6 | 	neg	arg08, #1
-00a70     01 1A 66 F6 | 	neg	arg09, #1
-00a74     80 04 B0 FD | 	call	#_Audio2_004_play
-00a78                 | '    audio.play(7,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00a78     07 0A 06 F6 | 	mov	arg01, #7
-00a7c     FF 03 00 FF 
-00a80     E0 0C 06 F6 | 	mov	arg02, ##524000
-00a84     C8 0E 06 F6 | 	mov	arg03, #200
-00a88     0C 10 C6 F9 | 	decod	arg04, #12
-00a8c     12 12 C6 F9 | 	decod	arg05, #18
-00a90     08 02 00 FF 
-00a94     00 14 06 F6 | 	mov	arg06, ##266240
-00a98     01 00 00 FF 
-00a9c     58 16 06 F6 | 	mov	arg07, ##600
-00aa0     01 18 66 F6 | 	neg	arg08, #1
-00aa4     01 1A 66 F6 | 	neg	arg09, #1
-00aa8     4C 04 B0 FD | 	call	#_Audio2_004_play
-00aac                 | '    audio.play(8,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00aac     08 0A 06 F6 | 	mov	arg01, #8
-00ab0     FF 03 00 FF 
-00ab4     E0 0C 06 F6 | 	mov	arg02, ##524000
-00ab8     C8 0E 06 F6 | 	mov	arg03, #200
-00abc     0C 10 C6 F9 | 	decod	arg04, #12
-00ac0     12 12 C6 F9 | 	decod	arg05, #18
-00ac4     08 02 00 FF 
-00ac8     00 14 06 F6 | 	mov	arg06, ##266240
-00acc     01 00 00 FF 
-00ad0     58 16 06 F6 | 	mov	arg07, ##600
-00ad4     01 18 66 F6 | 	neg	arg08, #1
-00ad8     01 1A 66 F6 | 	neg	arg09, #1
-00adc     18 04 B0 FD | 	call	#_Audio2_004_play
-00ae0                 | '    audio.play(9,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00ae0     09 0A 06 F6 | 	mov	arg01, #9
-00ae4     C4 03 00 FF 
-00ae8     B0 0D 06 F6 | 	mov	arg02, ##494000
-00aec     C8 0E 06 F6 | 	mov	arg03, #200
-00af0     0C 10 C6 F9 | 	decod	arg04, #12
-00af4     12 12 C6 F9 | 	decod	arg05, #18
-00af8     08 02 00 FF 
-00afc     00 14 06 F6 | 	mov	arg06, ##266240
-00b00     01 00 00 FF 
-00b04     58 16 06 F6 | 	mov	arg07, ##600
-00b08     01 18 66 F6 | 	neg	arg08, #1
-00b0c     01 1A 66 F6 | 	neg	arg09, #1
-00b10     E4 03 B0 FD | 	call	#_Audio2_004_play
-00b14                 | '    audio.play(10,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00b14     0A 0A 06 F6 | 	mov	arg01, #10
-00b18     5B 03 00 FF 
-00b1c     C0 0C 06 F6 | 	mov	arg02, ##440000
-00b20     C8 0E 06 F6 | 	mov	arg03, #200
-00b24     0C 10 C6 F9 | 	decod	arg04, #12
-00b28     12 12 C6 F9 | 	decod	arg05, #18
-00b2c     08 02 00 FF 
-00b30     00 14 06 F6 | 	mov	arg06, ##266240
-00b34     01 00 00 FF 
-00b38     58 16 06 F6 | 	mov	arg07, ##600
-00b3c     01 18 66 F6 | 	neg	arg08, #1
-00b40     01 1A 66 F6 | 	neg	arg09, #1
-00b44     B0 03 B0 FD | 	call	#_Audio2_004_play
-00b48                 | '    audio.play(11,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00b48     0B 0A 06 F6 | 	mov	arg01, #11
-00b4c     FD 02 00 FF 
-00b50     40 0D 06 F6 | 	mov	arg02, ##392000
-00b54     C8 0E 06 F6 | 	mov	arg03, #200
-00b58     0C 10 C6 F9 | 	decod	arg04, #12
-00b5c     12 12 C6 F9 | 	decod	arg05, #18
-00b60     08 02 00 FF 
-00b64     00 14 06 F6 | 	mov	arg06, ##266240
-00b68     01 00 00 FF 
-00b6c     58 16 06 F6 | 	mov	arg07, ##600
-00b70     01 18 66 F6 | 	neg	arg08, #1
-00b74     01 1A 66 F6 | 	neg	arg09, #1
-00b78     7C 03 B0 FD | 	call	#_Audio2_004_play
-00b7c                 | '    audio.play(12,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00b7c     0C 0A 06 F6 | 	mov	arg01, #12
-00b80     A9 02 00 FF 
-00b84     48 0D 06 F6 | 	mov	arg02, ##349000
-00b88     C8 0E 06 F6 | 	mov	arg03, #200
-00b8c     0C 10 C6 F9 | 	decod	arg04, #12
-00b90     12 12 C6 F9 | 	decod	arg05, #18
-00b94     08 02 00 FF 
-00b98     00 14 06 F6 | 	mov	arg06, ##266240
-00b9c     01 00 00 FF 
-00ba0     58 16 06 F6 | 	mov	arg07, ##600
-00ba4     01 18 66 F6 | 	neg	arg08, #1
-00ba8     01 1A 66 F6 | 	neg	arg09, #1
-00bac     48 03 B0 FD | 	call	#_Audio2_004_play
-00bb0                 | '    audio.play(13,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00bb0     0D 0A 06 F6 | 	mov	arg01, #13
-00bb4     84 02 00 FF 
-00bb8     10 0D 06 F6 | 	mov	arg02, ##330000
-00bbc     C8 0E 06 F6 | 	mov	arg03, #200
-00bc0     0C 10 C6 F9 | 	decod	arg04, #12
-00bc4     12 12 C6 F9 | 	decod	arg05, #18
-00bc8     08 02 00 FF 
-00bcc     00 14 06 F6 | 	mov	arg06, ##266240
-00bd0     01 00 00 FF 
-00bd4     58 16 06 F6 | 	mov	arg07, ##600
-00bd8     01 18 66 F6 | 	neg	arg08, #1
-00bdc     01 1A 66 F6 | 	neg	arg09, #1
-00be0     14 03 B0 FD | 	call	#_Audio2_004_play
-00be4                 | '    audio.play(14,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00be4     0E 0A 06 F6 | 	mov	arg01, #14
-00be8     3E 02 00 FF 
-00bec     70 0C 06 F6 | 	mov	arg02, ##294000
-00bf0     C8 0E 06 F6 | 	mov	arg03, #200
-00bf4     0C 10 C6 F9 | 	decod	arg04, #12
-00bf8     12 12 C6 F9 | 	decod	arg05, #18
-00bfc     08 02 00 FF 
-00c00     00 14 06 F6 | 	mov	arg06, ##266240
-00c04     01 00 00 FF 
-00c08     58 16 06 F6 | 	mov	arg07, ##600
-00c0c     01 18 66 F6 | 	neg	arg08, #1
-00c10     01 1A 66 F6 | 	neg	arg09, #1
-00c14     E0 02 B0 FD | 	call	#_Audio2_004_play
-00c18                 | '    audio.play(15,c4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
-00c18     0F 0A 06 F6 | 	mov	arg01, #15
-00c1c     FF 01 00 FF 
-00c20     70 0D 06 F6 | 	mov	arg02, ##262000
-00c24     C8 0E 06 F6 | 	mov	arg03, #200
-00c28     0C 10 C6 F9 | 	decod	arg04, #12
-00c2c     12 12 C6 F9 | 	decod	arg05, #18
-00c30     08 02 00 FF 
-00c34     00 14 06 F6 | 	mov	arg06, ##266240
-00c38     01 00 00 FF 
-00c3c     58 16 06 F6 | 	mov	arg07, ##600
-00c40     01 18 66 F6 | 	neg	arg08, #1
-00c44     01 1A 66 F6 | 	neg	arg09, #1
-00c48     AC 02 B0 FD | 	call	#_Audio2_004_play
-00c4c     BC FC 9F FD | 	jmp	#LR__0006
-00c50     E7 F0 03 F6 | 	mov	ptra, fp
-00c54     F2 00 A0 FD | 	call	#popregs_
-00c58                 | _drivertest_ret
-00c58     2D 00 64 FD | 	ret
-00c5c                 | 
-00c5c                 | ' 
-00c5c                 | ' '--------------------------------------------------------------
-00c5c                 | ' '---------- Init the variables, start the cog. ----------------
-00c5c                 | ' '--------------------------------------------------------------
-00c5c                 | ' 
-00c5c                 | ' pub start(mbox,scope,cache) :cog,base | iii
-00c5c                 | _Audio2_004_start
-00c5c     04 CA 05 F6 | 	mov	COUNT_, #4
-00c60     E8 00 A0 FD | 	call	#pushregs_
-00c64     05 1D 02 F6 | 	mov	local01, arg01
-00c68                 | ' 
-00c68                 | ' ' mbox: PSRAM mailbox or 0 if no PSRAM
-00c68                 | ' ' scope: a pointer to 640 long oscilloscope data in HUB wor visualization
-00c68                 | ' ' cache: a pointer to 2 KB long HUB cache for PSRAM audio data
-00c68                 | ' 
-00c68                 | ' mailboxaddr:=mbox 
-00c68     FA 1C 62 FC | 	wrlong	local01, objptr
-00c6c                 | ' scope_ptr:=scope
-00c6c     04 F4 05 F1 | 	add	objptr, #4
-00c70     FA 0C 62 FC | 	wrlong	arg02, objptr
-00c74                 | ' cache_ptr:=cache
-00c74     04 F4 05 F1 | 	add	objptr, #4
-00c78     FA 0E 62 FC | 	wrlong	arg03, objptr
-00c7c                 | ' base:=@channel0[0]
-00c7c     04 F4 05 F1 | 	add	objptr, #4
-00c80     FA 1E 02 F6 | 	mov	local02, objptr
+007f4 0fc 68 13 00 00 | 	long	@_dat_
+007f8 0fd             | ptr__psram_dat__
+007f8 0fd 70 20 00 00 | 	long	@_psram_dat_
+007fc 0fe             | ptr_stackspace_
+007fc 0fe 28 28 00 00 | 	long	@stackspace
+00800 0ff             | result1
+00800 0ff 00 00 00 00 | 	long	0
+00804 100             | result2
+00804 100 01 00 00 00 | 	long	1
+00808 101             | result3
+00808 101 02 00 00 00 | 	long	2
+0080c 102             | result4
+0080c 102 03 00 00 00 | 	long	3
+00810 103             | COG_BSS_START
+00810 103             | 	fit	480
+00810                 | 	orgh
+00810                 | hubentry
+00810                 | 
+00810                 | ' 
+00810                 | ' pub drivertest()   : cog,base,i,j
+00810                 | _drivertest
+00810     02 CA 05 F6 | 	mov	COUNT_, #2
+00814     E8 00 A0 FD | 	call	#pushregs_
+00818                 | ' ' prepare 8-bit saw wave
+00818                 | ' repeat i from $40000 to $407FF step 2
+00818     12 1E C6 F9 | 	decod	local01, #18
+0081c     D7 14 48 FB | 	callpa	#(@LR__0002-@LR__0001)>>2,fcache_load_ptr_
+00820                 | LR__0001
+00820                 | '   j:=@waveform+i-$40000+16
+00820     FC 20 02 F6 | 	mov	local02, ptr__dat__
+00824     0F 21 02 F1 | 	add	local02, local01
+00828     FF 01 00 FF 
+0082c     F0 21 86 F1 | 	sub	local02, ##262128
+00830                 | '   word[i]:=word[j]
+00830     10 21 E2 FA | 	rdword	local02, local02
+00834     0F 21 52 FC | 	wrword	local02, local01
+00838     02 1E 06 F1 | 	add	local01, #2
+0083c     04 02 00 FF 
+00840     00 1E 56 F2 | 	cmps	local01, ##264192 wc
+00844     D8 FF 9F CD |  if_b	jmp	#LR__0001
+00848                 | LR__0002
+00848                 | '  ' debug(sdec(word[i]))
+00848                 | ' ' start the driver. It will generate scope data at $60000. It will not use any PSRAM
+00848                 | ' repeat i from $41000 to $411FF step 2
+00848     08 02 00 FF 
+0084c     00 1E 06 F6 | 	mov	local01, ##266240
+00850     04 00 00 FF 
+00854     10 F8 05 F1 | 	add	ptr__dat__, ##2064
+00858     D7 1C 48 FB | 	callpa	#(@LR__0004-@LR__0003)>>2,fcache_load_ptr_
+0085c                 | LR__0003
+0085c                 | '   j:=@envelope+((i-$41000)>>1)+16
+0085c     FC 20 02 F6 | 	mov	local02, ptr__dat__
+00860     0F 1D 02 F6 | 	mov	arg09, local01
+00864     08 02 00 FF 
+00868     00 1C 86 F1 | 	sub	arg09, ##266240
+0086c     01 1C 46 F0 | 	shr	arg09, #1
+00870     0E 21 02 F1 | 	add	local02, arg09
+00874     10 20 06 F1 | 	add	local02, #16
+00878                 | '   word[i]:=byte[j]<<8
+00878     10 21 C2 FA | 	rdbyte	local02, local02
+0087c     08 20 66 F0 | 	shl	local02, #8
+00880     0F 21 52 FC | 	wrword	local02, local01
+00884     02 1E 06 F1 | 	add	local01, #2
+00888     09 02 00 FF 
+0088c     00 1E 56 F2 | 	cmps	local01, ##266752 wc
+00890     C8 FF 9F CD |  if_b	jmp	#LR__0003
+00894                 | LR__0004
+00894     04 00 00 FF 
+00898     10 F8 85 F1 | 	sub	ptr__dat__, ##2064
+0089c                 | ' psram.write($40000,$100000,2048)  
+0089c     12 0C C6 F9 | 	decod	arg01, #18
+008a0     14 0E C6 F9 | 	decod	arg02, #20
+008a4     0B 10 C6 F9 | 	decod	arg03, #11
+008a8     02 00 00 FF 
+008ac     70 F5 05 F1 | 	add	objptr, ##1392
+008b0     A8 09 B0 FD | 	call	#_psram_write
+008b4                 | ' cog, base:=audio.start(0,$60000,$61000)
+008b4     00 0C 06 F6 | 	mov	arg01, #0
+008b8     00 03 00 FF 
+008bc     00 0E 06 F6 | 	mov	arg02, ##393216
+008c0     08 03 00 FF 
+008c4     00 10 06 F6 | 	mov	arg03, ##397312
+008c8     02 00 00 FF 
+008cc     6C F5 85 F1 | 	sub	objptr, ##1388
+008d0     A4 03 B0 FD | 	call	#_Audio2_004_start
+008d4     04 F4 85 F1 | 	sub	objptr, #4
+008d8                 | ' 'debug(udec(cog,base))
+008d8                 | ' 
+008d8                 | ' {{Channel registers:
+008d8                 | ' }}
+008d8                 | ' 
+008d8                 | ' ' tell it to play
+008d8                 | ' 
+008d8                 | ' {{repeat i from 0 to 15 
+008d8                 | ' }}
+008d8                 | ' 
+008d8                 | ' sample[0]:=-32767
+008d8     40 00 80 FF 
+008dc     FA 02 58 FC | 	wrword	##32769, objptr
+008e0                 | ' sample[1]:=32767'
+008e0     02 F4 05 F1 | 	add	objptr, #2
+008e4     3F 00 80 FF 
+008e8     FA FE 5B FC | 	wrword	##32767, objptr
+008ec                 | ' ''audio.beep(0,@sample ,4408,4096,4,0,0) 
+008ec                 | ' 
+008ec                 | ' 'repeat i from 1 to 10000
+008ec                 | ' '  audio.play(0,i,10,4096,$08000000,0,0)
+008ec                 | ' 
+008ec                 | ' audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+008ec     00 0C 06 F6 | 	mov	arg01, #0
+008f0     FF 01 00 FF 
+008f4     70 0F 06 F6 | 	mov	arg02, ##262000
+008f8     C8 10 06 F6 | 	mov	arg03, #200
+008fc     0C 12 C6 F9 | 	decod	arg04, #12
+00900     14 14 C6 F9 | 	decod	arg05, #20
+00904     08 02 00 FF 
+00908     00 16 06 F6 | 	mov	arg06, ##266240
+0090c     01 00 00 FF 
+00910     58 18 06 F6 | 	mov	arg07, ##600
+00914     01 1A 66 F6 | 	neg	arg08, #1
+00918     01 1C 66 F6 | 	neg	arg09, #1
+0091c     02 F4 05 F1 | 	add	objptr, #2
+00920     F0 05 B0 FD | 	call	#_Audio2_004_play
+00924                 | ' repeat
+00924                 | LR__0005
+00924     FC FF 9F FD | 	jmp	#LR__0005
+00928                 | ' 
+00928                 | ' repeat
+00928                 | LR__0006
+00928                 | '    audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+00928     00 0C 06 F6 | 	mov	arg01, #0
+0092c     FF 01 00 FF 
+00930     70 0F 06 F6 | 	mov	arg02, ##262000
+00934     C8 10 06 F6 | 	mov	arg03, #200
+00938     0C 12 C6 F9 | 	decod	arg04, #12
+0093c     14 14 C6 F9 | 	decod	arg05, #20
+00940     08 02 00 FF 
+00944     00 16 06 F6 | 	mov	arg06, ##266240
+00948     01 00 00 FF 
+0094c     58 18 06 F6 | 	mov	arg07, ##600
+00950     01 1A 66 F6 | 	neg	arg08, #1
+00954     01 1C 66 F6 | 	neg	arg09, #1
+00958     B8 05 B0 FD | 	call	#_Audio2_004_play
+0095c                 | '    audio.play(1,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+0095c     01 0C 06 F6 | 	mov	arg01, #1
+00960     3E 02 00 FF 
+00964     70 0E 06 F6 | 	mov	arg02, ##294000
+00968     C8 10 06 F6 | 	mov	arg03, #200
+0096c     0C 12 C6 F9 | 	decod	arg04, #12
+00970     12 14 C6 F9 | 	decod	arg05, #18
+00974     08 02 00 FF 
+00978     00 16 06 F6 | 	mov	arg06, ##266240
+0097c     01 00 00 FF 
+00980     58 18 06 F6 | 	mov	arg07, ##600
+00984     01 1A 66 F6 | 	neg	arg08, #1
+00988     01 1C 66 F6 | 	neg	arg09, #1
+0098c     84 05 B0 FD | 	call	#_Audio2_004_play
+00990                 | '    audio.play(2,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00990     02 0C 06 F6 | 	mov	arg01, #2
+00994     84 02 00 FF 
+00998     10 0F 06 F6 | 	mov	arg02, ##330000
+0099c     C8 10 06 F6 | 	mov	arg03, #200
+009a0     0C 12 C6 F9 | 	decod	arg04, #12
+009a4     12 14 C6 F9 | 	decod	arg05, #18
+009a8     08 02 00 FF 
+009ac     00 16 06 F6 | 	mov	arg06, ##266240
+009b0     01 00 00 FF 
+009b4     58 18 06 F6 | 	mov	arg07, ##600
+009b8     01 1A 66 F6 | 	neg	arg08, #1
+009bc     01 1C 66 F6 | 	neg	arg09, #1
+009c0     50 05 B0 FD | 	call	#_Audio2_004_play
+009c4                 | '    audio.play(3,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+009c4     03 0C 06 F6 | 	mov	arg01, #3
+009c8     A9 02 00 FF 
+009cc     48 0F 06 F6 | 	mov	arg02, ##349000
+009d0     C8 10 06 F6 | 	mov	arg03, #200
+009d4     0C 12 C6 F9 | 	decod	arg04, #12
+009d8     12 14 C6 F9 | 	decod	arg05, #18
+009dc     08 02 00 FF 
+009e0     00 16 06 F6 | 	mov	arg06, ##266240
+009e4     01 00 00 FF 
+009e8     58 18 06 F6 | 	mov	arg07, ##600
+009ec     01 1A 66 F6 | 	neg	arg08, #1
+009f0     01 1C 66 F6 | 	neg	arg09, #1
+009f4     1C 05 B0 FD | 	call	#_Audio2_004_play
+009f8                 | '    audio.play(4,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+009f8     04 0C 06 F6 | 	mov	arg01, #4
+009fc     FD 02 00 FF 
+00a00     40 0F 06 F6 | 	mov	arg02, ##392000
+00a04     C8 10 06 F6 | 	mov	arg03, #200
+00a08     0C 12 C6 F9 | 	decod	arg04, #12
+00a0c     12 14 C6 F9 | 	decod	arg05, #18
+00a10     08 02 00 FF 
+00a14     00 16 06 F6 | 	mov	arg06, ##266240
+00a18     01 00 00 FF 
+00a1c     58 18 06 F6 | 	mov	arg07, ##600
+00a20     01 1A 66 F6 | 	neg	arg08, #1
+00a24     01 1C 66 F6 | 	neg	arg09, #1
+00a28     E8 04 B0 FD | 	call	#_Audio2_004_play
+00a2c                 | '    audio.play(5,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00a2c     05 0C 06 F6 | 	mov	arg01, #5
+00a30     5B 03 00 FF 
+00a34     C0 0E 06 F6 | 	mov	arg02, ##440000
+00a38     C8 10 06 F6 | 	mov	arg03, #200
+00a3c     0C 12 C6 F9 | 	decod	arg04, #12
+00a40     12 14 C6 F9 | 	decod	arg05, #18
+00a44     08 02 00 FF 
+00a48     00 16 06 F6 | 	mov	arg06, ##266240
+00a4c     01 00 00 FF 
+00a50     58 18 06 F6 | 	mov	arg07, ##600
+00a54     01 1A 66 F6 | 	neg	arg08, #1
+00a58     01 1C 66 F6 | 	neg	arg09, #1
+00a5c     B4 04 B0 FD | 	call	#_Audio2_004_play
+00a60                 | '    audio.play(6,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00a60     06 0C 06 F6 | 	mov	arg01, #6
+00a64     C4 03 00 FF 
+00a68     B0 0F 06 F6 | 	mov	arg02, ##494000
+00a6c     C8 10 06 F6 | 	mov	arg03, #200
+00a70     0C 12 C6 F9 | 	decod	arg04, #12
+00a74     12 14 C6 F9 | 	decod	arg05, #18
+00a78     08 02 00 FF 
+00a7c     00 16 06 F6 | 	mov	arg06, ##266240
+00a80     01 00 00 FF 
+00a84     58 18 06 F6 | 	mov	arg07, ##600
+00a88     01 1A 66 F6 | 	neg	arg08, #1
+00a8c     01 1C 66 F6 | 	neg	arg09, #1
+00a90     80 04 B0 FD | 	call	#_Audio2_004_play
+00a94                 | '    audio.play(7,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00a94     07 0C 06 F6 | 	mov	arg01, #7
+00a98     FF 03 00 FF 
+00a9c     E0 0E 06 F6 | 	mov	arg02, ##524000
+00aa0     C8 10 06 F6 | 	mov	arg03, #200
+00aa4     0C 12 C6 F9 | 	decod	arg04, #12
+00aa8     12 14 C6 F9 | 	decod	arg05, #18
+00aac     08 02 00 FF 
+00ab0     00 16 06 F6 | 	mov	arg06, ##266240
+00ab4     01 00 00 FF 
+00ab8     58 18 06 F6 | 	mov	arg07, ##600
+00abc     01 1A 66 F6 | 	neg	arg08, #1
+00ac0     01 1C 66 F6 | 	neg	arg09, #1
+00ac4     4C 04 B0 FD | 	call	#_Audio2_004_play
+00ac8                 | '    audio.play(8,c4*2000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00ac8     08 0C 06 F6 | 	mov	arg01, #8
+00acc     FF 03 00 FF 
+00ad0     E0 0E 06 F6 | 	mov	arg02, ##524000
+00ad4     C8 10 06 F6 | 	mov	arg03, #200
+00ad8     0C 12 C6 F9 | 	decod	arg04, #12
+00adc     12 14 C6 F9 | 	decod	arg05, #18
+00ae0     08 02 00 FF 
+00ae4     00 16 06 F6 | 	mov	arg06, ##266240
+00ae8     01 00 00 FF 
+00aec     58 18 06 F6 | 	mov	arg07, ##600
+00af0     01 1A 66 F6 | 	neg	arg08, #1
+00af4     01 1C 66 F6 | 	neg	arg09, #1
+00af8     18 04 B0 FD | 	call	#_Audio2_004_play
+00afc                 | '    audio.play(9,h4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00afc     09 0C 06 F6 | 	mov	arg01, #9
+00b00     C4 03 00 FF 
+00b04     B0 0F 06 F6 | 	mov	arg02, ##494000
+00b08     C8 10 06 F6 | 	mov	arg03, #200
+00b0c     0C 12 C6 F9 | 	decod	arg04, #12
+00b10     12 14 C6 F9 | 	decod	arg05, #18
+00b14     08 02 00 FF 
+00b18     00 16 06 F6 | 	mov	arg06, ##266240
+00b1c     01 00 00 FF 
+00b20     58 18 06 F6 | 	mov	arg07, ##600
+00b24     01 1A 66 F6 | 	neg	arg08, #1
+00b28     01 1C 66 F6 | 	neg	arg09, #1
+00b2c     E4 03 B0 FD | 	call	#_Audio2_004_play
+00b30                 | '    audio.play(10,a4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00b30     0A 0C 06 F6 | 	mov	arg01, #10
+00b34     5B 03 00 FF 
+00b38     C0 0E 06 F6 | 	mov	arg02, ##440000
+00b3c     C8 10 06 F6 | 	mov	arg03, #200
+00b40     0C 12 C6 F9 | 	decod	arg04, #12
+00b44     12 14 C6 F9 | 	decod	arg05, #18
+00b48     08 02 00 FF 
+00b4c     00 16 06 F6 | 	mov	arg06, ##266240
+00b50     01 00 00 FF 
+00b54     58 18 06 F6 | 	mov	arg07, ##600
+00b58     01 1A 66 F6 | 	neg	arg08, #1
+00b5c     01 1C 66 F6 | 	neg	arg09, #1
+00b60     B0 03 B0 FD | 	call	#_Audio2_004_play
+00b64                 | '    audio.play(11,g4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00b64     0B 0C 06 F6 | 	mov	arg01, #11
+00b68     FD 02 00 FF 
+00b6c     40 0F 06 F6 | 	mov	arg02, ##392000
+00b70     C8 10 06 F6 | 	mov	arg03, #200
+00b74     0C 12 C6 F9 | 	decod	arg04, #12
+00b78     12 14 C6 F9 | 	decod	arg05, #18
+00b7c     08 02 00 FF 
+00b80     00 16 06 F6 | 	mov	arg06, ##266240
+00b84     01 00 00 FF 
+00b88     58 18 06 F6 | 	mov	arg07, ##600
+00b8c     01 1A 66 F6 | 	neg	arg08, #1
+00b90     01 1C 66 F6 | 	neg	arg09, #1
+00b94     7C 03 B0 FD | 	call	#_Audio2_004_play
+00b98                 | '    audio.play(12,f4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00b98     0C 0C 06 F6 | 	mov	arg01, #12
+00b9c     A9 02 00 FF 
+00ba0     48 0F 06 F6 | 	mov	arg02, ##349000
+00ba4     C8 10 06 F6 | 	mov	arg03, #200
+00ba8     0C 12 C6 F9 | 	decod	arg04, #12
+00bac     12 14 C6 F9 | 	decod	arg05, #18
+00bb0     08 02 00 FF 
+00bb4     00 16 06 F6 | 	mov	arg06, ##266240
+00bb8     01 00 00 FF 
+00bbc     58 18 06 F6 | 	mov	arg07, ##600
+00bc0     01 1A 66 F6 | 	neg	arg08, #1
+00bc4     01 1C 66 F6 | 	neg	arg09, #1
+00bc8     48 03 B0 FD | 	call	#_Audio2_004_play
+00bcc                 | '    audio.play(13,e4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00bcc     0D 0C 06 F6 | 	mov	arg01, #13
+00bd0     84 02 00 FF 
+00bd4     10 0F 06 F6 | 	mov	arg02, ##330000
+00bd8     C8 10 06 F6 | 	mov	arg03, #200
+00bdc     0C 12 C6 F9 | 	decod	arg04, #12
+00be0     12 14 C6 F9 | 	decod	arg05, #18
+00be4     08 02 00 FF 
+00be8     00 16 06 F6 | 	mov	arg06, ##266240
+00bec     01 00 00 FF 
+00bf0     58 18 06 F6 | 	mov	arg07, ##600
+00bf4     01 1A 66 F6 | 	neg	arg08, #1
+00bf8     01 1C 66 F6 | 	neg	arg09, #1
+00bfc     14 03 B0 FD | 	call	#_Audio2_004_play
+00c00                 | '    audio.play(14,d4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00c00     0E 0C 06 F6 | 	mov	arg01, #14
+00c04     3E 02 00 FF 
+00c08     70 0E 06 F6 | 	mov	arg02, ##294000
+00c0c     C8 10 06 F6 | 	mov	arg03, #200
+00c10     0C 12 C6 F9 | 	decod	arg04, #12
+00c14     12 14 C6 F9 | 	decod	arg05, #18
+00c18     08 02 00 FF 
+00c1c     00 16 06 F6 | 	mov	arg06, ##266240
+00c20     01 00 00 FF 
+00c24     58 18 06 F6 | 	mov	arg07, ##600
+00c28     01 1A 66 F6 | 	neg	arg08, #1
+00c2c     01 1C 66 F6 | 	neg	arg09, #1
+00c30     E0 02 B0 FD | 	call	#_Audio2_004_play
+00c34                 | '    audio.play(15,c4*1000,200,4096,$40000,$41000,600) '16(channel,sample,splfreq,vol,len,loop,delay) 
+00c34     0F 0C 06 F6 | 	mov	arg01, #15
+00c38     FF 01 00 FF 
+00c3c     70 0F 06 F6 | 	mov	arg02, ##262000
+00c40     C8 10 06 F6 | 	mov	arg03, #200
+00c44     0C 12 C6 F9 | 	decod	arg04, #12
+00c48     12 14 C6 F9 | 	decod	arg05, #18
+00c4c     08 02 00 FF 
+00c50     00 16 06 F6 | 	mov	arg06, ##266240
+00c54     01 00 00 FF 
+00c58     58 18 06 F6 | 	mov	arg07, ##600
+00c5c     01 1A 66 F6 | 	neg	arg08, #1
+00c60     01 1C 66 F6 | 	neg	arg09, #1
+00c64     AC 02 B0 FD | 	call	#_Audio2_004_play
+00c68     BC FC 9F FD | 	jmp	#LR__0006
+00c6c     E7 F0 03 F6 | 	mov	ptra, fp
+00c70     F2 00 A0 FD | 	call	#popregs_
+00c74                 | _drivertest_ret
+00c74     2D 00 64 FD | 	ret
+00c78                 | 
+00c78                 | ' 
+00c78                 | ' '--------------------------------------------------------------
+00c78                 | ' '---------- Init the variables, start the cog. ----------------
+00c78                 | ' '--------------------------------------------------------------
+00c78                 | ' 
+00c78                 | ' pub start(mbox,scope,cache) :cog,base | iii
+00c78                 | _Audio2_004_start
+00c78     04 CA 05 F6 | 	mov	COUNT_, #4
+00c7c     E8 00 A0 FD | 	call	#pushregs_
+00c80     06 1F 02 F6 | 	mov	local01, arg01
 00c84                 | ' 
-00c84                 | ' repeat iii from 0 to 15
-00c84     00 20 06 F6 | 	mov	local03, #0
-00c88     0C F4 85 F1 | 	sub	objptr, #12
-00c8c     D7 1A 49 FB | 	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
-00c90                 | LR__0010
-00c90                 | '   long[base+64*iii]:=0
-00c90     0F 1D 02 F6 | 	mov	local01, local02
-00c94     10 FF 01 F6 | 	mov	result2, local03
-00c98     06 FE 65 F0 | 	shl	result2, #6
-00c9c     FF 1C 02 F1 | 	add	local01, result2
-00ca0     0E 01 68 FC | 	wrlong	#0, local01
-00ca4                 | '   long[base+64*iii+4]:=0  		
-00ca4     0F 1D 02 F6 | 	mov	local01, local02
-00ca8     10 FF 01 F6 | 	mov	result2, local03
-00cac     06 FE 65 F0 | 	shl	result2, #6
-00cb0     FF 1C 02 F1 | 	add	local01, result2
-00cb4     04 1C 06 F1 | 	add	local01, #4
-00cb8     0E 01 68 FC | 	wrlong	#0, local01
-00cbc                 | '   long[base+64*iii+8]:=0
-00cbc     0F 23 02 F6 | 	mov	local04, local02
-00cc0     10 1D 02 F6 | 	mov	local01, local03
-00cc4     06 1C 66 F0 | 	shl	local01, #6
-00cc8     0E 23 02 F1 | 	add	local04, local01
-00ccc     08 22 06 F1 | 	add	local04, #8
-00cd0     11 01 68 FC | 	wrlong	#0, local04
-00cd4                 | '   long[base+64*iii+12]:=0
-00cd4     0F 23 02 F6 | 	mov	local04, local02
-00cd8     10 1D 02 F6 | 	mov	local01, local03
-00cdc     06 1C 66 F0 | 	shl	local01, #6
-00ce0     0E 23 02 F1 | 	add	local04, local01
-00ce4     0C 22 06 F1 | 	add	local04, #12
-00ce8     11 01 68 FC | 	wrlong	#0, local04
-00cec                 | '   long[base+64*iii+16]:=0
-00cec     0F 23 02 F6 | 	mov	local04, local02
-00cf0     10 1D 02 F6 | 	mov	local01, local03
-00cf4     06 1C 66 F0 | 	shl	local01, #6
-00cf8     0E 23 02 F1 | 	add	local04, local01
-00cfc     10 22 06 F1 | 	add	local04, #16
-00d00     11 01 68 FC | 	wrlong	#0, local04
-00d04                 | '   long[base+64*iii+20]:=0
-00d04     0F 23 02 F6 | 	mov	local04, local02
-00d08     10 1D 02 F6 | 	mov	local01, local03
-00d0c     06 1C 66 F0 | 	shl	local01, #6
-00d10     0E 23 02 F1 | 	add	local04, local01
-00d14     14 22 06 F1 | 	add	local04, #20
-00d18     11 01 68 FC | 	wrlong	#0, local04
-00d1c                 | '   long[base+64*iii+24]:=0
-00d1c     0F 23 02 F6 | 	mov	local04, local02
-00d20     10 1D 02 F6 | 	mov	local01, local03
-00d24     06 1C 66 F0 | 	shl	local01, #6
-00d28     0E 23 02 F1 | 	add	local04, local01
-00d2c     18 22 06 F1 | 	add	local04, #24
-00d30     11 01 68 FC | 	wrlong	#0, local04
-00d34                 | '   long[base+64*iii+28]:=0
-00d34     0F 23 02 F6 | 	mov	local04, local02
-00d38     10 1D 02 F6 | 	mov	local01, local03
-00d3c     06 1C 66 F0 | 	shl	local01, #6
-00d40     0E 23 02 F1 | 	add	local04, local01
-00d44     1C 22 06 F1 | 	add	local04, #28
-00d48     11 01 68 FC | 	wrlong	#0, local04
-00d4c                 | '   word[base+64*iii+32]:=8192
-00d4c     0F 23 02 F6 | 	mov	local04, local02
-00d50     10 1D 02 F6 | 	mov	local01, local03
-00d54     06 1C 66 F0 | 	shl	local01, #6
-00d58     0E 23 02 F1 | 	add	local04, local01
-00d5c     20 22 06 F1 | 	add	local04, #32
-00d60     10 00 80 FF 
-00d64     11 01 58 FC | 	wrword	##8192, local04
-00d68                 | '   word[base+64*iii+34]:=8192
-00d68     0F 23 02 F6 | 	mov	local04, local02
-00d6c     10 1D 02 F6 | 	mov	local01, local03
-00d70     06 1C 66 F0 | 	shl	local01, #6
-00d74     0E 23 02 F1 | 	add	local04, local01
-00d78     22 22 06 F1 | 	add	local04, #34
+00c84                 | ' ' mbox: PSRAM mailbox or 0 if no PSRAM
+00c84                 | ' ' scope: a pointer to 640 long oscilloscope data in HUB wor visualization
+00c84                 | ' ' cache: a pointer to 2 KB long HUB cache for PSRAM audio data
+00c84                 | ' 
+00c84                 | ' mailboxaddr:=mbox 
+00c84     FA 1E 62 FC | 	wrlong	local01, objptr
+00c88                 | ' scope_ptr:=scope
+00c88     04 F4 05 F1 | 	add	objptr, #4
+00c8c     FA 0E 62 FC | 	wrlong	arg02, objptr
+00c90                 | ' cache_ptr:=cache
+00c90     04 F4 05 F1 | 	add	objptr, #4
+00c94     FA 10 62 FC | 	wrlong	arg03, objptr
+00c98                 | ' base:=@channel0[0]
+00c98     04 F4 05 F1 | 	add	objptr, #4
+00c9c     FA 20 02 F6 | 	mov	local02, objptr
+00ca0                 | ' 
+00ca0                 | ' repeat iii from 0 to 15
+00ca0     00 22 06 F6 | 	mov	local03, #0
+00ca4     0C F4 85 F1 | 	sub	objptr, #12
+00ca8     D7 1A 49 FB | 	callpa	#(@LR__0011-@LR__0010)>>2,fcache_load_ptr_
+00cac                 | LR__0010
+00cac                 | '   long[base+64*iii]:=0
+00cac     10 1F 02 F6 | 	mov	local01, local02
+00cb0     11 01 02 F6 | 	mov	result2, local03
+00cb4     06 00 66 F0 | 	shl	result2, #6
+00cb8     00 1F 02 F1 | 	add	local01, result2
+00cbc     0F 01 68 FC | 	wrlong	#0, local01
+00cc0                 | '   long[base+64*iii+4]:=0  		
+00cc0     10 1F 02 F6 | 	mov	local01, local02
+00cc4     11 01 02 F6 | 	mov	result2, local03
+00cc8     06 00 66 F0 | 	shl	result2, #6
+00ccc     00 1F 02 F1 | 	add	local01, result2
+00cd0     04 1E 06 F1 | 	add	local01, #4
+00cd4     0F 01 68 FC | 	wrlong	#0, local01
+00cd8                 | '   long[base+64*iii+8]:=0
+00cd8     10 25 02 F6 | 	mov	local04, local02
+00cdc     11 1F 02 F6 | 	mov	local01, local03
+00ce0     06 1E 66 F0 | 	shl	local01, #6
+00ce4     0F 25 02 F1 | 	add	local04, local01
+00ce8     08 24 06 F1 | 	add	local04, #8
+00cec     12 01 68 FC | 	wrlong	#0, local04
+00cf0                 | '   long[base+64*iii+12]:=0
+00cf0     10 25 02 F6 | 	mov	local04, local02
+00cf4     11 1F 02 F6 | 	mov	local01, local03
+00cf8     06 1E 66 F0 | 	shl	local01, #6
+00cfc     0F 25 02 F1 | 	add	local04, local01
+00d00     0C 24 06 F1 | 	add	local04, #12
+00d04     12 01 68 FC | 	wrlong	#0, local04
+00d08                 | '   long[base+64*iii+16]:=0
+00d08     10 25 02 F6 | 	mov	local04, local02
+00d0c     11 1F 02 F6 | 	mov	local01, local03
+00d10     06 1E 66 F0 | 	shl	local01, #6
+00d14     0F 25 02 F1 | 	add	local04, local01
+00d18     10 24 06 F1 | 	add	local04, #16
+00d1c     12 01 68 FC | 	wrlong	#0, local04
+00d20                 | '   long[base+64*iii+20]:=0
+00d20     10 25 02 F6 | 	mov	local04, local02
+00d24     11 1F 02 F6 | 	mov	local01, local03
+00d28     06 1E 66 F0 | 	shl	local01, #6
+00d2c     0F 25 02 F1 | 	add	local04, local01
+00d30     14 24 06 F1 | 	add	local04, #20
+00d34     12 01 68 FC | 	wrlong	#0, local04
+00d38                 | '   long[base+64*iii+24]:=0
+00d38     10 25 02 F6 | 	mov	local04, local02
+00d3c     11 1F 02 F6 | 	mov	local01, local03
+00d40     06 1E 66 F0 | 	shl	local01, #6
+00d44     0F 25 02 F1 | 	add	local04, local01
+00d48     18 24 06 F1 | 	add	local04, #24
+00d4c     12 01 68 FC | 	wrlong	#0, local04
+00d50                 | '   long[base+64*iii+28]:=0
+00d50     10 25 02 F6 | 	mov	local04, local02
+00d54     11 1F 02 F6 | 	mov	local01, local03
+00d58     06 1E 66 F0 | 	shl	local01, #6
+00d5c     0F 25 02 F1 | 	add	local04, local01
+00d60     1C 24 06 F1 | 	add	local04, #28
+00d64     12 01 68 FC | 	wrlong	#0, local04
+00d68                 | '   word[base+64*iii+32]:=8192
+00d68     10 25 02 F6 | 	mov	local04, local02
+00d6c     11 1F 02 F6 | 	mov	local01, local03
+00d70     06 1E 66 F0 | 	shl	local01, #6
+00d74     0F 25 02 F1 | 	add	local04, local01
+00d78     20 24 06 F1 | 	add	local04, #32
 00d7c     10 00 80 FF 
-00d80     11 01 58 FC | 	wrword	##8192, local04
-00d84                 | '   long[base+64*iii+36]:=0
-00d84     0F 23 02 F6 | 	mov	local04, local02
-00d88     10 1D 02 F6 | 	mov	local01, local03
-00d8c     06 1C 66 F0 | 	shl	local01, #6
-00d90     0E 23 02 F1 | 	add	local04, local01
-00d94     24 22 06 F1 | 	add	local04, #36
-00d98     11 01 68 FC | 	wrlong	#0, local04
-00d9c                 | '   long[base+64*iii+40]:=0
-00d9c     0F 23 02 F6 | 	mov	local04, local02
-00da0     10 1D 02 F6 | 	mov	local01, local03
-00da4     06 1C 66 F0 | 	shl	local01, #6
-00da8     0E 23 02 F1 | 	add	local04, local01
-00dac     28 22 06 F1 | 	add	local04, #40
-00db0     11 01 68 FC | 	wrlong	#0, local04
-00db4                 | '   long[base+64*iii+44]:=0
-00db4     0F 23 02 F6 | 	mov	local04, local02
-00db8     10 1D 02 F6 | 	mov	local01, local03
-00dbc     06 1C 66 F0 | 	shl	local01, #6
-00dc0     0E 23 02 F1 | 	add	local04, local01
-00dc4     2C 22 06 F1 | 	add	local04, #44
-00dc8     11 01 68 FC | 	wrlong	#0, local04
-00dcc                 | '   long[base+64*iii+48]:=0
-00dcc     0F 23 02 F6 | 	mov	local04, local02
-00dd0     10 1D 02 F6 | 	mov	local01, local03
-00dd4     06 1C 66 F0 | 	shl	local01, #6
-00dd8     0E 23 02 F1 | 	add	local04, local01
-00ddc     30 22 06 F1 | 	add	local04, #48
-00de0     11 01 68 FC | 	wrlong	#0, local04
-00de4                 | '   long[base+64*iii+52]:=0
-00de4     0F 23 02 F6 | 	mov	local04, local02
-00de8     10 1D 02 F6 | 	mov	local01, local03
-00dec     06 1C 66 F0 | 	shl	local01, #6
-00df0     0E 23 02 F1 | 	add	local04, local01
-00df4     34 22 06 F1 | 	add	local04, #52
-00df8     11 01 68 FC | 	wrlong	#0, local04
-00dfc                 | '   freqs[iii]:=440000
-00dfc     10 23 02 F6 | 	mov	local04, local03
-00e00     02 22 66 F0 | 	shl	local04, #2
-00e04     02 00 00 FF 
-00e08     0C F4 05 F1 | 	add	objptr, ##1036
-00e0c     FA 22 02 F1 | 	add	local04, objptr
-00e10     5B 03 80 FF 
-00e14     11 81 69 FC | 	wrlong	##440000, local04
-00e18                 | '   delays[iii]:=0
-00e18     10 23 02 F6 | 	mov	local04, local03
-00e1c     01 22 66 F0 | 	shl	local04, #1
-00e20     40 F4 05 F1 | 	add	objptr, #64
-00e24     FA 22 02 F1 | 	add	local04, objptr
-00e28     11 01 58 FC | 	wrword	#0, local04
-00e2c                 | '   volumes[iii]:=4096
-00e2c     10 23 02 F6 | 	mov	local04, local03
-00e30     01 22 66 F0 | 	shl	local04, #1
-00e34     20 F4 05 F1 | 	add	objptr, #32
-00e38     FA 22 02 F1 | 	add	local04, objptr
-00e3c     08 00 80 FF 
-00e40     11 01 58 FC | 	wrword	##4096, local04
-00e44                 | '   waveforms[iii]:=0
-00e44     10 23 02 F6 | 	mov	local04, local03
-00e48     02 22 66 F0 | 	shl	local04, #2
-00e4c     20 F4 05 F1 | 	add	objptr, #32
-00e50     FA 22 02 F1 | 	add	local04, objptr
-00e54     11 01 68 FC | 	wrlong	#0, local04
-00e58                 | '   envelopes[iii]:=0
-00e58     10 23 02 F6 | 	mov	local04, local03
-00e5c     02 22 66 F0 | 	shl	local04, #2
-00e60     40 F4 05 F1 | 	add	objptr, #64
-00e64     FA 22 02 F1 | 	add	local04, objptr
-00e68     11 01 68 FC | 	wrlong	#0, local04
-00e6c                 | '   lengths[iii]:=1000
-00e6c     10 23 02 F6 | 	mov	local04, local03
-00e70     01 22 66 F0 | 	shl	local04, #1
-00e74     40 F4 05 F1 | 	add	objptr, #64
-00e78     FA 22 02 F1 | 	add	local04, objptr
-00e7c     01 00 80 FF 
-00e80     11 D1 5B FC | 	wrword	##1000, local04
-00e84                 | '   pans[iii]:=8192
-00e84     10 23 02 F6 | 	mov	local04, local03
-00e88     01 22 66 F0 | 	shl	local04, #1
-00e8c     20 F4 05 F1 | 	add	objptr, #32
-00e90     FA 22 02 F1 | 	add	local04, objptr
-00e94     10 00 80 FF 
-00e98     11 01 58 FC | 	wrword	##8192, local04
-00e9c                 | '   sustains[iii]:=255
-00e9c     10 23 02 F6 | 	mov	local04, local03
-00ea0     01 22 66 F0 | 	shl	local04, #1
-00ea4     20 F4 05 F1 | 	add	objptr, #32
-00ea8     FA 22 02 F1 | 	add	local04, objptr
-00eac     11 FF 59 FC | 	wrword	#255, local04
-00eb0     01 20 06 F1 | 	add	local03, #1
-00eb4     10 20 56 F2 | 	cmps	local03, #16 wc
-00eb8     02 00 00 FF 
-00ebc     4C F5 85 F1 | 	sub	objptr, ##1356
-00ec0     CC FD 9F CD |  if_b	jmp	#LR__0010
-00ec4                 | LR__0011
-00ec4                 | '   
-00ec4                 | ' cog:=coginit(16,@audio,@mailboxaddr)
-00ec4     FB 0C 02 F6 | 	mov	arg02, ptr__Audio2_004_dat__
-00ec8     FA 0E 02 F6 | 	mov	arg03, objptr
-00ecc     10 22 06 F6 | 	mov	local04, #16
-00ed0     28 0E 62 FD | 	setq	arg03
-00ed4     06 23 F2 FC | 	coginit	local04, arg02 wc
-00ed8     01 22 66 C6 |  if_b	neg	local04, #1
-00edc                 | ' waitms(10)
-00edc     0A 0A 06 F6 | 	mov	arg01, #10
-00ee0     58 03 B0 FD | 	call	#__system___waitms
-00ee4                 | ' return cog,base
-00ee4     0F FF 01 F6 | 	mov	result2, local02
-00ee8     11 FD 01 F6 | 	mov	result1, local04
-00eec     E7 F0 03 F6 | 	mov	ptra, fp
-00ef0     F2 00 A0 FD | 	call	#popregs_
-00ef4                 | _Audio2_004_start_ret
-00ef4     2D 00 64 FD | 	ret
-00ef8                 | 
-00ef8                 | ' 
-00ef8                 | ' pub play (channel, frequency=-1, delay=-1, volume=-1, waveform=-1, envelope=-1, length=-1, pan=-1, sustain=-1) | base2
-00ef8                 | _Audio2_004_play
-00ef8     0B CA 05 F6 | 	mov	COUNT_, #11
-00efc     E8 00 A0 FD | 	call	#pushregs_
-00f00     05 1D 02 F6 | 	mov	local01, arg01
-00f04     06 1F 02 F6 | 	mov	local02, arg02
-00f08     07 21 02 F6 | 	mov	local03, arg03
-00f0c     08 23 02 F6 | 	mov	local04, arg04
-00f10     09 25 02 F6 | 	mov	local05, arg05
-00f14     0A 27 02 F6 | 	mov	local06, arg06
-00f18     0B 29 02 F6 | 	mov	local07, arg07
-00f1c     0C 2B 02 F6 | 	mov	local08, arg08
-00f20     0D 2D 02 F6 | 	mov	local09, arg09
-00f24                 | ' 
-00f24                 | ' if frequency==(-1)
-00f24     FF FF 7F FF 
-00f28     FF 1F 0E F2 | 	cmp	local02, ##-1 wz
-00f2c     20 00 90 5D |  if_ne	jmp	#LR__0020
-00f30                 | '   frequency:=freqs[channel]
-00f30     0E 1F 02 F6 | 	mov	local02, local01
-00f34     02 1E 66 F0 | 	shl	local02, #2
-00f38     FA 2E 02 F6 | 	mov	local10, objptr
-00f3c     02 00 00 FF 
-00f40     0C 2E 06 F1 | 	add	local10, ##1036
-00f44     17 1F 02 F1 | 	add	local02, local10
-00f48     0F 1F 02 FB | 	rdlong	local02, local02
-00f4c     1C 00 90 FD | 	jmp	#LR__0021
-00f50                 | LR__0020
-00f50                 | ' else
-00f50                 | '   freqs[channel]:=frequency
-00f50     0E 31 02 F6 | 	mov	local11, local01
-00f54     02 30 66 F0 | 	shl	local11, #2
-00f58     FA 2E 02 F6 | 	mov	local10, objptr
-00f5c     02 00 00 FF 
-00f60     0C 2E 06 F1 | 	add	local10, ##1036
-00f64     17 31 02 F1 | 	add	local11, local10
-00f68     18 1F 62 FC | 	wrlong	local02, local11
-00f6c                 | LR__0021
-00f6c                 | '   
-00f6c                 | ' if delay==(-1)
-00f6c     FF FF 7F FF 
-00f70     FF 21 0E F2 | 	cmp	local03, ##-1 wz
-00f74     20 00 90 5D |  if_ne	jmp	#LR__0022
-00f78                 | '   delay:=delays[channel]
-00f78     0E 2F 02 F6 | 	mov	local10, local01
-00f7c     01 2E 66 F0 | 	shl	local10, #1
-00f80     FA 30 02 F6 | 	mov	local11, objptr
-00f84     02 00 00 FF 
-00f88     4C 30 06 F1 | 	add	local11, ##1100
-00f8c     18 2F 02 F1 | 	add	local10, local11
-00f90     17 21 E2 FA | 	rdword	local03, local10
-00f94     1C 00 90 FD | 	jmp	#LR__0023
-00f98                 | LR__0022
-00f98                 | ' else
-00f98                 | '   delays[channel]:=delay
-00f98     0E 2F 02 F6 | 	mov	local10, local01
-00f9c     01 2E 66 F0 | 	shl	local10, #1
-00fa0     FA 30 02 F6 | 	mov	local11, objptr
-00fa4     02 00 00 FF 
-00fa8     4C 30 06 F1 | 	add	local11, ##1100
-00fac     18 2F 02 F1 | 	add	local10, local11
-00fb0     17 21 52 FC | 	wrword	local03, local10
-00fb4                 | LR__0023
-00fb4                 | '   
-00fb4                 | ' if volume==(-1)      
-00fb4     FF FF 7F FF 
-00fb8     FF 23 0E F2 | 	cmp	local04, ##-1 wz
-00fbc     20 00 90 5D |  if_ne	jmp	#LR__0024
-00fc0                 | '   volume:=volumes[channel]
-00fc0     0E 2F 02 F6 | 	mov	local10, local01
-00fc4     01 2E 66 F0 | 	shl	local10, #1
-00fc8     FA 30 02 F6 | 	mov	local11, objptr
-00fcc     02 00 00 FF 
-00fd0     6C 30 06 F1 | 	add	local11, ##1132
-00fd4     18 2F 02 F1 | 	add	local10, local11
-00fd8     17 23 E2 FA | 	rdword	local04, local10
-00fdc     1C 00 90 FD | 	jmp	#LR__0025
-00fe0                 | LR__0024
-00fe0                 | ' else
-00fe0                 | '   volumes[channel]:=volume
-00fe0     0E 2F 02 F6 | 	mov	local10, local01
-00fe4     01 2E 66 F0 | 	shl	local10, #1
-00fe8     FA 30 02 F6 | 	mov	local11, objptr
-00fec     02 00 00 FF 
-00ff0     6C 30 06 F1 | 	add	local11, ##1132
-00ff4     18 2F 02 F1 | 	add	local10, local11
-00ff8     17 23 52 FC | 	wrword	local04, local10
-00ffc                 | LR__0025
-00ffc                 | '   
-00ffc                 | ' if waveform==(-1)
-00ffc     FF FF 7F FF 
-01000     FF 25 0E F2 | 	cmp	local05, ##-1 wz
-01004     20 00 90 5D |  if_ne	jmp	#LR__0026
-01008                 | '   waveform:=waveforms[channel]
-01008     0E 31 02 F6 | 	mov	local11, local01
-0100c     02 30 66 F0 | 	shl	local11, #2
-01010     FA 2E 02 F6 | 	mov	local10, objptr
-01014     02 00 00 FF 
-01018     8C 2E 06 F1 | 	add	local10, ##1164
-0101c     17 31 02 F1 | 	add	local11, local10
-01020     18 25 02 FB | 	rdlong	local05, local11
-01024     1C 00 90 FD | 	jmp	#LR__0027
-01028                 | LR__0026
-01028                 | ' else
-01028                 | '   waveforms[channel]:=waveform
-01028     0E 31 02 F6 | 	mov	local11, local01
-0102c     02 30 66 F0 | 	shl	local11, #2
-01030     FA 2E 02 F6 | 	mov	local10, objptr
-01034     02 00 00 FF 
-01038     8C 2E 06 F1 | 	add	local10, ##1164
-0103c     17 31 02 F1 | 	add	local11, local10
-01040     18 25 62 FC | 	wrlong	local05, local11
-01044                 | LR__0027
-01044                 | '   
-01044                 | ' if envelope==(-1)
-01044     FF FF 7F FF 
-01048     FF 27 0E F2 | 	cmp	local06, ##-1 wz
-0104c     20 00 90 5D |  if_ne	jmp	#LR__0028
-01050                 | '   envelope:=envelopes[channel]
-01050     0E 31 02 F6 | 	mov	local11, local01
-01054     02 30 66 F0 | 	shl	local11, #2
-01058     FA 2E 02 F6 | 	mov	local10, objptr
-0105c     02 00 00 FF 
-01060     CC 2E 06 F1 | 	add	local10, ##1228
-01064     17 31 02 F1 | 	add	local11, local10
-01068     18 27 02 FB | 	rdlong	local06, local11
-0106c     1C 00 90 FD | 	jmp	#LR__0029
-01070                 | LR__0028
-01070                 | ' else
-01070                 | '   envelopes[channel]:=envelope
-01070     0E 31 02 F6 | 	mov	local11, local01
-01074     02 30 66 F0 | 	shl	local11, #2
-01078     FA 2E 02 F6 | 	mov	local10, objptr
-0107c     02 00 00 FF 
-01080     CC 2E 06 F1 | 	add	local10, ##1228
-01084     17 31 02 F1 | 	add	local11, local10
-01088     18 27 62 FC | 	wrlong	local06, local11
-0108c                 | LR__0029
-0108c                 | '   
-0108c                 | ' if length==(-1)
-0108c     FF FF 7F FF 
-01090     FF 29 0E F2 | 	cmp	local07, ##-1 wz
-01094     20 00 90 5D |  if_ne	jmp	#LR__0030
-01098                 | '   length:=lengths[channel]
-01098     0E 2F 02 F6 | 	mov	local10, local01
-0109c     01 2E 66 F0 | 	shl	local10, #1
-010a0     FA 30 02 F6 | 	mov	local11, objptr
-010a4     02 00 00 FF 
-010a8     0C 31 06 F1 | 	add	local11, ##1292
-010ac     18 2F 02 F1 | 	add	local10, local11
-010b0     17 29 E2 FA | 	rdword	local07, local10
-010b4     1C 00 90 FD | 	jmp	#LR__0031
-010b8                 | LR__0030
-010b8                 | ' else
-010b8                 | '   lengths[channel]:=length
-010b8     0E 2F 02 F6 | 	mov	local10, local01
-010bc     01 2E 66 F0 | 	shl	local10, #1
-010c0     FA 30 02 F6 | 	mov	local11, objptr
-010c4     02 00 00 FF 
-010c8     0C 31 06 F1 | 	add	local11, ##1292
-010cc     18 2F 02 F1 | 	add	local10, local11
-010d0     17 29 52 FC | 	wrword	local07, local10
-010d4                 | LR__0031
-010d4                 | '   
-010d4                 | ' if pan==(-1)
-010d4     FF FF 7F FF 
-010d8     FF 2B 0E F2 | 	cmp	local08, ##-1 wz
-010dc     20 00 90 5D |  if_ne	jmp	#LR__0032
-010e0                 | '   pan:=pans[channel]
-010e0     0E 2F 02 F6 | 	mov	local10, local01
-010e4     01 2E 66 F0 | 	shl	local10, #1
-010e8     FA 30 02 F6 | 	mov	local11, objptr
-010ec     02 00 00 FF 
-010f0     2C 31 06 F1 | 	add	local11, ##1324
-010f4     18 2F 02 F1 | 	add	local10, local11
-010f8     17 2B E2 FA | 	rdword	local08, local10
-010fc     1C 00 90 FD | 	jmp	#LR__0033
-01100                 | LR__0032
-01100                 | ' else
-01100                 | '   pans[channel]:=pan
-01100     0E 2F 02 F6 | 	mov	local10, local01
-01104     01 2E 66 F0 | 	shl	local10, #1
-01108     FA 30 02 F6 | 	mov	local11, objptr
-0110c     02 00 00 FF 
-01110     2C 31 06 F1 | 	add	local11, ##1324
-01114     18 2F 02 F1 | 	add	local10, local11
-01118     17 2B 52 FC | 	wrword	local08, local10
-0111c                 | LR__0033
-0111c                 | '  
-0111c                 | ' if sustain==(-1)
-0111c     FF FF 7F FF 
-01120     FF 2D 0E F2 | 	cmp	local09, ##-1 wz
-01124     20 00 90 5D |  if_ne	jmp	#LR__0034
-01128                 | '   sustain:=sustains[channel]
-01128     0E 2F 02 F6 | 	mov	local10, local01
-0112c     01 2E 66 F0 | 	shl	local10, #1
-01130     FA 30 02 F6 | 	mov	local11, objptr
-01134     02 00 00 FF 
-01138     4C 31 06 F1 | 	add	local11, ##1356
-0113c     18 2F 02 F1 | 	add	local10, local11
-01140     17 2D E2 FA | 	rdword	local09, local10
-01144     1C 00 90 FD | 	jmp	#LR__0035
-01148                 | LR__0034
-01148                 | ' else
-01148                 | '   sustains[channel]:=sustain
-01148     0E 2F 02 F6 | 	mov	local10, local01
-0114c     01 2E 66 F0 | 	shl	local10, #1
-01150     FA 30 02 F6 | 	mov	local11, objptr
-01154     02 00 00 FF 
-01158     4C 31 06 F1 | 	add	local11, ##1356
-0115c     18 2F 02 F1 | 	add	local10, local11
-01160     17 2D 52 FC | 	wrword	local09, local10
-01164                 | LR__0035
-01164     14 31 52 F6 | 	abs	local11, local07 wc
-01168     C2 B9 80 FF 
-0116c     18 DF 19 FD | 	qdiv	##24347887, local11
-01170                 | '                 
-01170                 | ' length:=24347887/length  
-01170     18 30 62 FD | 	getqx	local11
-01174     6D 1E 06 FD | 	qmul	local02, #109
-01178     18 29 82 F6 | 	negc	local07, local11
-0117c                 | ' debug(udec(sustain))
-0117c                 | ' base2:=@channel0[0]+64*channel
-0117c     FA 1E 02 F6 | 	mov	local02, objptr
-01180     0C 1E 06 F1 | 	add	local02, #12
-01184     06 1C 66 F0 | 	shl	local01, #6
-01188     0E 1F 02 F1 | 	add	local02, local01
-0118c                 | ' long[base2+20]:=waveform+$C0000000 
-0118c     00 00 60 FF 
-01190     00 24 06 F1 | 	add	local05, ##-1073741824
-01194     0F 2F 02 F6 | 	mov	local10, local02
-01198     14 2E 06 F1 | 	add	local10, #20
-0119c     17 25 62 FC | 	wrlong	local05, local10
-011a0                 | ' long[base2+28]:= 2048
-011a0     0F 31 02 F6 | 	mov	local11, local02
-011a4     1C 30 06 F1 | 	add	local11, #28
-011a8     04 00 80 FF 
-011ac     18 01 68 FC | 	wrlong	##2048, local11
-011b0                 | ' long[base2+24]:= 0
-011b0     0F 31 02 F6 | 	mov	local11, local02
-011b4     18 30 06 F1 | 	add	local11, #24
-011b8     18 01 68 FC | 	wrlong	#0, local11
-011bc                 | ' word[base2+32]:=volume
-011bc     0F 31 02 F6 | 	mov	local11, local02
-011c0     20 30 06 F1 | 	add	local11, #32
-011c4     18 23 52 FC | 	wrword	local04, local11
-011c8                 | ' word[base2+32]:=pan
-011c8     0F 31 02 F6 | 	mov	local11, local02
-011cc     20 30 06 F1 | 	add	local11, #32
-011d0     18 2B 52 FC | 	wrword	local08, local11
-011d4                 | ' long[base2+36]:=((frequency*109)/1000)*3574 ' (frequency*389566)/1000  freq*3574*109/1000
-011d4     18 30 62 FD | 	getqx	local11
-011d8     18 2F 52 F6 | 	abs	local10, local11 wc
-011dc     01 00 00 FF 
-011e0     E8 2F 16 FD | 	qdiv	local10, ##1000
-011e4     18 2E 62 FD | 	getqx	local10
-011e8     17 2F 82 F6 | 	negc	local10, local10
-011ec     06 00 00 FF 
-011f0     F6 2F 06 FD | 	qmul	local10, ##3574
-011f4     0F 2F 02 F6 | 	mov	local10, local02
-011f8     24 2E 06 F1 | 	add	local10, #36
-011fc                 | ' long[base2+44]:=envelope
-011fc     0F 31 02 F6 | 	mov	local11, local02
-01200     2C 30 06 F1 | 	add	local11, #44
-01204                 | ' long[base2+48]:=length
-01204                 | ' long[base2+52]:=sustain
-01204                 | ' waitms(delay)
-01204     10 0B 02 F6 | 	mov	arg01, local03
-01208     18 2A 62 FD | 	getqx	local08
-0120c     17 2B 62 FC | 	wrlong	local08, local10
-01210     18 27 62 FC | 	wrlong	local06, local11
-01214     0F 31 02 F6 | 	mov	local11, local02
-01218     30 30 06 F1 | 	add	local11, #48
-0121c     18 29 62 FC | 	wrlong	local07, local11
-01220     34 1E 06 F1 | 	add	local02, #52
-01224     0F 2D 62 FC | 	wrlong	local09, local02
-01228     10 00 B0 FD | 	call	#__system___waitms
-0122c     E7 F0 03 F6 | 	mov	ptra, fp
-01230     F2 00 A0 FD | 	call	#popregs_
-01234                 | _Audio2_004_play_ret
-01234     2D 00 64 FD | 	ret
-01238                 | hubexit
-01238     C1 00 80 FD | 	jmp	#cogexit
-0123c                 | 
-0123c                 | __system___waitms
-0123c     05 05 02 F6 | 	mov	_var01, arg01
-01240     1A 06 62 FD | 	getct	_var02
-01244     14 08 06 FB | 	rdlong	_var03, #20
-01248     D7 14 48 FB | 	callpa	#(@LR__0041-@LR__0040)>>2,fcache_load_ptr_
-0124c                 | LR__0040
-0124c     01 00 00 FF 
-01250     E8 05 56 F2 | 	cmps	_var01, ##1000 wc
-01254     1C 00 90 CD |  if_b	jmp	#LR__0042
-01258     04 07 02 F1 | 	add	_var02, _var03
-0125c     03 0B 02 F6 | 	mov	arg01, _var02
-01260     00 0A 66 FA | 	addct1	arg01, #0
-01264     24 22 60 FD | 	waitct1
-01268     01 00 00 FF 
-0126c     E8 05 86 F1 | 	sub	_var01, ##1000
-01270     D8 FF 9F FD | 	jmp	#LR__0040
-01274                 | LR__0041
-01274                 | LR__0042
-01274     01 04 56 F2 | 	cmps	_var01, #1 wc
-01278     28 00 90 CD |  if_b	jmp	#LR__0043
-0127c     04 05 02 FD | 	qmul	_var01, _var03
-01280     01 00 00 FF 
-01284     E8 0F 06 F6 | 	mov	arg03, ##1000
-01288     19 FC 61 FD | 	getqy	result1
-0128c     18 0A 62 FD | 	getqx	arg01
-01290     28 FC 61 FD | 	setq	result1
-01294     07 0B 12 FD | 	qdiv	arg01, arg03
-01298     18 0A 62 FD | 	getqx	arg01
-0129c     03 0B 62 FA | 	addct1	arg01, _var02
-012a0     24 22 60 FD | 	waitct1
-012a4                 | LR__0043
-012a4                 | __system___waitms_ret
-012a4     2D 00 64 FD | 	ret
-012a8                 | 	alignl
-012a8                 | _dat_
-012a8     73 32 00 04 
-012ac     00 00 10 00 
-012b0     00 00 00 00 
-012b4     00 00 00 00 | waveform file "glocke.s2"
-012b8     00 00 AB 04 
-012bc     52 09 F4 0D 
-012c0     8C 12 19 17 
-012c4     97 1B 03 20 | 	byte	$00, $00, $ab, $04, $52, $09, $f4, $0d, $8c, $12, $19, $17, $97, $1b, $03, $20
-012c8     5B 24 9C 28 
-012cc     C3 2C CE 30 
-012d0     BA 34 86 38 
-012d4     2F 3C B3 3F | 	byte	$5b, $24, $9c, $28, $c3, $2c, $ce, $30, $ba, $34, $86, $38, $2f, $3c, $b3, $3f
-012d8     10 43 45 46 
-012dc     51 49 31 4C 
-012e0     E5 4E 6B 51 
-012e4     C3 53 ED 55 | 	byte	$10, $43, $45, $46, $51, $49, $31, $4c, $e5, $4e, $6b, $51, $c3, $53, $ed, $55
-012e8     E7 57 B2 59 
-012ec     4D 5B B8 5C 
-012f0     F4 5D 00 5F 
-012f4     DF 5F 8F 60 | 	byte	$e7, $57, $b2, $59, $4d, $5b, $b8, $5c, $f4, $5d, $00, $5f, $df, $5f, $8f, $60
-012f8     13 61 6A 61 
-012fc     97 61 9A 61 
-01300     76 61 2B 61 
-01304     BB 60 28 60 | 	byte	$13, $61, $6a, $61, $97, $61, $9a, $61, $76, $61, $2b, $61, $bb, $60, $28, $60
-01308     74 5F A1 5E 
-0130c     B0 5D A4 5C 
-01310     7F 5B 43 5A 
-01314     F3 58 90 57 | 	byte	$74, $5f, $a1, $5e, $b0, $5d, $a4, $5c, $7f, $5b, $43, $5a, $f3, $58, $90, $57
-01318     1C 56 9B 54 
-0131c     0E 53 77 51 
-01320     D8 4F 34 4E 
-01324     8D 4C E5 4A | 	byte	$1c, $56, $9b, $54, $0e, $53, $77, $51, $d8, $4f, $34, $4e, $8d, $4c, $e5, $4a
-01328     3D 49 97 47 
-0132c     F6 45 5A 44 
-01330     C7 42 3C 41 
-01334     BC 3F 47 3E | 	byte	$3d, $49, $97, $47, $f6, $45, $5a, $44, $c7, $42, $3c, $41, $bc, $3f, $47, $3e
-01338     E0 3C 86 3B 
-0133c     3C 3A 01 39 
-01340     D6 37 BD 36 
-01344     B5 35 BF 34 | 	byte	$e0, $3c, $86, $3b, $3c, $3a, $01, $39, $d6, $37, $bd, $36, $b5, $35, $bf, $34
-01348     DB 33 09 33 
-0134c     49 32 9A 31 
-01350     FE 30 73 30 
-01354     F8 2F 8E 2F | 	byte	$db, $33, $09, $33, $49, $32, $9a, $31, $fe, $30, $73, $30, $f8, $2f, $8e, $2f
-01358     34 2F E8 2E 
-0135c     AA 2E 79 2E 
-01360     55 2E 3B 2E 
-01364     2C 2E 25 2E | 	byte	$34, $2f, $e8, $2e, $aa, $2e, $79, $2e, $55, $2e, $3b, $2e, $2c, $2e, $25, $2e
-01368     26 2E 2D 2E 
-0136c     39 2E 49 2E 
-01370     5C 2E 70 2E 
-01374     84 2E 96 2E | 	byte	$26, $2e, $2d, $2e, $39, $2e, $49, $2e, $5c, $2e, $70, $2e, $84, $2e, $96, $2e
-01378     A6 2E B2 2E 
-0137c     B8 2E B9 2E 
-01380     B2 2E A2 2E 
-01384     88 2E 64 2E | 	byte	$a6, $2e, $b2, $2e, $b8, $2e, $b9, $2e, $b2, $2e, $a2, $2e, $88, $2e, $64, $2e
-01388     34 2E F7 2D 
-0138c     AE 2D 55 2D 
-01390     EF 2C 78 2C 
-01394     F2 2B 5C 2B | 	byte	$34, $2e, $f7, $2d, $ae, $2d, $55, $2d, $ef, $2c, $78, $2c, $f2, $2b, $5c, $2b
-01398     B5 2A FD 29 
-0139c     34 29 5A 28 
-013a0     6E 27 72 26 
-013a4     65 25 47 24 | 	byte	$b5, $2a, $fd, $29, $34, $29, $5a, $28, $6e, $27, $72, $26, $65, $25, $47, $24
-013a8     19 23 DC 21 
-013ac     8F 20 34 1F 
-013b0     CB 1D 54 1C 
-013b4     D2 1A 44 19 | 	byte	$19, $23, $dc, $21, $8f, $20, $34, $1f, $cb, $1d, $54, $1c, $d2, $1a, $44, $19
-013b8     AC 17 0B 16 
-013bc     61 14 B0 12 
-013c0     FA 10 3F 0F 
-013c4     80 0D C0 0B | 	byte	$ac, $17, $0b, $16, $61, $14, $b0, $12, $fa, $10, $3f, $0f, $80, $0d, $c0, $0b
-013c8     FF 09 3E 08 
-013cc     80 06 C5 04 
-013d0     0F 03 5F 01 
-013d4     B6 FF 16 FE | 	byte	$ff, $09, $3e, $08, $80, $06, $c5, $04, $0f, $03, $5f, $01, $b6, $ff, $16, $fe
-013d8     81 FC F7 FA 
-013dc     7A F9 0B F8 
-013e0     AB F6 5C F5 
-013e4     1E F4 F2 F2 | 	byte	$81, $fc, $f7, $fa, $7a, $f9, $0b, $f8, $ab, $f6, $5c, $f5, $1e, $f4, $f2, $f2
-013e8     DB F1 D7 F0 
-013ec     E9 EF 11 EF 
-013f0     4F EE A5 ED 
-013f4     13 ED 98 EC | 	byte	$db, $f1, $d7, $f0, $e9, $ef, $11, $ef, $4f, $ee, $a5, $ed, $13, $ed, $98, $ec
-013f8     36 EC ED EB 
-013fc     BD EB A5 EB 
-01400     A7 EB C1 EB 
-01404     F3 EB 3D EC | 	byte	$36, $ec, $ed, $eb, $bd, $eb, $a5, $eb, $a7, $eb, $c1, $eb, $f3, $eb, $3d, $ec
-01408     9F EC 17 ED 
-0140c     A6 ED 4A EE 
-01410     03 EF D0 EF 
-01414     AE F0 9F F1 | 	byte	$9f, $ec, $17, $ed, $a6, $ed, $4a, $ee, $03, $ef, $d0, $ef, $ae, $f0, $9f, $f1
-01418     A0 F2 AF F3 
-0141c     CD F4 F6 F5 
-01420     2A F7 68 F8 
-01424     AD F9 F8 FA | 	byte	$a0, $f2, $af, $f3, $cd, $f4, $f6, $f5, $2a, $f7, $68, $f8, $ad, $f9, $f8, $fa
-01428     47 FC 99 FD 
-0142c     EC FE 3F 00 
-01430     8F 01 DA 02 
-01434     21 04 5F 05 | 	byte	$47, $fc, $99, $fd, $ec, $fe, $3f, $00, $8f, $01, $da, $02, $21, $04, $5f, $05
-01438     95 06 C0 07 
-0143c     DE 08 EF 09 
-01440     F1 0A E2 0B 
-01444     C1 0C 8D 0D | 	byte	$95, $06, $c0, $07, $de, $08, $ef, $09, $f1, $0a, $e2, $0b, $c1, $0c, $8d, $0d
-01448     45 0E E8 0E 
-0144c     75 0F EA 0F 
-01450     48 10 8E 10 
-01454     BB 10 CF 10 | 	byte	$45, $0e, $e8, $0e, $75, $0f, $ea, $0f, $48, $10, $8e, $10, $bb, $10, $cf, $10
-01458     CA 10 AB 10 
-0145c     73 10 22 10 
-01460     B9 0F 36 0F 
-01464     9D 0E EC 0D | 	byte	$ca, $10, $ab, $10, $73, $10, $22, $10, $b9, $0f, $36, $0f, $9d, $0e, $ec, $0d
-01468     25 0D 49 0C 
-0146c     59 0B 56 0A 
-01470     42 09 1D 08 
-01474     EB 06 AB 05 | 	byte	$25, $0d, $49, $0c, $59, $0b, $56, $0a, $42, $09, $1d, $08, $eb, $06, $ab, $05
-01478     61 04 0E 03 
-0147c     B4 01 54 00 
-01480     F2 FE 8F FD 
-01484     2D FC CE FA | 	byte	$61, $04, $0e, $03, $b4, $01, $54, $00, $f2, $fe, $8f, $fd, $2d, $fc, $ce, $fa
-01488     75 F9 24 F8 
-0148c     DE F6 A3 F5 
-01490     78 F4 5D F3 
-01494     55 F2 63 F1 | 	byte	$75, $f9, $24, $f8, $de, $f6, $a3, $f5, $78, $f4, $5d, $f3, $55, $f2, $63, $f1
-01498     87 F0 C5 EF 
-0149c     1E EF 93 EE 
-014a0     27 EE DB ED 
-014a4     B1 ED AA ED | 	byte	$87, $f0, $c5, $ef, $1e, $ef, $93, $ee, $27, $ee, $db, $ed, $b1, $ed, $aa, $ed
-014a8     C7 ED 09 EE 
-014ac     71 EE 01 EF 
-014b0     B8 EF 98 F0 
-014b4     A0 F1 D1 F2 | 	byte	$c7, $ed, $09, $ee, $71, $ee, $01, $ef, $b8, $ef, $98, $f0, $a0, $f1, $d1, $f2
-014b8     2B F4 AD F5 
-014bc     58 F7 2B F9 
-014c0     25 FB 45 FD 
-014c4     8B FF F5 01 | 	byte	$2b, $f4, $ad, $f5, $58, $f7, $2b, $f9, $25, $fb, $45, $fd, $8b, $ff, $f5, $01
-014c8     82 04 31 07 
-014cc     01 0A EE 0C 
-014d0     F9 0F 1E 13 
-014d4     5C 16 B1 19 | 	byte	$82, $04, $31, $07, $01, $0a, $ee, $0c, $f9, $0f, $1e, $13, $5c, $16, $b1, $19
-014d8     1A 1D 95 20 
-014dc     20 24 B8 27 
-014e0     5A 2B 05 2F 
-014e4     B6 32 6A 36 | 	byte	$1a, $1d, $95, $20, $20, $24, $b8, $27, $5a, $2b, $05, $2f, $b6, $32, $6a, $36
-014e8     1E 3A D0 3D 
-014ec     7D 41 22 45 
-014f0     BE 48 4D 4C 
-014f4     CD 4F 3C 53 | 	byte	$1e, $3a, $d0, $3d, $7d, $41, $22, $45, $be, $48, $4d, $4c, $cd, $4f, $3c, $53
-014f8     98 56 DD 59 
-014fc     0B 5D 1E 60 
-01500     15 63 EE 65 
-01504     A8 68 40 6B | 	byte	$98, $56, $dd, $59, $0b, $5d, $1e, $60, $15, $63, $ee, $65, $a8, $68, $40, $6b
-01508     B5 6D 07 70 
-0150c     32 72 38 74 
-01510     16 76 CC 77 
-01514     59 79 BD 7A | 	byte	$b5, $6d, $07, $70, $32, $72, $38, $74, $16, $76, $cc, $77, $59, $79, $bd, $7a
-01518     F7 7B 07 7D 
-0151c     EE 7D AA 7E 
-01520     3D 7F A6 7F 
-01524     E7 7F FF 7F | 	byte	$f7, $7b, $07, $7d, $ee, $7d, $aa, $7e, $3d, $7f, $a6, $7f, $e7, $7f, $ff, $7f
-01528     F0 7F BA 7F 
-0152c     5F 7F DF 7E 
-01530     3B 7E 75 7D 
-01534     8F 7C 89 7B | 	byte	$f0, $7f, $ba, $7f, $5f, $7f, $df, $7e, $3b, $7e, $75, $7d, $8f, $7c, $89, $7b
-01538     65 7A 25 79 
-0153c     CA 77 57 76 
-01540     CB 74 2B 73 
-01544     76 71 B0 6F | 	byte	$65, $7a, $25, $79, $ca, $77, $57, $76, $cb, $74, $2b, $73, $76, $71, $b0, $6f
-01548     D9 6D F3 6B 
-0154c     01 6A 04 68 
-01550     FD 65 EF 63 
-01554     DC 61 C4 5F | 	byte	$d9, $6d, $f3, $6b, $01, $6a, $04, $68, $fd, $65, $ef, $63, $dc, $61, $c4, $5f
-01558     A9 5D 8D 5B 
-0155c     71 59 57 57 
-01560     40 55 2D 53 
-01564     20 51 19 4F | 	byte	$a9, $5d, $8d, $5b, $71, $59, $57, $57, $40, $55, $2d, $53, $20, $51, $19, $4f
-01568     19 4D 22 4B 
-0156c     34 49 50 47 
-01570     76 45 A8 43 
-01574     E5 41 2E 40 | 	byte	$19, $4d, $22, $4b, $34, $49, $50, $47, $76, $45, $a8, $43, $e5, $41, $2e, $40
-01578     83 3E E4 3C 
-0157c     51 3B CB 39 
-01580     51 38 E3 36 
-01584     81 35 2A 34 | 	byte	$83, $3e, $e4, $3c, $51, $3b, $cb, $39, $51, $38, $e3, $36, $81, $35, $2a, $34
-01588     DE 32 9D 31 
-0158c     65 30 37 2F 
-01590     11 2E F4 2C 
-01594     DD 2B CC 2A | 	byte	$de, $32, $9d, $31, $65, $30, $37, $2f, $11, $2e, $f4, $2c, $dd, $2b, $cc, $2a
-01598     C1 29 BB 28 
-0159c     B7 27 B7 26 
-015a0     B7 25 B9 24 
-015a4     BA 23 BA 22 | 	byte	$c1, $29, $bb, $28, $b7, $27, $b7, $26, $b7, $25, $b9, $24, $ba, $23, $ba, $22
-015a8     B7 21 B1 20 
-015ac     A6 1F 97 1E 
-015b0     81 1D 64 1C 
-015b4     3F 1B 12 1A | 	byte	$b7, $21, $b1, $20, $a6, $1f, $97, $1e, $81, $1d, $64, $1c, $3f, $1b, $12, $1a
-015b8     DB 18 9A 17 
-015bc     4F 16 F8 14 
-015c0     95 13 27 12 
-015c4     AB 10 23 0F | 	byte	$db, $18, $9a, $17, $4f, $16, $f8, $14, $95, $13, $27, $12, $ab, $10, $23, $0f
-015c8     8E 0D EC 0B 
-015cc     3C 0A 7F 08 
-015d0     B6 06 DF 04 
-015d4     FC 02 0D 01 | 	byte	$8e, $0d, $ec, $0b, $3c, $0a, $7f, $08, $b6, $06, $df, $04, $fc, $02, $0d, $01
-015d8     12 FF 0C FD 
-015dc     FB FA E1 F8 
-015e0     BE F6 94 F4 
-015e4     62 F2 2A F0 | 	byte	$12, $ff, $0c, $fd, $fb, $fa, $e1, $f8, $be, $f6, $94, $f4, $62, $f2, $2a, $f0
-015e8     ED ED AD EB 
-015ec     6B E9 27 E7 
-015f0     E4 E4 A3 E2 
-015f4     65 E0 2C DE | 	byte	$ed, $ed, $ad, $eb, $6b, $e9, $27, $e7, $e4, $e4, $a3, $e2, $65, $e0, $2c, $de
-015f8     FA DB CF D9 
-015fc     AE D7 98 D5 
-01600     8F D3 95 D1 
-01604     AA CF D1 CD | 	byte	$fa, $db, $cf, $d9, $ae, $d7, $98, $d5, $8f, $d3, $95, $d1, $aa, $cf, $d1, $cd
-01608     0C CC 5B CA 
-0160c     C1 C8 3E C7 
-01610     D5 C5 86 C4 
-01614     53 C3 3E C2 | 	byte	$0c, $cc, $5b, $ca, $c1, $c8, $3e, $c7, $d5, $c5, $86, $c4, $53, $c3, $3e, $c2
-01618     46 C1 6E C0 
-0161c     B7 BF 20 BF 
-01620     AC BE 5A BE 
-01624     2C BE 21 BE | 	byte	$46, $c1, $6e, $c0, $b7, $bf, $20, $bf, $ac, $be, $5a, $be, $2c, $be, $21, $be
-01628     3A BE 77 BE 
-0162c     D8 BE 5D BF 
-01630     07 C0 D4 C0 
-01634     C4 C1 D6 C2 | 	byte	$3a, $be, $77, $be, $d8, $be, $5d, $bf, $07, $c0, $d4, $c0, $c4, $c1, $d6, $c2
-01638     0A C4 5F C5 
-0163c     D4 C6 67 C8 
-01640     18 CA E5 CB 
-01644     CD CD CD CF | 	byte	$0a, $c4, $5f, $c5, $d4, $c6, $67, $c8, $18, $ca, $e5, $cb, $cd, $cd, $cd, $cf
-01648     E5 D1 12 D4 
-0164c     53 D6 A5 D8 
-01650     06 DB 75 DD 
-01654     EF DF 71 E2 | 	byte	$e5, $d1, $12, $d4, $53, $d6, $a5, $d8, $06, $db, $75, $dd, $ef, $df, $71, $e2
-01658     FA E4 88 E7 
-0165c     16 EA A5 EC 
-01660     30 EF B6 F1 
-01664     34 F4 A8 F6 | 	byte	$fa, $e4, $88, $e7, $16, $ea, $a5, $ec, $30, $ef, $b6, $f1, $34, $f4, $a8, $f6
-01668     10 F9 69 FB 
-0166c     B2 FD E7 FF 
-01670     08 02 12 04 
-01674     03 06 DA 07 | 	byte	$10, $f9, $69, $fb, $b2, $fd, $e7, $ff, $08, $02, $12, $04, $03, $06, $da, $07
-01678     95 09 32 0B 
-0167c     B1 0C 0F 0E 
-01680     4C 0F 68 10 
-01684     60 11 35 12 | 	byte	$95, $09, $32, $0b, $b1, $0c, $0f, $0e, $4c, $0f, $68, $10, $60, $11, $35, $12
-01688     E6 12 73 13 
-0168c     DC 13 21 14 
-01690     41 14 3E 14 
-01694     18 14 D0 13 | 	byte	$e6, $12, $73, $13, $dc, $13, $21, $14, $41, $14, $3e, $14, $18, $14, $d0, $13
-01698     66 13 DC 12 
-0169c     33 12 6C 11 
-016a0     89 10 8B 0F 
-016a4     75 0E 47 0D | 	byte	$66, $13, $dc, $12, $33, $12, $6c, $11, $89, $10, $8b, $0f, $75, $0e, $47, $0d
-016a8     04 0C AE 0A 
-016ac     47 09 D2 07 
-016b0     50 06 C5 04 
-016b4     32 03 9A 01 | 	byte	$04, $0c, $ae, $0a, $47, $09, $d2, $07, $50, $06, $c5, $04, $32, $03, $9a, $01
-016b8     00 00 66 FE 
-016bc     CE FC 3B FB 
-016c0     B0 F9 2E F8 
-016c4     B9 F6 52 F5 | 	byte	$00, $00, $66, $fe, $ce, $fc, $3b, $fb, $b0, $f9, $2e, $f8, $b9, $f6, $52, $f5
-016c8     FC F3 B9 F2 
-016cc     8B F1 75 F0 
-016d0     77 EF 94 EE 
-016d4     CD ED 24 ED | 	byte	$fc, $f3, $b9, $f2, $8b, $f1, $75, $f0, $77, $ef, $94, $ee, $cd, $ed, $24, $ed
-016d8     9A EC 30 EC 
-016dc     E8 EB C2 EB 
-016e0     BF EB DF EB 
-016e4     24 EC 8D EC | 	byte	$9a, $ec, $30, $ec, $e8, $eb, $c2, $eb, $bf, $eb, $df, $eb, $24, $ec, $8d, $ec
-016e8     1A ED CB ED 
-016ec     A0 EE 98 EF 
-016f0     B4 F0 F1 F1 
-016f4     4F F3 CE F4 | 	byte	$1a, $ed, $cb, $ed, $a0, $ee, $98, $ef, $b4, $f0, $f1, $f1, $4f, $f3, $ce, $f4
-016f8     6B F6 26 F8 
-016fc     FD F9 EE FB 
-01700     F8 FD 19 00 
-01704     4E 02 97 04 | 	byte	$6b, $f6, $26, $f8, $fd, $f9, $ee, $fb, $f8, $fd, $19, $00, $4e, $02, $97, $04
-01708     F0 06 58 09 
-0170c     CC 0B 4A 0E 
-01710     D0 10 5B 13 
-01714     EA 15 78 18 | 	byte	$f0, $06, $58, $09, $cc, $0b, $4a, $0e, $d0, $10, $5b, $13, $ea, $15, $78, $18
-01718     06 1B 8F 1D 
-0171c     11 20 8B 22 
-01720     FA 24 5B 27 
-01724     AD 29 EE 2B | 	byte	$06, $1b, $8f, $1d, $11, $20, $8b, $22, $fa, $24, $5b, $27, $ad, $29, $ee, $2b
-01728     1B 2E 33 30 
-0172c     33 32 1B 34 
-01730     E8 35 99 37 
-01734     2C 39 A1 3A | 	byte	$1b, $2e, $33, $30, $33, $32, $1b, $34, $e8, $35, $99, $37, $2c, $39, $a1, $3a
-01738     F6 3B 2A 3D 
-0173c     3C 3E 2C 3F 
-01740     F9 3F A3 40 
-01744     28 41 89 41 | 	byte	$f6, $3b, $2a, $3d, $3c, $3e, $2c, $3f, $f9, $3f, $a3, $40, $28, $41, $89, $41
-01748     C6 41 DF 41 
-0174c     D4 41 A6 41 
-01750     54 41 E0 40 
-01754     49 40 92 3F | 	byte	$c6, $41, $df, $41, $d4, $41, $a6, $41, $54, $41, $e0, $40, $49, $40, $92, $3f
-01758     BA 3E C2 3D 
-0175c     AD 3C 7A 3B 
-01760     2B 3A C2 38 
-01764     3F 37 A5 35 | 	byte	$ba, $3e, $c2, $3d, $ad, $3c, $7a, $3b, $2b, $3a, $c2, $38, $3f, $37, $a5, $35
-01768     F4 33 2F 32 
-0176c     56 30 6B 2E 
-01770     71 2C 68 2A 
-01774     52 28 31 26 | 	byte	$f4, $33, $2f, $32, $56, $30, $6b, $2e, $71, $2c, $68, $2a, $52, $28, $31, $26
-01778     06 24 D4 21 
-0177c     9B 1F 5D 1D 
-01780     1C 1B D9 18 
-01784     95 16 53 14 | 	byte	$06, $24, $d4, $21, $9b, $1f, $5d, $1d, $1c, $1b, $d9, $18, $95, $16, $53, $14
-01788     13 12 D6 0F 
-0178c     9E 0D 6C 0B 
-01790     42 09 1F 07 
-01794     05 05 F4 02 | 	byte	$13, $12, $d6, $0f, $9e, $0d, $6c, $0b, $42, $09, $1f, $07, $05, $05, $f4, $02
-01798     EE 00 F3 FE 
-0179c     04 FD 21 FB 
-017a0     4A F9 81 F7 
-017a4     C4 F5 14 F4 | 	byte	$ee, $00, $f3, $fe, $04, $fd, $21, $fb, $4a, $f9, $81, $f7, $c4, $f5, $14, $f4
-017a8     72 F2 DD F0 
-017ac     55 EF D9 ED 
-017b0     6B EC 08 EB 
-017b4     B1 E9 66 E8 | 	byte	$72, $f2, $dd, $f0, $55, $ef, $d9, $ed, $6b, $ec, $08, $eb, $b1, $e9, $66, $e8
-017b8     25 E7 EE E5 
-017bc     C1 E4 9C E3 
-017c0     7F E2 69 E1 
-017c4     5A E0 4F DF | 	byte	$25, $e7, $ee, $e5, $c1, $e4, $9c, $e3, $7f, $e2, $69, $e1, $5a, $e0, $4f, $df
-017c8     49 DE 46 DD 
-017cc     46 DC 47 DB 
-017d0     49 DA 49 D9 
-017d4     49 D8 45 D7 | 	byte	$49, $de, $46, $dd, $46, $dc, $47, $db, $49, $da, $49, $d9, $49, $d8, $45, $d7
-017d8     3F D6 34 D5 
-017dc     23 D4 0C D3 
-017e0     EF D1 C9 D0 
-017e4     9B CF 63 CE | 	byte	$3f, $d6, $34, $d5, $23, $d4, $0c, $d3, $ef, $d1, $c9, $d0, $9b, $cf, $63, $ce
-017e8     22 CD D6 CB 
-017ec     7F CA 1D C9 
-017f0     AF C7 35 C6 
-017f4     AF C4 1C C3 | 	byte	$22, $cd, $d6, $cb, $7f, $ca, $1d, $c9, $af, $c7, $35, $c6, $af, $c4, $1c, $c3
-017f8     7D C1 D2 BF 
-017fc     1B BE 58 BC 
-01800     8A BA B0 B8 
-01804     CC B6 DE B4 | 	byte	$7d, $c1, $d2, $bf, $1b, $be, $58, $bc, $8a, $ba, $b0, $b8, $cc, $b6, $de, $b4
-01808     E7 B2 E7 B0 
-0180c     E0 AE D3 AC 
-01810     C0 AA A9 A8 
-01814     8F A6 73 A4 | 	byte	$e7, $b2, $e7, $b0, $e0, $ae, $d3, $ac, $c0, $aa, $a9, $a8, $8f, $a6, $73, $a4
-01818     57 A2 3C A0 
-0181c     24 9E 11 9C 
-01820     03 9A FC 97 
-01824     FF 95 0D 94 | 	byte	$57, $a2, $3c, $a0, $24, $9e, $11, $9c, $03, $9a, $fc, $97, $ff, $95, $0d, $94
-01828     27 92 50 90 
-0182c     8A 8E D5 8C 
-01830     35 8B A9 89 
-01834     36 88 DB 86 | 	byte	$27, $92, $50, $90, $8a, $8e, $d5, $8c, $35, $8b, $a9, $89, $36, $88, $db, $86
-01838     9B 85 77 84 
-0183c     71 83 8B 82 
-01840     C5 81 21 81 
-01844     A1 80 46 80 | 	byte	$9b, $85, $77, $84, $71, $83, $8b, $82, $c5, $81, $21, $81, $a1, $80, $46, $80
-01848     10 80 01 80 
-0184c     19 80 5A 80 
-01850     C3 80 56 81 
-01854     12 82 F9 82 | 	byte	$10, $80, $01, $80, $19, $80, $5a, $80, $c3, $80, $56, $81, $12, $82, $f9, $82
-01858     09 84 43 85 
-0185c     A7 86 34 88 
-01860     EA 89 C8 8B 
-01864     CE 8D F9 8F | 	byte	$09, $84, $43, $85, $a7, $86, $34, $88, $ea, $89, $c8, $8b, $ce, $8d, $f9, $8f
-01868     4B 92 C0 94 
-0186c     58 97 12 9A 
-01870     EB 9C E2 9F 
-01874     F5 A2 23 A6 | 	byte	$4b, $92, $c0, $94, $58, $97, $12, $9a, $eb, $9c, $e2, $9f, $f5, $a2, $23, $a6
-01878     68 A9 C4 AC 
-0187c     33 B0 B3 B3 
-01880     42 B7 DE BA 
-01884     83 BE 30 C2 | 	byte	$68, $a9, $c4, $ac, $33, $b0, $b3, $b3, $42, $b7, $de, $ba, $83, $be, $30, $c2
-01888     E2 C5 96 C9 
-0188c     4A CD FB D0 
-01890     A6 D4 48 D8 
-01894     E0 DB 6B DF | 	byte	$e2, $c5, $96, $c9, $4a, $cd, $fb, $d0, $a6, $d4, $48, $d8, $e0, $db, $6b, $df
-01898     E6 E2 4F E6 
-0189c     A4 E9 E2 EC 
-018a0     07 F0 12 F3 
-018a4     FF F5 CF F8 | 	byte	$e6, $e2, $4f, $e6, $a4, $e9, $e2, $ec, $07, $f0, $12, $f3, $ff, $f5, $cf, $f8
-018a8     7E FB 0B FE 
-018ac     75 00 BB 02 
-018b0     DB 04 D5 06 
-018b4     A8 08 53 0A | 	byte	$7e, $fb, $0b, $fe, $75, $00, $bb, $02, $db, $04, $d5, $06, $a8, $08, $53, $0a
-018b8     D5 0B 2F 0D 
-018bc     60 0E 68 0F 
-018c0     48 10 FF 10 
-018c4     8F 11 F7 11 | 	byte	$d5, $0b, $2f, $0d, $60, $0e, $68, $0f, $48, $10, $ff, $10, $8f, $11, $f7, $11
-018c8     39 12 56 12 
-018cc     4F 12 25 12 
-018d0     D9 11 6D 11 
-018d4     E2 10 3B 10 | 	byte	$39, $12, $56, $12, $4f, $12, $25, $12, $d9, $11, $6d, $11, $e2, $10, $3b, $10
-018d8     79 0F 9D 0E 
-018dc     AB 0D A3 0C 
-018e0     88 0B 5D 0A 
-018e4     22 09 DC 07 | 	byte	$79, $0f, $9d, $0e, $ab, $0d, $a3, $0c, $88, $0b, $5d, $0a, $22, $09, $dc, $07
-018e8     8B 06 32 05 
-018ec     D3 03 71 02 
-018f0     0E 01 AC FF 
-018f4     4C FE F2 FC | 	byte	$8b, $06, $32, $05, $d3, $03, $71, $02, $0e, $01, $ac, $ff, $4c, $fe, $f2, $fc
-018f8     9F FB 55 FA 
-018fc     15 F9 E3 F7 
-01900     BE F6 AA F5 
-01904     A7 F4 B7 F3 | 	byte	$9f, $fb, $55, $fa, $15, $f9, $e3, $f7, $be, $f6, $aa, $f5, $a7, $f4, $b7, $f3
-01908     DB F2 14 F2 
-0190c     63 F1 CA F0 
-01910     47 F0 DE EF 
-01914     8D EF 55 EF | 	byte	$db, $f2, $14, $f2, $63, $f1, $ca, $f0, $47, $f0, $de, $ef, $8d, $ef, $55, $ef
-01918     36 EF 31 EF 
-0191c     45 EF 72 EF 
-01920     B8 EF 16 F0 
-01924     8B F0 18 F1 | 	byte	$36, $ef, $31, $ef, $45, $ef, $72, $ef, $b8, $ef, $16, $f0, $8b, $f0, $18, $f1
-01928     BB F1 73 F2 
-0192c     3F F3 1E F4 
-01930     0F F5 11 F6 
-01934     22 F7 40 F8 | 	byte	$bb, $f1, $73, $f2, $3f, $f3, $1e, $f4, $0f, $f5, $11, $f6, $22, $f7, $40, $f8
-01938     6B F9 A1 FA 
-0193c     DF FB 26 FD 
-01940     71 FE C1 FF 
-01944     14 01 67 02 | 	byte	$6b, $f9, $a1, $fa, $df, $fb, $26, $fd, $71, $fe, $c1, $ff, $14, $01, $67, $02
-01948     B9 03 08 05 
-0194c     53 06 98 07 
-01950     D6 08 0A 0A 
-01954     33 0B 51 0C | 	byte	$b9, $03, $08, $05, $53, $06, $98, $07, $d6, $08, $0a, $0a, $33, $0b, $51, $0c
-01958     60 0D 61 0E 
-0195c     52 0F 30 10 
-01960     FD 10 B6 11 
-01964     5A 12 E9 12 | 	byte	$60, $0d, $61, $0e, $52, $0f, $30, $10, $fd, $10, $b6, $11, $5a, $12, $e9, $12
-01968     61 13 C3 13 
-0196c     0D 14 3F 14 
-01970     59 14 5B 14 
-01974     43 14 13 14 | 	byte	$61, $13, $c3, $13, $0d, $14, $3f, $14, $59, $14, $5b, $14, $43, $14, $13, $14
-01978     CA 13 68 13 
-0197c     ED 12 5B 12 
-01980     B1 11 EF 10 
-01984     17 10 29 0F | 	byte	$ca, $13, $68, $13, $ed, $12, $5b, $12, $b1, $11, $ef, $10, $17, $10, $29, $0f
-01988     25 0E 0E 0D 
-0198c     E2 0B A4 0A 
-01990     55 09 F5 07 
-01994     86 06 09 05 | 	byte	$25, $0e, $0e, $0d, $e2, $0b, $a4, $0a, $55, $09, $f5, $07, $86, $06, $09, $05
-01998     7F 03 EA 01 
-0199c     4A 00 A1 FE 
-019a0     F1 FC 3B FB 
-019a4     80 F9 C2 F7 | 	byte	$7f, $03, $ea, $01, $4a, $00, $a1, $fe, $f1, $fc, $3b, $fb, $80, $f9, $c2, $f7
-019a8     01 F6 40 F4 
-019ac     80 F2 C1 F0 
-019b0     06 EF 50 ED 
-019b4     9F EB F5 E9 | 	byte	$01, $f6, $40, $f4, $80, $f2, $c1, $f0, $06, $ef, $50, $ed, $9f, $eb, $f5, $e9
-019b8     54 E8 BC E6 
-019bc     2E E5 AC E3 
-019c0     35 E2 CC E0 
-019c4     71 DF 24 DE | 	byte	$54, $e8, $bc, $e6, $2e, $e5, $ac, $e3, $35, $e2, $cc, $e0, $71, $df, $24, $de
-019c8     E7 DC B9 DB 
-019cc     9B DA 8E D9 
-019d0     92 D8 A6 D7 
-019d4     CC D6 03 D6 | 	byte	$e7, $dc, $b9, $db, $9b, $da, $8e, $d9, $92, $d8, $a6, $d7, $cc, $d6, $03, $d6
-019d8     4B D5 A4 D4 
-019dc     0E D4 88 D3 
-019e0     11 D3 AB D2 
-019e4     52 D2 09 D2 | 	byte	$4b, $d5, $a4, $d4, $0e, $d4, $88, $d3, $11, $d3, $ab, $d2, $52, $d2, $09, $d2
-019e8     CC D1 9C D1 
-019ec     78 D1 5E D1 
-019f0     4E D1 47 D1 
-019f4     48 D1 4E D1 | 	byte	$cc, $d1, $9c, $d1, $78, $d1, $5e, $d1, $4e, $d1, $47, $d1, $48, $d1, $4e, $d1
-019f8     5A D1 6A D1 
-019fc     7C D1 90 D1 
-01a00     A4 D1 B7 D1 
-01a04     C7 D1 D3 D1 | 	byte	$5a, $d1, $6a, $d1, $7c, $d1, $90, $d1, $a4, $d1, $b7, $d1, $c7, $d1, $d3, $d1
-01a08     DA D1 DB D1 
-01a0c     D4 D1 C5 D1 
-01a10     AB D1 87 D1 
-01a14     56 D1 18 D1 | 	byte	$da, $d1, $db, $d1, $d4, $d1, $c5, $d1, $ab, $d1, $87, $d1, $56, $d1, $18, $d1
-01a18     CC D0 72 D0 
-01a1c     08 D0 8D CF 
-01a20     02 CF 66 CE 
-01a24     B7 CD F7 CC | 	byte	$cc, $d0, $72, $d0, $08, $d0, $8d, $cf, $02, $cf, $66, $ce, $b7, $cd, $f7, $cc
-01a28     25 CC 41 CB 
-01a2c     4B CA 43 C9 
-01a30     2A C8 FF C6 
-01a34     C4 C5 7A C4 | 	byte	$25, $cc, $41, $cb, $4b, $ca, $43, $c9, $2a, $c8, $ff, $c6, $c4, $c5, $7a, $c4
-01a38     20 C3 B9 C1 
-01a3c     44 C0 C4 BE 
-01a40     39 BD A6 BB 
-01a44     0A BA 69 B8 | 	byte	$20, $c3, $b9, $c1, $44, $c0, $c4, $be, $39, $bd, $a6, $bb, $0a, $ba, $69, $b8
-01a48     C3 B6 1B B5 
-01a4c     73 B3 CC B1 
-01a50     28 B0 89 AE 
-01a54     F2 AC 65 AB | 	byte	$c3, $b6, $1b, $b5, $73, $b3, $cc, $b1, $28, $b0, $89, $ae, $f2, $ac, $65, $ab
-01a58     E4 A9 70 A8 
-01a5c     0D A7 BD A5 
-01a60     81 A4 5C A3 
-01a64     50 A2 5F A1 | 	byte	$e4, $a9, $70, $a8, $0d, $a7, $bd, $a5, $81, $a4, $5c, $a3, $50, $a2, $5f, $a1
-01a68     8C A0 D8 9F 
-01a6c     45 9F D5 9E 
-01a70     8A 9E 66 9E 
-01a74     69 9E 96 9E | 	byte	$8c, $a0, $d8, $9f, $45, $9f, $d5, $9e, $8a, $9e, $66, $9e, $69, $9e, $96, $9e
-01a78     ED 9E 71 9F 
-01a7c     21 A0 00 A1 
-01a80     0C A2 48 A3 
-01a84     B3 A4 4E A6 | 	byte	$ed, $9e, $71, $9f, $21, $a0, $00, $a1, $0c, $a2, $48, $a3, $b3, $a4, $4e, $a6
-01a88     19 A8 13 AA 
-01a8c     3D AC 95 AE 
-01a90     1B B1 CF B3 
-01a94     AF B6 BB B9 | 	byte	$19, $a8, $13, $aa, $3d, $ac, $95, $ae, $1b, $b1, $cf, $b3, $af, $b6, $bb, $b9
-01a98     F0 BC 4D C0 
-01a9c     D1 C3 7A C7 
-01aa0     46 CB 32 CF 
-01aa4     3D D3 64 D7 | 	byte	$f0, $bc, $4d, $c0, $d1, $c3, $7a, $c7, $46, $cb, $32, $cf, $3d, $d3, $64, $d7
-01aa8     A5 DB FD DF 
-01aac     69 E4 E7 E8 
-01ab0     74 ED 0C F2 
-01ab4     AE F6 55 FB | 	byte	$a5, $db, $fd, $df, $69, $e4, $e7, $e8, $74, $ed, $0c, $f2, $ae, $f6, $55, $fb
-01ab8     68 32 00 01 
-01abc     00 00 08 00 
-01ac0     00 00 00 00 
-01ac4     00 00 00 00 | envelope file "percus.h2"
-01ac8     FF FD FC FA 
-01acc     F8 F6 F4 F2 
-01ad0     F0 EE EC EA 
-01ad4     E8 E6 E4 E1 | 	byte	$ff, $fd, $fc, $fa, $f8, $f6, $f4, $f2, $f0, $ee, $ec, $ea, $e8, $e6, $e4, $e1
-01ad8     DF DD DB D8 
-01adc     D6 D4 D1 CF 
-01ae0     CC CA C7 C5 
-01ae4     C2 BF BD BA | 	byte	$df, $dd, $db, $d8, $d6, $d4, $d1, $cf, $cc, $ca, $c7, $c5, $c2, $bf, $bd, $ba
-01ae8     B7 B5 B2 B0 
-01aec     AD AA A7 A5 
-01af0     A2 A0 9D 9B 
-01af4     99 97 95 93 | 	byte	$b7, $b5, $b2, $b0, $ad, $aa, $a7, $a5, $a2, $a0, $9d, $9b, $99, $97, $95, $93
-01af8     91 8F 8D 8C 
-01afc     8A 88 86 84 
-01b00     82 80 7E 7D 
-01b04     7B 79 78 76 | 	byte	$91, $8f, $8d, $8c, $8a, $88, $86, $84, $82, $80, $7e, $7d, $7b, $79, $78, $76
-01b08     75 73 72 70 
-01b0c     6F 6E 6D 6B 
-01b10     6A 68 67 66 
-01b14     64 63 62 60 | 	byte	$75, $73, $72, $70, $6f, $6e, $6d, $6b, $6a, $68, $67, $66, $64, $63, $62, $60
-01b18     5F 5E 5C 5B 
-01b1c     5A 59 58 57 
-01b20     56 55 54 53 
-01b24     52 51 50 4F | 	byte	$5f, $5e, $5c, $5b, $5a, $59, $58, $57, $56, $55, $54, $53, $52, $51, $50, $4f
-01b28     4E 4D 4C 4C 
-01b2c     4B 4A 49 48 
-01b30     47 46 45 44 
-01b34     43 42 41 40 | 	byte	$4e, $4d, $4c, $4c, $4b, $4a, $49, $48, $47, $46, $45, $44, $43, $42, $41, $40
-01b38     3F 3E 3D 3D 
-01b3c     3C 3C 3B 3A 
-01b40     3A 39 38 38 
-01b44     37 36 36 35 | 	byte	$3f, $3e, $3d, $3d, $3c, $3c, $3b, $3a, $3a, $39, $38, $38, $37, $36, $36, $35
-01b48     34 34 33 32 
-01b4c     31 31 30 2F 
-01b50     2F 2E 2D 2D 
-01b54     2C 2B 2B 2A | 	byte	$34, $34, $33, $32, $31, $31, $30, $2f, $2f, $2e, $2d, $2d, $2c, $2b, $2b, $2a
-01b58     29 29 28 27 
-01b5c     27 26 25 25 
-01b60     24 24 23 22 
-01b64     22 21 20 20 | 	byte	$29, $29, $28, $27, $27, $26, $25, $25, $24, $24, $23, $22, $22, $21, $20, $20
-01b68     1F 1E 1E 1E 
-01b6c     1D 1D 1D 1C 
-01b70     1C 1B 1B 1A 
-01b74     19 19 18 17 | 	byte	$1f, $1e, $1e, $1e, $1d, $1d, $1d, $1c, $1c, $1b, $1b, $1a, $19, $19, $18, $17
-01b78     17 16 15 15 
-01b7c     14 13 13 12 
-01b80     11 11 10 0F 
-01b84     0F 0E 0D 0D | 	byte	$17, $16, $15, $15, $14, $13, $13, $12, $11, $11, $10, $0f, $0f, $0e, $0d, $0d
-01b88     0C 0C 0B 0B 
-01b8c     0B 0A 0A 0A 
-01b90     09 09 09 08 
-01b94     08 08 07 07 | 	byte	$0c, $0c, $0b, $0b, $0b, $0a, $0a, $0a, $09, $09, $09, $08, $08, $08, $07, $07
-01b98     07 06 06 06 
-01b9c     05 05 05 04 
-01ba0     04 04 03 03 
-01ba4     03 02 02 02 | 	byte	$07, $06, $06, $06, $05, $05, $05, $04, $04, $04, $03, $03, $03, $02, $02, $02
-01ba8     01 01 01 00 
-01bac     00 00 00 00 
-01bb0     00 00 00 00 
-01bb4     00 00 00 00 | 	byte	$01, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-01bb8     00 00 00 00 
-01bbc     00 00 00 00 
-01bc0     00 00 00 00 
-01bc4     00 00 00 00 | 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-01bc8                 | 	alignl
-01bc8                 | _Audio2_004_dat_
-01bc8                 | 
-01bc8                 | audio       	org     0
-01bc8                 | 
-01bc8     61 6F 05 FB |             	rdlong  mailbox2, ptra++     	' get start address of all mailboxes
-01bcc     61 A7 05 FB |             	rdlong  scbase, ptra++       	' get start address of scope buffer
-01bd0     61 B3 05 FB |             	rdlong  hubptr, ptra++       	' get start address of PSRAM cache
-01bd4                 | 
-01bd4     01 EC 63 FD |             	cogid   pa                   	' compute cogid
-01bd8     0C EC 07 FA |             	mul     pa, #12              	' and mailbox spacing
-01bdc     F6 6F 01 F1 |             	add     mailbox2, pa         	' add offset to find this COG's mailbox
-01be0     B7 6C 01 F6 |             	mov     mailbox, mailbox2     	' we need 2 copies of this to enable switching between hub and psram
-01be4                 | 
-01be4     0E B0 05 FC |             	wrpin   dac2,#left           	' PWM DACs at 44100@339 MHz
-01be8     0E B4 15 FC |             	wxpin   sr44100,#left      	' 30*256
-01bec     0F B0 05 FC |             	wrpin   dac2,#right
-01bf0     0F B4 15 FC |             	wxpin   sr44100,#right    
-01bf4     41 9C 64 FD |             	dirh    #left addpins 1
-01bf8     20 9C 64 FD |             	setse1  #%001<<6 + left      	' Set the event - DAC empty
-01bfc                 |  
-01bfc                 |             
-01bfc                 | '---------------------------------------------------------------------------------        
-01bfc                 | '----------------- The main loop -------------------------------------------------
-01bfc                 | '---------------------------------------------------------------------------------
-01bfc                 | 
-01bfc     0F 9E 05 F6 | loop       	mov 	    cn,#15 '7
-01c00                 |               					'   waitx ##3300000  		'for debug
-01c00                 |             
-01c00                 | '----------------------------------------------------------------------------------
-01c00                 | '------------- Get parameters and execute commands if any -------------------------
-01c00                 | '----------------------------------------------------------------------------------
-01c00                 | 
-01c00                 | 
-01c00     CF 66 01 F6 | p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
-01c04     06 66 65 F0 |             	shl     channeladd,#6
-01c08     B3 F0 03 F1 |             	add     ptra,channeladd
-01c0c                 | 
-01c0c     28 1A 64 FD |             	setq    #13                       	' read parameters
-01c10     00 75 05 FB |             	rdlong  pointer0,ptra
-01c14     1F 88 1D F4 | p408        	bitl    command0,#31 wcz	      	' bit #31 command - set the DAC sample rate
-01c18     2C 00 90 3D |     	if_nc   jmp     #p404                     	' if not set, proceed
-01c1c     C4 68 01 F6 |             	mov     qq,command0             	' get the new rate
-01c20     4E 68 15 FC |             	wxpin   qq,#left addpins 1        	' and program the pins
-01c24     B4 68 E1 F8 |             	getbyte qq,qq,#0 		      	' check if the rate is n*256
-01c28     00 68 0D F2 |             	cmp     qq,#0 wz                         
-01c2c     4E B0 05 AC |     	if_z    wrpin   dac2,#left addpins 1      	' if yes, set PWM DAC mode
-01c30     4E AE 05 5C |     	if_nz   wrpin   dac,#left addpins 1       	' else set noise DAC mode
-01c34                 |                 
-01c34     1E 7E 1D F4 |                	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
-01c38     00 74 05 A6 |     	if_z    mov     pointer0, #0  
-01c3c     00 76 05 A6 |     	if_z    mov     pointer0h, #0  
-01c40     00 7C 05 A6 |     	if_z    mov     envph0, #0  
-01c44     05 7F 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
-01c48                 |     	
-01c48     BF 68 01 F6 | p404        	mov     qq,sstart0		     	' check if start>$80000
-01c4c     FF FF 03 FF 
-01c50     FF 69 05 F5 | 		and 	qq,##$7FFFFFF 
-01c54     00 04 00 FF 
-01c58     00 68 1D F2 |                 cmp 	qq,##$80000 wcz
-01c5c     B7 6C 01 36 |     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
-01c60     00 6C 05 C6 |     	if_lt   mov     mailbox,#0                	' if not, use HUB 
-01c64                 | 
-01c64     C2 9A 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
-01c68     C2 98 31 F9 |     	    	getword avol0,volpan0,#0
-01c6c                 |     	    	
-01c6c                 | '----------------------------------------------------------------------------------
-01c6c                 | '------------- Compute the envelope, if exists ------------------------------------
-01c6c                 | '----------------------------------------------------------------------------------
-01c6c                 |             
-01c6c     00 8A 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
-01c70     20 00 00 AF 
-01c74     00 E6 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
-01c78     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
-01c7c                 | 
-01c7c     C6 7C 01 F1 |            	add     envph0,envspd0			' envelope PA update
-01c80                 |            	           
-01c80     BE E2 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
-01c84     06 E2 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
-01c88     F1 E4 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
-01c8c     10 E2 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
-01c90     C7 E2 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
-01c94                 | 	    											'debug(udec(envhi,envlen0))
-01c94     C7 E2 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
-01c98     00 E4 05 36 |     	if_ge   mov     envlo,#0
-01c9c     C7 7C 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
-01ca0     16 7C 65 30 |     	if_ge   shl     envph0,#22
+00d80     12 01 58 FC | 	wrword	##8192, local04
+00d84                 | '   word[base+64*iii+34]:=8192
+00d84     10 25 02 F6 | 	mov	local04, local02
+00d88     11 1F 02 F6 | 	mov	local01, local03
+00d8c     06 1E 66 F0 | 	shl	local01, #6
+00d90     0F 25 02 F1 | 	add	local04, local01
+00d94     22 24 06 F1 | 	add	local04, #34
+00d98     10 00 80 FF 
+00d9c     12 01 58 FC | 	wrword	##8192, local04
+00da0                 | '   long[base+64*iii+36]:=0
+00da0     10 25 02 F6 | 	mov	local04, local02
+00da4     11 1F 02 F6 | 	mov	local01, local03
+00da8     06 1E 66 F0 | 	shl	local01, #6
+00dac     0F 25 02 F1 | 	add	local04, local01
+00db0     24 24 06 F1 | 	add	local04, #36
+00db4     12 01 68 FC | 	wrlong	#0, local04
+00db8                 | '   long[base+64*iii+40]:=0
+00db8     10 25 02 F6 | 	mov	local04, local02
+00dbc     11 1F 02 F6 | 	mov	local01, local03
+00dc0     06 1E 66 F0 | 	shl	local01, #6
+00dc4     0F 25 02 F1 | 	add	local04, local01
+00dc8     28 24 06 F1 | 	add	local04, #40
+00dcc     12 01 68 FC | 	wrlong	#0, local04
+00dd0                 | '   long[base+64*iii+44]:=0
+00dd0     10 25 02 F6 | 	mov	local04, local02
+00dd4     11 1F 02 F6 | 	mov	local01, local03
+00dd8     06 1E 66 F0 | 	shl	local01, #6
+00ddc     0F 25 02 F1 | 	add	local04, local01
+00de0     2C 24 06 F1 | 	add	local04, #44
+00de4     12 01 68 FC | 	wrlong	#0, local04
+00de8                 | '   long[base+64*iii+48]:=0
+00de8     10 25 02 F6 | 	mov	local04, local02
+00dec     11 1F 02 F6 | 	mov	local01, local03
+00df0     06 1E 66 F0 | 	shl	local01, #6
+00df4     0F 25 02 F1 | 	add	local04, local01
+00df8     30 24 06 F1 | 	add	local04, #48
+00dfc     12 01 68 FC | 	wrlong	#0, local04
+00e00                 | '   long[base+64*iii+52]:=0
+00e00     10 25 02 F6 | 	mov	local04, local02
+00e04     11 1F 02 F6 | 	mov	local01, local03
+00e08     06 1E 66 F0 | 	shl	local01, #6
+00e0c     0F 25 02 F1 | 	add	local04, local01
+00e10     34 24 06 F1 | 	add	local04, #52
+00e14     12 01 68 FC | 	wrlong	#0, local04
+00e18                 | '   freqs[iii]:=440000
+00e18     11 25 02 F6 | 	mov	local04, local03
+00e1c     02 24 66 F0 | 	shl	local04, #2
+00e20     02 00 00 FF 
+00e24     0C F4 05 F1 | 	add	objptr, ##1036
+00e28     FA 24 02 F1 | 	add	local04, objptr
+00e2c     5B 03 80 FF 
+00e30     12 81 69 FC | 	wrlong	##440000, local04
+00e34                 | '   delays[iii]:=0
+00e34     11 25 02 F6 | 	mov	local04, local03
+00e38     01 24 66 F0 | 	shl	local04, #1
+00e3c     40 F4 05 F1 | 	add	objptr, #64
+00e40     FA 24 02 F1 | 	add	local04, objptr
+00e44     12 01 58 FC | 	wrword	#0, local04
+00e48                 | '   volumes[iii]:=4096
+00e48     11 25 02 F6 | 	mov	local04, local03
+00e4c     01 24 66 F0 | 	shl	local04, #1
+00e50     20 F4 05 F1 | 	add	objptr, #32
+00e54     FA 24 02 F1 | 	add	local04, objptr
+00e58     08 00 80 FF 
+00e5c     12 01 58 FC | 	wrword	##4096, local04
+00e60                 | '   waveforms[iii]:=0
+00e60     11 25 02 F6 | 	mov	local04, local03
+00e64     02 24 66 F0 | 	shl	local04, #2
+00e68     20 F4 05 F1 | 	add	objptr, #32
+00e6c     FA 24 02 F1 | 	add	local04, objptr
+00e70     12 01 68 FC | 	wrlong	#0, local04
+00e74                 | '   envelopes[iii]:=0
+00e74     11 25 02 F6 | 	mov	local04, local03
+00e78     02 24 66 F0 | 	shl	local04, #2
+00e7c     40 F4 05 F1 | 	add	objptr, #64
+00e80     FA 24 02 F1 | 	add	local04, objptr
+00e84     12 01 68 FC | 	wrlong	#0, local04
+00e88                 | '   lengths[iii]:=1000
+00e88     11 25 02 F6 | 	mov	local04, local03
+00e8c     01 24 66 F0 | 	shl	local04, #1
+00e90     40 F4 05 F1 | 	add	objptr, #64
+00e94     FA 24 02 F1 | 	add	local04, objptr
+00e98     01 00 80 FF 
+00e9c     12 D1 5B FC | 	wrword	##1000, local04
+00ea0                 | '   pans[iii]:=8192
+00ea0     11 25 02 F6 | 	mov	local04, local03
+00ea4     01 24 66 F0 | 	shl	local04, #1
+00ea8     20 F4 05 F1 | 	add	objptr, #32
+00eac     FA 24 02 F1 | 	add	local04, objptr
+00eb0     10 00 80 FF 
+00eb4     12 01 58 FC | 	wrword	##8192, local04
+00eb8                 | '   sustains[iii]:=255
+00eb8     11 25 02 F6 | 	mov	local04, local03
+00ebc     01 24 66 F0 | 	shl	local04, #1
+00ec0     20 F4 05 F1 | 	add	objptr, #32
+00ec4     FA 24 02 F1 | 	add	local04, objptr
+00ec8     12 FF 59 FC | 	wrword	#255, local04
+00ecc     01 22 06 F1 | 	add	local03, #1
+00ed0     10 22 56 F2 | 	cmps	local03, #16 wc
+00ed4     02 00 00 FF 
+00ed8     4C F5 85 F1 | 	sub	objptr, ##1356
+00edc     CC FD 9F CD |  if_b	jmp	#LR__0010
+00ee0                 | LR__0011
+00ee0                 | '   
+00ee0                 | ' cog:=coginit(16,@audio,@mailboxaddr)
+00ee0     FB 0E 02 F6 | 	mov	arg02, ptr__Audio2_004_dat__
+00ee4     FA 10 02 F6 | 	mov	arg03, objptr
+00ee8     10 24 06 F6 | 	mov	local04, #16
+00eec     28 10 62 FD | 	setq	arg03
+00ef0     07 25 F2 FC | 	coginit	local04, arg02 wc
+00ef4     01 24 66 C6 |  if_b	neg	local04, #1
+00ef8                 | ' waitms(10)
+00ef8     0A 0C 06 F6 | 	mov	arg01, #10
+00efc     FC 03 B0 FD | 	call	#__system___waitms
+00f00                 | ' return cog,base
+00f00     10 01 02 F6 | 	mov	result2, local02
+00f04     12 FF 01 F6 | 	mov	result1, local04
+00f08     E7 F0 03 F6 | 	mov	ptra, fp
+00f0c     F2 00 A0 FD | 	call	#popregs_
+00f10                 | _Audio2_004_start_ret
+00f10     2D 00 64 FD | 	ret
+00f14                 | 
+00f14                 | ' 
+00f14                 | ' pub play (channel, frequency=-1, delay=-1, volume=-1, waveform=-1, envelope=-1, length=-1, pan=-1, sustain=-1) | base2
+00f14                 | _Audio2_004_play
+00f14     0B CA 05 F6 | 	mov	COUNT_, #11
+00f18     E8 00 A0 FD | 	call	#pushregs_
+00f1c     06 1F 02 F6 | 	mov	local01, arg01
+00f20     07 21 02 F6 | 	mov	local02, arg02
+00f24     08 23 02 F6 | 	mov	local03, arg03
+00f28     09 25 02 F6 | 	mov	local04, arg04
+00f2c     0A 27 02 F6 | 	mov	local05, arg05
+00f30     0B 29 02 F6 | 	mov	local06, arg06
+00f34     0C 2B 02 F6 | 	mov	local07, arg07
+00f38     0D 2D 02 F6 | 	mov	local08, arg08
+00f3c     0E 2F 02 F6 | 	mov	local09, arg09
+00f40                 | ' 
+00f40                 | ' if frequency==(-1)
+00f40     FF FF 7F FF 
+00f44     FF 21 0E F2 | 	cmp	local02, ##-1 wz
+00f48     20 00 90 5D |  if_ne	jmp	#LR__0020
+00f4c                 | '   frequency:=freqs[channel]
+00f4c     0F 21 02 F6 | 	mov	local02, local01
+00f50     02 20 66 F0 | 	shl	local02, #2
+00f54     FA 30 02 F6 | 	mov	local10, objptr
+00f58     02 00 00 FF 
+00f5c     0C 30 06 F1 | 	add	local10, ##1036
+00f60     18 21 02 F1 | 	add	local02, local10
+00f64     10 21 02 FB | 	rdlong	local02, local02
+00f68     1C 00 90 FD | 	jmp	#LR__0021
+00f6c                 | LR__0020
+00f6c                 | ' else
+00f6c                 | '   freqs[channel]:=frequency
+00f6c     0F 33 02 F6 | 	mov	local11, local01
+00f70     02 32 66 F0 | 	shl	local11, #2
+00f74     FA 30 02 F6 | 	mov	local10, objptr
+00f78     02 00 00 FF 
+00f7c     0C 30 06 F1 | 	add	local10, ##1036
+00f80     18 33 02 F1 | 	add	local11, local10
+00f84     19 21 62 FC | 	wrlong	local02, local11
+00f88                 | LR__0021
+00f88                 | '   
+00f88                 | ' if delay==(-1)
+00f88     FF FF 7F FF 
+00f8c     FF 23 0E F2 | 	cmp	local03, ##-1 wz
+00f90     20 00 90 5D |  if_ne	jmp	#LR__0022
+00f94                 | '   delay:=delays[channel]
+00f94     0F 31 02 F6 | 	mov	local10, local01
+00f98     01 30 66 F0 | 	shl	local10, #1
+00f9c     FA 32 02 F6 | 	mov	local11, objptr
+00fa0     02 00 00 FF 
+00fa4     4C 32 06 F1 | 	add	local11, ##1100
+00fa8     19 31 02 F1 | 	add	local10, local11
+00fac     18 23 E2 FA | 	rdword	local03, local10
+00fb0     1C 00 90 FD | 	jmp	#LR__0023
+00fb4                 | LR__0022
+00fb4                 | ' else
+00fb4                 | '   delays[channel]:=delay
+00fb4     0F 31 02 F6 | 	mov	local10, local01
+00fb8     01 30 66 F0 | 	shl	local10, #1
+00fbc     FA 32 02 F6 | 	mov	local11, objptr
+00fc0     02 00 00 FF 
+00fc4     4C 32 06 F1 | 	add	local11, ##1100
+00fc8     19 31 02 F1 | 	add	local10, local11
+00fcc     18 23 52 FC | 	wrword	local03, local10
+00fd0                 | LR__0023
+00fd0                 | '   
+00fd0                 | ' if volume==(-1)      
+00fd0     FF FF 7F FF 
+00fd4     FF 25 0E F2 | 	cmp	local04, ##-1 wz
+00fd8     20 00 90 5D |  if_ne	jmp	#LR__0024
+00fdc                 | '   volume:=volumes[channel]
+00fdc     0F 31 02 F6 | 	mov	local10, local01
+00fe0     01 30 66 F0 | 	shl	local10, #1
+00fe4     FA 32 02 F6 | 	mov	local11, objptr
+00fe8     02 00 00 FF 
+00fec     6C 32 06 F1 | 	add	local11, ##1132
+00ff0     19 31 02 F1 | 	add	local10, local11
+00ff4     18 25 E2 FA | 	rdword	local04, local10
+00ff8     1C 00 90 FD | 	jmp	#LR__0025
+00ffc                 | LR__0024
+00ffc                 | ' else
+00ffc                 | '   volumes[channel]:=volume
+00ffc     0F 31 02 F6 | 	mov	local10, local01
+01000     01 30 66 F0 | 	shl	local10, #1
+01004     FA 32 02 F6 | 	mov	local11, objptr
+01008     02 00 00 FF 
+0100c     6C 32 06 F1 | 	add	local11, ##1132
+01010     19 31 02 F1 | 	add	local10, local11
+01014     18 25 52 FC | 	wrword	local04, local10
+01018                 | LR__0025
+01018                 | '   
+01018                 | ' if waveform==(-1)
+01018     FF FF 7F FF 
+0101c     FF 27 0E F2 | 	cmp	local05, ##-1 wz
+01020     20 00 90 5D |  if_ne	jmp	#LR__0026
+01024                 | '   waveform:=waveforms[channel]
+01024     0F 33 02 F6 | 	mov	local11, local01
+01028     02 32 66 F0 | 	shl	local11, #2
+0102c     FA 30 02 F6 | 	mov	local10, objptr
+01030     02 00 00 FF 
+01034     8C 30 06 F1 | 	add	local10, ##1164
+01038     18 33 02 F1 | 	add	local11, local10
+0103c     19 27 02 FB | 	rdlong	local05, local11
+01040     1C 00 90 FD | 	jmp	#LR__0027
+01044                 | LR__0026
+01044                 | ' else
+01044                 | '   waveforms[channel]:=waveform
+01044     0F 33 02 F6 | 	mov	local11, local01
+01048     02 32 66 F0 | 	shl	local11, #2
+0104c     FA 30 02 F6 | 	mov	local10, objptr
+01050     02 00 00 FF 
+01054     8C 30 06 F1 | 	add	local10, ##1164
+01058     18 33 02 F1 | 	add	local11, local10
+0105c     19 27 62 FC | 	wrlong	local05, local11
+01060                 | LR__0027
+01060                 | '   
+01060                 | ' if envelope==(-1)
+01060     FF FF 7F FF 
+01064     FF 29 0E F2 | 	cmp	local06, ##-1 wz
+01068     20 00 90 5D |  if_ne	jmp	#LR__0028
+0106c                 | '   envelope:=envelopes[channel]
+0106c     0F 33 02 F6 | 	mov	local11, local01
+01070     02 32 66 F0 | 	shl	local11, #2
+01074     FA 30 02 F6 | 	mov	local10, objptr
+01078     02 00 00 FF 
+0107c     CC 30 06 F1 | 	add	local10, ##1228
+01080     18 33 02 F1 | 	add	local11, local10
+01084     19 29 02 FB | 	rdlong	local06, local11
+01088     1C 00 90 FD | 	jmp	#LR__0029
+0108c                 | LR__0028
+0108c                 | ' else
+0108c                 | '   envelopes[channel]:=envelope
+0108c     0F 33 02 F6 | 	mov	local11, local01
+01090     02 32 66 F0 | 	shl	local11, #2
+01094     FA 30 02 F6 | 	mov	local10, objptr
+01098     02 00 00 FF 
+0109c     CC 30 06 F1 | 	add	local10, ##1228
+010a0     18 33 02 F1 | 	add	local11, local10
+010a4     19 29 62 FC | 	wrlong	local06, local11
+010a8                 | LR__0029
+010a8                 | '   
+010a8                 | ' if length==(-1)
+010a8     FF FF 7F FF 
+010ac     FF 2B 0E F2 | 	cmp	local07, ##-1 wz
+010b0     20 00 90 5D |  if_ne	jmp	#LR__0030
+010b4                 | '   length:=lengths[channel]
+010b4     0F 31 02 F6 | 	mov	local10, local01
+010b8     01 30 66 F0 | 	shl	local10, #1
+010bc     FA 32 02 F6 | 	mov	local11, objptr
+010c0     02 00 00 FF 
+010c4     0C 33 06 F1 | 	add	local11, ##1292
+010c8     19 31 02 F1 | 	add	local10, local11
+010cc     18 2B E2 FA | 	rdword	local07, local10
+010d0     1C 00 90 FD | 	jmp	#LR__0031
+010d4                 | LR__0030
+010d4                 | ' else
+010d4                 | '   lengths[channel]:=length
+010d4     0F 31 02 F6 | 	mov	local10, local01
+010d8     01 30 66 F0 | 	shl	local10, #1
+010dc     FA 32 02 F6 | 	mov	local11, objptr
+010e0     02 00 00 FF 
+010e4     0C 33 06 F1 | 	add	local11, ##1292
+010e8     19 31 02 F1 | 	add	local10, local11
+010ec     18 2B 52 FC | 	wrword	local07, local10
+010f0                 | LR__0031
+010f0                 | '   
+010f0                 | ' if pan==(-1)
+010f0     FF FF 7F FF 
+010f4     FF 2D 0E F2 | 	cmp	local08, ##-1 wz
+010f8     20 00 90 5D |  if_ne	jmp	#LR__0032
+010fc                 | '   pan:=pans[channel]
+010fc     0F 31 02 F6 | 	mov	local10, local01
+01100     01 30 66 F0 | 	shl	local10, #1
+01104     FA 32 02 F6 | 	mov	local11, objptr
+01108     02 00 00 FF 
+0110c     2C 33 06 F1 | 	add	local11, ##1324
+01110     19 31 02 F1 | 	add	local10, local11
+01114     18 2D E2 FA | 	rdword	local08, local10
+01118     1C 00 90 FD | 	jmp	#LR__0033
+0111c                 | LR__0032
+0111c                 | ' else
+0111c                 | '   pans[channel]:=pan
+0111c     0F 31 02 F6 | 	mov	local10, local01
+01120     01 30 66 F0 | 	shl	local10, #1
+01124     FA 32 02 F6 | 	mov	local11, objptr
+01128     02 00 00 FF 
+0112c     2C 33 06 F1 | 	add	local11, ##1324
+01130     19 31 02 F1 | 	add	local10, local11
+01134     18 2D 52 FC | 	wrword	local08, local10
+01138                 | LR__0033
+01138                 | '  
+01138                 | ' if sustain==(-1)
+01138     FF FF 7F FF 
+0113c     FF 2F 0E F2 | 	cmp	local09, ##-1 wz
+01140     20 00 90 5D |  if_ne	jmp	#LR__0034
+01144                 | '   sustain:=sustains[channel]
+01144     0F 31 02 F6 | 	mov	local10, local01
+01148     01 30 66 F0 | 	shl	local10, #1
+0114c     FA 32 02 F6 | 	mov	local11, objptr
+01150     02 00 00 FF 
+01154     4C 33 06 F1 | 	add	local11, ##1356
+01158     19 31 02 F1 | 	add	local10, local11
+0115c     18 2F E2 FA | 	rdword	local09, local10
+01160     1C 00 90 FD | 	jmp	#LR__0035
+01164                 | LR__0034
+01164                 | ' else
+01164                 | '   sustains[channel]:=sustain
+01164     0F 31 02 F6 | 	mov	local10, local01
+01168     01 30 66 F0 | 	shl	local10, #1
+0116c     FA 32 02 F6 | 	mov	local11, objptr
+01170     02 00 00 FF 
+01174     4C 33 06 F1 | 	add	local11, ##1356
+01178     19 31 02 F1 | 	add	local10, local11
+0117c     18 2F 52 FC | 	wrword	local09, local10
+01180                 | LR__0035
+01180     15 33 52 F6 | 	abs	local11, local07 wc
+01184     C2 B9 80 FF 
+01188     19 DF 19 FD | 	qdiv	##24347887, local11
+0118c                 | '                 
+0118c                 | ' length:=24347887/length  
+0118c     18 32 62 FD | 	getqx	local11
+01190     19 2B 82 F6 | 	negc	local07, local11
+01194     17 01 00 F6 | 	mov	0-0, local09
+01198     36 02 64 FD | 	brk	#1
+0119c     6D 20 06 FD | 	qmul	local02, #109
+011a0                 | ' base2:=@channel0[0]+64*channel
+011a0     FA 20 02 F6 | 	mov	local02, objptr
+011a4     0C 20 06 F1 | 	add	local02, #12
+011a8     06 1E 66 F0 | 	shl	local01, #6
+011ac     0F 21 02 F1 | 	add	local02, local01
+011b0                 | ' long[base2+20]:=waveform+$C0000000 
+011b0     00 00 60 FF 
+011b4     00 26 06 F1 | 	add	local05, ##-1073741824
+011b8     10 31 02 F6 | 	mov	local10, local02
+011bc     14 30 06 F1 | 	add	local10, #20
+011c0     18 27 62 FC | 	wrlong	local05, local10
+011c4                 | ' long[base2+28]:= 2048
+011c4     10 33 02 F6 | 	mov	local11, local02
+011c8     1C 32 06 F1 | 	add	local11, #28
+011cc     04 00 80 FF 
+011d0     19 01 68 FC | 	wrlong	##2048, local11
+011d4                 | ' long[base2+24]:= 0
+011d4     10 33 02 F6 | 	mov	local11, local02
+011d8     18 32 06 F1 | 	add	local11, #24
+011dc     19 01 68 FC | 	wrlong	#0, local11
+011e0                 | ' word[base2+32]:=volume
+011e0     10 33 02 F6 | 	mov	local11, local02
+011e4     20 32 06 F1 | 	add	local11, #32
+011e8     19 25 52 FC | 	wrword	local04, local11
+011ec                 | ' word[base2+32]:=pan
+011ec     10 33 02 F6 | 	mov	local11, local02
+011f0     20 32 06 F1 | 	add	local11, #32
+011f4     19 2D 52 FC | 	wrword	local08, local11
+011f8                 | ' long[base2+36]:=((frequency*109)/1000)*3574 ' (frequency*389566)/1000  freq*3574*109/1000
+011f8     18 32 62 FD | 	getqx	local11
+011fc     19 31 52 F6 | 	abs	local10, local11 wc
+01200     01 00 00 FF 
+01204     E8 31 16 FD | 	qdiv	local10, ##1000
+01208     18 30 62 FD | 	getqx	local10
+0120c     18 31 82 F6 | 	negc	local10, local10
+01210     06 00 00 FF 
+01214     F6 31 06 FD | 	qmul	local10, ##3574
+01218     10 31 02 F6 | 	mov	local10, local02
+0121c     24 30 06 F1 | 	add	local10, #36
+01220                 | ' long[base2+44]:=envelope
+01220     10 33 02 F6 | 	mov	local11, local02
+01224     2C 32 06 F1 | 	add	local11, #44
+01228                 | ' long[base2+48]:=length
+01228                 | ' long[base2+52]:=sustain
+01228                 | ' waitms(delay)
+01228     11 0D 02 F6 | 	mov	arg01, local03
+0122c     18 2C 62 FD | 	getqx	local08
+01230     18 2D 62 FC | 	wrlong	local08, local10
+01234     19 29 62 FC | 	wrlong	local06, local11
+01238     10 33 02 F6 | 	mov	local11, local02
+0123c     30 32 06 F1 | 	add	local11, #48
+01240     19 2B 62 FC | 	wrlong	local07, local11
+01244     34 20 06 F1 | 	add	local02, #52
+01248     10 2F 62 FC | 	wrlong	local09, local02
+0124c     AC 00 B0 FD | 	call	#__system___waitms
+01250     E7 F0 03 F6 | 	mov	ptra, fp
+01254     F2 00 A0 FD | 	call	#popregs_
+01258                 | _Audio2_004_play_ret
+01258     2D 00 64 FD | 	ret
+0125c                 | 
+0125c                 | ' 
+0125c                 | ' '..............................................................................
+0125c                 | ' 
+0125c                 | ' {{
+0125c                 | ' }}
+0125c                 | ' PUB write(srcHubAddr, dstAddr, count) : result | mailbox
+0125c                 | _psram_write
+0125c                 | ' 'TODO: potential candidate for inline PASM to improve performance in SPIN2
+0125c                 | '     if drivercog == -1 ' driver must be running
+0125c     00 FB 05 F1 | 	add	ptr__psram_dat__, #256
+01260     FD 06 02 FB | 	rdlong	_var01, ptr__psram_dat__
+01264     00 FB 85 F1 | 	sub	ptr__psram_dat__, #256
+01268     FF FF 7F FF 
+0126c     FF 07 0E F2 | 	cmp	_var01, ##-1 wz
+01270                 | '         return ERR_INACTIVE
+01270     0F FE 65 A6 |  if_e	neg	result1, #15
+01274     7C 00 90 AD |  if_e	jmp	#LR__0041
+01278                 | '     if count == 0 ' don't even bother writing
+01278     00 10 0E F2 | 	cmp	arg03, #0 wz
+0127c                 | '         return 0
+0127c     00 FE 05 A6 |  if_e	mov	result1, #0
+01280     70 00 90 AD |  if_e	jmp	#LR__0041
+01284                 | '     mailbox := $7FF00 + cogid()*12     ' compute COG's mailbox address
+01284     00 FE 05 F6 | 	mov	result1, #0
+01288     01 FE 61 FD | 	cogid	result1
+0128c     FF 06 02 F6 | 	mov	_var01, result1
+01290     01 06 66 F0 | 	shl	_var01, #1
+01294     FF 06 02 F1 | 	add	_var01, result1
+01298     02 06 66 F0 | 	shl	_var01, #2
+0129c     FF 03 00 FF 
+012a0     00 09 06 F6 | 	mov	_var02, ##524032
+012a4     03 09 02 F1 | 	add	_var02, _var01
+012a8                 | '     if long[mailbox] < 0
+012a8     04 07 02 FB | 	rdlong	_var01, _var02
+012ac     00 06 56 F2 | 	cmps	_var01, #0 wc
+012b0                 | '         return ERR_MAILBOX_BUSY
+012b0     1C FE 65 C6 |  if_b	neg	result1, #28
+012b4     3C 00 90 CD |  if_b	jmp	#LR__0041
+012b8                 | '     long[mailbox][2] := count
+012b8     08 08 06 F1 | 	add	_var02, #8
+012bc     04 11 62 FC | 	wrlong	arg03, _var02
+012c0                 | '     long[mailbox][1] := srcHubAddr
+012c0     04 08 86 F1 | 	sub	_var02, #4
+012c4     04 0D 62 FC | 	wrlong	arg01, _var02
+012c8     04 08 86 F1 | 	sub	_var02, #4
+012cc                 | '     long[mailbox] := driver.R_WRITEBURST + (dstAddr & $1ffffff) ' trigger burst write operation
+012cc     07 0B 02 F6 | 	mov	_var03, arg02
+012d0     D9 0A 06 F4 | 	bitl	_var03, #217
+012d4     00 00 78 FF 
+012d8     00 06 06 F6 | 	mov	_var01, ##-268435456
+012dc     05 07 02 F1 | 	add	_var01, _var03
+012e0     04 07 62 FC | 	wrlong	_var01, _var02
+012e4                 | '     repeat
+012e4                 | LR__0040
+012e4                 | '         result := long[mailbox]    
+012e4     04 0B 02 FB | 	rdlong	_var03, _var02
+012e8     00 0A 56 F2 | 	cmps	_var03, #0 wc
+012ec     F4 FF 9F CD |  if_b	jmp	#LR__0040
+012f0                 | '     while result < 0   
+012f0                 | '     return -result                       'return success or error
+012f0     05 FF 61 F6 | 	neg	result1, _var03
+012f4                 | LR__0041
+012f4                 | _psram_write_ret
+012f4     2D 00 64 FD | 	ret
+012f8                 | hubexit
+012f8     C1 00 80 FD | 	jmp	#cogexit
+012fc                 | 
+012fc                 | __system___waitms
+012fc     06 07 02 F6 | 	mov	_var01, arg01
+01300     1A 08 62 FD | 	getct	_var02
+01304     14 0A 06 FB | 	rdlong	_var03, #20
+01308     D7 14 48 FB | 	callpa	#(@LR__0051-@LR__0050)>>2,fcache_load_ptr_
+0130c                 | LR__0050
+0130c     01 00 00 FF 
+01310     E8 07 56 F2 | 	cmps	_var01, ##1000 wc
+01314     1C 00 90 CD |  if_b	jmp	#LR__0052
+01318     05 09 02 F1 | 	add	_var02, _var03
+0131c     04 0D 02 F6 | 	mov	arg01, _var02
+01320     00 0C 66 FA | 	addct1	arg01, #0
+01324     24 22 60 FD | 	waitct1
+01328     01 00 00 FF 
+0132c     E8 07 86 F1 | 	sub	_var01, ##1000
+01330     D8 FF 9F FD | 	jmp	#LR__0050
+01334                 | LR__0051
+01334                 | LR__0052
+01334     01 06 56 F2 | 	cmps	_var01, #1 wc
+01338     28 00 90 CD |  if_b	jmp	#LR__0053
+0133c     05 07 02 FD | 	qmul	_var01, _var03
+01340     01 00 00 FF 
+01344     E8 11 06 F6 | 	mov	arg03, ##1000
+01348     19 FE 61 FD | 	getqy	result1
+0134c     18 0C 62 FD | 	getqx	arg01
+01350     28 FE 61 FD | 	setq	result1
+01354     08 0D 12 FD | 	qdiv	arg01, arg03
+01358     18 0C 62 FD | 	getqx	arg01
+0135c     04 0D 62 FA | 	addct1	arg01, _var02
+01360     24 22 60 FD | 	waitct1
+01364                 | LR__0053
+01364                 | __system___waitms_ret
+01364     2D 00 64 FD | 	ret
+01368                 | 	alignl
+01368                 | _dat_
+01368     73 32 00 04 
+0136c     00 00 10 00 
+01370     00 00 00 00 
+01374     00 00 00 00 | waveform file "glocke.s2"
+01378     00 00 AB 04 
+0137c     52 09 F4 0D 
+01380     8C 12 19 17 
+01384     97 1B 03 20 | 	byte	$00, $00, $ab, $04, $52, $09, $f4, $0d, $8c, $12, $19, $17, $97, $1b, $03, $20
+01388     5B 24 9C 28 
+0138c     C3 2C CE 30 
+01390     BA 34 86 38 
+01394     2F 3C B3 3F | 	byte	$5b, $24, $9c, $28, $c3, $2c, $ce, $30, $ba, $34, $86, $38, $2f, $3c, $b3, $3f
+01398     10 43 45 46 
+0139c     51 49 31 4C 
+013a0     E5 4E 6B 51 
+013a4     C3 53 ED 55 | 	byte	$10, $43, $45, $46, $51, $49, $31, $4c, $e5, $4e, $6b, $51, $c3, $53, $ed, $55
+013a8     E7 57 B2 59 
+013ac     4D 5B B8 5C 
+013b0     F4 5D 00 5F 
+013b4     DF 5F 8F 60 | 	byte	$e7, $57, $b2, $59, $4d, $5b, $b8, $5c, $f4, $5d, $00, $5f, $df, $5f, $8f, $60
+013b8     13 61 6A 61 
+013bc     97 61 9A 61 
+013c0     76 61 2B 61 
+013c4     BB 60 28 60 | 	byte	$13, $61, $6a, $61, $97, $61, $9a, $61, $76, $61, $2b, $61, $bb, $60, $28, $60
+013c8     74 5F A1 5E 
+013cc     B0 5D A4 5C 
+013d0     7F 5B 43 5A 
+013d4     F3 58 90 57 | 	byte	$74, $5f, $a1, $5e, $b0, $5d, $a4, $5c, $7f, $5b, $43, $5a, $f3, $58, $90, $57
+013d8     1C 56 9B 54 
+013dc     0E 53 77 51 
+013e0     D8 4F 34 4E 
+013e4     8D 4C E5 4A | 	byte	$1c, $56, $9b, $54, $0e, $53, $77, $51, $d8, $4f, $34, $4e, $8d, $4c, $e5, $4a
+013e8     3D 49 97 47 
+013ec     F6 45 5A 44 
+013f0     C7 42 3C 41 
+013f4     BC 3F 47 3E | 	byte	$3d, $49, $97, $47, $f6, $45, $5a, $44, $c7, $42, $3c, $41, $bc, $3f, $47, $3e
+013f8     E0 3C 86 3B 
+013fc     3C 3A 01 39 
+01400     D6 37 BD 36 
+01404     B5 35 BF 34 | 	byte	$e0, $3c, $86, $3b, $3c, $3a, $01, $39, $d6, $37, $bd, $36, $b5, $35, $bf, $34
+01408     DB 33 09 33 
+0140c     49 32 9A 31 
+01410     FE 30 73 30 
+01414     F8 2F 8E 2F | 	byte	$db, $33, $09, $33, $49, $32, $9a, $31, $fe, $30, $73, $30, $f8, $2f, $8e, $2f
+01418     34 2F E8 2E 
+0141c     AA 2E 79 2E 
+01420     55 2E 3B 2E 
+01424     2C 2E 25 2E | 	byte	$34, $2f, $e8, $2e, $aa, $2e, $79, $2e, $55, $2e, $3b, $2e, $2c, $2e, $25, $2e
+01428     26 2E 2D 2E 
+0142c     39 2E 49 2E 
+01430     5C 2E 70 2E 
+01434     84 2E 96 2E | 	byte	$26, $2e, $2d, $2e, $39, $2e, $49, $2e, $5c, $2e, $70, $2e, $84, $2e, $96, $2e
+01438     A6 2E B2 2E 
+0143c     B8 2E B9 2E 
+01440     B2 2E A2 2E 
+01444     88 2E 64 2E | 	byte	$a6, $2e, $b2, $2e, $b8, $2e, $b9, $2e, $b2, $2e, $a2, $2e, $88, $2e, $64, $2e
+01448     34 2E F7 2D 
+0144c     AE 2D 55 2D 
+01450     EF 2C 78 2C 
+01454     F2 2B 5C 2B | 	byte	$34, $2e, $f7, $2d, $ae, $2d, $55, $2d, $ef, $2c, $78, $2c, $f2, $2b, $5c, $2b
+01458     B5 2A FD 29 
+0145c     34 29 5A 28 
+01460     6E 27 72 26 
+01464     65 25 47 24 | 	byte	$b5, $2a, $fd, $29, $34, $29, $5a, $28, $6e, $27, $72, $26, $65, $25, $47, $24
+01468     19 23 DC 21 
+0146c     8F 20 34 1F 
+01470     CB 1D 54 1C 
+01474     D2 1A 44 19 | 	byte	$19, $23, $dc, $21, $8f, $20, $34, $1f, $cb, $1d, $54, $1c, $d2, $1a, $44, $19
+01478     AC 17 0B 16 
+0147c     61 14 B0 12 
+01480     FA 10 3F 0F 
+01484     80 0D C0 0B | 	byte	$ac, $17, $0b, $16, $61, $14, $b0, $12, $fa, $10, $3f, $0f, $80, $0d, $c0, $0b
+01488     FF 09 3E 08 
+0148c     80 06 C5 04 
+01490     0F 03 5F 01 
+01494     B6 FF 16 FE | 	byte	$ff, $09, $3e, $08, $80, $06, $c5, $04, $0f, $03, $5f, $01, $b6, $ff, $16, $fe
+01498     81 FC F7 FA 
+0149c     7A F9 0B F8 
+014a0     AB F6 5C F5 
+014a4     1E F4 F2 F2 | 	byte	$81, $fc, $f7, $fa, $7a, $f9, $0b, $f8, $ab, $f6, $5c, $f5, $1e, $f4, $f2, $f2
+014a8     DB F1 D7 F0 
+014ac     E9 EF 11 EF 
+014b0     4F EE A5 ED 
+014b4     13 ED 98 EC | 	byte	$db, $f1, $d7, $f0, $e9, $ef, $11, $ef, $4f, $ee, $a5, $ed, $13, $ed, $98, $ec
+014b8     36 EC ED EB 
+014bc     BD EB A5 EB 
+014c0     A7 EB C1 EB 
+014c4     F3 EB 3D EC | 	byte	$36, $ec, $ed, $eb, $bd, $eb, $a5, $eb, $a7, $eb, $c1, $eb, $f3, $eb, $3d, $ec
+014c8     9F EC 17 ED 
+014cc     A6 ED 4A EE 
+014d0     03 EF D0 EF 
+014d4     AE F0 9F F1 | 	byte	$9f, $ec, $17, $ed, $a6, $ed, $4a, $ee, $03, $ef, $d0, $ef, $ae, $f0, $9f, $f1
+014d8     A0 F2 AF F3 
+014dc     CD F4 F6 F5 
+014e0     2A F7 68 F8 
+014e4     AD F9 F8 FA | 	byte	$a0, $f2, $af, $f3, $cd, $f4, $f6, $f5, $2a, $f7, $68, $f8, $ad, $f9, $f8, $fa
+014e8     47 FC 99 FD 
+014ec     EC FE 3F 00 
+014f0     8F 01 DA 02 
+014f4     21 04 5F 05 | 	byte	$47, $fc, $99, $fd, $ec, $fe, $3f, $00, $8f, $01, $da, $02, $21, $04, $5f, $05
+014f8     95 06 C0 07 
+014fc     DE 08 EF 09 
+01500     F1 0A E2 0B 
+01504     C1 0C 8D 0D | 	byte	$95, $06, $c0, $07, $de, $08, $ef, $09, $f1, $0a, $e2, $0b, $c1, $0c, $8d, $0d
+01508     45 0E E8 0E 
+0150c     75 0F EA 0F 
+01510     48 10 8E 10 
+01514     BB 10 CF 10 | 	byte	$45, $0e, $e8, $0e, $75, $0f, $ea, $0f, $48, $10, $8e, $10, $bb, $10, $cf, $10
+01518     CA 10 AB 10 
+0151c     73 10 22 10 
+01520     B9 0F 36 0F 
+01524     9D 0E EC 0D | 	byte	$ca, $10, $ab, $10, $73, $10, $22, $10, $b9, $0f, $36, $0f, $9d, $0e, $ec, $0d
+01528     25 0D 49 0C 
+0152c     59 0B 56 0A 
+01530     42 09 1D 08 
+01534     EB 06 AB 05 | 	byte	$25, $0d, $49, $0c, $59, $0b, $56, $0a, $42, $09, $1d, $08, $eb, $06, $ab, $05
+01538     61 04 0E 03 
+0153c     B4 01 54 00 
+01540     F2 FE 8F FD 
+01544     2D FC CE FA | 	byte	$61, $04, $0e, $03, $b4, $01, $54, $00, $f2, $fe, $8f, $fd, $2d, $fc, $ce, $fa
+01548     75 F9 24 F8 
+0154c     DE F6 A3 F5 
+01550     78 F4 5D F3 
+01554     55 F2 63 F1 | 	byte	$75, $f9, $24, $f8, $de, $f6, $a3, $f5, $78, $f4, $5d, $f3, $55, $f2, $63, $f1
+01558     87 F0 C5 EF 
+0155c     1E EF 93 EE 
+01560     27 EE DB ED 
+01564     B1 ED AA ED | 	byte	$87, $f0, $c5, $ef, $1e, $ef, $93, $ee, $27, $ee, $db, $ed, $b1, $ed, $aa, $ed
+01568     C7 ED 09 EE 
+0156c     71 EE 01 EF 
+01570     B8 EF 98 F0 
+01574     A0 F1 D1 F2 | 	byte	$c7, $ed, $09, $ee, $71, $ee, $01, $ef, $b8, $ef, $98, $f0, $a0, $f1, $d1, $f2
+01578     2B F4 AD F5 
+0157c     58 F7 2B F9 
+01580     25 FB 45 FD 
+01584     8B FF F5 01 | 	byte	$2b, $f4, $ad, $f5, $58, $f7, $2b, $f9, $25, $fb, $45, $fd, $8b, $ff, $f5, $01
+01588     82 04 31 07 
+0158c     01 0A EE 0C 
+01590     F9 0F 1E 13 
+01594     5C 16 B1 19 | 	byte	$82, $04, $31, $07, $01, $0a, $ee, $0c, $f9, $0f, $1e, $13, $5c, $16, $b1, $19
+01598     1A 1D 95 20 
+0159c     20 24 B8 27 
+015a0     5A 2B 05 2F 
+015a4     B6 32 6A 36 | 	byte	$1a, $1d, $95, $20, $20, $24, $b8, $27, $5a, $2b, $05, $2f, $b6, $32, $6a, $36
+015a8     1E 3A D0 3D 
+015ac     7D 41 22 45 
+015b0     BE 48 4D 4C 
+015b4     CD 4F 3C 53 | 	byte	$1e, $3a, $d0, $3d, $7d, $41, $22, $45, $be, $48, $4d, $4c, $cd, $4f, $3c, $53
+015b8     98 56 DD 59 
+015bc     0B 5D 1E 60 
+015c0     15 63 EE 65 
+015c4     A8 68 40 6B | 	byte	$98, $56, $dd, $59, $0b, $5d, $1e, $60, $15, $63, $ee, $65, $a8, $68, $40, $6b
+015c8     B5 6D 07 70 
+015cc     32 72 38 74 
+015d0     16 76 CC 77 
+015d4     59 79 BD 7A | 	byte	$b5, $6d, $07, $70, $32, $72, $38, $74, $16, $76, $cc, $77, $59, $79, $bd, $7a
+015d8     F7 7B 07 7D 
+015dc     EE 7D AA 7E 
+015e0     3D 7F A6 7F 
+015e4     E7 7F FF 7F | 	byte	$f7, $7b, $07, $7d, $ee, $7d, $aa, $7e, $3d, $7f, $a6, $7f, $e7, $7f, $ff, $7f
+015e8     F0 7F BA 7F 
+015ec     5F 7F DF 7E 
+015f0     3B 7E 75 7D 
+015f4     8F 7C 89 7B | 	byte	$f0, $7f, $ba, $7f, $5f, $7f, $df, $7e, $3b, $7e, $75, $7d, $8f, $7c, $89, $7b
+015f8     65 7A 25 79 
+015fc     CA 77 57 76 
+01600     CB 74 2B 73 
+01604     76 71 B0 6F | 	byte	$65, $7a, $25, $79, $ca, $77, $57, $76, $cb, $74, $2b, $73, $76, $71, $b0, $6f
+01608     D9 6D F3 6B 
+0160c     01 6A 04 68 
+01610     FD 65 EF 63 
+01614     DC 61 C4 5F | 	byte	$d9, $6d, $f3, $6b, $01, $6a, $04, $68, $fd, $65, $ef, $63, $dc, $61, $c4, $5f
+01618     A9 5D 8D 5B 
+0161c     71 59 57 57 
+01620     40 55 2D 53 
+01624     20 51 19 4F | 	byte	$a9, $5d, $8d, $5b, $71, $59, $57, $57, $40, $55, $2d, $53, $20, $51, $19, $4f
+01628     19 4D 22 4B 
+0162c     34 49 50 47 
+01630     76 45 A8 43 
+01634     E5 41 2E 40 | 	byte	$19, $4d, $22, $4b, $34, $49, $50, $47, $76, $45, $a8, $43, $e5, $41, $2e, $40
+01638     83 3E E4 3C 
+0163c     51 3B CB 39 
+01640     51 38 E3 36 
+01644     81 35 2A 34 | 	byte	$83, $3e, $e4, $3c, $51, $3b, $cb, $39, $51, $38, $e3, $36, $81, $35, $2a, $34
+01648     DE 32 9D 31 
+0164c     65 30 37 2F 
+01650     11 2E F4 2C 
+01654     DD 2B CC 2A | 	byte	$de, $32, $9d, $31, $65, $30, $37, $2f, $11, $2e, $f4, $2c, $dd, $2b, $cc, $2a
+01658     C1 29 BB 28 
+0165c     B7 27 B7 26 
+01660     B7 25 B9 24 
+01664     BA 23 BA 22 | 	byte	$c1, $29, $bb, $28, $b7, $27, $b7, $26, $b7, $25, $b9, $24, $ba, $23, $ba, $22
+01668     B7 21 B1 20 
+0166c     A6 1F 97 1E 
+01670     81 1D 64 1C 
+01674     3F 1B 12 1A | 	byte	$b7, $21, $b1, $20, $a6, $1f, $97, $1e, $81, $1d, $64, $1c, $3f, $1b, $12, $1a
+01678     DB 18 9A 17 
+0167c     4F 16 F8 14 
+01680     95 13 27 12 
+01684     AB 10 23 0F | 	byte	$db, $18, $9a, $17, $4f, $16, $f8, $14, $95, $13, $27, $12, $ab, $10, $23, $0f
+01688     8E 0D EC 0B 
+0168c     3C 0A 7F 08 
+01690     B6 06 DF 04 
+01694     FC 02 0D 01 | 	byte	$8e, $0d, $ec, $0b, $3c, $0a, $7f, $08, $b6, $06, $df, $04, $fc, $02, $0d, $01
+01698     12 FF 0C FD 
+0169c     FB FA E1 F8 
+016a0     BE F6 94 F4 
+016a4     62 F2 2A F0 | 	byte	$12, $ff, $0c, $fd, $fb, $fa, $e1, $f8, $be, $f6, $94, $f4, $62, $f2, $2a, $f0
+016a8     ED ED AD EB 
+016ac     6B E9 27 E7 
+016b0     E4 E4 A3 E2 
+016b4     65 E0 2C DE | 	byte	$ed, $ed, $ad, $eb, $6b, $e9, $27, $e7, $e4, $e4, $a3, $e2, $65, $e0, $2c, $de
+016b8     FA DB CF D9 
+016bc     AE D7 98 D5 
+016c0     8F D3 95 D1 
+016c4     AA CF D1 CD | 	byte	$fa, $db, $cf, $d9, $ae, $d7, $98, $d5, $8f, $d3, $95, $d1, $aa, $cf, $d1, $cd
+016c8     0C CC 5B CA 
+016cc     C1 C8 3E C7 
+016d0     D5 C5 86 C4 
+016d4     53 C3 3E C2 | 	byte	$0c, $cc, $5b, $ca, $c1, $c8, $3e, $c7, $d5, $c5, $86, $c4, $53, $c3, $3e, $c2
+016d8     46 C1 6E C0 
+016dc     B7 BF 20 BF 
+016e0     AC BE 5A BE 
+016e4     2C BE 21 BE | 	byte	$46, $c1, $6e, $c0, $b7, $bf, $20, $bf, $ac, $be, $5a, $be, $2c, $be, $21, $be
+016e8     3A BE 77 BE 
+016ec     D8 BE 5D BF 
+016f0     07 C0 D4 C0 
+016f4     C4 C1 D6 C2 | 	byte	$3a, $be, $77, $be, $d8, $be, $5d, $bf, $07, $c0, $d4, $c0, $c4, $c1, $d6, $c2
+016f8     0A C4 5F C5 
+016fc     D4 C6 67 C8 
+01700     18 CA E5 CB 
+01704     CD CD CD CF | 	byte	$0a, $c4, $5f, $c5, $d4, $c6, $67, $c8, $18, $ca, $e5, $cb, $cd, $cd, $cd, $cf
+01708     E5 D1 12 D4 
+0170c     53 D6 A5 D8 
+01710     06 DB 75 DD 
+01714     EF DF 71 E2 | 	byte	$e5, $d1, $12, $d4, $53, $d6, $a5, $d8, $06, $db, $75, $dd, $ef, $df, $71, $e2
+01718     FA E4 88 E7 
+0171c     16 EA A5 EC 
+01720     30 EF B6 F1 
+01724     34 F4 A8 F6 | 	byte	$fa, $e4, $88, $e7, $16, $ea, $a5, $ec, $30, $ef, $b6, $f1, $34, $f4, $a8, $f6
+01728     10 F9 69 FB 
+0172c     B2 FD E7 FF 
+01730     08 02 12 04 
+01734     03 06 DA 07 | 	byte	$10, $f9, $69, $fb, $b2, $fd, $e7, $ff, $08, $02, $12, $04, $03, $06, $da, $07
+01738     95 09 32 0B 
+0173c     B1 0C 0F 0E 
+01740     4C 0F 68 10 
+01744     60 11 35 12 | 	byte	$95, $09, $32, $0b, $b1, $0c, $0f, $0e, $4c, $0f, $68, $10, $60, $11, $35, $12
+01748     E6 12 73 13 
+0174c     DC 13 21 14 
+01750     41 14 3E 14 
+01754     18 14 D0 13 | 	byte	$e6, $12, $73, $13, $dc, $13, $21, $14, $41, $14, $3e, $14, $18, $14, $d0, $13
+01758     66 13 DC 12 
+0175c     33 12 6C 11 
+01760     89 10 8B 0F 
+01764     75 0E 47 0D | 	byte	$66, $13, $dc, $12, $33, $12, $6c, $11, $89, $10, $8b, $0f, $75, $0e, $47, $0d
+01768     04 0C AE 0A 
+0176c     47 09 D2 07 
+01770     50 06 C5 04 
+01774     32 03 9A 01 | 	byte	$04, $0c, $ae, $0a, $47, $09, $d2, $07, $50, $06, $c5, $04, $32, $03, $9a, $01
+01778     00 00 66 FE 
+0177c     CE FC 3B FB 
+01780     B0 F9 2E F8 
+01784     B9 F6 52 F5 | 	byte	$00, $00, $66, $fe, $ce, $fc, $3b, $fb, $b0, $f9, $2e, $f8, $b9, $f6, $52, $f5
+01788     FC F3 B9 F2 
+0178c     8B F1 75 F0 
+01790     77 EF 94 EE 
+01794     CD ED 24 ED | 	byte	$fc, $f3, $b9, $f2, $8b, $f1, $75, $f0, $77, $ef, $94, $ee, $cd, $ed, $24, $ed
+01798     9A EC 30 EC 
+0179c     E8 EB C2 EB 
+017a0     BF EB DF EB 
+017a4     24 EC 8D EC | 	byte	$9a, $ec, $30, $ec, $e8, $eb, $c2, $eb, $bf, $eb, $df, $eb, $24, $ec, $8d, $ec
+017a8     1A ED CB ED 
+017ac     A0 EE 98 EF 
+017b0     B4 F0 F1 F1 
+017b4     4F F3 CE F4 | 	byte	$1a, $ed, $cb, $ed, $a0, $ee, $98, $ef, $b4, $f0, $f1, $f1, $4f, $f3, $ce, $f4
+017b8     6B F6 26 F8 
+017bc     FD F9 EE FB 
+017c0     F8 FD 19 00 
+017c4     4E 02 97 04 | 	byte	$6b, $f6, $26, $f8, $fd, $f9, $ee, $fb, $f8, $fd, $19, $00, $4e, $02, $97, $04
+017c8     F0 06 58 09 
+017cc     CC 0B 4A 0E 
+017d0     D0 10 5B 13 
+017d4     EA 15 78 18 | 	byte	$f0, $06, $58, $09, $cc, $0b, $4a, $0e, $d0, $10, $5b, $13, $ea, $15, $78, $18
+017d8     06 1B 8F 1D 
+017dc     11 20 8B 22 
+017e0     FA 24 5B 27 
+017e4     AD 29 EE 2B | 	byte	$06, $1b, $8f, $1d, $11, $20, $8b, $22, $fa, $24, $5b, $27, $ad, $29, $ee, $2b
+017e8     1B 2E 33 30 
+017ec     33 32 1B 34 
+017f0     E8 35 99 37 
+017f4     2C 39 A1 3A | 	byte	$1b, $2e, $33, $30, $33, $32, $1b, $34, $e8, $35, $99, $37, $2c, $39, $a1, $3a
+017f8     F6 3B 2A 3D 
+017fc     3C 3E 2C 3F 
+01800     F9 3F A3 40 
+01804     28 41 89 41 | 	byte	$f6, $3b, $2a, $3d, $3c, $3e, $2c, $3f, $f9, $3f, $a3, $40, $28, $41, $89, $41
+01808     C6 41 DF 41 
+0180c     D4 41 A6 41 
+01810     54 41 E0 40 
+01814     49 40 92 3F | 	byte	$c6, $41, $df, $41, $d4, $41, $a6, $41, $54, $41, $e0, $40, $49, $40, $92, $3f
+01818     BA 3E C2 3D 
+0181c     AD 3C 7A 3B 
+01820     2B 3A C2 38 
+01824     3F 37 A5 35 | 	byte	$ba, $3e, $c2, $3d, $ad, $3c, $7a, $3b, $2b, $3a, $c2, $38, $3f, $37, $a5, $35
+01828     F4 33 2F 32 
+0182c     56 30 6B 2E 
+01830     71 2C 68 2A 
+01834     52 28 31 26 | 	byte	$f4, $33, $2f, $32, $56, $30, $6b, $2e, $71, $2c, $68, $2a, $52, $28, $31, $26
+01838     06 24 D4 21 
+0183c     9B 1F 5D 1D 
+01840     1C 1B D9 18 
+01844     95 16 53 14 | 	byte	$06, $24, $d4, $21, $9b, $1f, $5d, $1d, $1c, $1b, $d9, $18, $95, $16, $53, $14
+01848     13 12 D6 0F 
+0184c     9E 0D 6C 0B 
+01850     42 09 1F 07 
+01854     05 05 F4 02 | 	byte	$13, $12, $d6, $0f, $9e, $0d, $6c, $0b, $42, $09, $1f, $07, $05, $05, $f4, $02
+01858     EE 00 F3 FE 
+0185c     04 FD 21 FB 
+01860     4A F9 81 F7 
+01864     C4 F5 14 F4 | 	byte	$ee, $00, $f3, $fe, $04, $fd, $21, $fb, $4a, $f9, $81, $f7, $c4, $f5, $14, $f4
+01868     72 F2 DD F0 
+0186c     55 EF D9 ED 
+01870     6B EC 08 EB 
+01874     B1 E9 66 E8 | 	byte	$72, $f2, $dd, $f0, $55, $ef, $d9, $ed, $6b, $ec, $08, $eb, $b1, $e9, $66, $e8
+01878     25 E7 EE E5 
+0187c     C1 E4 9C E3 
+01880     7F E2 69 E1 
+01884     5A E0 4F DF | 	byte	$25, $e7, $ee, $e5, $c1, $e4, $9c, $e3, $7f, $e2, $69, $e1, $5a, $e0, $4f, $df
+01888     49 DE 46 DD 
+0188c     46 DC 47 DB 
+01890     49 DA 49 D9 
+01894     49 D8 45 D7 | 	byte	$49, $de, $46, $dd, $46, $dc, $47, $db, $49, $da, $49, $d9, $49, $d8, $45, $d7
+01898     3F D6 34 D5 
+0189c     23 D4 0C D3 
+018a0     EF D1 C9 D0 
+018a4     9B CF 63 CE | 	byte	$3f, $d6, $34, $d5, $23, $d4, $0c, $d3, $ef, $d1, $c9, $d0, $9b, $cf, $63, $ce
+018a8     22 CD D6 CB 
+018ac     7F CA 1D C9 
+018b0     AF C7 35 C6 
+018b4     AF C4 1C C3 | 	byte	$22, $cd, $d6, $cb, $7f, $ca, $1d, $c9, $af, $c7, $35, $c6, $af, $c4, $1c, $c3
+018b8     7D C1 D2 BF 
+018bc     1B BE 58 BC 
+018c0     8A BA B0 B8 
+018c4     CC B6 DE B4 | 	byte	$7d, $c1, $d2, $bf, $1b, $be, $58, $bc, $8a, $ba, $b0, $b8, $cc, $b6, $de, $b4
+018c8     E7 B2 E7 B0 
+018cc     E0 AE D3 AC 
+018d0     C0 AA A9 A8 
+018d4     8F A6 73 A4 | 	byte	$e7, $b2, $e7, $b0, $e0, $ae, $d3, $ac, $c0, $aa, $a9, $a8, $8f, $a6, $73, $a4
+018d8     57 A2 3C A0 
+018dc     24 9E 11 9C 
+018e0     03 9A FC 97 
+018e4     FF 95 0D 94 | 	byte	$57, $a2, $3c, $a0, $24, $9e, $11, $9c, $03, $9a, $fc, $97, $ff, $95, $0d, $94
+018e8     27 92 50 90 
+018ec     8A 8E D5 8C 
+018f0     35 8B A9 89 
+018f4     36 88 DB 86 | 	byte	$27, $92, $50, $90, $8a, $8e, $d5, $8c, $35, $8b, $a9, $89, $36, $88, $db, $86
+018f8     9B 85 77 84 
+018fc     71 83 8B 82 
+01900     C5 81 21 81 
+01904     A1 80 46 80 | 	byte	$9b, $85, $77, $84, $71, $83, $8b, $82, $c5, $81, $21, $81, $a1, $80, $46, $80
+01908     10 80 01 80 
+0190c     19 80 5A 80 
+01910     C3 80 56 81 
+01914     12 82 F9 82 | 	byte	$10, $80, $01, $80, $19, $80, $5a, $80, $c3, $80, $56, $81, $12, $82, $f9, $82
+01918     09 84 43 85 
+0191c     A7 86 34 88 
+01920     EA 89 C8 8B 
+01924     CE 8D F9 8F | 	byte	$09, $84, $43, $85, $a7, $86, $34, $88, $ea, $89, $c8, $8b, $ce, $8d, $f9, $8f
+01928     4B 92 C0 94 
+0192c     58 97 12 9A 
+01930     EB 9C E2 9F 
+01934     F5 A2 23 A6 | 	byte	$4b, $92, $c0, $94, $58, $97, $12, $9a, $eb, $9c, $e2, $9f, $f5, $a2, $23, $a6
+01938     68 A9 C4 AC 
+0193c     33 B0 B3 B3 
+01940     42 B7 DE BA 
+01944     83 BE 30 C2 | 	byte	$68, $a9, $c4, $ac, $33, $b0, $b3, $b3, $42, $b7, $de, $ba, $83, $be, $30, $c2
+01948     E2 C5 96 C9 
+0194c     4A CD FB D0 
+01950     A6 D4 48 D8 
+01954     E0 DB 6B DF | 	byte	$e2, $c5, $96, $c9, $4a, $cd, $fb, $d0, $a6, $d4, $48, $d8, $e0, $db, $6b, $df
+01958     E6 E2 4F E6 
+0195c     A4 E9 E2 EC 
+01960     07 F0 12 F3 
+01964     FF F5 CF F8 | 	byte	$e6, $e2, $4f, $e6, $a4, $e9, $e2, $ec, $07, $f0, $12, $f3, $ff, $f5, $cf, $f8
+01968     7E FB 0B FE 
+0196c     75 00 BB 02 
+01970     DB 04 D5 06 
+01974     A8 08 53 0A | 	byte	$7e, $fb, $0b, $fe, $75, $00, $bb, $02, $db, $04, $d5, $06, $a8, $08, $53, $0a
+01978     D5 0B 2F 0D 
+0197c     60 0E 68 0F 
+01980     48 10 FF 10 
+01984     8F 11 F7 11 | 	byte	$d5, $0b, $2f, $0d, $60, $0e, $68, $0f, $48, $10, $ff, $10, $8f, $11, $f7, $11
+01988     39 12 56 12 
+0198c     4F 12 25 12 
+01990     D9 11 6D 11 
+01994     E2 10 3B 10 | 	byte	$39, $12, $56, $12, $4f, $12, $25, $12, $d9, $11, $6d, $11, $e2, $10, $3b, $10
+01998     79 0F 9D 0E 
+0199c     AB 0D A3 0C 
+019a0     88 0B 5D 0A 
+019a4     22 09 DC 07 | 	byte	$79, $0f, $9d, $0e, $ab, $0d, $a3, $0c, $88, $0b, $5d, $0a, $22, $09, $dc, $07
+019a8     8B 06 32 05 
+019ac     D3 03 71 02 
+019b0     0E 01 AC FF 
+019b4     4C FE F2 FC | 	byte	$8b, $06, $32, $05, $d3, $03, $71, $02, $0e, $01, $ac, $ff, $4c, $fe, $f2, $fc
+019b8     9F FB 55 FA 
+019bc     15 F9 E3 F7 
+019c0     BE F6 AA F5 
+019c4     A7 F4 B7 F3 | 	byte	$9f, $fb, $55, $fa, $15, $f9, $e3, $f7, $be, $f6, $aa, $f5, $a7, $f4, $b7, $f3
+019c8     DB F2 14 F2 
+019cc     63 F1 CA F0 
+019d0     47 F0 DE EF 
+019d4     8D EF 55 EF | 	byte	$db, $f2, $14, $f2, $63, $f1, $ca, $f0, $47, $f0, $de, $ef, $8d, $ef, $55, $ef
+019d8     36 EF 31 EF 
+019dc     45 EF 72 EF 
+019e0     B8 EF 16 F0 
+019e4     8B F0 18 F1 | 	byte	$36, $ef, $31, $ef, $45, $ef, $72, $ef, $b8, $ef, $16, $f0, $8b, $f0, $18, $f1
+019e8     BB F1 73 F2 
+019ec     3F F3 1E F4 
+019f0     0F F5 11 F6 
+019f4     22 F7 40 F8 | 	byte	$bb, $f1, $73, $f2, $3f, $f3, $1e, $f4, $0f, $f5, $11, $f6, $22, $f7, $40, $f8
+019f8     6B F9 A1 FA 
+019fc     DF FB 26 FD 
+01a00     71 FE C1 FF 
+01a04     14 01 67 02 | 	byte	$6b, $f9, $a1, $fa, $df, $fb, $26, $fd, $71, $fe, $c1, $ff, $14, $01, $67, $02
+01a08     B9 03 08 05 
+01a0c     53 06 98 07 
+01a10     D6 08 0A 0A 
+01a14     33 0B 51 0C | 	byte	$b9, $03, $08, $05, $53, $06, $98, $07, $d6, $08, $0a, $0a, $33, $0b, $51, $0c
+01a18     60 0D 61 0E 
+01a1c     52 0F 30 10 
+01a20     FD 10 B6 11 
+01a24     5A 12 E9 12 | 	byte	$60, $0d, $61, $0e, $52, $0f, $30, $10, $fd, $10, $b6, $11, $5a, $12, $e9, $12
+01a28     61 13 C3 13 
+01a2c     0D 14 3F 14 
+01a30     59 14 5B 14 
+01a34     43 14 13 14 | 	byte	$61, $13, $c3, $13, $0d, $14, $3f, $14, $59, $14, $5b, $14, $43, $14, $13, $14
+01a38     CA 13 68 13 
+01a3c     ED 12 5B 12 
+01a40     B1 11 EF 10 
+01a44     17 10 29 0F | 	byte	$ca, $13, $68, $13, $ed, $12, $5b, $12, $b1, $11, $ef, $10, $17, $10, $29, $0f
+01a48     25 0E 0E 0D 
+01a4c     E2 0B A4 0A 
+01a50     55 09 F5 07 
+01a54     86 06 09 05 | 	byte	$25, $0e, $0e, $0d, $e2, $0b, $a4, $0a, $55, $09, $f5, $07, $86, $06, $09, $05
+01a58     7F 03 EA 01 
+01a5c     4A 00 A1 FE 
+01a60     F1 FC 3B FB 
+01a64     80 F9 C2 F7 | 	byte	$7f, $03, $ea, $01, $4a, $00, $a1, $fe, $f1, $fc, $3b, $fb, $80, $f9, $c2, $f7
+01a68     01 F6 40 F4 
+01a6c     80 F2 C1 F0 
+01a70     06 EF 50 ED 
+01a74     9F EB F5 E9 | 	byte	$01, $f6, $40, $f4, $80, $f2, $c1, $f0, $06, $ef, $50, $ed, $9f, $eb, $f5, $e9
+01a78     54 E8 BC E6 
+01a7c     2E E5 AC E3 
+01a80     35 E2 CC E0 
+01a84     71 DF 24 DE | 	byte	$54, $e8, $bc, $e6, $2e, $e5, $ac, $e3, $35, $e2, $cc, $e0, $71, $df, $24, $de
+01a88     E7 DC B9 DB 
+01a8c     9B DA 8E D9 
+01a90     92 D8 A6 D7 
+01a94     CC D6 03 D6 | 	byte	$e7, $dc, $b9, $db, $9b, $da, $8e, $d9, $92, $d8, $a6, $d7, $cc, $d6, $03, $d6
+01a98     4B D5 A4 D4 
+01a9c     0E D4 88 D3 
+01aa0     11 D3 AB D2 
+01aa4     52 D2 09 D2 | 	byte	$4b, $d5, $a4, $d4, $0e, $d4, $88, $d3, $11, $d3, $ab, $d2, $52, $d2, $09, $d2
+01aa8     CC D1 9C D1 
+01aac     78 D1 5E D1 
+01ab0     4E D1 47 D1 
+01ab4     48 D1 4E D1 | 	byte	$cc, $d1, $9c, $d1, $78, $d1, $5e, $d1, $4e, $d1, $47, $d1, $48, $d1, $4e, $d1
+01ab8     5A D1 6A D1 
+01abc     7C D1 90 D1 
+01ac0     A4 D1 B7 D1 
+01ac4     C7 D1 D3 D1 | 	byte	$5a, $d1, $6a, $d1, $7c, $d1, $90, $d1, $a4, $d1, $b7, $d1, $c7, $d1, $d3, $d1
+01ac8     DA D1 DB D1 
+01acc     D4 D1 C5 D1 
+01ad0     AB D1 87 D1 
+01ad4     56 D1 18 D1 | 	byte	$da, $d1, $db, $d1, $d4, $d1, $c5, $d1, $ab, $d1, $87, $d1, $56, $d1, $18, $d1
+01ad8     CC D0 72 D0 
+01adc     08 D0 8D CF 
+01ae0     02 CF 66 CE 
+01ae4     B7 CD F7 CC | 	byte	$cc, $d0, $72, $d0, $08, $d0, $8d, $cf, $02, $cf, $66, $ce, $b7, $cd, $f7, $cc
+01ae8     25 CC 41 CB 
+01aec     4B CA 43 C9 
+01af0     2A C8 FF C6 
+01af4     C4 C5 7A C4 | 	byte	$25, $cc, $41, $cb, $4b, $ca, $43, $c9, $2a, $c8, $ff, $c6, $c4, $c5, $7a, $c4
+01af8     20 C3 B9 C1 
+01afc     44 C0 C4 BE 
+01b00     39 BD A6 BB 
+01b04     0A BA 69 B8 | 	byte	$20, $c3, $b9, $c1, $44, $c0, $c4, $be, $39, $bd, $a6, $bb, $0a, $ba, $69, $b8
+01b08     C3 B6 1B B5 
+01b0c     73 B3 CC B1 
+01b10     28 B0 89 AE 
+01b14     F2 AC 65 AB | 	byte	$c3, $b6, $1b, $b5, $73, $b3, $cc, $b1, $28, $b0, $89, $ae, $f2, $ac, $65, $ab
+01b18     E4 A9 70 A8 
+01b1c     0D A7 BD A5 
+01b20     81 A4 5C A3 
+01b24     50 A2 5F A1 | 	byte	$e4, $a9, $70, $a8, $0d, $a7, $bd, $a5, $81, $a4, $5c, $a3, $50, $a2, $5f, $a1
+01b28     8C A0 D8 9F 
+01b2c     45 9F D5 9E 
+01b30     8A 9E 66 9E 
+01b34     69 9E 96 9E | 	byte	$8c, $a0, $d8, $9f, $45, $9f, $d5, $9e, $8a, $9e, $66, $9e, $69, $9e, $96, $9e
+01b38     ED 9E 71 9F 
+01b3c     21 A0 00 A1 
+01b40     0C A2 48 A3 
+01b44     B3 A4 4E A6 | 	byte	$ed, $9e, $71, $9f, $21, $a0, $00, $a1, $0c, $a2, $48, $a3, $b3, $a4, $4e, $a6
+01b48     19 A8 13 AA 
+01b4c     3D AC 95 AE 
+01b50     1B B1 CF B3 
+01b54     AF B6 BB B9 | 	byte	$19, $a8, $13, $aa, $3d, $ac, $95, $ae, $1b, $b1, $cf, $b3, $af, $b6, $bb, $b9
+01b58     F0 BC 4D C0 
+01b5c     D1 C3 7A C7 
+01b60     46 CB 32 CF 
+01b64     3D D3 64 D7 | 	byte	$f0, $bc, $4d, $c0, $d1, $c3, $7a, $c7, $46, $cb, $32, $cf, $3d, $d3, $64, $d7
+01b68     A5 DB FD DF 
+01b6c     69 E4 E7 E8 
+01b70     74 ED 0C F2 
+01b74     AE F6 55 FB | 	byte	$a5, $db, $fd, $df, $69, $e4, $e7, $e8, $74, $ed, $0c, $f2, $ae, $f6, $55, $fb
+01b78     68 32 00 01 
+01b7c     00 00 08 00 
+01b80     00 00 00 00 
+01b84     00 00 00 00 | envelope file "percus.h2"
+01b88     FF FD FC FA 
+01b8c     F8 F6 F4 F2 
+01b90     F0 EE EC EA 
+01b94     E8 E6 E4 E1 | 	byte	$ff, $fd, $fc, $fa, $f8, $f6, $f4, $f2, $f0, $ee, $ec, $ea, $e8, $e6, $e4, $e1
+01b98     DF DD DB D8 
+01b9c     D6 D4 D1 CF 
+01ba0     CC CA C7 C5 
+01ba4     C2 BF BD BA | 	byte	$df, $dd, $db, $d8, $d6, $d4, $d1, $cf, $cc, $ca, $c7, $c5, $c2, $bf, $bd, $ba
+01ba8     B7 B5 B2 B0 
+01bac     AD AA A7 A5 
+01bb0     A2 A0 9D 9B 
+01bb4     99 97 95 93 | 	byte	$b7, $b5, $b2, $b0, $ad, $aa, $a7, $a5, $a2, $a0, $9d, $9b, $99, $97, $95, $93
+01bb8     91 8F 8D 8C 
+01bbc     8A 88 86 84 
+01bc0     82 80 7E 7D 
+01bc4     7B 79 78 76 | 	byte	$91, $8f, $8d, $8c, $8a, $88, $86, $84, $82, $80, $7e, $7d, $7b, $79, $78, $76
+01bc8     75 73 72 70 
+01bcc     6F 6E 6D 6B 
+01bd0     6A 68 67 66 
+01bd4     64 63 62 60 | 	byte	$75, $73, $72, $70, $6f, $6e, $6d, $6b, $6a, $68, $67, $66, $64, $63, $62, $60
+01bd8     5F 5E 5C 5B 
+01bdc     5A 59 58 57 
+01be0     56 55 54 53 
+01be4     52 51 50 4F | 	byte	$5f, $5e, $5c, $5b, $5a, $59, $58, $57, $56, $55, $54, $53, $52, $51, $50, $4f
+01be8     4E 4D 4C 4C 
+01bec     4B 4A 49 48 
+01bf0     47 46 45 44 
+01bf4     43 42 41 40 | 	byte	$4e, $4d, $4c, $4c, $4b, $4a, $49, $48, $47, $46, $45, $44, $43, $42, $41, $40
+01bf8     3F 3E 3D 3D 
+01bfc     3C 3C 3B 3A 
+01c00     3A 39 38 38 
+01c04     37 36 36 35 | 	byte	$3f, $3e, $3d, $3d, $3c, $3c, $3b, $3a, $3a, $39, $38, $38, $37, $36, $36, $35
+01c08     34 34 33 32 
+01c0c     31 31 30 2F 
+01c10     2F 2E 2D 2D 
+01c14     2C 2B 2B 2A | 	byte	$34, $34, $33, $32, $31, $31, $30, $2f, $2f, $2e, $2d, $2d, $2c, $2b, $2b, $2a
+01c18     29 29 28 27 
+01c1c     27 26 25 25 
+01c20     24 24 23 22 
+01c24     22 21 20 20 | 	byte	$29, $29, $28, $27, $27, $26, $25, $25, $24, $24, $23, $22, $22, $21, $20, $20
+01c28     1F 1E 1E 1E 
+01c2c     1D 1D 1D 1C 
+01c30     1C 1B 1B 1A 
+01c34     19 19 18 17 | 	byte	$1f, $1e, $1e, $1e, $1d, $1d, $1d, $1c, $1c, $1b, $1b, $1a, $19, $19, $18, $17
+01c38     17 16 15 15 
+01c3c     14 13 13 12 
+01c40     11 11 10 0F 
+01c44     0F 0E 0D 0D | 	byte	$17, $16, $15, $15, $14, $13, $13, $12, $11, $11, $10, $0f, $0f, $0e, $0d, $0d
+01c48     0C 0C 0B 0B 
+01c4c     0B 0A 0A 0A 
+01c50     09 09 09 08 
+01c54     08 08 07 07 | 	byte	$0c, $0c, $0b, $0b, $0b, $0a, $0a, $0a, $09, $09, $09, $08, $08, $08, $07, $07
+01c58     07 06 06 06 
+01c5c     05 05 05 04 
+01c60     04 04 03 03 
+01c64     03 02 02 02 | 	byte	$07, $06, $06, $06, $05, $05, $05, $04, $04, $04, $03, $03, $03, $02, $02, $02
+01c68     01 01 01 00 
+01c6c     00 00 00 00 
+01c70     00 00 00 00 
+01c74     00 00 00 00 | 	byte	$01, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01c78     00 00 00 00 
+01c7c     00 00 00 00 
+01c80     00 00 00 00 
+01c84     00 00 00 00 | 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01c88                 | 	alignl
+01c88                 | _Audio2_004_dat_
+01c88                 | 
+01c88                 | audio       	org     0
+01c88                 | 
+01c88     61 73 05 FB |             	rdlong  mailbox2, ptra++     	' get start address of all mailboxes
+01c8c     61 AB 05 FB |             	rdlong  scbase, ptra++       	' get start address of scope buffer
+01c90     61 B7 05 FB |             	rdlong  hubptr, ptra++       	' get start address of PSRAM cache
+01c94                 | 
+01c94     01 EC 63 FD |             	cogid   pa                   	' compute cogid
+01c98     0C EC 07 FA |             	mul     pa, #12              	' and mailbox spacing
+01c9c     F6 73 01 F1 |             	add     mailbox2, pa         	' add offset to find this COG's mailbox
+01ca0     B9 70 01 F6 |             	mov     mailbox, mailbox2     	' we need 2 copies of this to enable switching between hub and psram
 01ca4                 | 
-01ca4     F1 E6 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
-01ca8     01 E6 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
-01cac     C5 E6 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
-01cb0     F3 E6 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
-01cb4     F3 E8 39 F9 |             	getword envs2,envs1,#1			' then separate them		
-01cb8     F3 E6 31 F9 |            	getword envs1,envs1,#0
-01cbc     F2 E8 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
-01cc0     F2 E4 21 F6 |             	not     envlo
-01cc4     F2 E6 01 FA |             	mul     envs1,envlo
-01cc8     F4 E6 01 F1 |             	add     envs1,envs2
-01ccc     12 E6 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
-01cd0                 |               
-01cd0                 | '----------------------------------------------------------------------------------
-01cd0                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
-01cd0                 | '----------------------------------------------------------------------------------
-01cd0                 | 
-01cd0                 | 
-01cd0                 |     	
-01cd0                 | '----------------------------------------------------------------------------------
-01cd0                 | '------------- Get the sample -----------------------------------------------------
-01cd0                 | '----------------------------------------------------------------------------------    	
-01cd0                 |  
-01cd0     BB 9C 01 F6 | p410  		mov	oldptrh,pointer0h
-01cd4     C3 96 F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
-01cd8     08 86 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
-01cdc     C3 74 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
-01ce0     CB 76 21 F1 |            	addx	pointer0h,afreq0  
-01ce4                 |           	
-01ce4     1B 7E 0D F4 |    	   	testb   sstart0, #27 wz
-01ce8     10 00 90 5D |     	if_nz	jmp #p412   	
-01cec     1B 6A 61 CD |    	if_c  	getrnd  spl
-01cf0     B5 7A 41 C9 |    	if_c	rolword rawspl0,spl,#0	
-01cf4     BD 6A 31 F9 |    		getword spl,rawspl0,#0
-01cf8     88 00 90 FD |       	        jmp     #p406          	
-01cfc                 |            	
-01cfc                 |            	
-01cfc     CE 76 19 F2 | p412 		cmp	pointer0h,oldptrh wcz
-01d00     50 00 90 AD |  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
-01d04                 |      	
-01d04     1F 7E 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
-01d08     01 76 65 A0 |      	if_z    shl     pointer0h,#1        
-01d0c     1C 7E 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
-01d10     01 76 65 A0 |      	if_z    shl     pointer0h,#1        
-01d14                 | 												
-01d14     C1 76 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
-01d18     C1 76 81 31 |    	if_ge   sub     pointer0h,lend0       
-01d1c     C0 76 01 31 |         if_ge   add     pointer0h,lstart0
-01d20     C1 76 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
-01d24     C1 76 01 36 |         if_ge   mov	pointer0h,lend0	
-01d28                 |  
-01d28     BB 68 01 F6 |              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
-01d2c     BF 68 01 F1 |            	add     qq,sstart0            
-01d30     FF 6D 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
-01d34     B4 6A E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
-01d38     F8 00 B0 1D |     	if_gt   call    #cache_read
-01d3c     1F 7E 0D F4 |                 testb   sstart0,#31 wz 
-01d40     08 6A 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
-01d44     01 76 45 A0 |         if_z    shr     pointer0h,#1
-01d48     1C 7E 0D F4 |                 testb   sstart0,#28 wz            
-01d4c     01 76 45 A0 |     	if_z    shr     pointer0h,#1    
-01d50     B5 7A 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
-01d54                 |               
-01d54     BD 6A 31 F9 | p411	      	getword spl,rawspl0,#0
-01d58     BD 94 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
-01d5c                 | 
-01d5c                 |          '    debug(uhex(pointer0h,pointer0,spl,oldspl))
-01d5c                 | 
-01d5c                 | 
-01d5c     BA E4 01 F6 | 		mov	envlo,pointer0
-01d60     12 E4 45 F0 | 		shr 	envlo,#18
-01d64                 | 	
-01d64     F2 6A 31 FA |             	scas    spl,envlo                   	' and do linear interpolation
-01d68     00 6A 01 F6 |             	mov 	spl,0-0
-01d6c     F2 E4 21 F6 |             	not     envlo
-01d70     1F 00 00 FF 
-01d74     FF E5 05 F5 |           	and     envlo,##$3FFF
-01d78     F2 94 31 FA |            	scas    oldspl,envlo
-01d7c     00 94 01 F6 |             	mov     oldspl,0-0
-01d80     CA 6A 01 F1 |                 add     spl, oldspl
-01d84                 | 	 
-01d84     F3 6A 31 FA | p406        	scas    spl, envs1
-01d88     00 6A 01 F6 |             	mov     spl,0-0
-01d8c     CC 6A 31 FA |             	scas    spl,avol0                 	' apply volume
-01d90     00 6A 01 F6 |             	mov     spl,0-0
+01ca4     0E B4 05 FC |             	wrpin   dac2,#left           	' PWM DACs at 44100@339 MHz
+01ca8     0E B8 15 FC |             	wxpin   sr44100,#left      	' 30*256
+01cac     0F B4 05 FC |             	wrpin   dac2,#right
+01cb0     0F B8 15 FC |             	wxpin   sr44100,#right    
+01cb4     41 9C 64 FD |             	dirh    #left addpins 1
+01cb8     20 9C 64 FD |             	setse1  #%001<<6 + left      	' Set the event - DAC empty
+01cbc                 |  
+01cbc                 |             
+01cbc                 | '---------------------------------------------------------------------------------        
+01cbc                 | '----------------- The main loop -------------------------------------------------
+01cbc                 | '---------------------------------------------------------------------------------
+01cbc                 | 
+01cbc     00 A2 05 F6 | loop       	mov 	    cn,#0 '15 '7
+01cc0                 |               					'   waitx ##3300000  		'for debug
+01cc0                 |             
+01cc0                 | '----------------------------------------------------------------------------------
+01cc0                 | '------------- Get parameters and execute commands if any -------------------------
+01cc0                 | '----------------------------------------------------------------------------------
+01cc0                 | 
+01cc0                 | 
+01cc0     D1 6A 01 F6 | p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
+01cc4     06 6A 65 F0 |             	shl     channeladd,#6
+01cc8     B5 F0 03 F1 |             	add     ptra,channeladd
+01ccc                 | 
+01ccc     28 1A 64 FD |             	setq    #13                       	' read parameters
+01cd0     00 79 05 FB |             	rdlong  pointer0,ptra
+01cd4     1F 8C 1D F4 | p408        	bitl    command0,#31 wcz	      	' bit #31 command - set the DAC sample rate
+01cd8     2C 00 90 3D |     	if_nc   jmp     #p404                     	' if not set, proceed
+01cdc     C6 6C 01 F6 |             	mov     qq,command0             	' get the new rate
+01ce0     4E 6C 15 FC |             	wxpin   qq,#left addpins 1        	' and program the pins
+01ce4     B6 6C E1 F8 |             	getbyte qq,qq,#0 		      	' check if the rate is n*256
+01ce8     00 6C 0D F2 |             	cmp     qq,#0 wz                         
+01cec     4E B4 05 AC |     	if_z    wrpin   dac2,#left addpins 1      	' if yes, set PWM DAC mode
+01cf0     4E B2 05 5C |     	if_nz   wrpin   dac,#left addpins 1       	' else set noise DAC mode
+01cf4                 |                 
+01cf4     1E 82 1D F4 |                	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+01cf8     00 78 05 A6 |     	if_z    mov     pointer0, #0  
+01cfc     00 7A 05 A6 |     	if_z    mov     pointer0h, #0  
+01d00     00 80 05 A6 |     	if_z    mov     envph0, #0  
+01d04     05 83 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+01d08                 |     	
+01d08     C1 6C 01 F6 | p404        	mov     qq,sstart0		     	' check if start>$80000
+01d0c     FF FF 03 FF 
+01d10     FF 6D 05 F5 | 		and 	qq,##$7FFFFFF 
+01d14     00 04 00 FF 
+01d18     00 6C 1D F2 |                 cmp 	qq,##$80000 wcz
+01d1c     B9 70 01 36 |     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
+01d20     00 70 05 C6 |     	if_lt   mov     mailbox,#0                	' if not, use HUB 
+01d24     36 04 64 FD |  debug(uhex(sstart0,mailbox))
+01d28     C4 9E 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
+01d2c     C4 9C 31 F9 |     	    	getword avol0,volpan0,#0
+01d30                 |     	    	
+01d30                 | '----------------------------------------------------------------------------------
+01d30                 | '------------- Compute the envelope, if exists ------------------------------------
+01d30                 | '----------------------------------------------------------------------------------
+01d30                 |             
+01d30     00 8E 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
+01d34     20 00 00 AF 
+01d38     00 EA 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
+01d3c     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
+01d40                 | 
+01d40     C8 80 01 F1 |            	add     envph0,envspd0			' envelope PA update
+01d44                 |            	           
+01d44     C0 E6 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
+01d48     06 E6 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
+01d4c     F3 E8 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
+01d50     10 E6 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
+01d54     C9 E6 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
+01d58                 | 	    											'debug(udec(envhi,envlen0))
+01d58     C9 E6 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
+01d5c     00 E8 05 36 |     	if_ge   mov     envlo,#0
+01d60     C9 80 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
+01d64     16 80 65 30 |     	if_ge   shl     envph0,#22
+01d68                 | 
+01d68     F3 EA 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
+01d6c     01 EA 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
+01d70     C7 EA 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
+01d74     F5 EA 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
+01d78     F5 EC 39 F9 |             	getword envs2,envs1,#1			' then separate them		
+01d7c     F5 EA 31 F9 |            	getword envs1,envs1,#0
+01d80     F4 EC 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
+01d84     F4 E8 21 F6 |             	not     envlo
+01d88     F4 EA 01 FA |             	mul     envs1,envlo
+01d8c     F6 EA 01 F1 |             	add     envs1,envs2
+01d90     12 EA 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
+01d94                 |               
+01d94                 | '----------------------------------------------------------------------------------
+01d94                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
+01d94                 | '----------------------------------------------------------------------------------
+01d94                 | 
+01d94                 | 
+01d94                 |     	
+01d94                 | '----------------------------------------------------------------------------------
+01d94                 | '------------- Get the sample -----------------------------------------------------
+01d94                 | '----------------------------------------------------------------------------------    	
 01d94                 |  
-01d94     CD 6A 31 FA |             	scas    spl,apan0                 	' apply pan
-01d98     00 A0 01 F6 |             	mov     ls0,0-0
-01d9c     20 00 00 FF 
-01da0     00 68 05 F6 |             	mov     qq,##16384
-01da4     CD 68 81 F1 |             	sub     qq,apan0
-01da8     B4 6A 31 FA |             	scas    spl,qq
-01dac     00 A2 01 F6 |             	mov     rs0, 0-0
-01db0                 |       
-01db0     D1 78 29 F9 |                 setword sample0,rs0,#1           	' pack samples into long
-01db4     D0 78 21 F9 |                 setword sample0,ls0,#0
-01db8                 |                 
-01db8     D0 70 01 F1 |                 add  lsample,ls0
-01dbc     D1 72 01 F1 |                 add  rsample,rs0
-01dc0                 |              
-01dc0     1E 7E 1D F4 |             	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
-01dc4     00 74 05 A6 |     	if_z    mov     pointer0, #0  
-01dc8     00 76 05 A6 |     	if_z    mov     pointer0h, #0  
-01dcc     00 7C 05 A6 |     	if_z    mov     envph0, #0  
-01dd0     05 7F 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
-01dd4                 |             
-01dd4     28 08 64 FD | p403        	setq #4                          	' write new pointer, sample values and env pointer to the hub
-01dd8     00 75 65 FC | 	       	wrlong  pointer0,ptra
-01ddc     B3 F0 83 F1 |             	sub     ptra, channeladd         	' reset the pointer to channel parameters
-01de0                 | 
-01de0     87 9F 7D FB |             	djnf    cn, #p401
-01de4                 | 
-01de4     0F 72 E5 F4 |             	bitnot rsample, #15
-01de8     0F 70 E5 F4 |             	bitnot lsample, #15
-01dec                 |   							'           	getct ct2  	'debug
-01dec                 |   							'          	sub ct2,ct1
-01dec                 |   							'          	debug(udec(ct2))
-01dec     24 28 60 FD |             	waitse1
-01df0                 |           
-01df0     0E 70 25 FC |            	wypin   lsample, #left              
-01df4     0F 72 25 FC |                 wypin   rsample, #right        
-01df8                 | 
-01df8     B8 A4 21 F9 | 		setword oldsample, lsample,#0		' for oscilloscope
-01dfc     B9 A4 29 F9 | 		setword oldsample, rsample,#1
-01e00                 | 		
-01e00     00 72 05 F6 |             	mov rsample, #0
-01e04     00 70 05 F6 |             	mov lsample, #0
-01e08                 | 
-01e08                 | '----------------------------------------------------------------------------------
-01e08                 | '------------- Oscilloscope  -----------------------------------------------------
-01e08                 | '----------------------------------------------------------------------------------   
-01e08                 | 		
-01e08     00 A6 0D F2 | 	    	cmp     scbase,#0 wz
-01e0c     20 00 90 AD |     	if_z    jmp #p302	   
-01e10                 |  
-01e10     01 AC 15 F7 |             	incmod  scope,#1 wc            		'  todo: scope speed instead of const  
-01e14     D4 AA 01 C6 |     	if_c    mov scptr2,scptr
-01e18     02 AA 65 C0 |     	if_c    shl scptr2,#2
-01e1c     D3 AA 01 C1 |     	if_c    add scptr2,scbase     
-01e20     60 AA 65 FC |             	wrlong scptr2,#$60
-01e24     D5 A4 61 CC |     	if_c    wrlong oldsample,scptr2
-01e28     01 00 00 CF 
-01e2c     7F A8 05 C7 |     	if_c    incmod scptr,##639
-01e30                 |             
-01e30     C8 FD 9F FD |  p302           jmp     #loop            'loop
-01e34                 | 
-01e34                 | '----------------------------------------------------------------------------------
-01e34                 | '------------- This is the end of the main loop -----------------------------------
-01e34                 | '----------------------------------------------------------------------------------
-01e34                 | 
-01e34                 | '----------------------------------------------------------------------------------
-01e34                 | '------------- PSRAM cache ----------- --------------------------------------------
-01e34                 | '----------------------------------------------------------------------------------
-01e34                 | 
-01e34                 | ' There are 16 cache pointers for 16 channels
-01e34                 | ' if 24 higher bits of address=cache, then get a word from the cache
-01e34                 | ' else load the cache from PSRAM, update the pointer, then read a sample
-01e34                 | 
-01e34                 | 
-01e34     B4 DC E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
-01e38                 |             
-01e38     B4 DE 01 F6 | 	   	mov     addrhi,qq		
-01e3c     08 DE 45 F0 | 	    	shr     addrhi,#8		        ' get 24 upper bits
-01e40     DB 9E 95 F9 | 	    	alts    cn,#cache1            
-01e44     00 DE 09 F2 | 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
-01e48     34 00 90 AD |     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
-01e4c                 | 	
-01e4c     DB 9E 8D F9 | p702	    	altd    cn,#cache1			' cache miss. 
-01e50     EF 00 00 F6 | 	    	mov     0-0,addrhi                  	' update the pointer
-01e54     EF D6 01 F6 | 	    	mov     cmd,addrhi			' prepare the mailbox
-01e58     08 D6 65 F0 | 	    	shl     cmd,#8
-01e5c     0B D6 3D F8 |             	setnib  cmd, #%1011, #7             	' read burst from the external memory
-01e60     CF D8 01 F6 |             	mov     hubaddr,cn                  	' to the channel cache
-01e64     08 D8 65 F0 |             	shl     hubaddr,#8                  	'
-01e68     D9 D8 01 F1 |             	add     hubaddr,hubptr 
-01e6c     00 DB 05 F6 |             	mov     count,#256                  	' 256 bytes
-01e70     28 04 64 FD |             	setq    #2                          	' write 3 longs
-01e74     B6 D6 61 FC |             	wrlong  cmd, mailbox                	' run it
-01e78     B6 D6 01 FB | poll1       	rdlong  cmd, mailbox                	' poll mailbox for result
-01e7c     FE D7 B5 FB |             	tjs     cmd, #poll1                 	' retry until valid 
-01e80                 |             
-01e80                 | 	
-01e80     CF 68 01 F6 | p701	    	mov     qq,cn				' cache hit
-01e84     08 68 65 F0 | 	    	shl     qq,#8				' compute the cache start
-01e88     D9 68 01 F1 | 	    	add     qq,hubptr
-01e8c     EE 68 01 F1 | 	    	add	qq,addrlo			' add 8 lower bits to the cache addredd
-01e90     B4 6A E1 0A |     	_ret_   rdword  spl,qq                      	' read a long from the cache
-01e94                 |           
-01e94                 |   
-01e94                 | 
-01e94                 | 
-01e94                 | '---------------------------------------------------------------------------
-01e94                 | '------- Variables ---------------------------------------------------------
-01e94                 | '---------------------------------------------------------------------------
-01e94                 | 
-01e94                 | ' constants
-01e94                 | 
-01e94     00 00 00 00 | channeladd 	long 0
-01e98                 | 
-01e98                 | ' temporary variables 
-01e98                 | 
-01e98     00 00 00 00 | qq          	long 0
-01e9c     00 00 00 00 | spl         	long 0
-01ea0     00 00 00 00 | mailbox     	long 0
-01ea4     00 00 00 00 | mailbox2    	long 0
-01ea8     00 00 00 00 | lsample     	long 0
-01eac     00 00 00 00 | rsample     	long 0
-01eb0                 | 
-01eb0                 | ' channel parameter block
-01eb0                 | 
-01eb0     00 00 00 00 | pointer0    	long 0   
-01eb4     00 00 00 00 | pointer0h   	long 0  
-01eb8     00 00 00 00 | sample0     	long 0
-01ebc     00 00 00 00 | rawspl0	    	long 0
-01ec0     00 00 00 00 | envph0	    	long 0
-01ec4     00 00 00 00 | sstart0     	long 0     ' start pointer and type at bit 31
-01ec8     00 00 00 00 | lstart0     	long 0
-01ecc     00 00 00 00 | lend0       	long 0
-01ed0     00 00 00 00 | volpan0     	long 0
-01ed4     00 00 00 00 | freqskip0   	long 0
-01ed8     00 00 00 00 | command0    	long 0
-01edc     00 00 00 00 | envptr0	    	long 0
-01ee0     00 00 00 00 | envspd0	    	long 0
-01ee4     00 00 00 00 | envlen0	    	long 0
-01ee8     00 00 00 00 | res5	    	long 0
-01eec     00 00 00 00 | res6	    	long 0
-01ef0                 | 
-01ef0     00 00 00 00 | oldspl		long 0
-01ef4     00 00 00 00 | afreq0      	long 0
+01d94     BD A0 01 F6 | p410  		mov	oldptrh,pointer0h
+01d98     C5 9A F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
+01d9c     08 8A 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
+01da0     C5 78 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
+01da4     CD 7A 21 F1 |            	addx	pointer0h,afreq0  
+01da8                 |           	
+01da8     1B 82 0D F4 |    	   	testb   sstart0, #27 wz
+01dac     10 00 90 5D |     	if_nz	jmp #p412   	
+01db0     1B 6E 61 CD |    	if_c  	getrnd  spl
+01db4     B7 7E 41 C9 |    	if_c	rolword rawspl0,spl,#0	
+01db8     BF 6E 31 F9 |    		getword spl,rawspl0,#0
+01dbc     88 00 90 FD |       	        jmp     #p406          	
+01dc0                 |            	
+01dc0                 |            	
+01dc0     D0 7A 19 F2 | p412 		cmp	pointer0h,oldptrh wcz
+01dc4     50 00 90 AD |  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
+01dc8                 |      	
+01dc8     1F 82 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
+01dcc     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
+01dd0     1C 82 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
+01dd4     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
+01dd8                 | 												
+01dd8     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+01ddc     C3 7A 81 31 |    	if_ge   sub     pointer0h,lend0       
+01de0     C2 7A 01 31 |         if_ge   add     pointer0h,lstart0
+01de4     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+01de8     C3 7A 01 36 |         if_ge   mov	pointer0h,lend0	
+01dec                 |  
+01dec     BD 6C 01 F6 |              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
+01df0     C1 6C 01 F1 |            	add     qq,sstart0            
+01df4     FF 71 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
+01df8     B6 6E E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
+01dfc     F8 00 B0 1D |     	if_gt   call    #cache_read
+01e00     1F 82 0D F4 |                 testb   sstart0,#31 wz 
+01e04     08 6E 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
+01e08     01 7A 45 A0 |         if_z    shr     pointer0h,#1
+01e0c     1C 82 0D F4 |                 testb   sstart0,#28 wz            
+01e10     01 7A 45 A0 |     	if_z    shr     pointer0h,#1    
+01e14     B7 7E 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
+01e18                 |               
+01e18     BF 6E 31 F9 | p411	      	getword spl,rawspl0,#0
+01e1c     BF 98 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
+01e20                 | 
+01e20                 |           '  debug(uhex(pointer0h,pointer0,spl,oldspl))
+01e20                 | 
+01e20                 | 
+01e20     BC E8 01 F6 | 		mov	envlo,pointer0
+01e24     12 E8 45 F0 | 		shr 	envlo,#18
+01e28                 | 	
+01e28     F4 6E 31 FA |             	scas    spl,envlo                   	' and do linear interpolation
+01e2c     00 6E 01 F6 |             	mov 	spl,0-0
+01e30     F4 E8 21 F6 |             	not     envlo
+01e34     1F 00 00 FF 
+01e38     FF E9 05 F5 |           	and     envlo,##$3FFF
+01e3c     F4 98 31 FA |            	scas    oldspl,envlo
+01e40     00 98 01 F6 |             	mov     oldspl,0-0
+01e44     CC 6E 01 F1 |                 add     spl, oldspl
+01e48                 | 	 
+01e48     F5 6E 31 FA | p406        	scas    spl, envs1
+01e4c     00 6E 01 F6 |             	mov     spl,0-0
+01e50     CE 6E 31 FA |             	scas    spl,avol0                 	' apply volume
+01e54     00 6E 01 F6 |             	mov     spl,0-0
+01e58                 |  
+01e58     CF 6E 31 FA |             	scas    spl,apan0                 	' apply pan
+01e5c     00 A4 01 F6 |             	mov     ls0,0-0
+01e60     20 00 00 FF 
+01e64     00 6C 05 F6 |             	mov     qq,##16384
+01e68     CF 6C 81 F1 |             	sub     qq,apan0
+01e6c     B6 6E 31 FA |             	scas    spl,qq
+01e70     00 A6 01 F6 |             	mov     rs0, 0-0
+01e74                 |       
+01e74     D3 7C 29 F9 |                 setword sample0,rs0,#1           	' pack samples into long
+01e78     D2 7C 21 F9 |                 setword sample0,ls0,#0
+01e7c                 |                 
+01e7c     D2 74 01 F1 |                 add  lsample,ls0
+01e80     D3 76 01 F1 |                 add  rsample,rs0
+01e84                 |              
+01e84     1E 82 1D F4 |             	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+01e88     00 78 05 A6 |     	if_z    mov     pointer0, #0  
+01e8c     00 7A 05 A6 |     	if_z    mov     pointer0h, #0  
+01e90     00 80 05 A6 |     	if_z    mov     envph0, #0  
+01e94     05 83 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+01e98                 |             
+01e98     28 08 64 FD | p403        	setq #4                          	' write new pointer, sample values and env pointer to the hub
+01e9c     00 79 65 FC | 	       	wrlong  pointer0,ptra
+01ea0     B5 F0 83 F1 |             	sub     ptra, channeladd         	' reset the pointer to channel parameters
+01ea4                 | 
+01ea4     86 A3 7D FB |             	djnf    cn, #p401
+01ea8                 | 
+01ea8     0F 76 E5 F4 |             	bitnot rsample, #15
+01eac     0F 74 E5 F4 |             	bitnot lsample, #15
+01eb0                 |   							'           	getct ct2  	'debug
+01eb0                 |   							'          	sub ct2,ct1
+01eb0                 |   							'          	debug(udec(ct2))
+01eb0     24 28 60 FD |             	waitse1
+01eb4                 |           
+01eb4     0E 74 25 FC |            	wypin   lsample, #left              
+01eb8     0F 76 25 FC |                 wypin   rsample, #right        
+01ebc                 | 
+01ebc     BA A8 21 F9 | 		setword oldsample, lsample,#0		' for oscilloscope
+01ec0     BB A8 29 F9 | 		setword oldsample, rsample,#1
+01ec4                 | 		
+01ec4     00 76 05 F6 |             	mov rsample, #0
+01ec8     00 74 05 F6 |             	mov lsample, #0
+01ecc                 | 
+01ecc                 | '----------------------------------------------------------------------------------
+01ecc                 | '------------- Oscilloscope  -----------------------------------------------------
+01ecc                 | '----------------------------------------------------------------------------------   
+01ecc                 | 		
+01ecc     00 AA 0D F2 | 	    	cmp     scbase,#0 wz
+01ed0     20 00 90 AD |     	if_z    jmp #p302	   
+01ed4                 |  
+01ed4     01 B0 15 F7 |             	incmod  scope,#1 wc            		'  todo: scope speed instead of const  
+01ed8     D6 AE 01 C6 |     	if_c    mov scptr2,scptr
+01edc     02 AE 65 C0 |     	if_c    shl scptr2,#2
+01ee0     D5 AE 01 C1 |     	if_c    add scptr2,scbase     
+01ee4     60 AE 65 FC |             	wrlong scptr2,#$60
+01ee8     D7 A8 61 CC |     	if_c    wrlong oldsample,scptr2
+01eec     01 00 00 CF 
+01ef0     7F AC 05 C7 |     	if_c    incmod scptr,##639
+01ef4                 |             
+01ef4     C4 FD 9F FD |  p302           jmp     #loop            'loop
 01ef8                 | 
-01ef8     00 00 00 00 | avol0       	long 0
-01efc     00 00 00 00 | apan0       	long 0
-01f00     00 00 00 00 | oldptrh	    	long 0
-01f04     00 00 00 00 | cn          	long 0
-01f08                 | 
-01f08                 | ' Samples
-01f08                 | 
-01f08     00 00 00 00 | ls0         	long 0
-01f0c     00 00 00 00 | rs0         	long 0
-01f10                 | 
-01f10     00 00 00 00 | oldsample   	long 0
-01f14                 | 
-01f14     00 00 00 00 | scbase 		long 0
-01f18     00 00 00 00 | scptr 		long 0
-01f1c     00 00 00 00 | scptr2		long 0
-01f20     00 00 00 00 | scope 		long 0
-01f24                 | 
-01f24     44 00 17 00 | dac         	long %10111_00000000_01_00010_0     	'random dither
-01f28     46 00 17 00 | dac2        	long %10111_00000000_01_00011_0     	'pwm
-01f2c                 | 
-01f2c     00 18 07 00 | hubptr      	long $71800
-01f30     00 1E 00 00 | sr44100     	long 30*256
-01f34                 | 
-01f34     00 00 00 00 | cache1      	long 0
-01f38     00 00 00 00 | cache2      	long 0
-01f3c     00 00 00 00 | cache3      	long 0
-01f40     00 00 00 00 | cache4      	long 0
-01f44     00 00 00 00 | cache5      	long 0
-01f48     00 00 00 00 | cache6      	long 0
-01f4c     00 00 00 00 | cache7      	long 0
-01f50     00 00 00 00 | cache8      	long 0
-01f54     00 00 00 00 | cache9      	long 0
-01f58     00 00 00 00 | cachea      	long 0
-01f5c     00 00 00 00 | cacheb      	long 0
-01f60     00 00 00 00 | cachec      	long 0
-01f64     00 00 00 00 | cached      	long 0
-01f68     00 00 00 00 | cachee      	long 0
-01f6c     00 00 00 00 | cachef      	long 0
-01f70     00 00 00 00 | cache0      	long 0
-01f74                 | 
-01f74     00 00 00 00 | cmd         	long 0
-01f78     00 00 00 00 | hubaddr    	long 0
-01f7c     00 01 00 00 | count       	long 256
-01f80                 | 
-01f80     00 00 00 00 | addrlo 		long 0
-01f84     00 00 00 00 | addrhi 		long 0
-01f88     00 00 00 00 | pointer00 	long 0
-01f8c     00 00 00 00 | envhi 		long 0
-01f90     00 00 00 00 | envlo 		long 0
-01f94     00 00 00 00 | envs1 		long 0
-01f98     00 00 00 00 | envs2 		long 0
-01f9c     00 00 00 00 | noise0 		long 0
-01fa0                 | 
-01fa0                 | 'ct1 		long 0
-01fa0                 | 'ct2 		long 0
-01fa0                 | 
-01fa0                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
-01fa0                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
-01fa0     00 00 00 00 
-01fa4     00 00 00 00 | null  			long 	0,0           ' for channel reset
-01fa8                 | objmem
-01fa8     00 00 00 00 
+01ef8                 | '----------------------------------------------------------------------------------
+01ef8                 | '------------- This is the end of the main loop -----------------------------------
+01ef8                 | '----------------------------------------------------------------------------------
+01ef8                 | 
+01ef8                 | '----------------------------------------------------------------------------------
+01ef8                 | '------------- PSRAM cache ----------- --------------------------------------------
+01ef8                 | '----------------------------------------------------------------------------------
+01ef8                 | 
+01ef8                 | ' There are 16 cache pointers for 16 channels
+01ef8                 | ' if 24 higher bits of address=cache, then get a word from the cache
+01ef8                 | ' else load the cache from PSRAM, update the pointer, then read a sample
+01ef8                 | 
+01ef8                 | 
+01ef8     B6 E0 E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
+01efc     36 06 64 FD |             debug ("cache")
+01f00     B6 E2 01 F6 | 	   	mov     addrhi,qq		
+01f04     08 E2 45 F0 | 	    	shr     addrhi,#8		        ' get 24 upper bits
+01f08     DD A2 95 F9 | 	    	alts    cn,#cache1            
+01f0c     00 E2 09 F2 | 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
+01f10     34 00 90 AD |     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+01f14                 | 	
+01f14     DD A2 8D F9 | p702	    	altd    cn,#cache1			' cache miss. 
+01f18     F1 00 00 F6 | 	    	mov     0-0,addrhi                  	' update the pointer
+01f1c     F1 DA 01 F6 | 	    	mov     cmd,addrhi			' prepare the mailbox
+01f20     08 DA 65 F0 | 	    	shl     cmd,#8
+01f24     0B DA 3D F8 |             	setnib  cmd, #%1011, #7             	' read burst from the external memory
+01f28     D1 DC 01 F6 |             	mov     hubaddr,cn                  	' to the channel cache
+01f2c     08 DC 65 F0 |             	shl     hubaddr,#8                  	'
+01f30     DB DC 01 F1 |             	add     hubaddr,hubptr 
+01f34     00 DF 05 F6 |             	mov     count,#256                  	' 256 bytes
+01f38     28 04 64 FD |             	setq    #2                          	' write 3 longs
+01f3c     B8 DA 61 FC |             	wrlong  cmd, mailbox                	' run it
+01f40     B8 DA 01 FB | poll1       	rdlong  cmd, mailbox                	' poll mailbox for result
+01f44     FE DB B5 FB |             	tjs     cmd, #poll1                 	' retry until valid 
+01f48                 |             
+01f48                 | 	
+01f48     D1 6C 01 F6 | p701	    	mov     qq,cn				' cache hit
+01f4c     08 6C 65 F0 | 	    	shl     qq,#8				' compute the cache start
+01f50     DB 6C 01 F1 | 	    	add     qq,hubptr
+01f54     F0 6C 01 F1 | 	    	add	qq,addrlo			' add 8 lower bits to the cache addredd
+01f58     B6 6E E1 0A |     	_ret_   rdword  spl,qq                      	' read a long from the cache
+01f5c                 |           
+01f5c                 |   
+01f5c                 | 
+01f5c                 | 
+01f5c                 | '---------------------------------------------------------------------------
+01f5c                 | '------- Variables ---------------------------------------------------------
+01f5c                 | '---------------------------------------------------------------------------
+01f5c                 | 
+01f5c                 | ' constants
+01f5c                 | 
+01f5c     00 00 00 00 | channeladd 	long 0
+01f60                 | 
+01f60                 | ' temporary variables 
+01f60                 | 
+01f60     00 00 00 00 | qq          	long 0
+01f64     00 00 00 00 | spl         	long 0
+01f68     00 00 00 00 | mailbox     	long 0
+01f6c     00 00 00 00 | mailbox2    	long 0
+01f70     00 00 00 00 | lsample     	long 0
+01f74     00 00 00 00 | rsample     	long 0
+01f78                 | 
+01f78                 | ' channel parameter block
+01f78                 | 
+01f78     00 00 00 00 | pointer0    	long 0   
+01f7c     00 00 00 00 | pointer0h   	long 0  
+01f80     00 00 00 00 | sample0     	long 0
+01f84     00 00 00 00 | rawspl0	    	long 0
+01f88     00 00 00 00 | envph0	    	long 0
+01f8c     00 00 00 00 | sstart0     	long 0     ' start pointer and type at bit 31
+01f90     00 00 00 00 | lstart0     	long 0
+01f94     00 00 00 00 | lend0       	long 0
+01f98     00 00 00 00 | volpan0     	long 0
+01f9c     00 00 00 00 | freqskip0   	long 0
+01fa0     00 00 00 00 | command0    	long 0
+01fa4     00 00 00 00 | envptr0	    	long 0
+01fa8     00 00 00 00 | envspd0	    	long 0
+01fac     00 00 00 00 | envlen0	    	long 0
+01fb0     00 00 00 00 | res5	    	long 0
+01fb4     00 00 00 00 | res6	    	long 0
+01fb8                 | 
+01fb8     00 00 00 00 | oldspl		long 0
+01fbc     00 00 00 00 | afreq0      	long 0
+01fc0                 | 
+01fc0     00 00 00 00 | avol0       	long 0
+01fc4     00 00 00 00 | apan0       	long 0
+01fc8     00 00 00 00 | oldptrh	    	long 0
+01fcc     00 00 00 00 | cn          	long 0
+01fd0                 | 
+01fd0                 | ' Samples
+01fd0                 | 
+01fd0     00 00 00 00 | ls0         	long 0
+01fd4     00 00 00 00 | rs0         	long 0
+01fd8                 | 
+01fd8     00 00 00 00 | oldsample   	long 0
+01fdc                 | 
+01fdc     00 00 00 00 | scbase 		long 0
+01fe0     00 00 00 00 | scptr 		long 0
+01fe4     00 00 00 00 | scptr2		long 0
+01fe8     00 00 00 00 | scope 		long 0
+01fec                 | 
+01fec     44 00 17 00 | dac         	long %10111_00000000_01_00010_0     	'random dither
+01ff0     46 00 17 00 | dac2        	long %10111_00000000_01_00011_0     	'pwm
+01ff4                 | 
+01ff4     00 18 07 00 | hubptr      	long $71800
+01ff8     00 1E 00 00 | sr44100     	long 30*256
+01ffc                 | 
+01ffc     00 00 00 00 | cache1      	long 0
+02000     00 00 00 00 | cache2      	long 0
+02004     00 00 00 00 | cache3      	long 0
+02008     00 00 00 00 | cache4      	long 0
+0200c     00 00 00 00 | cache5      	long 0
+02010     00 00 00 00 | cache6      	long 0
+02014     00 00 00 00 | cache7      	long 0
+02018     00 00 00 00 | cache8      	long 0
+0201c     00 00 00 00 | cache9      	long 0
+02020     00 00 00 00 | cachea      	long 0
+02024     00 00 00 00 | cacheb      	long 0
+02028     00 00 00 00 | cachec      	long 0
+0202c     00 00 00 00 | cached      	long 0
+02030     00 00 00 00 | cachee      	long 0
+02034     00 00 00 00 | cachef      	long 0
+02038     00 00 00 00 | cache0      	long 0
+0203c                 | 
+0203c     00 00 00 00 | cmd         	long 0
+02040     00 00 00 00 | hubaddr    	long 0
+02044     00 01 00 00 | count       	long 256
+02048                 | 
+02048     00 00 00 00 | addrlo 		long 0
+0204c     00 00 00 00 | addrhi 		long 0
+02050     00 00 00 00 | pointer00 	long 0
+02054     00 00 00 00 | envhi 		long 0
+02058     00 00 00 00 | envlo 		long 0
+0205c     00 00 00 00 | envs1 		long 0
+02060     00 00 00 00 | envs2 		long 0
+02064     00 00 00 00 | noise0 		long 0
+02068                 | 
+02068                 | 'ct1 		long 0
+02068                 | 'ct2 		long 0
+02068                 | 
+02068                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
+02068                 | 		fit 256		'todo: maybe the better interpolation. Or all params in cog
+02068     00 00 00 00 
+0206c     00 00 00 00 | null  			long 	0,0           ' for channel reset
+02070                 | 	alignl
+02070                 | _psram_dat_
+02070     00 00 00 00 
       ...             
-02510     00 00 00 00 
-02514     00 00 00 00 | 	long	0[348]
-02518                 | stackspace
-02518     00 00 00 00 | 	long	0[1]
-0251c 102             | 	org	COG_BSS_START
-0251c 102             | _var01
-0251c 102             | 	res	1
-0251c 103             | _var02
-0251c 103             | 	res	1
-0251c 104             | _var03
-0251c 104             | 	res	1
-0251c 105             | arg01
-0251c 105             | 	res	1
-0251c 106             | arg02
-0251c 106             | 	res	1
-0251c 107             | arg03
-0251c 107             | 	res	1
-0251c 108             | arg04
-0251c 108             | 	res	1
-0251c 109             | arg05
-0251c 109             | 	res	1
-0251c 10a             | arg06
-0251c 10a             | 	res	1
-0251c 10b             | arg07
-0251c 10b             | 	res	1
-0251c 10c             | arg08
-0251c 10c             | 	res	1
-0251c 10d             | arg09
-0251c 10d             | 	res	1
-0251c 10e             | local01
-0251c 10e             | 	res	1
-0251c 10f             | local02
-0251c 10f             | 	res	1
-0251c 110             | local03
-0251c 110             | 	res	1
-0251c 111             | local04
-0251c 111             | 	res	1
-0251c 112             | local05
-0251c 112             | 	res	1
-0251c 113             | local06
-0251c 113             | 	res	1
-0251c 114             | local07
-0251c 114             | 	res	1
-0251c 115             | local08
-0251c 115             | 	res	1
-0251c 116             | local09
-0251c 116             | 	res	1
-0251c 117             | local10
-0251c 117             | 	res	1
-0251c 118             | local11
-0251c 118             | 	res	1
-0251c 119             | 	fit	480
-0251c 119             | 
+02168     00 00 00 00 
+0216c     00 00 00 00 |     listdata long 0[8*8]
+02170                 |             orgh
+02170                 | 
+02170                 | ' driver state
+02170     FF FF FF FF | drivercog   long    -1  ' COG id of driver
+02174     FF FF FF FF | driverlock  long    -1  ' LOCK id of driver
+02178                 | 
+02178                 | ' delay profile
+02178     07 00 00 00 
+0217c     00 CF 7B 05 
+02180     80 D1 F0 08 
+02184     80 4F 47 0C | delayTable  long    7,92_000000,150_000000,206_000000,258_000000,310_000000,333_000000,0
+02188     80 C4 60 0F 
+0218c     80 39 7A 12 
+02190     40 2D D9 13 
+02194     00 00 00 00 | 	byte	$80, $c4, $60, $0f, $80, $39, $7a, $12, $40, $2d, $d9, $13, $00, $00, $00, $00
+02198                 | 
+02198                 | ' data to be passed to driver when starting it
+02198                 | startupData
+02198     00 00 00 00 |     long    0           ' current frequency
+0219c     00 00 00 00 |     long    FLAGS       ' optional flags for driver
+021a0     00 00 00 00 |     long    0           ' reset pin mask on port A for PSRAM (none)
+021a4     00 00 00 00 |     long    0           ' reset pin mask on port B for PSRAM (none)
+021a8     28 00 00 00 |     long    DATABUS     ' PSRAM data bus start pin
+021ac     B8 21 00 00 |     long    deviceData  ' address of devices data structure in HUBRAM
+021b0     38 22 00 00 |     long    qosData     ' address of QoS data structure in HUBRAM
+021b4     58 22 00 00 |     long    mailboxes   ' address of mailbox structure in HUBRAM
+021b8                 | 
+021b8                 | ' data for memory
+021b8                 | deviceData
+021b8                 |     ' 16 bank parameters follow (16MB per bank)
+021b8     00 00 00 00 
+      ...             
+021f0     00 00 00 00 
+021f4     00 00 00 00 |     long    0[16]                               ' banks 0-15
+021f8                 |     ' 16 banks of pin parameters follow
+021f8     39 38 00 00 |     long    (CLK_PIN << 8) | CE_PIN             ' bank 0 
+021fc     39 38 00 00 |     long    (CLK_PIN << 8) | CE_PIN             ' bank 1 
+02200     FF FF FF FF 
+      ...             
+02230     FF FF FF FF 
+02234     FF FF FF FF |     long    -1[14]                              ' banks 2-15
+02238                 | 
+02238                 | ' data for COG polling
+02238                 | qosData 
+02238     00 00 FF FF 
+0223c     00 00 FF FF 
+02240     00 00 FF FF 
+02244     00 00 FF FF |     long    $FFFF0000[8]    ' cog 0-7 default QoS parameters
+02248     00 00 FF FF 
+0224c     00 00 FF FF 
+02250     00 00 FF FF 
+02254     00 00 FF FF | 	byte	$00, $00, $ff, $ff, $00, $00, $ff, $ff, $00, $00, $ff, $ff, $00, $00, $ff, $ff
+02258                 |     
+02258                 | ' mailbox storage
+02258                 | 
+02258                 | mailboxes
+02258     00 00 00 00 
+      ...             
+022b0     00 00 00 00 
+022b4     00 00 00 00 |     long    0[8*3]          ' 3 longs per mailbox per COG
+022b8                 | objmem
+022b8     00 00 00 00 
+      ...             
+02820     00 00 00 00 
+02824     00 00 00 00 | 	long	0[348]
+02828                 | stackspace
+02828     00 00 00 00 | 	long	0[1]
+0282c 103             | 	org	COG_BSS_START
+0282c 103             | _var01
+0282c 103             | 	res	1
+0282c 104             | _var02
+0282c 104             | 	res	1
+0282c 105             | _var03
+0282c 105             | 	res	1
+0282c 106             | arg01
+0282c 106             | 	res	1
+0282c 107             | arg02
+0282c 107             | 	res	1
+0282c 108             | arg03
+0282c 108             | 	res	1
+0282c 109             | arg04
+0282c 109             | 	res	1
+0282c 10a             | arg05
+0282c 10a             | 	res	1
+0282c 10b             | arg06
+0282c 10b             | 	res	1
+0282c 10c             | arg07
+0282c 10c             | 	res	1
+0282c 10d             | arg08
+0282c 10d             | 	res	1
+0282c 10e             | arg09
+0282c 10e             | 	res	1
+0282c 10f             | local01
+0282c 10f             | 	res	1
+0282c 110             | local02
+0282c 110             | 	res	1
+0282c 111             | local03
+0282c 111             | 	res	1
+0282c 112             | local04
+0282c 112             | 	res	1
+0282c 113             | local05
+0282c 113             | 	res	1
+0282c 114             | local06
+0282c 114             | 	res	1
+0282c 115             | local07
+0282c 115             | 	res	1
+0282c 116             | local08
+0282c 116             | 	res	1
+0282c 117             | local09
+0282c 117             | 	res	1
+0282c 118             | local10
+0282c 118             | 	res	1
+0282c 119             | local11
+0282c 119             | 	res	1
+0282c 11a             | 	fit	480
+0282c 11a             | 
