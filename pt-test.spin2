@@ -11,7 +11,7 @@ obj
 audio:"audio2-004.spin2"
 psram:"psram.spin2"
 var
-
+long pscog,mail
 word sample[2]
 
 pub drivertest()   : cog,base,i,j
@@ -24,8 +24,12 @@ repeat i from $40000 to $407FF step 2
 repeat i from $41000 to $411FF step 2
   j:=@envelope+((i-$41000)>>1)+16
   word[i]:=byte[j]<<8
+  
+pscog,mail:=psram.startx(0, 1024, 11, 7) 
+debug(uhex(mail)) 
 psram.write($40000,$100000,2048)  
-cog, base:=audio.start(0,$60000,$61000)
+cog, base:=audio.start(mail,$60000,$68000)
+waitms(100)
 'debug(udec(cog,base))
 
 {{Channel registers:
@@ -60,26 +64,14 @@ long #14..15 reserved, unused
 
 ' tell it to play
 
-{{repeat i from 0 to 15 
-  long[base+24+64*i]:=0                ' loop start point
-  long[base+28+64*i]:=$800              '
-  word[base+32+64*i]:=0                ' max volume
-  long[base+20+64*i]:=$C0040000        ' sample pointer
-  long[base+36+64*i]:=$100000
-  long[base+44+64*i]:=$41000
-  long[base+48+64*i]:=$8000
-  long[base+52+64*i]:=256
-}}
 
-sample[0]:=-32767
-sample[1]:=32767'
-''audio.beep(0,@sample ,4408,4096,4,0,0) 
 
 'repeat i from 1 to 10000
 '  audio.play(0,i,10,4096,$08000000,0,0)
 
-audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
-repeat
+'audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+'audio.play(0,c4*1000,200,4096,$40000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 
+'repeat
 
 repeat
    audio.play(0,c4*1000,200,4096,$100000,$41000,600) ' (channel, frequency, delay, volume, waveform, envelope, length, pan, sustain) 

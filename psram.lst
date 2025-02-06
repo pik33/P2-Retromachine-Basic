@@ -1,0 +1,1866 @@
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/psram.p2asm"
+00000                 | con
+00000                 | 	_clkfreq = 20000000
+00000                 | 	_clkmode = 16779595
+00000                 | ' 
+00000                 | '   mailbox=$7FF00 
+00000                 | 	mailbox = 524032
+00000                 | ' 
+00000                 | ' 
+00000                 | ' 
+00000                 | '        
+00000                 | '     ' P2 EDGE with PSRAM pin mappings (P2-EC32MB)
+00000                 | '     DATABUS  = 40
+00000                 | 	DATABUS = 40
+00000                 | '     CLK_PIN  = 56
+00000                 | 	CLK_PIN = 56
+00000                 | '     CE_PIN   = 57
+00000                 | 	CE_PIN = 57
+00000                 | ' 
+00000                 | '     ' number of address bits used in 32MB of PSRAM
+00000                 | '     ADDRSIZE = 25   
+00000                 | 	ADDRSIZE = 25
+00000                 | ' 
+00000                 | '     ' 8 microsecond CS low time
+00000                 | '     MAX_CS_LOW_USEC = 8
+00000                 | 	MAX_CS_LOW_USEC = 8
+00000                 | ' 
+00000                 | '     ' optional FLAGS for driver
+00000                 | '     FLAGS = 0
+00000                 | 	FLAGS = 0
+00000                 | '     
+00000                 | '     ' These error codes are compatible with the larger, complete driver
+00000                 | '     ERR_INVALID      =  -6 ' invalid arguments
+00000                 | 	ERR_INVALID = -6
+00000                 | '     ERR_TOO_SLOW     = -14 ' can't send sufficient data at this P2 clock speed
+00000                 | 	ERR_TOO_SLOW = -14
+00000                 | '     ERR_INACTIVE     = -15 ' driver is not running
+00000                 | 	ERR_INACTIVE = -15
+00000                 | '     ERR_ABORTED      = -16 ' driver was shutdown
+00000                 | 	ERR_ABORTED = -16
+00000                 | '     ERR_NO_LOCK      = -26 ' no LOCK available for driver
+00000                 | 	ERR_NO_LOCK = -26
+00000                 | '     ERR_MAILBOX_BUSY = -28 ' mailbox still has operation pending
+00000                 | 	ERR_MAILBOX_BUSY = -28
+00000                 | '         ERR_WOULD_BLOCK  = -24
+00000                 | 	ERR_WOULD_BLOCK = -24
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 20000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $100094b
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 FC 05 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 0C 03 90 5D |  if_ne	jmp	#spininit
+0040c 002 FD F0 03 F6 | 	mov	ptra, ptr_stackspace_
+00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
+00414 004 EC 02 90 5D |  if_ne	jmp	#skip_clock_set_
+00418 005 00 00 64 FD | 	hubset	#0
+0041c 006 04 80 80 FF 
+00420 007 00 90 66 FD | 	hubset	##16779592
+00424 008 86 01 80 FF 
+00428 009 1F 80 66 FD | 	waitx	##200000
+0042c 00a 04 80 00 FF 
+00430 00b 4B ED 07 F6 | 	mov	pa, ##16779595
+00434 00c 00 EC 63 FD | 	hubset	pa
+00438 00d 18 EC 67 FC | 	wrlong	pa, #24
+0043c 00e 96 98 80 FF 
+00440 00f 14 00 6E FC | 	wrlong	##20000000, #20
+00444 010 BC 02 90 FD | 	jmp	#skip_clock_set_
+00448 011 00 00 00 00 
+      ...             
+006fc 0be 00 00 00 00 
+00700 0bf 00 00 00 00 | 	orgf	192
+00704 0c0             | skip_clock_set_
+00704 0c0 04 08 A0 FD | 	call	#_start
+00708 0c1             | cogexit
+00708 0c1 38 01 80 FF 
+0070c 0c2 1F 00 66 FD | 	waitx	##160000
+00710 0c3 01 04 62 FD | 	cogid	arg01
+00714 0c4 03 04 62 FD | 	cogstop	arg01
+00718 0c5             | spininit
+00718 0c5 61 F5 05 FB | 	rdlong	objptr, ptra++
+0071c 0c6 61 FD 05 FB | 	rdlong	result1, ptra++
+00720 0c7 28 06 64 FD | 	setq	#3
+00724 0c8 00 05 06 FB | 	rdlong	arg01, ptra
+00728 0c9 04 F0 87 F1 | 	sub	ptra, #4
+0072c 0ca 2D FC 61 FD | 	call	result1
+00730 0cb D4 FF 9F FD | 	jmp	#cogexit
+00734 0cc             | FCACHE_LOAD_
+00734 0cc F9 AD 01 F6 |     mov	fcache_tmpb_,ptrb
+00738 0cd 2B F2 63 FD |     pop	ptrb
+0073c 0ce D5 EC 8B F9 |     altd	pa,ret_instr_
+00740 0cf D5 00 00 F6 |     mov	 0-0, ret_instr_
+00744 0d0 28 EC 63 FD |     setq	pa
+00748 0d1 E1 01 04 FB |     rdlong	$0, ptrb++
+0074c 0d2 2A F2 63 FD |     push	ptrb
+00750 0d3 D6 F2 03 F6 |     mov ptrb,fcache_tmpb_
+00754 0d4 00 00 80 FD |     jmp	#\$0 ' jmp to cache
+00758 0d5             | ret_instr_
+00758 0d5 00 FE 07 02 |     _ret_ cmp inb,#0
+0075c 0d6             | fcache_tmpb_
+0075c 0d6 00 00 00 00 |     long 0
+00760 0d7             | fcache_load_ptr_
+00760 0d7 CC 00 00 00 |     long FCACHE_LOAD_
+00764 0d8             | builtin_bytefill_
+00764 0d8 01 08 56 F0 |         shr	arg03, #1 wc
+00768 0d9 02 07 42 CC |  if_c   wrbyte	arg02, arg01
+0076c 0da 01 04 06 C1 |  if_c   add	arg01, #1
+00770 0db 00 06 FE F9 |         movbyts	arg02, #0
+00774 0dc             | builtin_wordfill_
+00774 0dc 01 08 56 F0 |         shr	arg03, #1 wc
+00778 0dd 02 07 52 CC |  if_c   wrword	arg02, arg01
+0077c 0de 02 04 06 C1 |  if_c   add	arg01, #2
+00780 0df 03 07 2A F9 |         setword	arg02, arg02, #1
+00784 0e0             | builtin_longfill_
+00784 0e0 02 01 88 FC |         wrfast	#0,arg01
+00788 0e1 00 08 0E F2 |         cmp	arg03, #0 wz
+0078c 0e2 04 03 D8 5C |  if_nz  rep	#1, arg03
+00790 0e3 17 06 62 5D |  if_nz  wflong	arg02
+00794 0e4 2D 00 64 FD |         ret
+00798 0e5             | COUNT_
+00798 0e5 00 00 00 00 |     long 0
+0079c 0e6             | RETADDR_
+0079c 0e6 00 00 00 00 |     long 0
+007a0 0e7             | fp
+007a0 0e7 00 00 00 00 |     long 0
+007a4 0e8             | pushregs_
+007a4 0e8 2B EC 63 FD |     pop  pa
+007a8 0e9 2B CC 61 FD |     pop  RETADDR_
+007ac 0ea 03 CA 95 FB |     tjz  COUNT_, #pushregs_done_
+007b0 0eb FF CB 8D F9 |     altd  COUNT_, #511
+007b4 0ec 28 00 64 FD |     setq #0-0
+007b8 0ed 61 0D 66 FC |     wrlong local01, ptra++
+007bc 0ee             | pushregs_done_
+007bc 0ee 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
+007c0 0ef 61 CB 65 FC |     wrlong COUNT_, ptra++
+007c4 0f0 F8 CF 01 F6 |     mov    fp, ptra
+007c8 0f1 2C EC 63 FD |     jmp  pa
+007cc 0f2             |  popregs_
+007cc 0f2 2B EC 63 FD |     pop    pa
+007d0 0f3 28 04 64 FD |     setq   #2
+007d4 0f4 5F CB 05 FB |     rdlong COUNT_, --ptra
+007d8 0f5 02 CA 75 FB |     djf    COUNT_, #popregs__ret
+007dc 0f6 28 CA 61 FD |     setq   COUNT_
+007e0 0f7 5F 0D 06 FB |     rdlong local01, --ptra
+007e4 0f8             | popregs__ret
+007e4 0f8 2A CC 61 FD |     push   RETADDR_
+007e8 0f9 2C EC 63 FD |     jmp    pa
+007ec 0fa             | 
+007ec 0fa             | objptr
+007ec 0fa 88 1C 00 00 | 	long	@objmem
+007f0 0fb             | ptr__dat__
+007f0 0fb B0 0A 00 00 | 	long	@_dat_
+007f4 0fc             | ptr__psram16drv_dat__
+007f4 0fc F8 0C 00 00 | 	long	@_psram16drv_dat_
+007f8 0fd             | ptr_stackspace_
+007f8 0fd 88 1C 00 00 | 	long	@stackspace
+007fc 0fe             | result1
+007fc 0fe 00 00 00 00 | 	long	0
+00800 0ff             | result2
+00800 0ff 01 00 00 00 | 	long	1
+00804 100             | COG_BSS_START
+00804 100             | 	fit	480
+00804                 | 	orgh
+00804                 | hubentry
+00804                 | 
+00804                 | ' 
+00804                 | ' '..............................................................................
+00804                 | ' 
+00804                 | ' {{
+00804                 | ' }}
+00804                 | ' PUB start() : result
+00804                 | _start
+00804                 | '     return startx(0, 0, 0, -1)
+00804     00 04 06 F6 | 	mov	arg01, #0
+00808     00 06 06 F6 | 	mov	arg02, #0
+0080c     00 08 06 F6 | 	mov	arg03, #0
+00810     01 0A 66 F6 | 	neg	arg04, #1
+00814     04 00 B0 FD | 	call	#_startx
+00818                 | _start_ret
+00818     2D 00 64 FD | 	ret
+0081c                 | 
+0081c                 | ' 
+0081c                 | ' '..............................................................................
+0081c                 | ' 
+0081c                 | ' {{
+0081c                 | ' }}
+0081c                 | ' PUB startx(freq, burst, delay, desiredcog) : cog,mail | driverAddr
+0081c                 | _startx
+0081c     04 CA 05 F6 | 	mov	COUNT_, #4
+00820     E8 00 A0 FD | 	call	#pushregs_
+00824     02 0D 02 F6 | 	mov	local01, arg01
+00828     04 0F 02 F6 | 	mov	local02, arg03
+0082c     05 11 02 F6 | 	mov	local03, arg04
+00830                 | '     stop() ' restart driver if required
+00830     74 01 B0 FD | 	call	#_stop
+00834     00 0C 0E F2 | 	cmp	local01, #0 wz
+00838     14 0C 06 AB |  if_e	rdlong	local01, #20
+0083c     06 07 52 F6 | 	abs	arg02, local01 wc
+00840     A1 07 00 FF 
+00844     40 06 16 FD | 	qdiv	arg02, ##1000000
+00848                 | ' 
+00848                 | '     ' use current frequency if none specified
+00848                 | ' 
+00848                 | '     if freq == 0 
+00848                 | '         freq := clkfreq 
+00848                 | ' 
+00848                 | '     ' compute the device burst size including overheads to keep CS low time below 8us
+00848                 | ' 
+00848                 | '     burst := (((MAX_CS_LOW_USEC*(freq/1000000)) - 132) >> 4) << 4  ' some sane rounded value
+00848                 | '     if burst < 0
+00848                 | '         return ERR_TOO_SLOW,0 ' P2 frequency is too low for any 8us transfers
+00848     18 06 62 FD | 	getqx	arg02
+0084c     03 0B 82 F6 | 	negc	arg04, arg02
+00850     03 0A 66 F0 | 	shl	arg04, #3
+00854     84 0A 86 F1 | 	sub	arg04, #132
+00858     04 0A 46 F0 | 	shr	arg04, #4
+0085c     04 0A 66 F0 | 	shl	arg04, #4
+00860     00 0A 56 F2 | 	cmps	arg04, #0 wc
+00864     00 FE 05 C6 |  if_b	mov	result2, #0
+00868     0E FC 65 C6 |  if_b	neg	result1, #14
+0086c     2C 01 90 CD |  if_b	jmp	#LR__0005
+00870                 | ' 
+00870                 | '     ' compute the input delay
+00870                 | ' 
+00870                 | '     if delay <= 0
+00870     01 0E 56 F2 | 	cmps	local02, #1 wc
+00874     10 00 90 3D |  if_ae	jmp	#LR__0001
+00878                 | '         delay := lookupDelay(freq)
+00878     06 05 02 F6 | 	mov	arg01, local01
+0087c     E8 01 B0 FD | 	call	#_lookupDelay
+00880     FE 0E 02 F6 | 	mov	local02, result1
+00884     04 00 90 FD | 	jmp	#LR__0002
+00888                 | LR__0001
+00888                 | '     else
+00888                 | '         delay <#= $f ' limit to 15
+00888     0F 0E 66 F3 | 	fles	local02, #15
+0088c                 | LR__0002
+0088c                 | ' 
+0088c                 | '     ' create our lock
+0088c                 | ' 
+0088c                 | '     driverlock := LOCKNEW()  
+0088c     00 FC 05 F6 | 	mov	result1, #0
+00890     04 FC 61 FD | 	locknew	result1
+00894     04 F7 05 F1 | 	add	ptr__dat__, #260
+00898     FB FC 61 FC | 	wrlong	result1, ptr__dat__
+0089c                 | '     if driverlock == -1
+0089c     04 F7 85 F1 | 	sub	ptr__dat__, #260
+008a0     FF FF 7F FF 
+008a4     FF FD 0D F2 | 	cmp	result1, ##-1 wz
+008a8                 | '         return ERR_NO_LOCK,0
+008a8     00 FE 05 A6 |  if_e	mov	result2, #0
+008ac     1A FC 65 A6 |  if_e	neg	result1, #26
+008b0     E8 00 90 AD |  if_e	jmp	#LR__0005
+008b4                 | ' 
+008b4                 | '     ' patch in the proper data and HUB addresses to the startup structure
+008b4                 | ' 
+008b4                 | '     long[@startupData][0]:=clkfreq
+008b4     14 0C 06 FB | 	rdlong	local01, #20
+008b8     28 F7 05 F1 | 	add	ptr__dat__, #296
+008bc     FB 0C 62 FC | 	wrlong	local01, ptr__dat__
+008c0                 | ' '    long[@startupData][1]:=$1000_0000
+008c0                 | '     long[@startupData][5]:=@deviceData
+008c0     FB 0C 02 F6 | 	mov	local01, ptr__dat__
+008c4     20 0C 06 F1 | 	add	local01, #32
+008c8     FB 06 02 F6 | 	mov	arg02, ptr__dat__
+008cc     14 06 06 F1 | 	add	arg02, #20
+008d0     03 0D 62 FC | 	wrlong	local01, arg02
+008d4                 | '     long[@startupData][6]:=@qosData
+008d4     FB 0C 02 F6 | 	mov	local01, ptr__dat__
+008d8     A0 0C 06 F1 | 	add	local01, #160
+008dc     FB 06 02 F6 | 	mov	arg02, ptr__dat__
+008e0     18 06 06 F1 | 	add	arg02, #24
+008e4     03 0D 62 FC | 	wrlong	local01, arg02
+008e8                 | ' 
+008e8                 | ' 
+008e8                 | '     long[@startupData][7]:=mailbox
+008e8     FB 0C 02 F6 | 	mov	local01, ptr__dat__
+008ec     1C 0C 06 F1 | 	add	local01, #28
+008f0     FF 03 80 FF 
+008f4     06 01 6A FC | 	wrlong	##524032, local01
+008f8                 | '   
+008f8                 | '     ' setup some default bank and QoS parameter values
+008f8                 | ' 
+008f8                 | '     longfill(@deviceData, (burst << 16) | (delay << 12) | (ADDRSIZE-1), 2)
+008f8     20 F6 05 F1 | 	add	ptr__dat__, #32
+008fc     FB 04 02 F6 | 	mov	arg01, ptr__dat__
+00900     48 F7 85 F1 | 	sub	ptr__dat__, #328
+00904     10 0A 66 F0 | 	shl	arg04, #16
+00908     0C 0E 66 F0 | 	shl	local02, #12
+0090c     07 0B 42 F5 | 	or	arg04, local02
+00910     18 0A 46 F5 | 	or	arg04, #24
+00914     05 07 02 F6 | 	mov	arg02, arg04
+00918     02 08 06 F6 | 	mov	arg03, #2
+0091c     E0 00 A0 FD | 	call	#\builtin_longfill_
+00920                 | '     longfill(@qosData, $FFFF0000, 8)
+00920     FB 04 02 F6 | 	mov	arg01, ptr__dat__
+00924     C8 05 06 F1 | 	add	arg01, #456
+00928     07 08 06 F6 | 	mov	arg03, #7
+0092c     28 08 62 FD | 	setq	arg03
+00930     80 FF FF FF 
+00934     02 01 68 FC | 	wrlong	##-65536, arg01
+00938                 | ' 
+00938                 | '     ' get the address of the PSRAM memory driver so we can start it
+00938                 | ' 
+00938                 | '     driverAddr:= driver.getDriverAddr()
+00938                 | '     return @driver_start
+00938     FC 06 02 F6 | 	mov	arg02, ptr__psram16drv_dat__
+0093c     20 06 06 F1 | 	add	arg02, #32
+00940                 | ' 
+00940                 | '     ' start the PSRAM memory driver and wait for it to complete initialization
+00940                 | ' 
+00940                 | '     if desiredcog < 0
+00940     00 10 56 F2 | 	cmps	local03, #0 wc
+00944                 | '         desiredcog := NEWCOG
+00944     10 10 06 C6 |  if_b	mov	local03, #16
+00948                 | '     drivercog := coginit(desiredcog, driverAddr, @startupData)
+00948     FB 08 02 F6 | 	mov	arg03, ptr__dat__
+0094c     28 09 06 F1 | 	add	arg03, #296
+00950     08 13 02 F6 | 	mov	local04, local03
+00954     28 08 62 FD | 	setq	arg03
+00958     03 13 F2 FC | 	coginit	local04, arg02 wc
+0095c     01 12 66 C6 |  if_b	neg	local04, #1
+00960     00 F7 05 F1 | 	add	ptr__dat__, #256
+00964     FB 12 62 FC | 	wrlong	local04, ptr__dat__
+00968     00 F7 85 F1 | 	sub	ptr__dat__, #256
+0096c     D7 08 48 FB | 	callpa	#(@LR__0004-@LR__0003)>>2,fcache_load_ptr_
+00970                 | '     repeat until long[@startupData] == 0 
+00970                 | LR__0003
+00970     FB 12 02 F6 | 	mov	local04, ptr__dat__
+00974     28 13 06 F1 | 	add	local04, #296
+00978     09 13 0A FB | 	rdlong	local04, local04 wz
+0097c     F0 FF 9F 5D |  if_ne	jmp	#LR__0003
+00980                 | LR__0004
+00980                 | ' 
+00980                 | '     return drivercog,long[@startupData][7]
+00980     00 F7 05 F1 | 	add	ptr__dat__, #256
+00984     FB FC 01 FB | 	rdlong	result1, ptr__dat__
+00988     28 F6 05 F1 | 	add	ptr__dat__, #40
+0098c     FB 12 02 F6 | 	mov	local04, ptr__dat__
+00990     1C 12 06 F1 | 	add	local04, #28
+00994     09 FF 01 FB | 	rdlong	result2, local04
+00998     28 F7 85 F1 | 	sub	ptr__dat__, #296
+0099c                 | LR__0005
+0099c     E7 F0 03 F6 | 	mov	ptra, fp
+009a0     F2 00 A0 FD | 	call	#popregs_
+009a4                 | _startx_ret
+009a4     2D 00 64 FD | 	ret
+009a8                 | 
+009a8                 | ' 
+009a8                 | ' '..............................................................................
+009a8                 | ' 
+009a8                 | ' {{
+009a8                 | ' }}
+009a8                 | ' PUB stop() : i
+009a8                 | _stop
+009a8     00 00 06 F6 | 	mov	_var01, #0
+009ac                 | '     if drivercog <> -1
+009ac     00 F7 05 F1 | 	add	ptr__dat__, #256
+009b0     FB 04 02 FB | 	rdlong	arg01, ptr__dat__
+009b4     00 F7 85 F1 | 	sub	ptr__dat__, #256
+009b8     FF FF 7F FF 
+009bc     FF 05 0E F2 | 	cmp	arg01, ##-1 wz
+009c0     70 00 90 AD |  if_e	jmp	#LR__0013
+009c4                 | '         cogstop(drivercog) ' a rather brutal stop
+009c4     00 F7 05 F1 | 	add	ptr__dat__, #256
+009c8     FB 04 02 FB | 	rdlong	arg01, ptr__dat__
+009cc     00 F7 85 F1 | 	sub	ptr__dat__, #256
+009d0     03 04 62 FD | 	cogstop	arg01
+009d4     D7 26 48 FB | 	callpa	#(@LR__0012-@LR__0010)>>2,fcache_load_ptr_
+009d8                 | '         repeat i from 0 to 7
+009d8                 | LR__0010
+009d8                 | '             if long[mailbox][i*3] < 0
+009d8     00 FD 01 F6 | 	mov	result1, _var01
+009dc     01 FC 65 F0 | 	shl	result1, #1
+009e0     00 FD 01 F1 | 	add	result1, _var01
+009e4     02 FC 65 F0 | 	shl	result1, #2
+009e8     FF 03 00 FF 
+009ec     00 FD 05 F1 | 	add	result1, ##524032
+009f0     FE FC 01 FB | 	rdlong	result1, result1
+009f4     00 FC 55 F2 | 	cmps	result1, #0 wc
+009f8     1C 00 90 3D |  if_ae	jmp	#LR__0011
+009fc                 | '                 long[mailbox][i*3] := -ERR_ABORTED ' abort request
+009fc     00 FD 01 F6 | 	mov	result1, _var01
+00a00     01 FC 65 F0 | 	shl	result1, #1
+00a04     00 FD 01 F1 | 	add	result1, _var01
+00a08     02 FC 65 F0 | 	shl	result1, #2
+00a0c     FF 03 00 FF 
+00a10     00 FD 05 F1 | 	add	result1, ##524032
+00a14     FE 20 68 FC | 	wrlong	#16, result1
+00a18                 | LR__0011
+00a18     01 00 06 F1 | 	add	_var01, #1
+00a1c     08 00 56 F2 | 	cmps	_var01, #8 wc
+00a20     B4 FF 9F CD |  if_b	jmp	#LR__0010
+00a24                 | LR__0012
+00a24                 | '         drivercog := -1
+00a24     00 F7 05 F1 | 	add	ptr__dat__, #256
+00a28     FF FF FF FF 
+00a2c     FB FE 6B FC | 	wrlong	##-1, ptr__dat__
+00a30     00 F7 85 F1 | 	sub	ptr__dat__, #256
+00a34                 | LR__0013
+00a34                 | '     if driverlock <> -1
+00a34     04 F7 05 F1 | 	add	ptr__dat__, #260
+00a38     FB 02 02 FB | 	rdlong	_var02, ptr__dat__
+00a3c     04 F7 85 F1 | 	sub	ptr__dat__, #260
+00a40     FF FF 7F FF 
+00a44     FF 03 0E F2 | 	cmp	_var02, ##-1 wz
+00a48                 | '         LOCKRET(driverlock)
+00a48     04 F7 05 51 |  if_ne	add	ptr__dat__, #260
+00a4c     FB 04 02 5B |  if_ne	rdlong	arg01, ptr__dat__
+00a50     05 04 62 5D |  if_ne	lockret	arg01
+00a54                 | '         driverlock := -1
+00a54     FF FF FF 5F 
+00a58     FB FE 6B 5C |  if_ne	wrlong	##-1, ptr__dat__
+00a5c     04 F7 85 51 |  if_ne	sub	ptr__dat__, #260
+00a60     00 FD 01 F6 | 	mov	result1, _var01
+00a64                 | _stop_ret
+00a64     2D 00 64 FD | 	ret
+00a68                 | 
+00a68                 | ' 
+00a68                 | ' '..............................................................................
+00a68                 | ' 
+00a68                 | ' {{
+00a68                 | ' }}
+00a68                 | ' PRI lookupDelay(freq) : delay | profile
+00a68                 | _lookupDelay
+00a68                 | '     profile := @delayTable
+00a68     FB 00 02 F6 | 	mov	_var01, ptr__dat__
+00a6c     08 01 06 F1 | 	add	_var01, #264
+00a70                 | '     delay := long[profile][0]
+00a70     00 03 02 FB | 	rdlong	_var02, _var01
+00a74     D7 16 48 FB | 	callpa	#(@LR__0021-@LR__0020)>>2,fcache_load_ptr_
+00a78                 | '     repeat while long[profile][1] 
+00a78                 | LR__0020
+00a78     04 00 06 F1 | 	add	_var01, #4
+00a7c     00 FD 09 FB | 	rdlong	result1, _var01 wz
+00a80     04 00 86 F1 | 	sub	_var01, #4
+00a84     1C 00 90 AD |  if_e	jmp	#LR__0022
+00a88                 | '         if freq +< long[profile][1] 
+00a88     04 00 06 F1 | 	add	_var01, #4
+00a8c     00 FD 01 FB | 	rdlong	result1, _var01
+00a90     04 00 86 F1 | 	sub	_var01, #4
+00a94     FE 04 12 F2 | 	cmp	arg01, result1 wc
+00a98                 | '             quit
+00a98                 | '         profile += 4
+00a98     04 00 06 31 |  if_ae	add	_var01, #4
+00a9c                 | '         delay++
+00a9c     01 02 06 31 |  if_ae	add	_var02, #1
+00aa0     D4 FF 9F 3D |  if_ae	jmp	#LR__0020
+00aa4                 | LR__0021
+00aa4                 | LR__0022
+00aa4     01 FD 01 F6 | 	mov	result1, _var02
+00aa8                 | _lookupDelay_ret
+00aa8     2D 00 64 FD | 	ret
+00aac                 | hubexit
+00aac     C1 00 80 FD | 	jmp	#cogexit
+00ab0                 | 	alignl
+00ab0                 | _dat_
+00ab0     00 00 00 00 
+      ...             
+00ba8     00 00 00 00 
+00bac     00 00 00 00 |     listdata long 0[8*8]
+00bb0                 |             orgh
+00bb0                 | 
+00bb0                 | ' driver state
+00bb0     FF FF FF FF | drivercog   long    -1  ' COG id of driver
+00bb4     FF FF FF FF | driverlock  long    -1  ' LOCK id of driver
+00bb8                 | 
+00bb8                 | ' delay profile
+00bb8     07 00 00 00 
+00bbc     00 CF 7B 05 
+00bc0     80 D1 F0 08 
+00bc4     80 4F 47 0C | delayTable  long    7,92_000000,150_000000,206_000000,258_000000,310_000000,333_000000,0
+00bc8     80 C4 60 0F 
+00bcc     80 39 7A 12 
+00bd0     40 2D D9 13 
+00bd4     00 00 00 00 | 	byte	$80, $c4, $60, $0f, $80, $39, $7a, $12, $40, $2d, $d9, $13, $00, $00, $00, $00
+00bd8                 | 
+00bd8                 | ' data to be passed to driver when starting it
+00bd8                 | startupData
+00bd8     00 00 00 00 |     long    0           ' current frequency
+00bdc     00 00 00 00 |     long    FLAGS       ' optional flags for driver
+00be0     00 00 00 00 |     long    0           ' reset pin mask on port A for PSRAM (none)
+00be4     00 00 00 00 |     long    0           ' reset pin mask on port B for PSRAM (none)
+00be8     28 00 00 00 |     long    DATABUS     ' PSRAM data bus start pin
+00bec     F8 0B 00 00 |     long    deviceData  ' address of devices data structure in HUBRAM
+00bf0     78 0C 00 00 |     long    qosData     ' address of QoS data structure in HUBRAM
+00bf4     98 0C 00 00 |     long    mailboxes   ' address of mailbox structure in HUBRAM
+00bf8                 | 
+00bf8                 | ' data for memory
+00bf8                 | deviceData
+00bf8                 |     ' 16 bank parameters follow (16MB per bank)
+00bf8     00 00 00 00 
+      ...             
+00c30     00 00 00 00 
+00c34     00 00 00 00 |     long    0[16]                               ' banks 0-15
+00c38                 |     ' 16 banks of pin parameters follow
+00c38     39 38 00 00 |     long    (CLK_PIN << 8) | CE_PIN             ' bank 0 
+00c3c     39 38 00 00 |     long    (CLK_PIN << 8) | CE_PIN             ' bank 1 
+00c40     FF FF FF FF 
+      ...             
+00c70     FF FF FF FF 
+00c74     FF FF FF FF |     long    -1[14]                              ' banks 2-15
+00c78                 | 
+00c78                 | ' data for COG polling
+00c78                 | qosData 
+00c78     00 00 FF FF 
+00c7c     00 00 FF FF 
+00c80     00 00 FF FF 
+00c84     00 00 FF FF |     long    $FFFF0000[8]    ' cog 0-7 default QoS parameters
+00c88     00 00 FF FF 
+00c8c     00 00 FF FF 
+00c90     00 00 FF FF 
+00c94     00 00 FF FF | 	byte	$00, $00, $ff, $ff, $00, $00, $ff, $ff, $00, $00, $ff, $ff, $00, $00, $ff, $ff
+00c98                 |     
+00c98                 | ' mailbox storage
+00c98                 | 
+00c98                 | mailboxes
+00c98     00 00 00 00 
+      ...             
+00cf0     00 00 00 00 
+00cf4     00 00 00 00 |     long    0[8*3]          ' 3 longs per mailbox per COG
+00cf8                 | 	alignl
+00cf8                 | _psram16drv_dat_
+00cf8                 |                             orgh
+00cf8     00 00 00 00 
+      ...             
+00d10     00 00 00 00 
+00d14     00 00 00 00 | scratch_buffer              long    0[8]    ' 8 scratch longs in hub (one per possible driver COG id)
+00d18                 | 
+00d18                 | driver_start
+00d18                 |                             org
+00d18 000             | '..................................................................................................
+00d18 000             | ' Memory layout for COG RAM once operational:
+00d18 000             | '
+00d18 000             | '  COG RAM address      Usage
+00d18 000             | '  ---------------      ----
+00d18 000             | '    $00-$17            Mailbox data area (3 longs x 8 COGs) (24)
+00d18 000             | '    $18-$1F            Mailbox HUB parameter addresses per COG (8)
+00d18 000             | '    $20-$7F            COG service handlers (8 COGs x 12 longs per COG) (96)
+00d18 000             | '    $80-$FF            EXECF vector storage (8 requests x 16 banks) (128)
+00d18 000             | '   $100-$197           Mailbox poller, error handlers, and all driver management code
+00d18 000             | '  ~$198-$1F3           State and register variables
+00d18 000             | '
+00d18 000             | ' Also during driver COG startup:
+00d18 000             | '  $00-$17  is init as temporary init code - stage 2 (EXECF vector table init)
+00d18 000             | ' $100-$1FF is uses as temporary init code - stage 1 (does HW setup & majority of driver init)
+00d18 000             | '..................................................................................................
+00d18 000             |                             
+00d18 000             | ' Mailbox storage after vector initialization
+00d18 000             | 
+00d18 000 FC 01 B0 FD | req0                        call    #init                   'do HW setup/initialization
+00d1c 001 F0 E3 AB FA | data0                       rdlut   c, b wz                 'read bank info          
+00d20 002 F0 DF 03 F6 | count0                      mov     a, b                    'set COGRAM address low nibble
+00d24 003 68 F0 07 A6 | req1        if_z            mov     ptra, #(no_vect & $1ff) 'set pointer to invalid vectors
+00d28 004 0A E2 17 F4 | data1                       testb   c, #FLASH_BIT wc        'check type: R/O PSRAM (1) or R/W PSRAM (0)
+00d2c 005 50 F0 07 16 | count1      if_nc_and_nz    mov     ptra, #(rw_vect & $1ff) 'set pointer to R/W PSRAM vectors
+00d30 006 58 F0 07 46 | req2        if_c_and_nz     mov     ptra, #(ro_vect & $1ff) 'set pointer to R/O PSRAM vectors
+00d34 007 08 E2 07 F6 | data2                       mov     c, #$8                  'setup vector base to $80
+00d38 008 F1 DF 0B F8 | count2                      setnib  a, c, #1                'prepare vector base address for bank
+00d3c 009 00 DE 8F F9 | req3                        altd    a, #0                   'prepare COG destination read address
+00d40 00a 61 01 A4 FA | data3                       rdlut   0-0, ptra++             'read vector into table in COG RAM
+00d44 00b 0F E2 0F F7 | count3                      incmod  c, #15 wz               'next vector
+00d48 00c EC FF 9F 5D | req4        if_nz           jmp     #count2                 'repeat
+00d4c 00d 0F E0 0F F7 | data4                       incmod  b, #15 wz               'next bank
+00d50 00e C8 FF 9F 5D | count4      if_nz           jmp     #data0                  'repeat
+00d54 00f 20 F0 07 F6 | req5                        mov     ptra, #$20              'setup base LUT address to clear
+00d58 010 50 0A DC FC | data5                       rep     #5, #80                 'update next 80 longs      
+00d5c 011 E2 F1 13 F2 | count5                      cmp     ptra, header wc         'check if LUT address range 
+00d60 012 E3 F1 93 32 | req6        if_nc           cmpr    ptra, trailer wc        '...falls in/outside control region
+00d64 013 61 01 3C CC | data6       if_c            wrlut   #0, ptra++              'if outside, clear LUT RAM      
+00d68 014 61 B1 37 3C | count6      if_nc           wrlut   addr1, ptra++           'copy control vector table into LUT
+00d6c 015 A5 29 00 31 | req7        if_nc           add     $-1, const512           'increment source of LUT write data
+00d70 016 FF C0 03 F6 | data7                       mov     burstwrite, 255-0       'save real bank 15 burst write vector
+00d74 017 26 FF 05 06 | count7      _ret_           mov     255, #dolist            'setup list address, return to notify
+00d78 018             | 
+00d78 018             | ' Mailbox parameter addresses per COG once patched
+00d78 018             |                             
+00d78 018 04 00 00 00 | cog0mboxdata                long    0*12+4                  'address offset for cog0 mbox data
+00d7c 019 10 00 00 00 | cog1mboxdata                long    1*12+4                  'address offset for cog1 mbox data
+00d80 01a 1C 00 00 00 | cog2mboxdata                long    2*12+4                  '...
+00d84 01b 28 00 00 00 | cog3mboxdata                long    3*12+4
+00d88 01c 34 00 00 00 | cog4mboxdata                long    4*12+4
+00d8c 01d 40 00 00 00 | cog5mboxdata                long    5*12+4
+00d90 01e 4C 00 00 00 | cog6mboxdata                long    6*12+4
+00d94 01f 58 00 00 00 | cog7mboxdata                long    7*12+4                  'address offset for cog7 mbox data
+00d98 020             | 
+00d98 020             | '..................................................................................................
+00d98 020             | ' Per COG request and state setup and service branching
+00d98 020             |         
+00d98 020             | cog0                 
+00d98 020 20 F0 07 F6 |                             mov     ptra, #$20+0*10         'determine COG0 parameter save address
+00d9c 021 18 F2 03 F6 |                             mov     ptrb, cog0mboxdata      'determine COG0 mailbox data address
+00da0 022 D0 C3 03 F6 |                             mov     id, id0                 'get COG0 state
+00da4 023 E1 47 3B F9 |                             getword limit, id, #1           'get COG0 burst limit
+00da8 024 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00dac 025 30 04 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00db0 026 00 B0 03 F6 |                             mov     addr1, req0             'get mailbox request parameter for COG0
+00db4 027 01 B2 03 F6 |                             mov     hubdata, data0          'get COG0 mailbox data parameter
+00db8 028 02 B4 03 F6 |                             mov     count, count0           'get COG0 mailbox count parameter
+00dbc 029 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00dc0 02a 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00dc4 02b 33 CA 63 FD |                             execf   request-0               'jump to service
+00dc8 02c             | cog1                        
+00dc8 02c 2A F0 07 F6 |                             mov     ptra, #$20+1*10         'determine COG1 parameter save address
+00dcc 02d 19 F2 03 F6 |                             mov     ptrb, cog1mboxdata      'determine COG1 mailbox data address
+00dd0 02e D1 C3 03 F6 |                             mov     id, id1                 'get COG1 state
+00dd4 02f E1 47 3B F9 |                             getword limit, id, #1           'get COG1 burst limit
+00dd8 030 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00ddc 031 00 04 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00de0 032 03 B0 03 F6 |                             mov     addr1, req1             'get mailbox request parameter for COG1
+00de4 033 04 B2 03 F6 |                             mov     hubdata, data1          'get COG1 mailbox data parameter
+00de8 034 05 B4 03 F6 |                             mov     count, count1           'get COG1 mailbox count parameter
+00dec 035 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00df0 036 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00df4 037 33 CA 63 FD |                             execf   request-0               'jump to service
+00df8 038             | cog2                         
+00df8 038 34 F0 07 F6 |                             mov     ptra, #$20+2*10         'determine COG2 parameter save address
+00dfc 039 1A F2 03 F6 |                             mov     ptrb, cog2mboxdata      'determine COG2 mailbox data address
+00e00 03a D2 C3 03 F6 |                             mov     id, id2                 'get COG2 state
+00e04 03b E1 47 3B F9 |                             getword limit, id, #1           'get COG2 burst limit
+00e08 03c 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00e0c 03d D0 03 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00e10 03e 06 B0 03 F6 |                             mov     addr1, req2             'get mailbox request parameter for COG2
+00e14 03f 07 B2 03 F6 |                             mov     hubdata, data2          'get COG2 mailbox data parameter
+00e18 040 08 B4 03 F6 |                             mov     count, count2           'get COG2 mailbox count parameter
+00e1c 041 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00e20 042 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00e24 043 33 CA 63 FD |                             execf   request-0               'jump to service
+00e28 044             | cog3                        
+00e28 044 3E F0 07 F6 |                             mov     ptra, #$20+3*10         'determine COG3 parameter save address
+00e2c 045 1B F2 03 F6 |                             mov     ptrb, cog3mboxdata      'determine COG3 mailbox data address
+00e30 046 D3 C3 03 F6 |                             mov     id, id3                 'get COG3 state
+00e34 047 E1 47 3B F9 |                             getword limit, id, #1           'get COG3 burst limit
+00e38 048 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00e3c 049 A0 03 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00e40 04a 09 B0 03 F6 |                             mov     addr1, req3             'get mailbox request parameter for COG3
+00e44 04b 0A B2 03 F6 |                             mov     hubdata, data3          'get COG3 mailbox data parameter
+00e48 04c 0B B4 03 F6 |                             mov     count, count3           'get COG3 mailbox count parameter
+00e4c 04d D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00e50 04e 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00e54 04f 33 CA 63 FD |                             execf   request-0               'jump to service
+00e58 050             | cog4                        
+00e58 050 48 F0 07 F6 |                             mov     ptra, #$20+4*10         'determine COG4 parameter save address
+00e5c 051 1C F2 03 F6 |                             mov     ptrb, cog4mboxdata      'determine COG4 mailbox data address
+00e60 052 D4 C3 03 F6 |                             mov     id, id4                 'get COG4 state
+00e64 053 E1 47 3B F9 |                             getword limit, id, #1           'get COG4 burst limit
+00e68 054 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00e6c 055 70 03 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00e70 056 0C B0 03 F6 |                             mov     addr1, req4             'get mailbox request parameter for COG4
+00e74 057 0D B2 03 F6 |                             mov     hubdata, data4          'get COG4 mailbox data parameter
+00e78 058 0E B4 03 F6 |                             mov     count, count4           'get COG4 mailbox count parameter
+00e7c 059 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00e80 05a 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00e84 05b 33 CA 63 FD |                             execf   request-0               'jump to service
+00e88 05c             | cog5                        
+00e88 05c 52 F0 07 F6 |                             mov     ptra, #$20+5*10         'determine COG5 parameter save address
+00e8c 05d 1D F2 03 F6 |                             mov     ptrb, cog5mboxdata      'determine COG5 mailbox data address
+00e90 05e D5 C3 03 F6 |                             mov     id, id5                 'get COG5 state
+00e94 05f E1 47 3B F9 |                             getword limit, id, #1           'get COG5 burst limit
+00e98 060 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00e9c 061 40 03 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00ea0 062 0F B0 03 F6 |                             mov     addr1, req5             'get mailbox request parameter for COG5
+00ea4 063 10 B2 03 F6 |                             mov     hubdata, data5          'get COG5 mailbox data parameter
+00ea8 064 11 B4 03 F6 |                             mov     count, count5           'get COG5 mailbox count parameter
+00eac 065 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00eb0 066 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00eb4 067 33 CA 63 FD |                             execf   request-0               'jump to service
+00eb8 068             | cog6                        
+00eb8 068 5C F0 07 F6 |                             mov     ptra, #$20+6*10         'determine COG6 parameter save address
+00ebc 069 1E F2 03 F6 |                             mov     ptrb, cog6mboxdata      'determine COG6 mailbox data address
+00ec0 06a D6 C3 03 F6 |                             mov     id, id6                 'get COG6 state
+00ec4 06b E1 47 3B F9 |                             getword limit, id, #1           'get COG6 burst limit
+00ec8 06c 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00ecc 06d 10 03 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00ed0 06e 12 B0 03 F6 |                             mov     addr1, req6             'get mailbox request parameter for COG6
+00ed4 06f 13 B2 03 F6 |                             mov     hubdata, data6          'get COG6 mailbox data parameter
+00ed8 070 14 B4 03 F6 |                             mov     count, count6           'get COG6 mailbox count parameter
+00edc 071 D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00ee0 072 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00ee4 073 33 CA 63 FD |                             execf   request-0               'jump to service
+00ee8 074             | cog7                        
+00ee8 074 66 F0 07 F6 |                             mov     ptra, #$20+7*10         'determine COG7 parameter save address
+00eec 075 1F F2 03 F6 |                             mov     ptrb, cog7mboxdata      'determine COG7 mailbox data address
+00ef0 076 D7 C3 03 F6 |                             mov     id, id7                 'get COG7 state
+00ef4 077 E1 47 3B F9 |                             getword limit, id, #1           'get COG7 burst limit
+00ef8 078 08 D3 AF FA |                             rdlut   resume, ptra[8] wz      'check if we are in the middle of something
+00efc 079 E0 02 90 5D |             if_nz           jmp     #restore                'if so restore state and resume
+00f00 07a 15 B0 03 F6 |                             mov     addr1, req7             'get mailbox request parameter for COG7
+00f04 07b 16 B2 03 F6 |                             mov     hubdata, data7          'get COG7 mailbox data parameter
+00f08 07c 17 B4 03 F6 |                             mov     count, count7           'get COG7 mailbox count parameter
+00f0c 07d D8 CB FB F8 |                             getbyte request, addr1, #3      'get request + bank info
+00f10 07e 00 CA 8F F9 |                             altd    request, #0             'lookup jump vector service table 
+00f14 07f 33 CA 63 FD |                             execf   request-0               'jump to service
+00f18 080             | 
+00f18 080             |                             fit     128
+00f18 080             |                             fit     128
+00f18 080             | pad                         long    0[128-$]                'align init code to $80
+00f18 080             | 
+00f18 080             | '..................................................................................................
+00f18 080             | 
+00f18 080             | ' This initialization code ($80-$FF) gets reused as the main service EXECF jump table later (128 longs)
+00f18 080             | 
+00f18 080             | init                        
+00f18 080             |                             ' get driver scratch long address in hub
+00f18 080 01 DA 63 FD |                             cogid   hubscratch              'get cogid
+00f1c 081 01 DA 07 F1 |                             add     hubscratch, #1          'increase by 1 from 1-8
+00f20 082 04 DA 07 FA |                             mul     hubscratch, #4          'multiply by 4 to get 4-32
+00f24 083 F9 DB C3 F2 |                             subr    hubscratch, ptrb        'get scratch area as one of 8 longs before driver
+00f28 084             |                     
+00f28 084             |                             ' read in the additional LUT RAM code
+00f28 084 F9 41 03 F1 |                             add     lutcodeaddr, ptrb       'determine hub address of LUT code   
+00f2c 085 29 9E 67 FD |                             setq2   #511-(hwinit & $1ff)    'read the remaining instructions 
+00f30 086 A0 61 00 FB |                             rdlong  hwinit & $1ff, lutcodeaddr  '...and load into LUT RAM address $240
+00f34 087             | 
+00f34 087             |                             ' read the startup parameters
+00f34 087 28 0E 64 FD |                             setq    #8-1                    'read 8 longs from hub
+00f38 088 00 41 07 FB |                             rdlong  startupparams, ptra     '.. as the startup parameters 
+00f3c 089             | 
+00f3c 089             |                             ' setup some of the config flag dependent state and patch LUTRAM
+00f3c 089 1C 42 0F F4 |                             testb   flags, #EXPANSION_BIT wz'test for graphics expansion enabled
+00f40 08a             | 
+00f40 08a F9 71 03 A1 |             if_z            add     expansion, ptrb         'compensate for HUB address
+00f44 08b 01 00 00 5F 
+00f48 08c FB 70 07 56 |             if_nz           mov     expansion, ##donerepeats'disable expansion when flag bit clear
+00f4c 08d 1D 42 17 F4 |                             testb   flags, #UNREGCLK_BIT wc 'check if we have registered clks
+00f50 08e AA 57 43 35 |             if_nc           or      clkconfig, registered   'enable this if so
+00f54 08f 00 58 07 36 |             if_nc           mov     clkdelay, #0            'remove clk delay if registered clock
+00f58 090             | 
+00f58 090             |                             ' setup data pin modes and data bus pin group in streamer commands
+00f58 090 38 48 07 F5 |                             and     datapins, #%111000      'compute base pin
+00f5c 091 01 00 00 FF 
+00f60 092 C0 49 47 F5 |                             or      datapins, ##(15<<6)     'configure 16 pins total
+00f64 093 A4 DF 03 F6 |                             mov     a, datapins             'get data pin base
+00f68 094 A4 55 03 FC |                             wrpin   registered, datapins    'prepare data pins for address phase transfer
+00f6c 095 03 DE 47 F0 |                             shr     a, #3                   'determine data pin group
+00f70 096 07 DE 07 F5 |                             and     a, #7                   'ignore the unwanted bits
+00f74 097 08 DE 47 F5 |                             or      a, #8
+00f78 098 EF 2F 2B F8 |                             setnib  ximm8lut, a, #5         'setup bus group in streamer
+00f7c 099 EF 31 2B F8 |                             setnib  xrecvlo8, a, #5
+00f80 09a EF 35 2B F8 |                             setnib  xrecvdata, a, #5
+00f84 09b EF 37 2B F8 |                             setnib  xsenddata, a, #5
+00f88 09c EF 39 2B F8 |                             setnib  xsendimm, a, #5
+00f8c 09d 01 DE 07 F1 |                             add     a, #1
+00f90 09e EF 33 2B F8 |                             setnib  xrecvhi8, a, #5         ' increase port by one
+00f94 09f             |  
+00f94 09f             |                             ' setup device control pin states
+00f94 09f 29 3E 64 FD |                             setq2   #32-1                   'read 32 longs to LUTRAM
+00f98 0a0 A5 01 00 FB |                             rdlong  $000, devicelist        'read bank/pin data for all banks    
+00f9c 0a1 01 00 00 FF 
+00fa0 0a2 00 4A 07 F6 |                             mov     const512, ##512         'prepare constant
+00fa4 0a3             | 
+00fa4 0a3 10 F2 07 F6 |                             mov     ptrb, #16               'point to bank pin config data
+00fa8 0a4 10 14 DC FC |                             rep     @pinloop, #16           'iterate through 16 banks
+00fac 0a5 E1 CF B7 FA |                             rdlut   pinconfig, ptrb++ wc    'invalid if pin config bit 31 is one
+00fb0 0a6 AF CF 03 F5 |                             and     pinconfig, pinmask      'save us from invalid bits in args
+00fb4 0a7 E7 53 E3 38 |             if_nc           getbyte cspin, pinconfig, #0    'read CS pin number
+00fb8 0a8 A9 01 08 3C |             if_nc           wrpin   #0, cspin               'clear smart pin mode
+00fbc 0a9 59 52 63 3D |             if_nc           drvh    cspin                   'setup pins for all banks
+00fc0 0aa E7 51 EB 38 |             if_nc           getbyte clkpin, pinconfig, #1   'read CLK pin number
+00fc4 0ab 50 50 63 3D |             if_nc           fltl    clkpin                  'disable Smartpin clock output mode
+00fc8 0ac A8 57 03 3C |             if_nc           wrpin   clkconfig, clkpin       'set clk to Smartpin transition output
+00fcc 0ad A8 03 18 3C |             if_nc           wxpin   #1, clkpin              'configure for 1 clocks between transitions
+00fd0 0ae 58 50 63 3D |             if_nc           drvl    clkpin                  'set clk state low
+00fd4 0af             | pinloop
+00fd4 0af             |                             ' generate minimum CE high time before access
+00fd4 0af A1 07 00 FF 
+00fd8 0b0 40 40 17 FD |                             qdiv    frequency, ##1000000    'convert from Hz to MHz
+00fdc 0b1 18 E2 63 FD |                             getqx   c                       'get P2 clocks per microsecond
+00fe0 0b2 96 DE 07 F6 |                             mov     a, #MIN_CS_DELAY_US     'get time before active delay in microseconds 
+00fe4 0b3 F1 DF 03 FA |                             mul     a, c                    'convert microseconds to clocks
+00fe8 0b4 1F DE 63 FD |                             waitx   a                       'delay
+00fec 0b5 E8 05 B0 FD |                             call    #hwinit                 'setup HW into QSPI mode
+00ff0 0b6             | 
+00ff0 0b6             |                             ' setup the COG mailboxes and addresses 
+00ff0 0b6 08 04 DC FC |                             rep     #2, #8                  'setup loop to patch mailbox addresses
+00ff4 0b7 38 70 A5 F9 |                             alti    $+1, #%111_000          'increase D field
+00ff8 0b8 A7 31 00 F1 |                             add     cog0mboxdata, mbox      'apply base offset to mailbox data
+00ffc 0b9             | 
+00ffc 0b9 28 2E 64 FD |                             setq    #24-1
+01000 0ba A7 01 68 FC |                             wrlong  #0, mbox                'clear out mailboxes ????
+01004 0bb             | 
+01004 0bb             |                             ' setup the polling loop for active COGs 
+01004 0bb 01 C2 63 FD |                             cogid   id
+01008 0bc D0 C3 97 F9 |                             alts    id, #id0                'determine id register of control COG
+0100c 0bd 00 90 B6 F9 |                             setd    patchid, #0             'patch into destination address
+01010 0be 2A F0 63 FD |                             push    ptra                    'save ptra before we lose it
+01014 0bf 0A F0 07 F6 |                             mov     ptra, #10
+01018 0c0 E1 F1 03 FA |                             mul     ptra, id
+0101c 0c1 20 F0 07 F1 |                             add     ptra, #$20              'prep ptra for reloadcogs
+01020 0c2 B0 C3 97 F9 |                             alts    id, #cog0_handler       'add to handler base
+01024 0c3 00 48 BE F9 |                             sets    ctrlpollinst, #0-0      'patch into jump instruction
+01028 0c4 03 C2 07 FA |                             mul     id, #3
+0102c 0c5 E1 49 B2 F9 |                             setd    ctrlpollinst, id
+01030 0c6 09 C3 A7 FA |                             rdlut   id, ptra[9]             'save original value
+01034 0c7 09 C1 37 FC |                             wrlut   initctrl, ptra[9]       'prep LUT data for reloadcogs
+01038 0c8 D8 01 B0 FD |                             call    #reloadcogs
+0103c 0c9 09 C3 37 FC |                             wrlut   id, ptra[9]             'restore original value
+01040 0ca 2B F0 63 FD |                             pop     ptra                    'restore original ptra
+01044 0cb             |                             ' move LUT control vectors into temporary location to avoid clobbering them later
+01044 0cb D8 E5 B7 F9 |                             setd    d, #addr1
+01048 0cc 60 E4 BF F9 |                             sets    d, #(ctrl_vect & $1ff)
+0104c 0cd 08 04 DC FC |                             rep     #2, #8
+01050 0ce 3F E4 A7 F9 |                             alti    d, #%111_111            'patch & increment d/s fields in next instr.
+01054 0cf 60 B0 A7 FA |                             rdlut   addr1-0, #$60-0
+01058 0d0             | 
+01058 0d0             |                             'setup control COG service handling, we need to patch 5 instructions
+01058 0d0             |                             'one existing instruction is moved earlier and four instructions get replaced
+01058 0d0 01 C2 63 FD |                             cogid   id
+0105c 0d1 0C DE 07 F6 |                             mov     a, #(cog1-cog0)         'get code separation of handlers
+01060 0d2 E1 DF 03 FA |                             mul     a, id                   'scale ID by separation
+01064 0d3 24 DE 07 F1 |                             add     a, #cog0+4              'add to base for COG0 and offset
+01068 0d4 EF E5 B3 F9 |                             setd    d, a                    'set this as the destination
+0106c 0d5 02 DE 07 F1 |                             add     a, #2                   'increment COG address
+01070 0d6 EF E5 BB F9 |                             sets    d, a                    'set this as the source
+01074 0d7 3C E4 A7 F9 |                             alti    d, #%111_100             
+01078 0d8 00 00 00 F6 |                             mov     0-0, 0-0                'move instruction
+0107c 0d9 EE E4 BF F9 |                             sets    d, #controlpatch        'set source of patched instructions
+01080 0da 02 04 DC FC |                             rep     #2, #2                  'patch two instructions
+01084 0db 3F E4 A7 F9 |                             alti    d, #%111_111
+01088 0dc 00 00 00 F6 |                             mov     0-0, 0-0
+0108c 0dd A5 E5 03 F1 |                             add     d, const512             'skip two instructions
+01090 0de A5 E5 03 F1 |                             add     d, const512
+01094 0df 02 04 DC FC |                             rep     #2, #2                  'patch two instructions
+01098 0e0 3F E4 A7 F9 |                             alti    d, #%111_111
+0109c 0e1 00 00 00 F6 |                             mov     0-0, 0-0
+010a0 0e2             |                             
+010a0 0e2             |                             ' setup register values for control vector loop setup after we return
+010a0 0e2 E1 C5 03 F6 |                             mov     header, id              'get cog ID
+010a4 0e3 0A C4 07 FA |                             mul     header, #10             'multiply by size of state memory per COG
+010a8 0e4 20 C4 07 F1 |                             add     header, #$20            'add to COG state base address in LUT
+010ac 0e5 E2 C7 03 F6 |                             mov     trailer, header         'determine start/end LUT address
+010b0 0e6 09 C6 07 F1 |                             add     trailer, #9             '...for control region
+010b4 0e7 E0 C3 43 F5 |                             or      id, initctrl            'set id field for control COG
+010b8 0e8 D0 C3 8F F9 |                             altd    id, #id0
+010bc 0e9 E1 01 00 F6 |                             mov     0-0, id                 'setup id field for notification
+010c0 0ea F8 F3 03 F6 |                             mov     ptrb, ptra              'get startup parameter address
+010c4 0eb 04 F2 07 F1 |                             add     ptrb, #4                'ptrb[-1] will be cleared at notify
+010c8 0ec 00 E0 07 F6 |                             mov     b, #0                   'prepare b for upcoming loop
+010cc 0ed 2A 14 66 0D |                 _ret_       push    #notify                 'continue init in mailbox area
+010d0 0ee             |  
+010d0 0ee D8 CB 7B F8 | controlpatch                getnib  request, addr1, #7      'instructions to patch for control COG
+010d4 0ef 07 CA 07 F5 |                             and     request, #7
+010d8 0f0 F8 CB 03 F1 |                             add     request, ptra           'add request vector offset
+010dc 0f1 E5 CB A3 FA |                             rdlut   request, request        'lookup jump vector service table 
+010e0 0f2             | 
+010e0 0f2             |                             fit     $100                    'ensure all init code fits this space
+010e0 0f2             |                             fit     $100                    'ensure all init code fits this space
+010e0 0f2             | 
+010e0 0f2 00 00 00 00 
+      ...             
+01110 0fe 00 00 00 00 
+01114 0ff 00 00 00 00 |                             long    0[$100-$]               'pad more if required until table ends
+01118 100             | 
+01118 100             | '..................................................................................................
+01118 100             | ' Error result handling and COG notification of request completion
+01118 100             | 
+01118 100 04 04 4C FB | unsupported                 callpa  #-ERR_UNSUPPORTED, #err 'operation not supported
+0111c 101 03 02 4C FB | invalidbank                 callpa  #-ERR_INVALID_BANK, #err'bank accessed has no devices mapped
+01120 102 02 06 4C FB | invalidlist                 callpa  #-ERR_INVALID_LIST, #err'invalid list item request
+01124 103 01 08 4C FB | alignmenterror              callpa  #-ERR_ALIGNMENT, #err   'flash alignment error
+01128 104 05 EC 07 F6 | busyerror                   mov     pa, #-ERR_BUSY          'flash busy, falls through...
+0112c 105 D0 C3 8F F9 | err                         altd    id, #id0                'adjust for the running COG
+01130 106 09 00 04 F4 |                             bitl    0-0, #LIST_BIT          'cancel any list in progress by this COG
+01134 107 08 01 3C FC |                             wrlut   #0, ptra[8]             'cancel any resume state
+01138 108 32 04 64 FD |                             skipf   #%10                    'dont notify with success code 0 below
+0113c 109 BF ED 67 FC |                             wrlong  pa, ptrb[-1]            'set error code in mailbox response
+01140 10a BF 01 6C FC | notify                      wrlong  #0, ptrb[-1]            'if no error, clear mailbox request
+01144 10b 0B C2 0F F4 |                             testb   id, #NOTIFY_BIT wz      'check if COG also wants ATN notification
+01148 10c E1 DF C3 F9 |                             decod   a, id                   'convert COG ID to bitmask
+0114c 10d 3F DE 63 AD |             if_z            cogatn  a                       'notify COG via ATN
+01150 10e             | ' Poller re-starts here after a COG is serviced
+01150 10e 0F C2 0F F4 | poller                      testb   id, #PRIORITY_BIT wz    'check what type of COG was serviced
+01154 10f E6 5F 03 57 |             if_nz           incmod  rrcounter, rrlimit      'cycle the round-robin (RR) counter
+01158 110 AF 45 CB F9 |                             bmask   mask, rrcounter         'generate a RR skip mask from the count
+0115c 111             | ' Main dynamic polling loop repeats until a request arrives
+0115c 111 00 00 DC FC | polling_loop                rep     #0-0, #0                'repeat until we get a request for something
+01160 112 28 2E 64 FD |                             setq    #24-1                   'read 24 longs
+01164 113 A7 01 00 FB |                             rdlong  req0, mbox              'get all mailbox requests and data longs
+01168 114             | 
+01168 114 B0 01 B0 FB | polling_code                tjs     req0, cog0_handler      ']A control handler executes before skipf &
+0116c 115 32 44 63 FD |                             skipf   mask                    ']after all priority COG handlers if present
+01170 116 B1 07 B0 FB |                             tjs     req1, cog1_handler      ']Initially this is just a dummy placeholder
+01174 117 B2 0D B0 FB |                             tjs     req2, cog2_handler      ']loop taking up the most space assuming 
+01178 118 B3 13 B0 FB |                             tjs     req3, cog3_handler      ']a polling loop with all round robin COGs 
+0117c 119 B4 19 B0 FB |                             tjs     req4, cog4_handler      ']from COG1-7 and one control COG, COG0.
+01180 11a B5 1F B0 FB |                             tjs     req5, cog5_handler      ']This loop is recreated at init time 
+01184 11b B6 25 B0 FB |                             tjs     req6, cog6_handler      ']based on the active COGs being polled
+01188 11c B7 2B B0 FB |                             tjs     req7, cog7_handler      ']and whether priority or round robin.
+0118c 11d B1 07 B0 FB |                             tjs     req1, cog1_handler      ']Any update of COG parameters would also
+01190 11e B2 0D B0 FB |                             tjs     req2, cog2_handler      ']regenerate this code, in case priorities
+01194 11f B3 13 B0 FB |                             tjs     req3, cog3_handler      ']have changed.
+01198 120 B4 19 B0 FB |                             tjs     req4, cog4_handler      ']A skip pattern that is continually 
+0119c 121 B5 1F B0 FB |                             tjs     req5, cog5_handler      ']changed selects which RR COG is the
+011a0 122 B6 25 B0 FB |                             tjs     req6, cog6_handler      ']first to be polled in the seqeuence.
+011a4 123 B7 2B B0 FB | pollinst                    tjs     req7, cog7_handler      'instruction template for RR COGs
+011a8 124             | 
+011a8 124 B0 01 B0 FB | ctrlpollinst                tjs     req0, cog0_handler      'instruction template for control
+011ac 125 32 44 63 FD | skipfinst                   skipf   mask                    'instruction template for skipf
+011b0 126             |  
+011b0 126             | '..................................................................................................
+011b0 126             | ' List handler                               
+011b0 126             | 
+011b0 126 01 B0 A7 FB | dolist                      tjf     addr1, #real_list       'if addr1 is all ones this is a real list
+011b4 127 33 C0 63 FD |                             execf   burstwrite              'otherwise do a burst write to this bank
+011b8 128 28 0E 64 FD | real_list                   setq    #8-1                    'read 8 longs (largest request size)
+011bc 129 D9 B1 03 FB |                             rdlong  addr1, hubdata          '..to update the request state
+011c0 12a D7 B1 BF FB |                             tjns    addr1, #invalidlist     'error if request list item not valid
+011c4 12b D0 C3 8F F9 |                             altd    id, #id0                'get COG state
+011c8 12c 09 00 3C F4 |                             bith    0-0, #LIST_BIT wcz      'retain fact that we are in a list
+011cc 12d 09 C2 27 F4 |                             bith    id, #LIST_BIT           'retain fact that we are in a list
+011d0 12e 44 FF 9F AD |             if_z            jmp     #unsupported            'no list recursion is allowed!
+011d4 12f D8 CB FB F8 |                             getbyte request, addr1, #3      'get upper byte of this request
+011d8 130 00 CA 8F F9 | service_request             altd    request, #0             'get request address in COG RAM
+011dc 131 33 00 60 FD |                             execf   0-0                     'process the request 
+011e0 132             | 
+011e0 132             | '..................................................................................................
+011e0 132             | ' Restoring per COG state and resuming where we left off
+011e0 132             | 
+011e0 132 00 B1 A7 FA | restore                     rdlut   addr1, ptra[0]          'restore then continue with working state
+011e4 133 01 B3 A7 FA |                             rdlut   hubdata, ptra[1]
+011e8 134 02 B5 A7 FA |                             rdlut   count, ptra[2]
+011ec 135 03 B7 B7 FA |                             rdlut   addr2, ptra[3] wc       'C=1 indicates an extended request size
+011f0 136 D8 CB FB F8 |                             getbyte request, addr1, #3
+011f4 137 33 D2 63 3D |             if_nc           execf   resume                  'if not extended then resume immediately
+011f8 138 04 B9 A7 FA |                             rdlut   total, ptra[4]          'we need to read the extended parameters
+011fc 139 05 BB A7 FA |                             rdlut   offset1, ptra[5]
+01200 13a 06 BD A7 FA |                             rdlut   offset2, ptra[6]
+01204 13b 07 BF A7 FA |                             rdlut   link, ptra[7]
+01208 13c 09 D5 A7 FA |                             rdlut   orighubsize, ptra[9]
+0120c 13d 33 D2 63 FD |                             execf   resume                  'then resume what we were doing last time
+01210 13e             |                    
+01210 13e             | '..................................................................................................
+01210 13e             | ' Re-configuration of QoS settings and custom polling loop sequence generator
+01210 13e             | 
+01210 13e 2A 14 66 FD | reconfig                    push    #notify                 'setup return addr, then reload 
+01214 13f 28 0E 64 FD | reloadcogs                  setq    #8-1                    'reload all per COG QoS params
+01218 140 A6 B1 03 FB |                             rdlong  addr1, coglist          'use addr1+ as 8 long scratch area
+0121c 141 D0 DF B7 F9 |                             setd    a, #id0
+01220 142 D8 DF BF F9 |                             sets    a, #addr1
+01224 143 FE FF FF FF 
+01228 144 28 00 66 FD |                             setq    ##!($FF + (1<<LIST_BIT))'preserve list flag and COG ID state 
+0122c 145 08 04 DC FC |                             rep     #2, #8                  'repeat for 8 COGs
+01230 146 3F DE A7 F9 |                             alti    a, #%111_111 
+01234 147 00 00 F0 F9 |                             muxq    0-0, 0-0
+01238 148 09 01 A4 FA | patchid                     rdlut   0-0, ptra[9]            'restore static control COG ID information
+0123c 149 01 E2 63 FD |                             cogid   c
+01240 14a F1 41 C3 F9 |                             decod   excludedcogs, c         'exclude driver cog initially
+01244 14b 08 DE 07 F6 |                             mov     a, #$8                  'a iterates through prio levels 8=lowest
+01248 14c 01 EC 67 F6 |                             neg     pa, #1                  'start with all ones
+0124c 14d 07 E2 07 F6 | fillprio                    mov     c, #7                   'c iterates through cogs
+01250 14e D0 E3 97 F9 | prioloop                    alts    c, #id0
+01254 14f 00 E0 03 F6 |                             mov     b, 0-0
+01258 150 F0 E5 3B F9 |                             getword d, b, #1                'get burst field
+0125c 151 F2 E5 CB F7 |                             test    d wz                    'if burst=0 
+01260 152 F1 41 23 A4 |             if_z            bith    excludedcogs, c         '...then exclude this COG from polling
+01264 153 0C 00 90 AD |             if_z            jmp     #excluded               
+01268 154 F0 E5 5B F8 |                             getnib  d, b, #3                'get RR/PRI flag & priority
+0126c 155 EF E5 0B F2 |                             cmp     d, a wz                 'compare against current priority level
+01270 156 F1 ED 83 A8 |             if_z            rolnib  pa, c, #0               'if matches include COG at this level
+01274 157 F6 E3 7F FB | excluded                    djnf    c, #prioloop            'repeat for all 8 COGs
+01278 158 0F DE 0F F7 |                             incmod  a, #15 wz               'next level
+0127c 159 CC FF 9F 5D |             if_nz           jmp     #fillprio 
+01280 15a             | 
+01280 15a             | 'determine priority cogs and build instructions for the polling sequence
+01280 15a 00 EE 07 F6 |                             mov     pb, #0                  'clear out set of priority COGs
+01284 15b 03 DE 07 F6 |                             mov     a, #3                   'start with no COGs being polled + 3 instructions
+01288 15c 14 E5 B7 F9 |                             setd    d, #polling_code        'initialize COGRAM write position
+0128c 15d             | 
+0128c 15d 08 18 DC FC |                             rep     @endprioloop, #8        'test all 8 priority slots
+01290 15e 03 EC 17 F4 |                             testb   pa, #3 wc               'test validity bit, c=1 if invalid
+01294 15f F6 E3 43 F8 |                             getnib  c, pa, #0               'get cogid ID at this priority level
+01298 160 F1 EF 0B 34 |             if_nc           testb   pb, c wz                'check if already exists as priority COG
+0129c 161 F1 EF 23 14 |             if_nc_and_nz    bith    pb, c                   'and only add if it doesn't
+012a0 162 01 DE 07 11 |             if_nc_and_nz    add     a, #1                   'add another COG to poll 
+012a4 163 B0 E3 97 19 |             if_nc_and_nz    alts    c, #cog0_handler        'determine jump address per COG
+012a8 164 00 46 BE 19 |             if_nc_and_nz    sets    pollinst, #0-0          'patch jump handler in instruction
+012ac 165 03 E2 07 1A |             if_nc_and_nz    mul     c, #3
+012b0 166 F1 47 B2 19 |             if_nc_and_nz    setd    pollinst, c             'patch REQ slot to poll in instruction
+012b4 167 38 E4 A7 19 |             if_nc_and_nz    alti    d, #%111_000            'generate new COG RAM write address
+012b8 168 23 01 00 16 |             if_nc_and_nz    mov     0-0, pollinst           'move the instruction to COG RAM
+012bc 169 04 EC 07 F0 |                             ror     pa, #4                  'advance to next priority
+012c0 16a             | endprioloop
+012c0 16a FF EE 67 F5 |                             xor     pb, #$ff                'invert to find all the non-priority COGs
+012c4 16b A0 EF 23 F5 |                             andn    pb, excludedcogs        'and remove any other excluded COGs
+012c8 16c F7 CD AB F7 |                             ones    rrlimit, pb wz          'count the number of RR COGs
+012cc 16d E6 DF 03 F1 |                             add     a, rrlimit              'account for this number of RR COGs to poll
+012d0 16e 01 CC 87 F1 |                             sub     rrlimit, #1             'setup last RR count value for incmod
+012d4 16f 38 E4 A7 F9 |                             alti    d, #%111_000            'generate the control polling instruction
+012d8 170 24 01 00 F6 |                             mov     0-0, ctrlpollinst       'write the instruction
+012dc 171 38 E4 A7 59 |             if_nz           alti    d, #%111_000            'if RR COG count not zero we need a skipf
+012e0 172 25 01 00 56 |             if_nz           mov     0-0, skipfinst          'add the skipf instruction
+012e4 173 02 DE 07 51 |             if_nz           add     a, #2                   'account for the extra skipf overhead instructions
+012e8 174 EF 23 B2 F9 |                             setd    polling_loop, a         'save it as the repeat count
+012ec 175 2D 00 64 AD |             if_z            ret                             'we are done now, if no round robin COGs
+012f0 176             | 
+012f0 176             | ' populate the round robin COG polling instructions
+012f0 176 02 5E 07 F6 |                             mov     rrcounter, #2           'fill the RR poll instruction list twice
+012f4 177 F7 E1 03 F6 | rrloop                      mov     b, pb                   'get the set of RR COGs
+012f8 178 00 E2 07 F6 |                             mov     c, #0                   'start at COG ID = 0
+012fc 179 00 DE 07 F6 |                             mov     a, #0                   'req mailbox COGRAM address for COG 0
+01300 17a 01 E0 5F F0 | nextrrcog                   shr     b, #1 wcz               'test for COG ID in RR COG set, set C=1
+01304 17b EF 47 B2 C9 |             if_c            setd    pollinst, a             'patch REQ slot to poll in instruction
+01308 17c B0 E3 97 C9 |             if_c            alts    c, #cog0_handler        'determine jump address
+0130c 17d 00 46 BE C9 |             if_c            sets    pollinst, #0-0          'patch jump handler in instruction
+01310 17e 38 E4 A7 C9 |             if_c            alti    d, #%111_000            'generate new COG RAM write address
+01314 17f 23 01 00 C6 |             if_c            mov     0-0, pollinst           'move the instruction to COG RAM
+01318 180 01 E2 07 F1 |                             add     c, #1                   'increment the COG ID
+0131c 181 03 DE 07 F1 |                             add     a, #3                   'increase the request address
+01320 182 DC FF 9F 5D |             if_nz           jmp     #nextrrcog              'repeat for all COG IDs
+01324 183 F3 5F 6F 0B |             _ret_           djnz    rrcounter, #rrloop      'repeat twice, leave rrcounter zeroed
+01328 184             | '..................................................................................................
+01328 184             | ' Code to get/set driver settings per bank or to dump COG/LUT state
+01328 184             | 
+01328 184             | set_latency                                                 '            (a) set latency
+01328 184             | get_latency                                                 '            (b) get latency
+01328 184             | set_burst                                                   '            (c) set burst size of bank
+01328 184             | get_burst                                                   '            (d) get burst size of bank
+01328 184             |                                                             '            (e) dump state
+01328 184 D8 E1 73 F8 |                             getnib  b, addr1, #6            ' a b c d    get bank address
+0132c 185 28 FE 67 FD | dump_state                  setq    #511                    ' | | | | e  prepare burst write
+01330 186 D9 01 60 FC |                             wrlong  0, hubdata              ' | | | | e  write COG RAM to HUB
+01334 187             |                                                             ' | | | | e  account for following AUGS
+01334 187 04 00 00 FF 
+01338 188 00 B2 07 F1 |                             add     hubdata, ##2048         ' | | | | e  advance by 2k bytes
+0133c 189 29 FE 67 FD |                             setq2   #511                    ' | | | | e  prepare burst write
+01340 18a D9 01 60 FC |                             wrlong  0, hubdata              ' | | | | e  write LUT RAM to HUB
+01344 18b 10 E0 07 F1 |                             add     b, #16                  ' a b | | |  point to latency params
+01348 18c F0 DF A3 FA |                             rdlut   a, b                    ' a b c d |  read data for bank
+0134c 18d D9 DF DB F8 |                             setbyte a, hubdata, #3          ' a | | | |  patch latency
+01350 18e D9 DF 03 F6 |                             mov     a, hubdata              ' | | c | |  patch burst/delay etc
+01354 18f F0 DF 33 FC |                             wrlut   a, b                    ' a | c | |  if setting, save bank data
+01358 190 EF DF FB F8 |                             getbyte a, a, #3                ' | b | | |  extract latency field only
+0135c 191 80 DF 67 FC |                             wrlong  a, ptrb                 ' | b | d |  write result          
+01360 192 DC FD 9F FD |                             jmp     #notify                 ' a b c d e  return success
+01364 193             | 
+01364 193             | '..................................................................................................
+01364 193             | ' Misc EXECF code
+01364 193             | 
+01364 193 33 72 63 FD | start_read_exec             execf   newburstr
+01368 194 33 7C 63 FD | start_write_exec            execf   resumewrites
+0136c 195 33 78 63 FD | continue_read_exec          execf   lockedreads
+01370 196 33 7A 63 FD | continue_write_exec         execf   lockedwrites
+01374 197             | 
+01374 197             | '..................................................................................................
+01374 197             | ' Variables
+01374 197             | 
+01374 197 08 00 CF 20 | ximm8lut        long    $20CF_0008              '8 nibble transfers via LUT to pins
+01378 198 01 00 C6 E0 | xrecvlo8        long    $E0C6_0001              '1 byte read from lo bus pins
+0137c 199 01 00 C6 E0 | xrecvhi8        long    $E0C6_0001              '1 byte read from hi bus pins
+01380 19a 00 00 C0 F0 | xrecvdata       long    $F0C0_0000              'arbitrary 16 bit reads from 16 bit bus pins
+01384 19b 00 00 C0 B0 | xsenddata       long    $B0C0_0000              'arbitrary 16 bit writes from hub to pins
+01388 19c 02 00 C0 70 | xsendimm        long    $70C0_0002              'arbitrary 2x16 bit immediate writes from imm to pins
+0138c 19d             | 
+0138c 19d 00 00 00 80 | xfreq1          long    $80000000
+01390 19e 00 00 00 40 | xfreq2          long    $40000000
+01394 19f 03 00 00 00 | delay           long    3
+01398 1a0             | 
+01398 1a0             | lutcodeaddr                 
+01398 1a0             | startupparams
+01398 1a0             | excludedcogs                                    'careful: shared register use!
+01398 1a0 CC 07 00 00 | frequency       long    lut_code - driver_start 'determine offset of LUT code from base
+0139c 1a1 00 00 00 00 | flags           long    0
+013a0 1a2             | mask                                            'careful: shared register use!
+013a0 1a2 00 00 00 00 | resetmaskA      long    0
+013a4 1a3             | limit                                           'careful: shared register use!
+013a4 1a3 00 00 00 00 | resetmaskB      long    0
+013a8 1a4 00 00 00 00 | datapins        long    0
+013ac 1a5             | const512                                        'careful: shared register use!
+013ac 1a5 00 00 00 00 | devicelist      long    0
+013b0 1a6 00 00 00 00 | coglist         long    0
+013b4 1a7 00 00 00 00 | mbox            long    0 
+013b8 1a8             | 
+013b8 1a8             | clkpin                                          'shared with code patched during init
+013b8 1a8 A8 03 18 FC | clockpatch      wxpin   #1, clkpin              'adjust transition delay to # clocks
+013bc 1a9             | cspin                                           'shared with code patched during init
+013bc 1a9 1D 3A 63 FD | speedpatch      setxfrq xfreq1                  'instruction to set read speed to sysclk/1
+013c0 1aa 00 00 01 00 | registered      long    %100_000_000_00_00000_0 'config pin for clocked input
+013c4 1ab 4A 00 00 00 | clkconfig       long    %1_00101_0              'config for Smartpin transition output mode
+013c8 1ac 01 00 00 00 | clkdelay        long    1
+013cc 1ad 00 00 00 00 | regdatabus      long    0
+013d0 1ae             | 
+013d0 1ae 10 00 00 00 | deviceaddr      long    $10
+013d4 1af             | rrcounter
+013d4 1af 7F 7F 3F FF | pinmask         long    $ff3f7f7f
+013d8 1b0             | 
+013d8 1b0             | ' jump addresses for the per COG handlers
+013d8 1b0 20 00 00 00 | cog0_handler    long    cog0
+013dc 1b1 2C 00 00 00 | cog1_handler    long    cog1
+013e0 1b2 38 00 00 00 | cog2_handler    long    cog2
+013e4 1b3 44 00 00 00 | cog3_handler    long    cog3
+013e8 1b4 50 00 00 00 | cog4_handler    long    cog4
+013ec 1b5 5C 00 00 00 | cog5_handler    long    cog5
+013f0 1b6 68 00 00 00 | cog6_handler    long    cog6
+013f4 1b7 74 00 00 00 | cog7_handler    long    cog7
+013f8 1b8 0C 0F 00 00 | expansion       long    gfxexpansion - driver_start
+013fc 1b9             | 
+013fc 1b9             | ' EXECF sequences
+013fc 1b9 70 7A 80 22 | newburstr       long    (%0010001010000000011110 << 10) + r_burst
+01400 1ba 48 9B EF 00 | lockedfill      long    (%0000000011101111100110 << 10) + w_locked_fill
+01404 1bb 41 F3 05 74 | restorefill     long    (%0111010000000101111100 << 10) + w_fill_cont
+01408 1bc 80 22 3F 00 | lockedreads     long    (%0000000000111111001000 << 10) + r_locked_burst
+0140c 1bd 4B F3 E0 0F | lockedwrites    long    (%0000111111100000111100 << 10) + w_resume_burst
+01410 1be 4B 03 E0 0F | resumewrites    long    (%0000111111100000000000 << 10) + w_resume_burst
+01414 1bf 76 02 8A 84 | resumereads     long    (%1000010010001010000000 << 10) + r_resume_burst
+01418 1c0             | 'singlewrites    long    (%0000000010011111101000 << 10) + single_write
+01418 1c0             | 
+01418 1c0             | 
+01418 1c0             | ' SKIPF sequences
+01418 1c0             | skiptable
+01418 1c0 7E 30 0C 00 |                 long    %11000011000001111110  ' read modify write byte
+0141c 1c1 0E 37 03 00 |                 long    %110011011100001110    ' read modify write word
+01420 1c2 00 00 00 00 |                 long    0                      ' read modify write long
+01424 1c3 7E 00 00 00 |                 long    %1111110               ' single byte read
+01428 1c4 8E 07 00 00 |                 long    %11110001110           ' single word read
+0142c 1c5 00 00 00 00 | pattern2        long    0
+01430 1c6 00 00 00 00 | pattern3        long    0
+01434 1c7 77 02 00 00 | singlelong      long    %1001110111  
+01438 1c8 FD 10 80 6F | skipcase_a      long    %01101111100000000001000011111101
+0143c 1c9 10 18 50 00 | skipcase_b      long    %00000000010100000001100000010000
+01440 1ca 11 3E 60 00 | skipcase_c      long    %00000000011000000011111000010001
+01444 1cb 02 0F 00 00 | skipseq_write   long    %00000000000000000000111100000010
+01448 1cc             | 
+01448 1cc             | ' LUT RAM address values
+01448 1cc FF 02 00 00 | complete_rw     long    complete_rw_lut
+0144c 1cd DD 02 00 00 | continue_read   long    continue_read_lut
+01450 1ce DB 02 00 00 | continue_write  long    continue_write_lut
+01454 1cf F6 02 00 00 | noread          long    noread_lut
+01458 1d0             | 
+01458 1d0 00 00 00 00 | id0             long    0
+0145c 1d1 01 00 00 00 | id1             long    1
+01460 1d2 02 00 00 00 | id2             long    2
+01464 1d3 03 00 00 00 | id3             long    3
+01468 1d4 04 00 00 00 | id4             long    4
+0146c 1d5 05 00 00 00 | id5             long    5
+01470 1d6 06 00 00 00 | id6             long    6
+01474 1d7 07 00 00 00 | id7             long    7
+01478 1d8             | 
+01478 1d8             | 'These next 10 request registers below are also temporarily reused during init 
+01478 1d8             | 'and COG updates and need to follow immediately after id0-id7
+01478 1d8 00 00 00 00 | addr1           long    0
+0147c 1d9 00 00 00 00 | hubdata         long    0
+01480 1da 00 00 00 00 | count           long    0
+01484 1db 00 00 00 00 | addr2           long    0
+01488 1dc 00 00 00 00 | total           long    0
+0148c 1dd 00 00 00 00 | offset1         long    0
+01490 1de 00 00 00 00 | offset2         long    0
+01494 1df 00 00 00 00 | link            long    0
+01498 1e0             | 
+01498 1e0             | burstwrite                                      'note shared register use during init
+01498 1e0 00 10 F0 FE | initctrl        long    $FEF01000               'round robin, burst=$fff0, no ATN, ERR on busy
+0149c 1e1 00 00 00 00 | id              long    0
+014a0 1e2             | 
+014a0 1e2 00 00 00 00 | header          long    0
+014a4 1e3 00 00 00 00 | trailer         long    0
+014a8 1e4 00 00 00 00 | cmdaddr         long    0
+014ac 1e5 00 00 00 00 | request         long    0
+014b0 1e6 00 00 00 00 | rrlimit         long    0
+014b4 1e7 00 00 00 00 | pinconfig       long    0
+014b8 1e8 00 00 00 00 | clks            long    0
+014bc 1e9 00 00 00 00 | resume          long    0
+014c0 1ea 00 00 00 00 | orighubsize     long    0
+014c4 1eb 00 00 00 00 | wrclks          long    0
+014c8 1ec             | 
+014c8 1ec 00 00 00 00 | pattern         long    0
+014cc 1ed 00 00 00 00 | hubscratch      long    0
+014d0 1ee 00 10 00 00 | val4k           long    4096
+014d4 1ef             | 
+014d4 1ef             | ' temporary general purpose regs
+014d4 1ef 00 00 00 00 | a               long    0
+014d8 1f0 00 00 00 00 | b               long    0
+014dc 1f1 00 00 00 00 | c               long    0
+014e0 1f2 00 00 00 00 | d               long    0
+014e4 1f3             | 
+014e4 1f3             |                 fit     502
+014e4 1f3             |                 fit     502
+014e4 1f3             | 
+014e4 1f3             | '..................................................................................................
+014e4 1f3             | 
+014e4 1f3             |             orgh
+014e4                 | 
+014e4                 | lut_code
+014e4                 | 'HW init code up to 80 longs
+014e4                 | 
+014e4                 | '..................................................................................................
+014e4                 | ' Memory layout for LUT RAM once operational:
+014e4                 | '
+014e4                 | '  LUT RAM address      Usage
+014e4                 | '  ---------------      ----
+014e4                 | '    $200-$20F          Bank parameters: burst + type + size per bank (16)
+014e4                 | '    $210-$21F          Pin parameters : latency + control pins per bank (16)
+014e4                 | '    $220-$26F          COG state storage (8 COGs x 10 longs per COG)
+014e4                 | '    $270-$3FF          Main PSRAM access code in LUTRAM 
+014e4                 | '
+014e4                 | ' Also during driver COG startup:
+014e4                 | ' $230-$24F is used for HW init setup
+014e4                 | ' $250-$26F is used as temporary vector storage 
+014e4                 | '..................................................................................................
+014e4                 | 
+014e4                 |                 org $230    
+014e4 230             | 
+014e4 230             | ' routines to (re-)initialize PSRAM chip into QSPI mode from whatever it was before
+014e4 230 1D 3C 63 FD | hwinit                      setxfrq xfreq2
+014e8 231 24 16 60 FD |                             pollxfi
+014ec 232 FF AA 2A FF 
+014f0 233 FF ED 07 F6 |                             mov     pa, ##$5555FFFF         '$F5 - exit QSPI mode if we were in this mode
+014f4 234 28 00 B0 FD |                             call    #sendqspi
+014f8 235 07 F8 07 FF 
+014fc 236 F0 ED 07 F6 |                             mov     pa, ##$0FF00FF0         '$66 - reset enable
+01500 237 28 00 B0 FD |                             call    #sendspi
+01504 238 F8 07 78 FF 
+01508 239 0F EC 07 F6 |                             mov     pa, ##$F00FF00F         '$99 - reset
+0150c 23a 1C 00 B0 FD |                             call    #sendspi
+01510 23b 7F 78 78 FF 
+01514 23c 00 ED 07 F6 |                             mov     pa, ##$F0F0FF00         '$35 - enter quad spi mode
+01518 23d 10 00 B0 FD |                             call    #sendspi 
+0151c 23e 2D 00 64 FD |                             ret
+01520 23f             | 
+01520 23f 04 D0 07 F6 | sendqspi                    mov     clks,#4
+01524 240 32 0C 64 FD |                             skipf   #%110
+01528 241 9C EF 03 F6 |                             mov     pb, xsendimm
+0152c 242             | 
+0152c 242 10 D0 07 F6 | sendspi                     mov     clks, #16
+01530 243 97 EF 03 F6 |                             mov     pb, ximm8lut
+01534 244 58 52 63 FD |                             drvl    cspin                   'active low chip select
+01538 245 58 48 63 FD |                             drvl    datapins                'enable the DATA bus
+0153c 246 F6 EF A3 FC |                             xinit   pb, pa                  'send 32 bit immediate data
+01540 247 A8 D1 23 FC |                             wypin   clks, clkpin            'start memory clock output 
+01544 248 24 36 60 FD |                             waitxfi                         'wait for the completion
+01548 249 50 48 63 FD |                             fltl    datapins                'float data bus
+0154c 24a 59 52 63 FD |                             drvh    cspin                   'raise chip select
+01550 24b 1F 90 65 0D |             _ret_           waitx   #200                    'delay before return to ensure CS delay
+01554 24c             | 
+01554 24c 00 00 00 00 
+01558 24d 00 00 00 00 
+0155c 24e 00 00 00 00 
+01560 24f 00 00 00 00 |                 long    0[$270-32-$]
+01564 250             |     
+01564 250             |                 fit     $270-32  ' keep room for 32 vector longs
+01564 250             |                 fit     $270-32  ' keep room for 32 vector longs
+01564 250             | ' EXECF vectors only used during bank initialization at startup time, reclaimed later for COG state
+01564 250             | rw_vect ' PSRAM jump vectors
+01564 250 71 52 5A EE |                 long    (%1110111001011010010100 << 10) + r_single
+01568 251 71 52 5A EE |                 long    (%1110111001011010010100 << 10) + r_single
+0156c 252 71 42 5A AE |                 long    (%1010111001011010010000 << 10) + r_single
+01570 253 70 7A 80 22 |                 long    (%0010001010000000011110 << 10) + r_burst
+01574 254 41 E3 00 74 |                 long    (%0111010000000000111000 << 10) + w_single
+01578 255 41 93 00 74 |                 long    (%0111010000000000100100 << 10) + w_single
+0157c 256 41 73 00 74 |                 long    (%0111010000000000011100 << 10) + w_single
+01580 257 47 1B 00 FE |                 long    (%1111111000000000000110 << 10) + w_burst
+01584 258             | ro_vect ' R/O PSRAM jump vectors
+01584 258 71 52 5A EE |                 long    (%1110111001011010010100 << 10) + r_single
+01588 259 71 52 5A EE |                 long    (%1110111001011010010100 << 10) + r_single
+0158c 25a 71 42 5A AE |                 long    (%1010111001011010010000 << 10) + r_single
+01590 25b 70 7A 80 22 |                 long    (%0010001010000000011110 << 10) + r_burst
+01594 25c 00 01 00 00 |                 long    unsupported
+01598 25d 00 01 00 00 |                 long    unsupported
+0159c 25e 00 01 00 00 |                 long    unsupported
+015a0 25f 00 01 00 00 |                 long    unsupported
+015a4 260             | ctrl_vect ' Control jump vectors
+015a4 260 84 F9 39 00 |                 long    (%0000000000111001111110 << 10) + get_latency
+015a8 261 00 01 00 00 |                 long    unsupported
+015ac 262 84 F9 7B 00 |                 long    (%0000000001111011111110 << 10) + get_burst
+015b0 263 85 01 7F 00 |                 long    (%0000000001111111000000 << 10) + dump_state
+015b4 264 84 F9 D1 00 |                 long    (%0000000011010001111110 << 10) + set_latency
+015b8 265 00 01 00 00 |                 long    unsupported
+015bc 266 84 F9 CB 00 |                 long    (%0000000011001011111110 << 10) + set_burst
+015c0 267 3E 01 00 00 |                 long    reconfig 
+015c4 268             | no_vect ' Invalid bank jump vectors
+015c4 268 01 01 00 00 |                 long    invalidbank
+015c8 269 01 01 00 00 |                 long    invalidbank
+015cc 26a 01 01 00 00 |                 long    invalidbank
+015d0 26b 01 01 00 00 |                 long    invalidbank
+015d4 26c 01 01 00 00 |                 long    invalidbank
+015d8 26d 01 01 00 00 |                 long    invalidbank
+015dc 26e 01 01 00 00 |                 long    invalidbank
+015e0 26f 01 01 00 00 |                 long    invalidbank
+015e4 270             | 
+015e4 270             |                 fit     $270
+015e4 270             |                 fit     $270
+015e4 270             | '..................................................................................................
+015e4 270             | ' PSRAM READS
+015e4 270             |                                                             ' a b c d e f
+015e4 270             |                                                             ' B W L B R L  (a) byte read
+015e4 270             |                                                             ' Y O O U E O  (b) word read
+015e4 270             |                                                             ' T R N R S C  (c) long read
+015e4 270             |                                                             ' E D G S U K  (d) new burst read
+015e4 270             |                                                             '       T M E  (e) resumed sub-burst
+015e4 270             |                                                             '         E D  (f) locked sub-burst
+015e4 270             | 
+015e4 270             | 
+015e4 270 DA D5 03 F6 | r_burst                     mov     orighubsize, count      '       d      preserve the original transfer count
+015e8 271 DA B5 CB F7 | r_single                    test    count wz                ' a b c |      test for RMW (z=1 if not RMW)
+015ec 272 36 D9 07 F6 |                             mov     pattern, #%100110110    ' a b c |      setup future skip pattern
+015f0 273 20 D9 27 A5 |             if_z            andn    pattern, #%100100000    ' | | c |      no need to rearrange long data
+015f4 274 02 34 27 F9 |                             setword xrecvdata, #2, #0       ' a b c |      2x16 bit transfers to read a long
+015f8 275 80 B4 97 FB |                             tjz     count, #noread_lut      ' | | | d      check for any bytes to send
+015fc 276 E5 E1 43 F8 | r_resume_burst              getnib  b, request, #0          ' a b c d e    get bank parameter LUT address
+01600 277 F0 E1 A3 FA |                             rdlut   b, b                    ' a b c d e    get bank limit/mask
+01604 278 F0 45 CB F9 |                             bmask   mask, b                 ' | | | d e    build mask for addr
+01608 279 F0 3F EB F8 |                             getbyte delay, b, #1            ' a b c d e    get input delay of bank + flags
+0160c 27a 11 E0 47 F0 | p0                          shr     b, #17                  ' | | | d e    scale burst size based on bus rate
+01610 27b F0 47 23 F3 |                             fle     limit, b                ' | | | d e    apply any per bank limit to cog limit
+01614 27c 05 3E 57 F0 |                             shr     delay, #5 wc            ' a b c d e    prep delay and test for registered inputs
+01618 27d 10 5A 67 04 |             _ret_           bitnc   regdatabus, #16         ' | | | | |    setup if data bus is registered or not
+0161c 27e 10 5A 67 F4 |                             bitnc   regdatabus, #16         ' a b c d e    setup if data bus is registered or not
+01620 27f F9 3B 83 FC |                             wrfast  xfreq1, ptrb            ' a b c | |    setup streamer hub address for singles
+01624 280 D9 3B 83 FC | r_locked_burst              wrfast  xfreq1, hubdata         ' | | | d e f  setup streamer hub address for bursts
+01628 281 DA E3 03 F6 |                             mov     c, count                ' | | | d e f  get count of bytes left to read
+0162c 282 A3 E3 33 F3 |                             fle     c, limit wc             ' | | | d e f  enforce the burst limit
+01630 283 20 D0 17 F6 |                             mov     clks, #32 wc            ' a b c | | |  16 clock transitions to read a single long
+01634 284 CD D3 03 C6 |             if_c            mov     resume, continue_read   ' | | | d e f  burst read will continue
+01638 285 CC D3 03 36 |             if_nc           mov     resume, complete_rw     ' | | c d e f  burst/long read will complete
+0163c 286 32 20 64 FD |                             skipf   #%10000                 ' | | | d | |  extend skipf sequence for burst
+01640 287 E5 5D 03 F8 |                             setnib  deviceaddr, request, #0 ' a b c d e |  get the bank's pin config address
+01644 288 AE CF A3 FA |                             rdlut   pinconfig, deviceaddr   ' a b c d e |  get the pin config for this bank
+01648 289 E7 53 E3 F8 |                             getbyte cspin, pinconfig, #0    ' a b c d e |  byte 0 holds CS pin
+0164c 28a E7 51 EB F8 |                             getbyte clkpin, pinconfig, #1   ' a b c d e |  byte 1 holds CLK pin
+01650 28b 54 00 90 FD |                             jmp     #readcommon             ' a b c | | |  skip burst transfer setup for single reads
+01654 28c             | 
+01654 28c             |                             ' fall through to read bursts
+01654 28c             |                         
+01654 28c             | burst_read                  ' handle the 4k page boundary by splitting any read bursts that cross it 
+01654 28c D8 E5 03 F6 |                             mov     d, addr1                'get start address
+01658 28d 0B E4 47 F7 |                             zerox   d, #11                  'only keep 12 LSBs
+0165c 28e EE E5 C3 F2 |                             subr    d, val4k                'figure out how many bytes remain before we hit the boundary
+01660 28f F2 E3 33 F3 |                             fle     c, d wc                 'compare this size to our transfer size and limit it
+01664 290 CD D3 03 C6 |             if_c            mov     resume, continue_read   'and we will continue with a sub-burst again
+01668 291 00 D8 07 F6 |                             mov     pattern, #0             'enable all by default
+0166c 292 01 B0 17 F4 |                             testb   addr1, #1 wc            'test if start addr starts in second word
+01670 293 01 D8 67 F4 |                             bitnc   pattern, #1             'enable delay cycle if so
+01674 294 6C D0 63 FD |                             wrc     clks                    'and account for its clock cycle
+01678 295 00 B0 17 F4 |                             testb   addr1, #0 wc            'test if start addr starts on odd byte
+0167c 296 02 D8 67 F4 |                             bitnc   pattern, #2             'add hi 8 transfer initially
+01680 297 F1 E5 03 F6 |                             mov     d, c                    'get count of bytes to be read into HUB
+01684 298 01 E4 87 C1 |             if_c            sub     d, #1                   'minus 1 if start addr was odd
+01688 299 01 E4 4F F0 |                             shr     d, #1 wz                'divide by two bytes to work out 16 bit transfers
+0168c 29a F2 D1 23 F1 |                             addx    clks, d                 'account for this in the clock (with extra 8 bit cycle)
+01690 29b F2 35 23 F9 |                             setword xrecvdata, d, #0        'set the word transfer clocks needed in streamer
+01694 29c 03 D8 87 F4 |                             bitz    pattern, #3             'adjust the pattern to include this
+01698 29d 00 E2 D7 F4 |                             testb   c, #0 xorc              'test for end address
+0169c 29e 04 D8 67 F4 |                             bitnc   pattern, #4             'include low 8 bit transfer if required
+016a0 29f 0E D0 27 F1 |                             addx    clks, #14               'account for 14 address+delay clocks + and low 8 bit transfer
+016a4 2a0 E8 D1 03 F1 |                             add     clks, clks
+016a8 2a1             | readcommon
+016a8 2a1 D8 C9 03 F6 |                             mov     cmdaddr, addr1          'get start address of transfer
+016ac 2a2 02 C8 47 F0 |                             shr     cmdaddr, #2             'align to 32 bit boundary
+016b0 2a3 EB C8 DF F8 |                             setbyte cmdaddr, #$EB, #3       'add quad read command
+016b4 2a4             | 
+016b4 2a4 60 C8 63 FD |                             splitb  cmdaddr                 'reverse nibbles in address to match bus order
+016b8 2a5 69 C8 63 FD |                             rev     cmdaddr
+016bc 2a6 1B C8 FF F9 |                             movbyts cmdaddr, #%%0123
+016c0 2a7 61 C8 63 FD |                             mergeb  cmdaddr
+016c4 2a8             | 
+016c4 2a8 58 52 63 FD |                             drvl    cspin                   'activate chip select
+016c8 2a9 58 48 63 FD |                             drvl    datapins                'enable data bus
+016cc 2aa             |             '               setxfrq xfreq2                  'setup streamer frequency (sysclk/2)
+016cc 2aa E4 2F A3 FC |                             xinit   ximm8lut, cmdaddr       'stream out command+address
+016d0 2ab A8 D1 23 FC |                             wypin   clks, clkpin            'start clock output
+016d4 2ac 00 00 CC FC |                             xcont   #0,#0                   '1 dummy transfer to resync to the streamer for timely tri-stating
+016d8 2ad 00 0C CC FC |                             xcont   #6,#0                   '6 clock transfers for bus turnaround delay
+016dc 2ae             |                           '  drvh    datapins                'enable this only if validating actual tri-state time on a scope
+016dc 2ae 50 48 63 FD |                             fltl    datapins                'safe to float the data bus, address has been sent by now
+016e0 2af A4 5B 03 FC |                             wrpin   regdatabus, datapins    'setup data bus inputs as registered or not for read timing control
+016e4 2b0 28 3A 63 FD |                             setq    xfreq1                  'reconfigure with single cycle xfreq (sysclk/1)
+016e8 2b1 00 3E C7 FC |                             xcont   delay, #0               'configurable fine input delay per P2 clock cycle
+016ec 2b2 00 0C CC FC |                             xcont   #6, #0                  'fixed delay offset to expand delay range
+016f0 2b3 32 D8 63 FD |                             skipf   pattern                 'choose path below
+016f4 2b4             |                                                             'Bursts Bytes Words Longs  RMW FromWrites
+016f4 2b4 28 3C 63 FD |                             setq    xfreq2                  '   a     b     c     d     e    f  restore sysclk/2 operation
+016f8 2b5 00 02 CC FC |                             xcont   #1, #0                  '   ?     |     |     |     |    |  skips over LSW
+016fc 2b6 00 32 C7 FC |                             xcont   xrecvhi8, #0            '   ?     |     |     |     |    |  1x8 bits on high 8 bit bus
+01700 2b7 00 34 C7 FC |                             xcont   xrecvdata, #0           '   ?     b     c     d     e    f  nx16 bits on 16 bit bus
+01704 2b8 00 30 C7 FC |                             xcont   xrecvlo8, #0            '   ?     |     |     |     |    |  1x8 bits on low 8 bit bus
+01708 2b9 2D D2 63 FD |                             call    resume                  '   a     |     |     d     |    |  chooses what to do next
+0170c 2ba 24 36 60 FD |                             waitxfi                         '   a     b     c     d     e    f  wait for streaming to finish
+01710 2bb A4 55 03 FC |                             wrpin   registered, datapins    '   a     b     c     d     e    f  restore data pins for next transfer
+01714 2bc 59 52 63 0D |             _ret_           drvh    cspin                   '   a     |     |     d     |    f  de-assert chip select and return
+01718 2bd 59 52 63 FD |                             drvh    cspin                   '         b     c           e       deassert chip select and continue
+0171c 2be E5 E5 4B F8 |                             getnib  d, request, #1          'get request code value
+01720 2bf 03 E4 87 51 |             if_nz           sub     d, #3                   'offset for table if RMW
+01724 2c0 BB E5 8F F9 |                             altd    d, #skiptable-5         'patch next instruction
+01728 2c1 32 00 60 FD |                             skipf   0-0                     'generate skip sequence
+0172c 2c2             |                                                             ' B   W  RMWB RMWW RMLL 
+0172c 2c2 80 DF 07 FB |                             rdlong  a, ptrb                 ' a   b   c    d    e   read back data written to mailbox
+01730 2c3 28 B4 63 FD |                             setq    count                   ' |   |   |    |    e   setup bit mux mask
+01734 2c4 D9 DF F3 F9 |                             muxq    a, hubdata              ' |   |   |    |    e   apply bit mux
+01738 2c5 40 00 90 FD |                             jmp     #writeback              ' |   |   |    |    e   write back to external memory
+0173c 2c6 01 B0 17 F4 |                             testb   addr1, #1 wc            ' |   b   |    d        test for odd word address read case
+01740 2c7 EF EF 3B C9 |             if_c            getword pb, a, #1               ' |   b   |    d        select hi word in long
+01744 2c8 EF EF 33 39 |             if_nc           getword pb, a, #0               ' |   b   |    d        select lo word in long
+01748 2c9 D8 E5 03 F6 |                             mov     d, addr1                ' a   |   c    d
+0174c 2ca 03 E4 07 F5 |                             and     d, #3                   ' a   |   c    |        get LSBs of address
+01750 2cb EF E5 6F F9 |                             altgb   d, #a                   ' a   |   c    |        index into long
+01754 2cc 00 EE E3 F8 |                             getbyte pb                      ' a   |   c    |        and extract the byte
+01758 2cd 80 EF 67 FC |                             wrlong  pb, ptrb                ' a   b   c    d        write data back now zeroed and aligned
+0175c 2ce C0 00 B0 FD |                             call    #complete_rw_lut        ' a   b   |    |        process any list setup first
+01760 2cf 2D 00 64 FD |                             ret                             ' a   b   |    |        then return
+01764 2d0 28 B4 63 FD |                             setq    count                   '         c    d        setup bit mux mask
+01768 2d1 D9 EF F3 F9 |                             muxq    pb, hubdata             '         c    d        apply bit mux
+0176c 2d2 EF E5 67 F9 |                             altsb   d, #a                   '         c    |
+01770 2d3 F7 01 C0 F8 |                             setbyte 0-0, pb, #0             '         c    |
+01774 2d4 F7 DF 2B C9 |             if_c            setword a, pb, #1               '         |    d
+01778 2d5 F7 DF 23 39 |             if_nc           setword a, pb, #0               '         |    d
+0177c 2d6 37 8A 07 F6 | writeback                   mov     pattern2, #%110111      'setup next skip pattern to send a single long and resume
+01780 2d7 EF B3 03 F6 |                             mov     hubdata, a              'write a to PSRAM
+01784 2d8 14 D6 07 F6 |                             mov     wrclks, #20             '20 clocks to write a long
+01788 2d9 CC D3 03 F6 |                             mov     resume, complete_rw     'we'll complete the operation after this
+0178c 2da 10 03 90 FD |                             jmp     #writecommon
+01790 2db             | 
+01790 2db             | '..................................................................................................
+01790 2db             | ' Burst continuation testing
+01790 2db             | 
+01790 2db 32 96 63 FD | continue_write_lut          skipf   skipseq_write           'customize executed code below for write case
+01794 2dc BE D3 03 F6 |                             mov     resume, resumewrites    ' a (a=skipf sequence for writes)
+01798 2dd             | continue_read_lut          
+01798 2dd BF D3 03 F6 |                             mov     resume, resumereads     ' | setup resume address to execf
+0179c 2de F1 B3 03 F1 |                             add     hubdata, c              ' a compute the next hub addr to use
+017a0 2df F1 B5 83 F1 |                             sub     count, c                ' a account for the bytes already sent
+017a4 2e0 D8 E3 03 F1 |                             add     c, addr1                ' a compute next external mem address
+017a8 2e1 28 44 63 FD |                             setq    mask                    ' a configure mask for bit muxing
+017ac 2e2 F1 B1 F3 F9 |                             muxq    addr1, c                ' a perform address bit muxing
+017b0 2e3 0A C2 0F F4 |                             testb   id, #LOCKED_BIT wz      ' a check if we can keep sending or need to yield
+017b4 2e4 14 00 90 5D |             if_nz           jmp     #yield                  ' | we have to yield now to other COGs
+017b8 2e5 E1 47 3B F9 |                             getword limit, id, #1           ' | restore per COG limit for continuing flash reads
+017bc 2e6 F0 47 23 F3 |                             fle     limit, b                ' | also re-apply per bank limit
+017c0 2e7 2A 2A 67 0D |             _ret_           push    #continue_read_exec     ' | 
+017c4 2e8 04 00 90 5D |             if_nz           jmp     #yield                  ' a
+017c8 2e9 2A 2C 67 0D |             _ret_           push    #continue_write_exec    ' a
+017cc 2ea             | 
+017cc 2ea 04 B9 37 FC | yield                       wrlut   total, ptra[4]          'save context for next time
+017d0 2eb 05 BB 37 FC |                             wrlut   offset1, ptra[5]        'save context for next time
+017d4 2ec 06 BD 37 FC |                             wrlut   offset2, ptra[6]        'save context for next time
+017d8 2ed 07 BF 37 FC |                             wrlut   link, ptra[7]           'save context for next time
+017dc 2ee 00 B1 37 FC | yieldfill                   wrlut   addr1, ptra[0]          'save context for next time
+017e0 2ef 01 B3 37 FC |                             wrlut   hubdata, ptra[1]        'save context for next time
+017e4 2f0 02 B5 37 FC |                             wrlut   count, ptra[2]          'save context for next time
+017e8 2f1 03 B7 37 FC |                             wrlut   addr2, ptra[3]          'save context for next time
+017ec 2f2 08 D3 37 FC |                             wrlut   resume, ptra[8]         'save next resume address
+017f0 2f3 09 D5 37 FC |                             wrlut   orighubsize, ptra[9]    'save original hub size
+017f4 2f4 2A 1C 66 0D |             _ret_           push    #poller
+017f8 2f5             | 
+017f8 2f5             | 
+017f8 2f5 32 BE 65 FD | notransfer_lut              skipf   #%11011111              'cancel old skipping, start new sequence
+017fc 2f6             | nowrite_lut                                                 '  (a) new skip sequence 
+017fc 2f6 32 00 64 FD | noread_lut                  skipf   #0                      ' | cancel skipping
+01800 2f7 08 01 3C FC |                             wrlut   #0, ptra[8]             ' | clear resume
+01804 2f8 09 C2 0F F4 |                             testb   id, #LIST_BIT wz        ' | test for running from a request list   
+01808 2f9 40 F8 9F 5D |             if_nz           jmp     #notify                 ' | if not a request list then we are done
+0180c 2fa 1F B6 0F F4 |                             testb   addr2, #31 wz           ' | check if extended list item
+01810 2fb DF B7 03 A6 | donerepeats if_z            mov     addr2, link             ' a if so take addr2 from link field
+01814 2fc 1C 00 B0 FD | checklist                   call    #checknext              ' | handle running from list
+01818 2fd 2D 00 64 FD |                             ret                             ' | continue processing
+0181c 2fe 2A 9E 63 0D |             _ret_           push    noread                  'continue end of transfer
+01820 2ff             | '..................................................................................................
+01820 2ff             | ' Completion of requests
+01820 2ff             | 
+01820 2ff             | complete_rw_lut             
+01820 2ff 09 C2 0F F4 |                             testb   id, #LIST_BIT wz        'test for running from a request list   
+01824 300 32 04 64 AD |             if_z            skipf   #%10                    'if a request list then skip notification
+01828 301 08 01 3C FC |                             wrlut   #0, ptra[8]             ' a   default is not to resume
+0182c 302 2A 14 66 0D |             _ret_           push    #notify                 ' |   if not a request list then we are done
+01830 303 0D B6 B7 FB |                             tjs     addr2, #extendedreq     '     test for special extended request  
+01834 304 07 B6 97 FB | checknext                   tjz     addr2, #listcomplete    'not special, check if the list is complete
+01838 305 BF ED 07 FB |                             rdlong  pa, ptrb[-1]            'check if list has been aborted by client
+0183c 306 05 EC BF FB |                             tjns    pa, #listcomplete       'exit if it has
+01840 307 0A C2 0F F4 |                             testb   id, #LOCKED_BIT wz
+01844 308 DB B3 03 A6 |             if_z            mov     hubdata, addr2
+01848 309 32 62 64 AD |             if_z            skipf   #%110001
+0184c 30a 32 10 64 5D |             if_nz           skipf   #%1000                  'do not notify if list is continuing
+01850 30b 80 B7 67 FC |                             wrlong  addr2, ptrb             ' a  write back next list address
+01854 30c D0 C3 8F F9 | listcomplete                altd    id, #id0                ' a  compute COG's state address
+01858 30d 09 00 04 F4 |                             bitl    0-0, #LIST_BIT          ' a  clear list flag for this COG
+0185c 30e 2A 14 66 0D |             _ret_           push    #notify                 ' |  we are done with the list
+01860 30f 2A 1C 66 0D |             _ret_           push    #poller                 ' a  we are still continuing the list
+01864 310 2A 50 66 0D |             _ret_           push    #real_list              ' a  we are still continuing the list
+01868 311 E3 B5 97 FB | extendedreq                 tjz     count, #notransfer_lut  'test for single transfers, do nothing if extd *** 
+0186c 312 DB DF 7B F8 |                             getnib  a, addr2, #7            'check the request type
+01870 313 0F DE 0F F2 |                             cmp     a, #$F wz               'write burst $F = bank to bank cases (b) or (c)
+01874 314 D8 DF 73 F8 |                             getnib  a, addr1, #6            'get the bank for next operation (assuming case (a))
+01878 315 32 90 63 5D |             if_nz           skipf   skipcase_a              'all other values are hub memory only copies
+0187c 316             |                                                             ' skipcase (a) gfx copy to/from hub
+0187c 316             |                                                             ' skipcase (b) gfx copy extmem bank to bank
+0187c 316             |                                                             ' skipcase (c) linear copy extmem bank to bank
+0187c 316 DB DF 73 F8 |                             getnib  a, addr2, #6            ' |      get the bank for next operation (cases b,c)
+01880 317 EF E5 AB FA |                             rdlut   d, a wz                 ' a      load bank information and check if valid
+01884 318 31 02 64 5D |             if_nz           skip    #%1                     ' |      if valid then skip past next instruction
+01888 319 2A 02 66 0D |             _ret_           push    #invalidbank            ' |      otherwise bail out after this
+0188c 31a DD BB CB F7 |                             test    offset1 wz              ' |      check for first offset being zero
+01890 31b DE BD CB A7 |             if_z            test    offset2 wz              ' |      ..and the other offset is also zero
+01894 31c 32 94 63 AD |             if_z            skipf   skipcase_c              ' |      ..if so, do bank-to-bank copy transfer
+01898 31d 32 92 63 FD |                             skipf   skipcase_b              ' |   |  otherwise a graphics copy between banks
+0189c 31e F1 B3 03 F1 |                             add     hubdata, c              ' a b c  add bytes just sent to hub address
+018a0 31f EA B3 83 F1 |                             sub     hubdata, orighubsize    ' a b c  rewind by orig hub buffer size
+018a4 320 D8 E3 03 F1 |                             add     c, addr1                ' a b c  compute next address to use
+018a8 321 DC B9 CB F7 |                             test    total wz                ' a b |  check for zero tranfers
+018ac 322 DC D5 2B F3 |                             fle     orighubsize, total wz   ' | | c  ensure we don't overwrite
+018b0 323 44 FF 9F AD |             if_z            jmp     #notransfer_lut         ' a b c  handle the zero length case
+018b4 324 1E B0 0F F4 |                             testb   addr1, #30 wz           ' a b c  check if reading/writing
+018b8 325 EA B5 03 F6 |                             mov     count, orighubsize      ' a b c  reset count to hub buffer size
+018bc 326 EA E3 83 F1 |                             sub     c, orighubsize          ' a b |  rewind to original position
+018c0 327 DD E3 03 A1 |             if_z            add     c, offset1              ' a b |  add any dst scanline offset
+018c4 328 DE E3 03 51 |             if_nz           add     c, offset2              ' a b |  add any src scanline offset
+018c8 329 DE B3 03 A1 |             if_z            add     hubdata, offset2        ' a | |  add any src scanline offset
+018cc 32a DD B3 03 51 |             if_nz           add     hubdata, offset1        ' a | |  add any dst scanline offset
+018d0 32b 28 44 63 FD |                             setq    mask                    ' a b c  configure mask for bit muxing
+018d4 32c F1 B1 F3 F9 |                             muxq    addr1, c                ' a b c  perform address bit muxing
+018d8 32d D8 DF 03 F6 |                             mov     a, addr1                ' | b c  ]
+018dc 32e DB B1 03 F6 |                             mov     addr1, addr2            ' | b c  ]swap read/write addresses
+018e0 32f EF B7 03 F6 |                             mov     addr2, a                ' | b c  ]
+018e4 330 1E B0 A7 F4 |                             bitnz   addr1, #30              ' | b c  alternate read/write bursts
+018e8 331 0F B6 3F F8 |                             setnib  addr2, #$F, #7          ' | b c  preserve bank to bank copy
+018ec 332 01 B8 8F F1 |                             sub     total, #1 wz            ' a | |  decrement scanline count
+018f0 333 01 B8 8F A1 |             if_z            sub     total, #1 wz            ' | b |  decrement scanline count after write
+018f4 334 EA B9 8B A1 |             if_z            sub     total, orighubsize wz   ' | | c  decrement bytes sent after write
+018f8 335 DF B7 03 A6 |             if_z            mov     addr2, link
+018fc 336 34 FF 9F AD |             if_z            jmp     #checknext
+01900 337 D8 CB FB F8 | moretransfers               getbyte request, addr1, #3      'prepare next request
+01904 338 0A C2 0F F4 |                             testb   id, #LOCKED_BIT wz      'check if we can keep sending or need to yield
+01908 339 32 1C 64 AD |             if_z            skipf   #%1110                  '     skip some code if we are locked
+0190c 33a 1E B0 0F F4 |                             testb   addr1, #30 wz           ' a   test if will be reading or writing
+01910 33b BE D3 03 A6 |             if_z            mov     resume, resumewrites    ' |   resume burst writing
+01914 33c B9 D3 03 56 |             if_nz           mov     resume, newburstr       ' |   resume burst reading
+01918 33d B0 FE 9F FD |                             jmp     #yield                  ' |   yield to poller
+0191c 33e 31 02 64 AD |             if_z            skip    #%1                     '     skip next instruction for writing case
+01920 33f 2A 26 67 0D |             _ret_           push    #start_read_exec        '(|)  do new read burst next 
+01924 340 2A 28 67 0D |             _ret_           push    #start_write_exec       'do new write burst next
+01928 341             | 
+01928 341             | '..................................................................................................
+01928 341             | ' PSRAM WRITES
+01928 341             |                                                             '  a b c d e f g h
+01928 341             | 
+01928 341             |                                                             '  B W L F B R L L (a) byte write(s)
+01928 341             |                                                             '  Y O O I U E O O (b) word write(s)
+01928 341             |                                                             '  T R N L R S C C (c) long write(s)
+01928 341             |                                                             '  E D G L S U K K (d) resumed fill
+01928 341             |                                                             '          T M E E (e) new burst write
+01928 341             |                                                             '            E D D (f) resumed burst
+01928 341             |                                                             '              F B (g) locked fill
+01928 341             |                                                             '              I U (h) locked burst write
+01928 341             |                                                             '              L R 
+01928 341             |                                                             '              L S 
+01928 341             |                                                             '                T 
+01928 341             | 
+01928 341             | w_single                   
+01928 341             | w_fill_cont           
+01928 341 D8 DF 7B F8 |                             getnib  a, addr1, #7            '  a b c d          obtain request
+0192c 342 03 DE 07 F5 |                             and     a, #3                   '  a b c d          extract encoded size (0=B,1=W,2=L)
+01930 343 00 B2 FF F9 |                             movbyts hubdata, #0             '  a | | |          replicate byte across long
+01934 344 44 B2 FF F9 |                             movbyts hubdata, #%01000100     '  | b | |          replicate word across long
+01938 345 01 B0 27 F5 |                             andn    addr1, #1               '  | b | |          align word addresses
+0193c 346 03 B0 27 F5 |                             andn    addr1, #3               '  | | c |          align long addresses
+01940 347 DA D5 03 F6 | w_burst                     mov     orighubsize, count      '  a b c | e        save original hub size
+01944 348 01 B4 0F F2 | w_locked_fill               cmp     count, #1 wz            '  a b c d |   g    optimization for single transfers
+01948 349 EF B5 63 F0 |                             shl     count, a                '  a b c | |   |    scale into bytes
+0194c 34a AB B5 97 FB |                             tjz     count, #nowrite_lut     '  a b c d e   |    check for any bytes to write
+01950 34b DA E3 03 F6 | w_resume_burst              mov     c, count                '  a b c d e f g h  get the number of bytes to write
+01954 34c 76 02 A0 FD |                             call    #\r_resume_burst        '  a b c d e f g h  get per bank limit and read delay info
+01958 34d             |                ' disable call to r_resume_burst for single longs when z=0
+01958 34d E5 5D 03 F8 |                             setnib  deviceaddr, request, #0 '  a b c d e f | |  get the pin/configuration lut address
+0195c 34e AE CF A3 FA |                             rdlut   pinconfig, deviceaddr   '  a b c d e f | |  get the pin config for this bank
+01960 34f E7 53 E3 F8 |                             getbyte cspin, pinconfig, #0    '  a b c d e f | |  byte 0 holds CS pin
+01964 350 E7 51 EB F8 |                             getbyte clkpin, pinconfig, #1   '  a b c d e f | |  byte 1 holds CLK pin
+01968 351 3F 8A 0F F6 |                             mov     pattern2, #%111111 wz   '  | | | | e f | h  setup base skip pattern for bursts
+0196c 352 A3 E3 33 F3 |                             fle     c, limit wc             '  a b c d e f g h  enforce the burst limit
+01970 353 CE D3 03 C6 |             if_c            mov     resume, continue_write  '  | | | | e f | h  this burst write will continue
+01974 354 CC D3 03 36 |             if_nc           mov     resume, complete_rw     '  | | | | e f | h  this burst write will complete
+01978 355 D9 DF 03 F6 |                             mov     a, hubdata              '  | | | | e f | h  save streamer hub addr
+0197c 356 14 D6 07 F6 |                             mov     wrclks, #20             '  a b c d | | g |  prepare base clocks
+01980 357 01 DE 17 F4 |                             testb   a, #1 wc                '  a b c d | | g |  check if longs (c=1) or bytes/words (c=0)
+01984 358 C7 8B 03 F6 |                             mov     pattern2, singlelong    '  a b c d | | g |  setup skip pattern for single long write
+01988 359 14 01 90 8D |             if_z_and_c      jmp     #writecommon            '  a b c d | | g |  optimized single long write
+0198c 35a 09 8A 67 25 |             if_z_and_nc     xor     pattern2, #%1001        '  a b c d | | g |  modify pattern for single byte/word write
+01990 35b 5C 00 90 2D |             if_z_and_nc     jmp     #single_write           '  a b c d | | g |  optimized single byte/word write
+01994 35c 0F 8A 07 F6 |                             mov     pattern2, #%1111        '  a b c d | | g |  setup pattern for fills
+01998 35d             |         
+01998 35d             |             'PSRAM write data logic gets rather complex/messy here unfortunately, and multiple cases need to be handled:
+01998 35d             |             '
+01998 35d             |             '  At least one of these 3 optional components will be sent
+01998 35d             |             '     header - first partial long of data, gets aligned to PSRAM long boundary
+01998 35d             |             '     body - N x full longs of data
+01998 35d             |             '     trailer - last partial long of data
+01998 35d             |             '
+01998 35d             |             '  Both the header and trailer need to first read a long from PSRAM first then mask with new data
+01998 35d             |             '
+01998 35d             |             'Case    Type                           Sends
+01998 35d             |             ' 1)     Single byte/word write         header only (takes its own optimized path)
+01998 35d             |             ' 2)     Single long write              body only (takes its own optimized path)
+01998 35d             |             ' 3)     Multiple byte/word fill        optional header, optional body, optional trailer
+01998 35d             |             ' 4)     Multiple long fill             body only
+01998 35d             |             ' 5)     Burst write                    optional header, optional body, optional trailer
+01998 35d             | 
+01998 35d             |                             'if not just a single transfer we need to work out how many bytes are left to the 4kB page boundary
+01998 35d D8 E5 03 F6 |                             mov     d, addr1                'get start address
+0199c 35e 0B E4 47 F7 |                             zerox   d, #11                  'only keep 12 LSBs
+019a0 35f EE E5 C3 F2 |                             subr    d, val4k                'figure out how many bytes remain before we hit the boundary
+019a4 360 F2 E3 33 F3 |                             fle     c, d wc                 'compare this size to our transfer size and limit it
+019a8 361 CE D3 03 C6 |             if_c            mov     resume, continue_write  'and we will continue with a sub-burst again (harmless for fills)
+019ac 362 13 8C 07 F6 |                             mov     pattern3, #%10011
+019b0 363 D8 E5 03 F6 |                             mov     d, addr1                'get start address position 
+019b4 364 03 E4 0F F5 |                             and     d, #3 wz                'get alignment
+019b8 365 04 E2 17 F2 |                             cmp     c, #4 wc                'test if we have at least 4 bytes to send
+019bc 366 10 D6 07 F6 |                             mov     wrclks, #16             'clocks needed for address phase
+019c0 367 F1 EF 03 F6 |                             mov     pb, c                   'get number of bytes to send
+019c4 368 F2 EF 03 F1 |                             add     pb, d                   'and increase total to send, including initial re-alignment
+019c8 369 40 00 90 2D |             if_z_and_nc     jmp     #header_done            'if aligned and at least 4 bytes, no header to send
+019cc 36a             |                             
+019cc 36a F0 CA 17 F2 |                             cmp     request, #%11110000 wc  'test for fill/burst (c=1 if fill, c=0 if burst)
+019d0 36b 32 3C 64 CD |             if_c            skipf   #%11110                 'if fill skip burst write stuff
+019d4 36c 04 D6 07 F1 |                             add     wrclks, #4              'we need to include 4 clock transitions for 2x16 bits
+019d8 36d F2 DF 83 F1 |                             sub     a, d                    ' |  (bursts only) subtract start address by offset to realign long
+019dc 36e EF E5 03 FB |                             rdlong  d, a                    ' |  (bursts only) read first long in HUB RAM at this addr
+019e0 36f 04 DE 07 F1 |                             add     a, #4                   ' |  (bursts only) increase source address by a long for later
+019e4 370 32 08 64 FD |                             skipf   #%100                   ' |  (bursts only) prevent d clobber below
+019e8 371 04 EE 9F F1 |                             sub     pb, #4 wcz              ' subtract a long from the total
+019ec 372 00 8A 07 F4 |                             bitl    pattern2, #0            ' enable transfer of header portion in skip pattern
+019f0 373 D9 E5 03 F6 | single_write                mov     d, hubdata              ' (for single/fills only) get fill data 
+019f4 374 88 01 B0 FD |                             call    #readlong               ' go get the first aligned long from PSRAM into hub RAM
+019f8 375 5A B0 47 FB |                             callpa  addr1, #getmask         ' compute a suitable mux mask for pa into pa
+019fc 376 ED C5 03 FB |                             rdlong  header, hubscratch      ' read original external RAM data from hub RAM
+01a00 377 28 EC 63 FD |                             setq    pa                      ' setup byte mux mask
+01a04 378 F2 C5 F3 F9 |                             muxq    header, d               ' copy bytes into long
+01a08 379 94 00 90 ED |             if_c_or_z       jmp     #writecommon            ' if underflowed or emptied or single transfer we are done
+01a0c 37a             | 
+01a0c 37a F0 CA 17 F2 | header_done                 cmp     request, #%11110000 wc  'test for fill/burst (c=1 if fill, c=0 if burst)
+01a10 37b F7 E5 03 F6 |                             mov     d, pb                   'preserve the count
+01a14 37c 03 EE 2F F5 |                             andn    pb, #3 wz               'determine the number of full long bytes left to send
+01a18 37d 07 EE 97 FB |                             tjz     pb, #body_done          'if no full longs, go send the trailing portion
+01a1c 37e             |                  
+01a1c 37e F7 D7 03 F1 |                             add     wrclks, pb              'include this number of bytes as more clock transitions
+01a20 37f 32 14 64 CD |             if_c            skipf   #%1010                 'for fills we can skip burst stuff
+01a24 380 0C 8A 27 C5 |             if_c            andn    pattern2, #$C           'enable rep loop instructions for fills in write pattern
+01a28 381 01 8A 07 F4 |                             bitl    pattern2, #1            ' |  |  enable streamer instruction for bursts in write pattern
+01a2c 382 01 EE 47 F0 |                             shr     pb, #1                  ' |  b  compute word count for bursts
+01a30 383 F7 37 23 F9 |                             setword xsenddata, pb, #0       ' |  |  setup streamer count for bursts
+01a34 384 01 EE 47 F0 |                             shr     pb, #1                  ' |  b  compute how many long transfer repeats this is
+01a38 385             | 
+01a38 385 03 E4 07 F5 | body_done                   and     d, #3                   'determine if any residual trailing bytes to send (0-3)
+01a3c 386 17 E4 97 FB |                             tjz     d, #trailer_done        'no trailer to send, we exit now
+01a40 387 DA E3 0B C2 |             if_c            cmp     c, count wz             'if a fill, check if fill will be completing
+01a44 388 CC D3 0B 32 |             if_nc           cmp     resume, complete_rw wz  'if a burst, check if this burst is completing
+01a48 389 F2 E3 83 51 |             if_nz           sub     c, d                    'we won't send this trailer if the burst/fill continues
+01a4c 38a 4C 00 90 5D |             if_nz           jmp     #trailer_done           '..so the next transfer will become aligned and efficent
+01a50 38b             | 
+01a50 38b             |                             'we have 1-3 more aligned residual bytes left to send as the trailer
+01a50 38b F0 E5 47 F5 |                             or      d, #$1f0                'setup mux mask address
+01a54 38c F2 ED A3 FA |                             rdlut   pa, d                   'read mux mask for this length at offset 0
+01a58 38d 2A B0 63 FD |                             push    addr1                   'save address
+01a5c 38e             | 
+01a5c 38e             | ' use this code (note: foldover can occur here in PSRAM bank)
+01a5c 38e F1 B1 03 F1 |                             add     addr1, c                'find last long address in PSRAM
+01a60 38f 01 B0 87 F1 |                             sub     addr1, #1               '..to be rewritten
+01a64 390 18 01 B0 FD |                             call    #readlong               'read data from this external address
+01a68 391             |             
+01a68 391 D9 E5 03 C6 |             if_c            mov     d, hubdata              'get data to be sent for fills
+01a6c 392 32 3C 64 CD |             if_c            skipf   #%11110                 'skip burst code for fills
+01a70 393 2B B0 63 FD |                             pop     addr1                   'restore address
+01a74 394 F7 E5 03 F6 |                             mov     d, pb                   ' | get number of full longs that were sent
+01a78 395 02 E4 67 F0 |                             shl     d, #2                   ' | convert to bytes
+01a7c 396 EF E5 03 F1 |                             add     d, a                    ' | add to start adress of longs to stream
+01a80 397 F2 E5 03 FB |                             rdlong  d, d                    ' | read this last long from HUB RAM
+01a84 398             | 
+01a84 398 ED C7 03 FB |                             rdlong  trailer, hubscratch     'read external RAM data value
+01a88 399 28 EC 63 FD |                             setq    pa                      'setup byte mask
+01a8c 39a F2 C7 F3 F9 |                             muxq    trailer, d              'apply byte mask to data via muxq
+01a90 39b 04 D6 07 F1 |                             add     wrclks, #4              'increase by 4 more clocks
+01a94 39c 05 8A 07 F4 |                             bitl    pattern2, #5            'enable trailing bytes to be written (bursts)
+01a98 39d 00 8C 07 F4 |                             bitl    pattern3, #0            'enable trailing bytes to be written (fills)
+01a9c 39e             | 
+01a9c 39e             |                             'trailer is done
+01a9c 39e EF 3B 73 FC | trailer_done                rdfast  xfreq1, a               '(bursts, but harmless for fills) setup streamer source address
+01aa0 39f             | 
+01aa0 39f D8 C9 03 F6 | writecommon                 mov     cmdaddr, addr1          'get start address of transfer
+01aa4 3a0 02 C8 47 F0 |                             shr     cmdaddr, #2             'align to 32 bit boundary
+01aa8 3a1 02 C8 DF F8 |                             setbyte cmdaddr, #$02, #3       'add quad write command
+01aac 3a2             | 
+01aac 3a2 60 C8 63 FD |                             splitb  cmdaddr                 'reverse nibbles in address to match bus order
+01ab0 3a3 69 C8 63 FD |                             rev     cmdaddr                 
+01ab4 3a4 1B C8 FF F9 |                             movbyts cmdaddr, #%%0123
+01ab8 3a5 61 C8 63 FD |                             mergeb  cmdaddr
+01abc 3a6             |                             
+01abc 3a6 58 52 63 FD |                             drvl    cspin                   'activate chip select
+01ac0 3a7 58 48 63 FD |                             drvl    datapins                'enable the DATA bus
+01ac4 3a8 E4 2F A3 FC |                             xinit   ximm8lut, cmdaddr       'send 8 nibbles of address and command via LUT translation
+01ac8 3a9 A8 D7 23 FC |                             wypin   wrclks, clkpin          'start memory clock output 
+01acc 3aa             |                                                          
+01acc 3aa 32 8A 63 FD |                             skipf   pattern2                '   B W L Burst FB FW FL RMW
+01ad0 3ab E2 39 C3 FC |                             xcont   xsendimm, header        '   a b |   ?    ?  ?  ?  | ' send 32 bit immediate data as 2x16 bits 
+01ad4 3ac 00 36 C7 FC |                             xcont   xsenddata, #0           '   | | |   ?    |  |  |  | ' send data from hub for bursts as 2nx16 bits
+01ad8 3ad F7 03 D8 FC |                             rep     #1, pb                  '   | | |   |    ?  ?  ?  | ' repeat for bursts
+01adc 3ae D9 39 C3 FC |                             xcont   xsendimm, hubdata       '   | | c   |    ?  ?  ?  h ' send 32 bit fill data as 2x16 bits
+01ae0 3af 32 8C 63 FD |                             skipf   pattern3 '%10011/%10010 '   | | |   |    e  f  g  | ' determine if trailer to be sent
+01ae4 3b0 E3 39 C3 FC |                             xcont   xsendimm, trailer       '   | | |   ?    ?  ?  ?  | ' send 32 bit immediate last data as 2x16 bits
+01ae8 3b1 2D D2 63 FD |                             call    resume                  '   | | |   d    |  |  |  h ' bursts check what to do next while streaming
+01aec 3b2 24 36 60 FD |                             waitxfi                         '   a b c   d    e  f  g  h ' wait for streamer to end
+01af0 3b3 50 48 63 FD |                             fltl    datapins                '   a b c   d    e  f  g  h ' tri-state DATA bus
+01af4 3b4 59 52 63 0D |             _ret_           drvh    cspin                   '   | | |   d    |  |  |  h ' de-assert chip select or fall through
+01af8 3b5             |  
+01af8 3b5 59 52 63 FD |                             drvh    cspin
+01afc 3b6 09 C2 17 F4 | check_fill_lut              testb   id, #LIST_BIT wc        'test for running from a request list   
+01b00 3b7 F1 B5 8B F1 |                             sub     count, c wz             'account for bytes written
+01b04 3b8 34 00 90 5D |             if_nz           jmp     #continue_fill          'if more filling to go, setup next fill
+01b08 3b9 08 01 3C FC |                             wrlut   #0, ptra[8]             'default is not to resume
+01b0c 3ba 3C F5 9F 3D |             if_nc           jmp     #notify                 'if not a request list then we are done
+01b10 3bb 40 B7 BF FB |                             tjns    addr2, #checklist       'if not extended, check next list entry
+01b14 3bc 3E B9 67 FB |                             djz     total, #donerepeats     'check for repeats remaining
+01b18 3bd B8 B9 B3 FB |                             tjs     total, expansion        'check if started with zero repeats (treated as 1)
+01b1c 3be EA E5 03 F6 |                             mov     d, orighubsize
+01b20 3bf EF E5 63 F0 |                             shl     d, a
+01b24 3c0 F2 E3 83 F1 |                             sub     c, d
+01b28 3c1 DD E3 03 F1 |                             add     c, offset1
+01b2c 3c2 F2 B5 03 F6 |                             mov     count, d                'restore original count
+01b30 3c3 E5 E1 43 F8 | readmask                    getnib  b, request, #0          'get bank parameter LUT address
+01b34 3c4 F0 E1 A3 FA |                             rdlut   b, b                    'get bank limit/mask (in case count=1 above)
+01b38 3c5 F0 45 CB F9 |                             bmask   mask, b                 'build mask for addr (in case count=1)
+01b3c 3c6 D8 E3 03 F1 | continue_fill               add     c, addr1                'add bytes to destination address
+01b40 3c7 28 44 63 FD |                             setq    mask                    'setup bit mask
+01b44 3c8 F1 B1 F3 F9 |                             muxq    addr1, c                'setup new external memory address
+01b48 3c9 0A C2 0F F4 |                             testb   id, #LOCKED_BIT wz      'check if we can keep sending or need to yield
+01b4c 3ca 33 74 63 AD |             if_z            execf   lockedfill              'continue next fill operation
+01b50 3cb BB D3 03 F6 |                             mov     resume, restorefill
+01b54 3cc 00 B6 07 36 |             if_nc           mov     addr2, #0               'clear any left over garbage for non-list requests
+01b58 3cd 80 FC BF 3D |             if_nc           call    #yieldfill              'we have to yield now to other COGs
+01b5c 3ce 6C FC BF CD |             if_c            call    #yield
+01b60 3cf 2D 00 64 FD |                             ret
+01b64 3d0             |                            
+01b64 3d0             | getmask               '     rczr    c wcz                   'get 2 LSBs of count in W&C
+01b64 3d0             |                       '     rczl    pa                      'rotate left into address offset
+01b64 3d0             |                       '     rczl    c wcz                   'restore count and flags
+01b64 3d0 03 E2 EF F7 |                             testn   c, #3 wz                'set z=1 if less than 4 bytes being sent, z=0 if 4 or more
+01b68 3d1 02 EC 67 F0 |                             shl     pa, #2
+01b6c 3d2 28 06 64 AD |             if_z            setq    #3
+01b70 3d3 F1 ED F3 A9 |             if_z            muxq    pa, c
+01b74 3d4 F0 ED 47 F5 |                             or      pa, #$1f0               'setup LUT address offset
+01b78 3d5 F6 ED A3 FA |            {_ret_}          rdlut   pa, pa                  'lookup MUX MASK in LUT
+01b7c 3d6 2D 00 7C FD |                             ret     wcz ' would prefer my earlier _ret_ approach if possible somehow, to save a cycle
+01b80 3d7             | 
+01b80 3d7 ED 3B 83 FC | readlong                    wrfast  xfreq1, hubscratch      'setup read to hub scratch
+01b84 3d8 02 34 27 F9 |                             setword xrecvdata, #2, #0       'read 2x16 words
+01b88 3d9 20 D0 07 F6 |                             mov     clks, #32               '32 read clock transitions
+01b8c 3da 36 D8 07 F6 |                             mov     pattern, #%110110       'setup read skip pattern
+01b90 3db 14 FB 9F FD |                             jmp     #readcommon             'read then return directly to caller
+01b94 3dc             |         
+01b94 3dc             | 
+01b94 3dc             | '..................................................................................................
+01b94 3dc             | 
+01b94 3dc             |                 fit 1024-32
+01b94 3dc             |                 fit 1024-32
+01b94 3dc 00 00 00 00 
+01b98 3dd 00 00 00 00 
+01b9c 3de 00 00 00 00 
+01ba0 3df 00 00 00 00 |                 long    0[1024-32-$]                'align position to last 32 long boundary in LUTRAM
+01ba4 3e0             |                 org 1024-32
+01ba4 000             | 
+01ba4 000             | ' mapping table from 0-F into 0000-FFFF on output bus (nibble replication)
+01ba4 000 00 00 00 00 |                 long $0000
+01ba8 001 11 11 00 00 |                 long $1111
+01bac 002 22 22 00 00 |                 long $2222
+01bb0 003 33 33 00 00 |                 long $3333
+01bb4 004 44 44 00 00 |                 long $4444
+01bb8 005 55 55 00 00 |                 long $5555
+01bbc 006 66 66 00 00 |                 long $6666
+01bc0 007 77 77 00 00 |                 long $7777
+01bc4 008 88 88 00 00 |                 long $8888
+01bc8 009 99 99 00 00 |                 long $9999
+01bcc 00a AA AA 00 00 |                 long $aaaa
+01bd0 00b BB BB 00 00 |                 long $bbbb
+01bd4 00c CC CC 00 00 |                 long $cccc
+01bd8 00d DD DD 00 00 |                 long $dddd
+01bdc 00e EE EE 00 00 |                 long $eeee
+01be0 00f FF FF 00 00 |                 long $ffff
+01be4 010             | 
+01be4 010             | 'masks
+01be4 010 FF FF FF FF |                 long $ffffffff ' 00 aligned 0/4 length
+01be8 011 FF 00 00 00 |                 long $000000ff ' 00 aligned 1 length
+01bec 012 FF FF 00 00 |                 long $0000ffff ' 00 aligned 2 length
+01bf0 013 FF FF FF 00 |                 long $00ffffff ' 00 aligned 3 length
+01bf4 014             | 
+01bf4 014 00 FF FF FF |                 long $ffffff00 ' 01 aligned 0/4 length
+01bf8 015 00 FF 00 00 |                 long $0000ff00 ' 01 aligned 1 length
+01bfc 016 00 FF FF 00 |                 long $00ffff00 ' 01 aligned 2 length
+01c00 017 00 FF FF FF |                 long $ffffff00 ' 01 aligned 3 length
+01c04 018             | 
+01c04 018 00 00 FF FF |                 long $ffff0000 ' 10 aligned 0/4 length
+01c08 019 00 00 FF 00 |                 long $00ff0000 ' 10 aligned 1 length
+01c0c 01a 00 00 FF FF |                 long $ffff0000 ' 10 aligned 2 length
+01c10 01b 00 00 FF FF |                 long $ffff0000 ' 10 aligned 3 length
+01c14 01c             | 
+01c14 01c 00 00 00 FF |                 long $ff000000 ' 11 aligned 0/4 length
+01c18 01d 00 00 00 FF |                 long $ff000000 ' 11 aligned 1 length
+01c1c 01e 00 00 00 FF |                 long $ff000000 ' 11 aligned 2 length
+01c20 01f 00 00 00 FF |                 long $ff000000 ' 11 aligned 3 length
+01c24 020             | 
+01c24 020             |         fit 1024
+01c24 020             |         fit 1024
+01c24 020             | 
+01c24 020             | '--------------------------------------------------------------------------------------------------
+01c24 020             |         orgh
+01c24                 | 
+01c24                 | gfxexpansion
+01c24                 |                             'simple line drawing graphics expansion of memory driver
+01c24                 |                             'jmp     #donerepeats                'just return for now
+01c24                 | 
+01c24     DB B1 0B F2 |                             cmp     addr1, addr2 wz         'see if we've reached the end
+01c28     FB 02 80 AD |             if_z            jmp     #donerepeats            'nothing more to draw
+01c2c     01 B8 07 F1 |                             add     total, #1               'restore total after decrement
+01c30     DD E1 03 F6 |                             mov     b, offset1              'get error term
+01c34     01 E0 67 F0 |                             shl     b, #1                   'compute e2 = 2 x error
+01c38     DE E5 33 F9 |                             getword d, offset2, #0          'get dx = abs(x0-x1)
+01c3c     10 BC C7 F0 |                             sar     offset2, #16            'get dy = -abs(y0-y1)
+01c40     DE E1 53 F2 |                             cmps    b, offset2 wc           'compare if e2 >= dy
+01c44     00 E2 07 F6 |                             mov     c, #0                   'clear accumulator reg
+01c48     31 1C 64 CD |             if_c            skip    #%1110                  'if not, skip
+01c4c     EF DF C3 F9 |                             decod   a                       'decode as 1,2,or 4 byte size
+01c50     DE BB 03 F1 |                             add     offset1, offset2        'err+=dy 
+01c54     10 B8 0F F4 |                             testb   total, #16 wz           'check sign sx   
+01c58     EF E3 C3 F3 |                             sumz    c, a                    'accumulator +/- size a (x0+=sx)
+01c5c     F0 E5 53 F2 |                             cmps    d, b wc                 'compare if e2 <= dx
+01c60     31 3C 64 CD |             if_c            skip    #%11110                 'if not, skip
+01c64     F2 BD 43 F9 |                             rolword offset2, d, #0          'restore offset
+01c68     F2 BB 03 F1 |                             add     offset1, d              'err+=dx
+01c6c     11 B8 0F F4 |                             testb   total, #17 wz           'check sign sy
+01c70     DC E5 33 F9 |                             getword d, total, #0            'get line width
+01c74     F2 E3 C3 F3 |                             sumz    c, d                    'accumulator +/- linewidth (y0+=sy)
+01c78     EF DF 93 F7 |                             encod   a wc                    'restore size and set carry
+01c7c     EA B5 03 F6 |                             mov     count, orighubsize      'reset the fill width
+01c80     EF B5 63 F0 |                             shl     count, a                '..for the type of transfer
+01c84     C3 03 80 FD |                             jmp     #readmask               'continue filling
+01c88                 | objmem
+01c88                 | 	long	0[0]
+01c88                 | stackspace
+01c88     00 00 00 00 | 	long	0[1]
+01c8c 100             | 	org	COG_BSS_START
+01c8c 100             | _var01
+01c8c 100             | 	res	1
+01c8c 101             | _var02
+01c8c 101             | 	res	1
+01c8c 102             | arg01
+01c8c 102             | 	res	1
+01c8c 103             | arg02
+01c8c 103             | 	res	1
+01c8c 104             | arg03
+01c8c 104             | 	res	1
+01c8c 105             | arg04
+01c8c 105             | 	res	1
+01c8c 106             | local01
+01c8c 106             | 	res	1
+01c8c 107             | local02
+01c8c 107             | 	res	1
+01c8c 108             | local03
+01c8c 108             | 	res	1
+01c8c 109             | local04
+01c8c 109             | 	res	1
+01c8c 10a             | 	fit	480
+01c8c 10a             | 

@@ -29,9 +29,15 @@
 
 }
 '----------------------------------------------------------------------- 
+#define DEBUG
 
 CON
-    
+#ifdef DEBUG
+  mailbox=$7FF00 
+#else
+  mailbox=$7BF00
+#endif
+       
     ' P2 EDGE with PSRAM pin mappings (P2-EC32MB)
     DATABUS  = 40
     CLK_PIN  = 56
@@ -83,7 +89,7 @@ This is an extended API to start the PSRAM driver using custom parameters.
     delay      - input delay value to use for the memory (0-15), 0=automatically compute based on frequency
     desiredcog - a cog ID from 0-7 can be nominated for the driver cog, or will be auto allocated if it is -1
 }}
-PUB startx(freq, burst, delay, desiredcog) : result | driverAddr
+PUB startx(freq, burst, delay, desiredcog) : cog,mail | driverAddr
     stop() ' restart driver if required
 
     ' use current frequency if none specified
@@ -95,7 +101,7 @@ PUB startx(freq, burst, delay, desiredcog) : result | driverAddr
 
     burst := (((MAX_CS_LOW_USEC*(freq/1000000)) - 132) >> 4) << 4  ' some sane rounded value
     if burst < 0
-        return ERR_TOO_SLOW ' P2 frequency is too low for any 8us transfers
+        return ERR_TOO_SLOW,0 ' P2 frequency is too low for any 8us transfers
 
     ' compute the input delay
 
@@ -108,7 +114,7 @@ PUB startx(freq, burst, delay, desiredcog) : result | driverAddr
 
     driverlock := LOCKNEW()  
     if driverlock == -1
-        return ERR_NO_LOCK
+        return ERR_NO_LOCK,0
 
     ' patch in the proper data and HUB addresses to the startup structure
 
@@ -116,8 +122,10 @@ PUB startx(freq, burst, delay, desiredcog) : result | driverAddr
 '    long[@startupData][1]:=$1000_0000
     long[@startupData][5]:=@deviceData
     long[@startupData][6]:=@qosData
-    long[@startupData][7]:=$7FF00
 
+
+    long[@startupData][7]:=mailbox
+  
     ' setup some default bank and QoS parameter values
 
     longfill(@deviceData, (burst << 16) | (delay << 12) | (ADDRSIZE-1), 2)
@@ -134,7 +142,7 @@ PUB startx(freq, burst, delay, desiredcog) : result | driverAddr
     drivercog := coginit(desiredcog, driverAddr, @startupData)
     repeat until long[@startupData] == 0 
 
-    return drivercog
+    return drivercog,long[@startupData][7]
 
 '..............................................................................
 
@@ -147,8 +155,8 @@ PUB stop() : i
     if drivercog <> -1
         cogstop(drivercog) ' a rather brutal stop
         repeat i from 0 to 7
-            if long[$7FF00][i*3] < 0
-                long[$7FF00][i*3] := -ERR_ABORTED ' abort request
+            if long[mailbox][i*3] < 0
+                long[mailbox][i*3] := -ERR_ABORTED ' abort request
         drivercog := -1
     if driverlock <> -1
         LOCKRET(driverlock)
@@ -164,20 +172,20 @@ This API will burst read a block into HUB RAM from external PSRAM
     srcAddr    - 25 bit source address in PSRAM to be read
     count      - number of bytes to read into HUB RAM
 }}
-PUB read1(dstHubAddr, srcAddr, count) : result | mailbox
+PUB read1(dstHubAddr, srcAddr, count) : result | mailbox1
 'TODO: potential candidate for inline PASM to improve performance in SPIN2
     if drivercog == -1 ' driver must be running
         return ERR_INACTIVE
     if count == 0 ' don't even bother reading
         return 0
-    mailbox := $7FF00 + cogid()*12     ' compute COG's mailbox address
-    if long[mailbox] < 0
+    mailbox1 := mailbox + cogid()*12     ' compute COG's mailbox address
+    if long[mailbox1] < 0
         return ERR_MAILBOX_BUSY
-    long[mailbox][2] := count
-    long[mailbox][1] := dstHubAddr
-    long[mailbox] := driver.R_READBURST + (srcAddr & $1ffffff) ' trigger burst read operation
+    long[mailbox1][2] := count
+    long[mailbox1][1] := dstHubAddr
+    long[mailbox1] := driver.R_READBURST + (srcAddr & $1ffffff) ' trigger burst read operation
     repeat
-        result := long[mailbox]    
+        result := long[mailbox1]    
     while result < 0   
     return -result                       'return success or error
 
@@ -191,20 +199,20 @@ This API will burst write a block from HUB RAM to external PSRAM
     dstAddr    - 25 bit source address in PSRAM to be written
     count      - number of bytes to write to PSRAM
 }}
-PUB write(srcHubAddr, dstAddr, count) : result | mailbox
+PUB write(srcHubAddr, dstAddr, count) : result | mailbox1
 'TODO: potential candidate for inline PASM to improve performance in SPIN2
     if drivercog == -1 ' driver must be running
         return ERR_INACTIVE
     if count == 0 ' don't even bother writing
         return 0
-    mailbox := $7FF00 + cogid()*12     ' compute COG's mailbox address
+    mailbox1 := mailbox + cogid()*12     ' compute COG's mailbox address
     if long[mailbox] < 0
         return ERR_MAILBOX_BUSY
-    long[mailbox][2] := count
-    long[mailbox][1] := srcHubAddr
-    long[mailbox] := driver.R_WRITEBURST + (dstAddr & $1ffffff) ' trigger burst write operation
+    long[mailbox1][2] := count
+    long[mailbox1][1] := srcHubAddr
+    long[mailbox1] := driver.R_WRITEBURST + (dstAddr & $1ffffff) ' trigger burst write operation
     repeat
-        result := long[mailbox]    
+        result := long[mailbox1]    
     while result < 0   
     return -result                       'return success or error
 
@@ -235,11 +243,11 @@ If the listPtr is non-zero it will be used as a list pointer and instead of trig
 operation, it will build a listItem structure in HUB RAM at this address to do the copy later.
 ................................................................................................
 }}
-PUB gfxCopyImage(dstAddr, dstPitch, srcAddr, srcPitch, byteWidth, height, hubBuffer, listPtr) : r | mailbox, list
+PUB gfxCopyImage(dstAddr, dstPitch, srcAddr, srcPitch, byteWidth, height, hubBuffer, listPtr) : r | mailbox1, list
     ' when no valid listPtr, fill request into scratch space and execute a single request list 
     if listPtr == 0
-        mailbox := $7FF00 + cogid()*12     ' compute COG's mailbox address
-        if long[mailbox] < 0
+        mailbox1 := mailbox + cogid()*12     ' compute COG's mailbox address
+        if long[mailbox1] < 0
             return ERR_MAILBOX_BUSY ' don't clobber existing list item
         list := @listdata[cogid()*8]
     else ' construct list item only, don't execute
@@ -254,7 +262,7 @@ PUB gfxCopyImage(dstAddr, dstPitch, srcAddr, srcPitch, byteWidth, height, hubBuf
     long[list][7]:= 0 ' no link pointer to next item (yet)
     if listPtr 
         return listPtr + 28 ' return the address of link pointer to allow chaining etc
-    r := execList(mailbox, list, 0)
+    r := execList(mailbox1, list, 0)
 
 {{
 .................................................................................................
@@ -283,10 +291,10 @@ If the listPtr is non-zero it will be used as a list pointer and instead of trig
 operation, it will build a listItem structure in HUB RAM at this address to do the write later.
 ................................................................................................
 }}
-PUB gfxWriteImage(srcHubAddr, srcPitch, dstAddr, dstPitch, byteWidth, height, listPtr) : r | mailbox, list
+PUB gfxWriteImage(srcHubAddr, srcPitch, dstAddr, dstPitch, byteWidth, height, listPtr) : r | mailbox1, list
     if listPtr == 0
-        mailbox := $7FF00 + cogid()*12
-        if long[mailbox] < 0
+        mailbox1 := mailbox + cogid()*12
+        if long[mailbox1] < 0
             return ERR_MAILBOX_BUSY ' don't clobber existing list item
         list := @listdata[cogid()*8]
     else
@@ -301,7 +309,7 @@ PUB gfxWriteImage(srcHubAddr, srcPitch, dstAddr, dstPitch, byteWidth, height, li
     long[list][7]:= 0
     if listPtr 
         return listPtr + 28
-    r := execList(mailbox, list, 0)
+    r := execList(mailbox1, list, 0)
 
 {{
 .................................................................................................
@@ -349,7 +357,7 @@ PUB execList(m, listptr, nonBlocking) : r
 
 
 ' An experimental API for using the line drawing accelarator in the memory driver
-PUB gfxLine(dstAddr, dstPitch, xoffset, yoffset, pattern, listPtr, datasize) : r | req, mailbox, list, dx, dy
+PUB gfxLine(dstAddr, dstPitch, xoffset, yoffset, pattern, listPtr, datasize) : r | req, mailbox1, list, dx, dy
     if datasize == 1
         req := driver.R_WRITEBYTE
     elseif datasize == 2
@@ -360,8 +368,8 @@ PUB gfxLine(dstAddr, dstPitch, xoffset, yoffset, pattern, listPtr, datasize) : r
         return ERR_INVALID
     ' when no ptr, fill in scratch space and execute a single request list 
     if listPtr == 0
-        mailbox := $7FF00 + cogid()*12
-        if long[mailbox] < 0
+        mailbox1 := mailbox + cogid()*12
+        if long[mailbox1] < 0
             return ERR_MAILBOX_BUSY ' don't clobber existing list item
         list := @listdata[cogid()*8]
         'list := @listdata[(m*NUMCOGS + cogid())*ITEMSIZE]
@@ -379,7 +387,7 @@ PUB gfxLine(dstAddr, dstPitch, xoffset, yoffset, pattern, listPtr, datasize) : r
     long[list][7]:= 0 ' no link pointer to next item
     if listPtr 
         return listPtr + 28 ' return the address of link pointer to allow chaining etc
-    r := execList(mailbox, list, 0)
+    r := execList(mailbox1, list, 0)
  
 DAT
     listdata long 0[8*8]
@@ -422,7 +430,7 @@ PUB fillLongs(addr, pattern, count, listPtr) : r
     return fill(addr, pattern, count, listPtr, 4)
 
 ' generalized fill
-PUB fill(addr, pattern, count, listPtr, datasize) : r | mailbox, req
+PUB fill(addr, pattern, count, listPtr, datasize) : r | mailbox1, req
     case datasize 
         1: req := driver.R_WRITEBYTE
         2: req := driver.R_WRITEWORD
@@ -432,14 +440,14 @@ PUB fill(addr, pattern, count, listPtr, datasize) : r | mailbox, req
         return 0
     if drivercog == -1
         return ERR_INACTIVE
-    mailbox := $7FF00 + 12*cogid() ' get mailbox base address for this COG
+    mailbox1 := mailbox + 12*cogid() ' get mailbox base address for this COG
     if long[mailbox] < 0
         return ERR_MAILBOX_BUSY
-    long[mailbox][2] := count
-    long[mailbox][1] := pattern
-    long[mailbox] := req + (addr & $1ffffff)
+    long[mailbox1][2] := count
+    long[mailbox1][1] := pattern
+    long[mailbox1] := req + (addr & $1ffffff)
     repeat
-        r := long[mailbox]
+        r := long[mailbox1]
     while r < 0
     return -r                  ' return 0 for success or negated error code
  
@@ -513,16 +521,16 @@ Use this 32 bit format for qos data
   10   : 1 = Locked transfer completes even after burst size fragmentation, 0 = COGs are repolled
   9-0  : reserved (0)
 }}
-PUB setQos(cog, qos) : result | mailbox
+PUB setQos(cog, qos) : result | mailbox1
     if drivercog == -1 ' driver must be running
         return ERR_INACTIVE
     if cog < 0 or cog > 7 ' enforce cog id range
         return ERR_INVALID
     long[@qosData][cog] := qos & !$1ff
-    mailbox := $7FF00 + drivercog*12
+    mailbox1 := mailbox + drivercog*12
     repeat until LOCKTRY(driverlock)
-    long[mailbox] := driver.R_CONFIG + cogid()
-    repeat while long[mailbox] < 0
+    long[mailbox1] := driver.R_CONFIG + cogid()
+    repeat while long[mailbox1] < 0
     LOCKREL(driverlock)
 
 '..............................................................................
@@ -544,7 +552,7 @@ This API return the mailbox start address in HUB RAM for a given cog.
 It can also be useful for the P2 video driver.
 }}
 PUB getMailbox(cog) : result
-    return $7FF00 + cog*12
+    return mailbox + cog*12
 
 '..............................................................................
 
@@ -564,20 +572,20 @@ modifyBankParams(andmask, ormask)
 
 This internal method modifies the bank specific parameters for the given addr and applies to the driver.
 }}
-PRI modifyBankParams(andmask, ormask) : result | value, i , mailbox
+PRI modifyBankParams(andmask, ormask) : result | value, i , mailbox1
     ' driver must be running
     if drivercog == -1
         return ERR_INACTIVE
 
-    mailbox := $7FF00 + drivercog*12
+    mailbox1 := mailbox + drivercog*12
     repeat until LOCKTRY(driverlock)
     ' configure parameter(s) over all spanned banks and update local storage also
     repeat i from 0 to 1
         value := (long[@deviceData][i] & andmask) | ormask
-        long[mailbox][1] := value 
-        long[mailbox] := driver.R_SETPARAMS + (i<<24) + cogid()
+        long[mailbox1][1] := value 
+        long[mailbox1] := driver.R_SETPARAMS + (i<<24) + cogid()
         repeat  
-            result := long[mailbox]
+            result := long[mailbox1]
         until result >= 0
         if result == 0
             long[@deviceData][i] := value

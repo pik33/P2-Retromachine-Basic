@@ -163,7 +163,7 @@ else
   sustains[channel]:=sustain
                 
 length:=24347887/length  
-debug(udec(sustain))
+'debug(udec(sustain))
 base2:=@channel0[0]+64*channel
 long[base2+20]:=waveform+$C0000000 
 long[base2+28]:= 2048
@@ -238,13 +238,13 @@ audio       	org     0
             	wxpin   sr44100,#right    
             	dirh    #left addpins 1
             	setse1  #%001<<6 + left      	' Set the event - DAC empty
- 
+  'debug(uhex(mailbox))
             
 '---------------------------------------------------------------------------------        
 '----------------- The main loop -------------------------------------------------
 '---------------------------------------------------------------------------------
 
-loop       	mov 	    cn,#0 '15 '7
+loop       	mov 	    cn,#15 '7
               					'   waitx ##3300000  		'for debug
             
 '----------------------------------------------------------------------------------
@@ -278,10 +278,10 @@ p404        	mov     qq,sstart0		     	' check if start>$80000
                 cmp 	qq,##$80000 wcz
     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
     	if_lt   mov     mailbox,#0                	' if not, use HUB 
- debug(uhex(sstart0,mailbox))
+ ''debug(uhex(sstart0,mailbox))
 p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
     	    	getword avol0,volpan0,#0
-    	    	
+    	   debug(uhex(pointer0,pointer0h,sstart0)) 	
 '----------------------------------------------------------------------------------
 '------------- Compute the envelope, if exists ------------------------------------
 '----------------------------------------------------------------------------------
@@ -355,6 +355,7 @@ p412 		cmp	pointer0h,oldptrh wcz
  
              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
            	add     qq,sstart0            
+           	and  	qq,##$7FF_FFFF
            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
     	if_gt   call    #cache_read
@@ -459,15 +460,16 @@ p403        	setq #4                          	' write new pointer, sample value
 
 
 cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
-            debug ("cache")
+         '   debug ("cache")
 	   	mov     addrhi,qq		
 	    	shr     addrhi,#8		        ' get 24 upper bits
 	    	alts    cn,#cache1            
 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
-    	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
-	
+   	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+
 p702	    	altd    cn,#cache1			' cache miss. 
 	    	mov     0-0,addrhi                  	' update the pointer
+	    ''	 debug(uhex(addrhi))
 	    	mov     cmd,addrhi			' prepare the mailbox
 	    	shl     cmd,#8
             	setnib  cmd, #%1011, #7             	' read burst from the external memory

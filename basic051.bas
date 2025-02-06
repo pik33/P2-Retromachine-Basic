@@ -6476,8 +6476,8 @@ end sub
 '' ------------------------------- Hardware start/stop/initialization 
 
 sub startpsram
-pscog=psram.startx(0, 1024, 11, 7)
-mbox=psram.getMailbox(0)
+pscog,mbox=psram.startx(0, 1024, 11, 7)
+'mbox=psram.getMailbox(0)
 end sub
 
 sub startaudio

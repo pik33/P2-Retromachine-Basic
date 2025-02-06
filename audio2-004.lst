@@ -423,7 +423,7 @@
 00b34     0F B8 15 FC |             	wxpin   sr44100,#right    
 00b38     41 9C 64 FD |             	dirh    #left addpins 1
 00b3c     20 9C 64 FD |             	setse1  #%001<<6 + left      	' Set the event - DAC empty
-00b40                 |  
+00b40                 |   debug(uhex(mailbox))
 00b40                 |             
 00b40                 | '---------------------------------------------------------------------------------        
 00b40                 | '----------------- The main loop -------------------------------------------------
@@ -465,200 +465,203 @@
 00b9c     00 6C 1D F2 |                 cmp 	qq,##$80000 wcz
 00ba0     B9 70 01 36 |     	if_ge   mov     mailbox,mailbox2          	' if yes, use PSRAM
 00ba4     00 70 05 C6 |     	if_lt   mov     mailbox,#0                	' if not, use HUB 
-00ba8     36 02 64 FD |  debug(uhex(sstart0,mailbox))
-00bac     C4 9E 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
-00bb0     C4 9C 31 F9 |     	    	getword avol0,volpan0,#0
-00bb4                 |     	    	
-00bb4                 | '----------------------------------------------------------------------------------
-00bb4                 | '------------- Compute the envelope, if exists ------------------------------------
-00bb4                 | '----------------------------------------------------------------------------------
-00bb4                 |             
-00bb4     00 8E 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
-00bb8     20 00 00 AF 
-00bbc     00 EA 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
-00bc0     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
-00bc4                 | 
-00bc4     C8 80 01 F1 |            	add     envph0,envspd0			' envelope PA update
-00bc8                 |            	           
-00bc8     C0 E6 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
-00bcc     06 E6 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
-00bd0     F3 E8 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
-00bd4     10 E6 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
-00bd8     C9 E6 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
-00bdc                 | 	    											'debug(udec(envhi,envlen0))
-00bdc     C9 E6 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
-00be0     00 E8 05 36 |     	if_ge   mov     envlo,#0
-00be4     C9 80 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
-00be8     16 80 65 30 |     	if_ge   shl     envph0,#22
-00bec                 | 
-00bec     F3 EA 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
-00bf0     01 EA 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
-00bf4     C7 EA 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
-00bf8     F5 EA 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
-00bfc     F5 EC 39 F9 |             	getword envs2,envs1,#1			' then separate them		
-00c00     F5 EA 31 F9 |            	getword envs1,envs1,#0
-00c04     F4 EC 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
-00c08     F4 E8 21 F6 |             	not     envlo
-00c0c     F4 EA 01 FA |             	mul     envs1,envlo
-00c10     F6 EA 01 F1 |             	add     envs1,envs2
-00c14     12 EA 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
-00c18                 |               
-00c18                 | '----------------------------------------------------------------------------------
-00c18                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
-00c18                 | '----------------------------------------------------------------------------------
-00c18                 | 
-00c18                 | 
-00c18                 |     	
-00c18                 | '----------------------------------------------------------------------------------
-00c18                 | '------------- Get the sample -----------------------------------------------------
-00c18                 | '----------------------------------------------------------------------------------    	
-00c18                 |  
-00c18     BD A0 01 F6 | p410  		mov	oldptrh,pointer0h
-00c1c     C5 9A F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
-00c20     08 8A 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
-00c24     C5 78 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
-00c28     CD 7A 21 F1 |            	addx	pointer0h,afreq0  
-00c2c                 |           	
-00c2c     1B 82 0D F4 |    	   	testb   sstart0, #27 wz
-00c30     10 00 90 5D |     	if_nz	jmp #p412   	
-00c34     1B 6E 61 CD |    	if_c  	getrnd  spl
-00c38     B7 7E 41 C9 |    	if_c	rolword rawspl0,spl,#0	
-00c3c     BF 6E 31 F9 |    		getword spl,rawspl0,#0
-00c40     88 00 90 FD |       	        jmp     #p406          	
-00c44                 |            	
-00c44                 |            	
-00c44     D0 7A 19 F2 | p412 		cmp	pointer0h,oldptrh wcz
-00c48     50 00 90 AD |  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
-00c4c                 |      	
-00c4c     1F 82 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
-00c50     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
-00c54     1C 82 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
-00c58     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
-00c5c                 | 												
-00c5c     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
-00c60     C3 7A 81 31 |    	if_ge   sub     pointer0h,lend0       
-00c64     C2 7A 01 31 |         if_ge   add     pointer0h,lstart0
-00c68     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
-00c6c     C3 7A 01 36 |         if_ge   mov	pointer0h,lend0	
-00c70                 |  
-00c70     BD 6C 01 F6 |              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
-00c74     C1 6C 01 F1 |            	add     qq,sstart0            
-00c78     FF 71 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
-00c7c     B6 6E E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
-00c80     F8 00 B0 1D |     	if_gt   call    #cache_read
-00c84     1F 82 0D F4 |                 testb   sstart0,#31 wz 
-00c88     08 6E 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
-00c8c     01 7A 45 A0 |         if_z    shr     pointer0h,#1
-00c90     1C 82 0D F4 |                 testb   sstart0,#28 wz            
-00c94     01 7A 45 A0 |     	if_z    shr     pointer0h,#1    
-00c98     B7 7E 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
-00c9c                 |               
-00c9c     BF 6E 31 F9 | p411	      	getword spl,rawspl0,#0
-00ca0     BF 98 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
-00ca4                 | 
-00ca4                 |           '  debug(uhex(pointer0h,pointer0,spl,oldspl))
-00ca4                 | 
-00ca4                 | 
-00ca4     BC E8 01 F6 | 		mov	envlo,pointer0
-00ca8     12 E8 45 F0 | 		shr 	envlo,#18
-00cac                 | 	
-00cac     F4 6E 31 FA |             	scas    spl,envlo                   	' and do linear interpolation
-00cb0     00 6E 01 F6 |             	mov 	spl,0-0
-00cb4     F4 E8 21 F6 |             	not     envlo
-00cb8     1F 00 00 FF 
-00cbc     FF E9 05 F5 |           	and     envlo,##$3FFF
-00cc0     F4 98 31 FA |            	scas    oldspl,envlo
-00cc4     00 98 01 F6 |             	mov     oldspl,0-0
-00cc8     CC 6E 01 F1 |                 add     spl, oldspl
-00ccc                 | 	 
-00ccc     F5 6E 31 FA | p406        	scas    spl, envs1
-00cd0     00 6E 01 F6 |             	mov     spl,0-0
-00cd4     CE 6E 31 FA |             	scas    spl,avol0                 	' apply volume
-00cd8     00 6E 01 F6 |             	mov     spl,0-0
-00cdc                 |  
-00cdc     CF 6E 31 FA |             	scas    spl,apan0                 	' apply pan
-00ce0     00 A4 01 F6 |             	mov     ls0,0-0
-00ce4     20 00 00 FF 
-00ce8     00 6C 05 F6 |             	mov     qq,##16384
-00cec     CF 6C 81 F1 |             	sub     qq,apan0
-00cf0     B6 6E 31 FA |             	scas    spl,qq
-00cf4     00 A6 01 F6 |             	mov     rs0, 0-0
-00cf8                 |       
-00cf8     D3 7C 29 F9 |                 setword sample0,rs0,#1           	' pack samples into long
-00cfc     D2 7C 21 F9 |                 setword sample0,ls0,#0
-00d00                 |                 
-00d00     D2 74 01 F1 |                 add  lsample,ls0
-00d04     D3 76 01 F1 |                 add  rsample,rs0
-00d08                 |              
-00d08     1E 82 1D F4 |             	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
-00d0c     00 78 05 A6 |     	if_z    mov     pointer0, #0  
-00d10     00 7A 05 A6 |     	if_z    mov     pointer0h, #0  
-00d14     00 80 05 A6 |     	if_z    mov     envph0, #0  
-00d18     05 83 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
-00d1c                 |             
-00d1c     28 08 64 FD | p403        	setq #4                          	' write new pointer, sample values and env pointer to the hub
-00d20     00 79 65 FC | 	       	wrlong  pointer0,ptra
-00d24     B5 F0 83 F1 |             	sub     ptra, channeladd         	' reset the pointer to channel parameters
-00d28                 | 
-00d28     86 A3 7D FB |             	djnf    cn, #p401
+00ba8                 |  ''debug(uhex(sstart0,mailbox))
+00ba8     C4 9E 39 F9 | p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
+00bac     C4 9C 31 F9 |     	    	getword avol0,volpan0,#0
+00bb0                 |     	   debug(uhex(pointer0,pointer0h,sstart0)) 	
+00bb0                 | '----------------------------------------------------------------------------------
+00bb0                 | '------------- Compute the envelope, if exists ------------------------------------
+00bb0                 | '----------------------------------------------------------------------------------
+00bb0                 |             
+00bb0     00 8E 1D F2 |             	cmp     envptr0,#0 wcz     		' read the pointer
+00bb4     20 00 00 AF 
+00bb8     00 EA 05 A6 |     	if_z    mov     envs1,##$4000			' if 0, no envelope, load $4000=1 for scas
+00bbc     54 00 90 AD |     	if_z    jmp     #p410				' and run away	
+00bc0                 | 
+00bc0     C8 80 01 F1 |            	add     envph0,envspd0			' envelope PA update
+00bc4                 |            	           
+00bc4     C0 E6 01 F6 |       	    	mov     envhi, envph0			' move phase acc to high part of env pointer
+00bc8     06 E6 45 F0 | 		shr     envhi,#6			' leave 10 bits in hi
+00bcc     F3 E8 31 F9 | 	   	getword envlo,envhi,#0              	' and 16 bit in lo
+00bd0     10 E6 45 F0 | 	    	shr     envhi,#16			' move 10 bits of hi to the lower word
+00bd4     C9 E6 19 F2 | 	    	cmp     envhi,envlen0 wcz		' compare this to envelope length
+00bd8                 | 	    											'debug(udec(envhi,envlen0))
+00bd8     C9 E6 01 36 |     	if_ge  	mov     envhi,envlen0			' if greater than, set it at envlen
+00bdc     00 E8 05 36 |     	if_ge   mov     envlo,#0
+00be0     C9 80 01 36 |     	if_ge   mov     envph0,envlen0             	' and set envph0 at the end of the envelope
+00be4     16 80 65 30 |     	if_ge   shl     envph0,#22
+00be8                 | 
+00be8     F3 EA 01 F6 |             	mov 	envs1,envhi			' 10 high bits of PA is the offset to the envelope entry
+00bec     01 EA 65 F0 |             	shl 	envs1,#1                        ' these entries are 16 bit so multiply the offset by 2
+00bf0     C7 EA 01 F1 |             	add 	envs1,envptr0                   ' and add it to the pointer
+00bf4     F5 EA 01 FB |             	rdlong 	envs1,envs1			' and then read 2 entries in one rdlong
+00bf8     F5 EC 39 F9 |             	getword envs2,envs1,#1			' then separate them		
+00bfc     F5 EA 31 F9 |            	getword envs1,envs1,#0
+00c00     F4 EC 01 FA |             	mul     envs2,envlo                     ' and do linear interpolation based on lower bits of the offset
+00c04     F4 E8 21 F6 |             	not     envlo
+00c08     F4 EA 01 FA |             	mul     envs1,envlo
+00c0c     F6 EA 01 F1 |             	add     envs1,envs2
+00c10     12 EA 45 F0 |             	shr     envs1,#18			' we need only 14 bits for scas
+00c14                 |               
+00c14                 | '----------------------------------------------------------------------------------
+00c14                 | '------------- Generate the noise if bit 27 of the pointer is set -----------------
+00c14                 | '----------------------------------------------------------------------------------
+00c14                 | 
+00c14                 | 
+00c14                 |     	
+00c14                 | '----------------------------------------------------------------------------------
+00c14                 | '------------- Get the sample -----------------------------------------------------
+00c14                 | '----------------------------------------------------------------------------------    	
+00c14                 |  
+00c14     BD A0 01 F6 | p410  		mov	oldptrh,pointer0h
+00c18     C5 9A F9 F8 |            	getbyte	afreq0,freqskip0,#3         	' the frequency is in 8:24 format, so get integer in afreq0
+00c1c     08 8A 65 F0 |            	shl	freqskip0,#8                	' and keep the fractional in freqskip0
+00c20     C5 78 19 F1 |            	add     pointer0,freqskip0 wcz      	' compute the pointer to the next sample   
+00c24     CD 7A 21 F1 |            	addx	pointer0h,afreq0  
+00c28                 |           	
+00c28     1B 82 0D F4 |    	   	testb   sstart0, #27 wz
+00c2c     10 00 90 5D |     	if_nz	jmp #p412   	
+00c30     1B 6E 61 CD |    	if_c  	getrnd  spl
+00c34     B7 7E 41 C9 |    	if_c	rolword rawspl0,spl,#0	
+00c38     BF 6E 31 F9 |    		getword spl,rawspl0,#0
+00c3c     90 00 90 FD |       	        jmp     #p406          	
+00c40                 |            	
+00c40                 |            	
+00c40     D0 7A 19 F2 | p412 		cmp	pointer0h,oldptrh wcz
+00c44     58 00 90 AD |  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
+00c48                 |      	
+00c48     1F 82 0D F4 |             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
+00c4c     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
+00c50     1C 82 0D F4 |             	testb   sstart0,#28 wz  		' bit 28 : interleaved sample         
+00c54     01 7A 65 A0 |      	if_z    shl     pointer0h,#1        
+00c58                 | 												
+00c58     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+00c5c     C3 7A 81 31 |    	if_ge   sub     pointer0h,lend0       
+00c60     C2 7A 01 31 |         if_ge   add     pointer0h,lstart0
+00c64     C3 7A 19 F2 |             	cmp     pointer0h,lend0 wcz		' check if end of the loop reached
+00c68     C3 7A 01 36 |         if_ge   mov	pointer0h,lend0	
+00c6c                 |  
+00c6c     BD 6C 01 F6 |              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
+00c70     C1 6C 01 F1 |            	add     qq,sstart0            
+00c74     FF FF 03 FF 
+00c78     FF 6D 05 F5 |            	and  	qq,##$7FF_FFFF
+00c7c     FF 71 5D F2 |            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
+00c80     B6 6E E1 EA |     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
+00c84     F8 00 B0 1D |     	if_gt   call    #cache_read
+00c88     1F 82 0D F4 |                 testb   sstart0,#31 wz 
+00c8c     08 6E 65 50 |     	if_nz   shl     spl,#8				' convert 8 to 16 bit if needed
+00c90     01 7A 45 A0 |         if_z    shr     pointer0h,#1
+00c94     1C 82 0D F4 |                 testb   sstart0,#28 wz            
+00c98     01 7A 45 A0 |     	if_z    shr     pointer0h,#1    
+00c9c     B7 7E 41 F9 |                 rolword rawspl0,spl,#0			' now rawspl0 has oldsample:newsample in it
+00ca0                 |               
+00ca0     BF 6E 31 F9 | p411	      	getword spl,rawspl0,#0
+00ca4     BF 98 39 F9 | 		getword oldspl,rawspl0,#1		' then separate them		
+00ca8                 | 
+00ca8                 |           '  debug(uhex(pointer0h,pointer0,spl,oldspl))
+00ca8                 | 
+00ca8                 | 
+00ca8     BC E8 01 F6 | 		mov	envlo,pointer0
+00cac     12 E8 45 F0 | 		shr 	envlo,#18
+00cb0                 | 	
+00cb0     F4 6E 31 FA |             	scas    spl,envlo                   	' and do linear interpolation
+00cb4     00 6E 01 F6 |             	mov 	spl,0-0
+00cb8     F4 E8 21 F6 |             	not     envlo
+00cbc     1F 00 00 FF 
+00cc0     FF E9 05 F5 |           	and     envlo,##$3FFF
+00cc4     F4 98 31 FA |            	scas    oldspl,envlo
+00cc8     00 98 01 F6 |             	mov     oldspl,0-0
+00ccc     CC 6E 01 F1 |                 add     spl, oldspl
+00cd0                 | 	 
+00cd0     F5 6E 31 FA | p406        	scas    spl, envs1
+00cd4     00 6E 01 F6 |             	mov     spl,0-0
+00cd8     CE 6E 31 FA |             	scas    spl,avol0                 	' apply volume
+00cdc     00 6E 01 F6 |             	mov     spl,0-0
+00ce0                 |  
+00ce0     CF 6E 31 FA |             	scas    spl,apan0                 	' apply pan
+00ce4     00 A4 01 F6 |             	mov     ls0,0-0
+00ce8     20 00 00 FF 
+00cec     00 6C 05 F6 |             	mov     qq,##16384
+00cf0     CF 6C 81 F1 |             	sub     qq,apan0
+00cf4     B6 6E 31 FA |             	scas    spl,qq
+00cf8     00 A6 01 F6 |             	mov     rs0, 0-0
+00cfc                 |       
+00cfc     D3 7C 29 F9 |                 setword sample0,rs0,#1           	' pack samples into long
+00d00     D2 7C 21 F9 |                 setword sample0,ls0,#0
+00d04                 |                 
+00d04     D2 74 01 F1 |                 add  lsample,ls0
+00d08     D3 76 01 F1 |                 add  rsample,rs0
+00d0c                 |              
+00d0c     1E 82 1D F4 |             	bitl    sstart0, #30 wcz          	' if bit #30 of start pointer is set, the current pointers needs resetting  
+00d10     00 78 05 A6 |     	if_z    mov     pointer0, #0  
+00d14     00 7A 05 A6 |     	if_z    mov     pointer0h, #0  
+00d18     00 80 05 A6 |     	if_z    mov     envph0, #0  
+00d1c     05 83 65 AC |     	if_z    wrlong  sstart0, ptra[5]          	' reset bit #30 in hub
+00d20                 |             
+00d20     28 08 64 FD | p403        	setq #4                          	' write new pointer, sample values and env pointer to the hub
+00d24     00 79 65 FC | 	       	wrlong  pointer0,ptra
+00d28     B5 F0 83 F1 |             	sub     ptra, channeladd         	' reset the pointer to channel parameters
 00d2c                 | 
-00d2c     0F 76 E5 F4 |             	bitnot rsample, #15
-00d30     0F 74 E5 F4 |             	bitnot lsample, #15
-00d34                 |   							'           	getct ct2  	'debug
-00d34                 |   							'          	sub ct2,ct1
-00d34                 |   							'          	debug(udec(ct2))
-00d34     24 28 60 FD |             	waitse1
-00d38                 |           
-00d38     0E 74 25 FC |            	wypin   lsample, #left              
-00d3c     0F 76 25 FC |                 wypin   rsample, #right        
-00d40                 | 
-00d40     BA A8 21 F9 | 		setword oldsample, lsample,#0		' for oscilloscope
-00d44     BB A8 29 F9 | 		setword oldsample, rsample,#1
-00d48                 | 		
-00d48     00 76 05 F6 |             	mov rsample, #0
-00d4c     00 74 05 F6 |             	mov lsample, #0
-00d50                 | 
-00d50                 | '----------------------------------------------------------------------------------
-00d50                 | '------------- Oscilloscope  -----------------------------------------------------
-00d50                 | '----------------------------------------------------------------------------------   
-00d50                 | 		
-00d50     00 AA 0D F2 | 	    	cmp     scbase,#0 wz
-00d54     20 00 90 AD |     	if_z    jmp #p302	   
-00d58                 |  
-00d58     01 B0 15 F7 |             	incmod  scope,#1 wc            		'  todo: scope speed instead of const  
-00d5c     D6 AE 01 C6 |     	if_c    mov scptr2,scptr
-00d60     02 AE 65 C0 |     	if_c    shl scptr2,#2
-00d64     D5 AE 01 C1 |     	if_c    add scptr2,scbase     
-00d68     60 AE 65 FC |             	wrlong scptr2,#$60
-00d6c     D7 A8 61 CC |     	if_c    wrlong oldsample,scptr2
-00d70     01 00 00 CF 
-00d74     7F AC 05 C7 |     	if_c    incmod scptr,##639
-00d78                 |             
-00d78     C4 FD 9F FD |  p302           jmp     #loop            'loop
-00d7c                 | 
-00d7c                 | '----------------------------------------------------------------------------------
-00d7c                 | '------------- This is the end of the main loop -----------------------------------
-00d7c                 | '----------------------------------------------------------------------------------
-00d7c                 | 
-00d7c                 | '----------------------------------------------------------------------------------
-00d7c                 | '------------- PSRAM cache ----------- --------------------------------------------
-00d7c                 | '----------------------------------------------------------------------------------
-00d7c                 | 
-00d7c                 | ' There are 16 cache pointers for 16 channels
-00d7c                 | ' if 24 higher bits of address=cache, then get a word from the cache
-00d7c                 | ' else load the cache from PSRAM, update the pointer, then read a sample
-00d7c                 | 
-00d7c                 | 
-00d7c     B6 E0 E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
-00d80     36 04 64 FD |             debug ("cache")
+00d2c     85 A3 7D FB |             	djnf    cn, #p401
+00d30                 | 
+00d30     0F 76 E5 F4 |             	bitnot rsample, #15
+00d34     0F 74 E5 F4 |             	bitnot lsample, #15
+00d38                 |   							'           	getct ct2  	'debug
+00d38                 |   							'          	sub ct2,ct1
+00d38                 |   							'          	debug(udec(ct2))
+00d38     24 28 60 FD |             	waitse1
+00d3c                 |           
+00d3c     0E 74 25 FC |            	wypin   lsample, #left              
+00d40     0F 76 25 FC |                 wypin   rsample, #right        
+00d44                 | 
+00d44     BA A8 21 F9 | 		setword oldsample, lsample,#0		' for oscilloscope
+00d48     BB A8 29 F9 | 		setword oldsample, rsample,#1
+00d4c                 | 		
+00d4c     00 76 05 F6 |             	mov rsample, #0
+00d50     00 74 05 F6 |             	mov lsample, #0
+00d54                 | 
+00d54                 | '----------------------------------------------------------------------------------
+00d54                 | '------------- Oscilloscope  -----------------------------------------------------
+00d54                 | '----------------------------------------------------------------------------------   
+00d54                 | 		
+00d54     00 AA 0D F2 | 	    	cmp     scbase,#0 wz
+00d58     20 00 90 AD |     	if_z    jmp #p302	   
+00d5c                 |  
+00d5c     01 B0 15 F7 |             	incmod  scope,#1 wc            		'  todo: scope speed instead of const  
+00d60     D6 AE 01 C6 |     	if_c    mov scptr2,scptr
+00d64     02 AE 65 C0 |     	if_c    shl scptr2,#2
+00d68     D5 AE 01 C1 |     	if_c    add scptr2,scbase     
+00d6c     60 AE 65 FC |             	wrlong scptr2,#$60
+00d70     D7 A8 61 CC |     	if_c    wrlong oldsample,scptr2
+00d74     01 00 00 CF 
+00d78     7F AC 05 C7 |     	if_c    incmod scptr,##639
+00d7c                 |             
+00d7c     C0 FD 9F FD |  p302           jmp     #loop            'loop
+00d80                 | 
+00d80                 | '----------------------------------------------------------------------------------
+00d80                 | '------------- This is the end of the main loop -----------------------------------
+00d80                 | '----------------------------------------------------------------------------------
+00d80                 | 
+00d80                 | '----------------------------------------------------------------------------------
+00d80                 | '------------- PSRAM cache ----------- --------------------------------------------
+00d80                 | '----------------------------------------------------------------------------------
+00d80                 | 
+00d80                 | ' There are 16 cache pointers for 16 channels
+00d80                 | ' if 24 higher bits of address=cache, then get a word from the cache
+00d80                 | ' else load the cache from PSRAM, update the pointer, then read a sample
+00d80                 | 
+00d80                 | 
+00d80     B6 E0 E1 F8 | cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
+00d84                 |          '   debug ("cache")
 00d84     B6 E2 01 F6 | 	   	mov     addrhi,qq		
 00d88     08 E2 45 F0 | 	    	shr     addrhi,#8		        ' get 24 upper bits
 00d8c     DD A2 95 F9 | 	    	alts    cn,#cache1            
 00d90     00 E2 09 F2 | 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
-00d94     34 00 90 AD |     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
-00d98                 | 	
+00d94     34 00 90 AD |    	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+00d98                 | 
 00d98     DD A2 8D F9 | p702	    	altd    cn,#cache1			' cache miss. 
 00d9c     F1 00 00 F6 | 	    	mov     0-0,addrhi                  	' update the pointer
+00da0                 | 	    ''	 debug(uhex(addrhi))
 00da0     F1 DA 01 F6 | 	    	mov     cmd,addrhi			' prepare the mailbox
 00da4     08 DA 65 F0 | 	    	shl     cmd,#8
 00da8     0B DA 3D F8 |             	setnib  cmd, #%1011, #7             	' read burst from the external memory

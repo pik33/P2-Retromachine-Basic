@@ -411,7 +411,7 @@ _dat_
 	byte	$41, $9c, $64, $fd
 '-'             	setse1  #%001<<6 + left      	' Set the event - DAC empty
 	byte	$20, $9c, $64, $fd
-'-'  
+'-'   debug(uhex(mailbox))
 '-'             
 '-' '---------------------------------------------------------------------------------        
 '-' '----------------- The main loop -------------------------------------------------
@@ -475,13 +475,12 @@ _dat_
 	byte	$b9, $70, $01, $36
 '-'     	if_lt   mov     mailbox,#0                	' if not, use HUB 
 	byte	$00, $70, $05, $c6
-'-'  debug(uhex(sstart0,mailbox))
-	byte	$36, $02, $64, $fd
+'-'  ''debug(uhex(sstart0,mailbox))
 '-' p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
 	byte	$c4, $9e, $39, $f9
 '-'     	    	getword avol0,volpan0,#0
 	byte	$c4, $9c, $31, $f9
-'-'     	    	
+'-'     	   debug(uhex(pointer0,pointer0h,sstart0)) 	
 '-' '----------------------------------------------------------------------------------
 '-' '------------- Compute the envelope, if exists ------------------------------------
 '-' '----------------------------------------------------------------------------------
@@ -571,13 +570,13 @@ _dat_
 '-'    		getword spl,rawspl0,#0
 	byte	$bf, $6e, $31, $f9
 '-'       	        jmp     #p406          	
-	byte	$88, $00, $90, $fd
+	byte	$90, $00, $90, $fd
 '-'            	
 '-'            	
 '-' p412 		cmp	pointer0h,oldptrh wcz
 	byte	$d0, $7a, $19, $f2
 '-'  	if_e 	jmp 	#p411				' if the pointer didn't change, no sample has to be read
-	byte	$50, $00, $90, $ad
+	byte	$58, $00, $90, $ad
 '-'      	
 '-'             	testb   sstart0,#31 wz       	   	' bit 31 : 16 bit sample  
 	byte	$1f, $82, $0d, $f4
@@ -603,6 +602,8 @@ _dat_
 	byte	$bd, $6c, $01, $f6
 '-'            	add     qq,sstart0            
 	byte	$c1, $6c, $01, $f1
+'-'            	and  	qq,##$7FF_FFFF
+	byte	$ff, $ff, $03, $ff, $ff, $6d, $05, $f5
 '-'            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
 	byte	$ff, $71, $5d, $f2
 '-'     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
@@ -701,7 +702,7 @@ _dat_
 	byte	$b5, $f0, $83, $f1
 '-' 
 '-'             	djnf    cn, #p401
-	byte	$86, $a3, $7d, $fb
+	byte	$85, $a3, $7d, $fb
 '-' 
 '-'             	bitnot rsample, #15
 	byte	$0f, $76, $e5, $f4
@@ -753,7 +754,7 @@ _dat_
 	byte	$01, $00, $00, $cf, $7f, $ac, $05, $c7
 '-'             
 '-'  p302           jmp     #loop            'loop
-	byte	$c4, $fd, $9f, $fd
+	byte	$c0, $fd, $9f, $fd
 '-' 
 '-' '----------------------------------------------------------------------------------
 '-' '------------- This is the end of the main loop -----------------------------------
@@ -770,8 +771,7 @@ _dat_
 '-' 
 '-' cache_read  	getbyte addrlo,qq,#0 			' when this is called, qq is the addres of the sample			
 	byte	$b6, $e0, $e1, $f8
-'-'             debug ("cache")
-	byte	$36, $04, $64, $fd
+'-'          '   debug ("cache")
 '-' 	   	mov     addrhi,qq		
 	byte	$b6, $e2, $01, $f6
 '-' 	    	shr     addrhi,#8		        ' get 24 upper bits
@@ -780,13 +780,14 @@ _dat_
 	byte	$dd, $a2, $95, $f9
 '-' 	    	cmp	addrhi,0-0 wz               	' and compare with the cache pointer for the channel
 	byte	$00, $e2, $09, $f2
-'-'     	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
+'-'    	if_z    jmp     #p701	    			' if equal, cache hit, read the sample from it
 	byte	$34, $00, $90, $ad
-'-' 	
+'-' 
 '-' p702	    	altd    cn,#cache1			' cache miss. 
 	byte	$dd, $a2, $8d, $f9
 '-' 	    	mov     0-0,addrhi                  	' update the pointer
 	byte	$f1, $00, $00, $f6
+'-' 	    ''	 debug(uhex(addrhi))
 '-' 	    	mov     cmd,addrhi			' prepare the mailbox
 	byte	$f1, $da, $01, $f6
 '-' 	    	shl     cmd,#8
