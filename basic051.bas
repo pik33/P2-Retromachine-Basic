@@ -2896,29 +2896,8 @@ t1=pop()
 
 freq=converttofloat(t1)
 t1=pop()
-channel=converttoint(t1) mod 8
-amode=channels(channel).amode
-if amode>0 then
-  lfreq=int(log(freq)/log(2))
-  skip=round(2^(lfreq+amode))                     '''' this const + const 2 lines lower=18
-  if skip>32768 then i=skip/32768: skip=32768 else i=1
-  period=round((3528000/freq)/(i*(2^(18-amode-lfreq))))  ' should be 3546895 but I use 338688000 for 44100 Hz samples
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) 
-else
-  period=24 '147000 Hz
-  skip=round(1024*256*(freq/147000.0))
-  channels(channel).realfreq=(3528000.0/period)*(skip/(256.0*1024.0)) 
-endif
-
-
-
-ps=skip shl 16+period
-if (lpeek(base+64*channel+8) and $0800_0000)=0 then 
-  lpoke base+64*channel+24,ps
-else
-  dpoke base+64*channel+24,round(3546895/freq) 
-  dpoke base+64*channel+26,256
-endif 
+channel=converttoint(t1) mod 16
+audio.changefreq(channel,round(1000*freq))
 end sub
 
 '-------------------- changepan
@@ -2947,7 +2926,7 @@ dim channel,vol as integer
 t1=pop()
 vol=round(converttofloat(t1)*1000) mod 16384
 t1=pop()
-channel=converttoint(t1) mod 8
+channel=converttoint(t1) mod 16
 dpoke base+64*channel+20,vol
 end sub
 
@@ -2962,11 +2941,11 @@ t1=pop()
 wave=converttoint(t1)
 if wave<0 then wave=0
 t1=pop()
-channel=converttoint(t1) mod 8
+channel=converttoint(t1) mod 16
 if wave <32 then 
-  lpoke base+64*channel+8,2048*wave+$8000_0000 
+  audio.changewav(channel,$2000000+2048*wave)
 else
-  lpoke base+64*channel+8,$8800_0000 
+  audio.changewav(channel,$0800_0000)
 endif
 end sub
 
@@ -4805,11 +4784,11 @@ if params(6)<0 orelse params(6)>1000.0 then slen=channels(channel).length else s
 if params(7)<-1.0 orelse params(7)>1.0 then pan=channels(channel).pan else pan= params(7) : channels(channel).pan=pan
 if params(8)<0 orelse params(8)>255 then sus=channels(channel).sus else sus= round(params(8)) : channels(channel).sus=sus
 if params(9)<0 orelse params(9)>255 then amode=channels(channel).amode else amode= round(params(9)) : channels(channel).amode=amode
-print wave
+'print wave
 
 ifreq=round(freq*1000)
 if wave <32 then 
-  wave=2048*wave+$C200_0000 
+  wave=2048*wave+$2000000
 else
   wave=$C800_0000 
 endif
@@ -4817,11 +4796,12 @@ if env=8 then env=0 else env=varptr(envbuf(env,0))
 speed=round(speed_coeff/slen)
 ipan=8192+round(8192*pan)
 ivol=round(1000.0*vol)
-
-audio.play(channel,ifreq,delay,ivol,wave,env,round(slen),ipan,sus)
- '  audio.play(1,440000,200,4096,$2000000,$0,600) 
-print channel, ifreq, delay, ivol,hex$(wave),env,slen,ipan, sus
-if delay>0 then waitms(delay) 
+'for i=0 to 1023: print psdpeek(2*i),:next i
+audio.play(channel,ifreq,delay,ivol,wave,env,round(slen*1000),ipan,sus)
+'audio.play(1,440000,200,4096,$2_000_800,$0,600) 
+'audio.play(1,440000,200,4096,$2_000_800,364028,600) 
+'print channel, ifreq, delay, ivol,hex$(wave),env,slen,ipan, sus
+'if delay>0 then waitms(delay) 
 end sub
 
 '-------------------- plot
@@ -6364,7 +6344,7 @@ dim a as single
 'v.cls(147,154)
 dim k as single : k=1.0
 
-for i=0 to 1023 : psdpoke       2*i,round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
+for i=0 to 1023 : psdpoke  2*i,round(32600*sin(i*3.1415926535/512.0)) : next i               		' 0 : sinewave  
 for i=0 to 511  : psdpoke  2048+2*i, -32512+127*i: psdpoke 2048+2*(512+i),32512-127*i : next i   		' 1 : triangle 
 for i=0 to 1023 : psdpoke  4096+2*i, -32256+63*i : next i 							' 2 saw 4 sqr 8 noise 3567 
 for i=0 to 127  : psdpoke  6144+2*i, -32600 : next i : for i=128 to 1023 :  psdpoke 6144+2*i, 32600 : next i 	' 3 pulse 12.5%
@@ -6508,32 +6488,32 @@ end function
 '' ------------------------------- Convenient psram peek/poke
 
 sub pslpoke(addr as ulong,value as ulong)
-psram.write(varptr(value),addr,4)
+psram.write(varptr(value),addr and $1FF_FFFF,4)
 end sub
 
 sub psdpoke(addr as ulong,value as ulong)
-psram.write(varptr(value),addr,2)
+psram.write(varptr(value),addr and $1FF_FFFF,2)
 end sub
 
 sub pspoke(addr as ulong,value as ulong)
-psram.write(varptr(value),addr,1)
+psram.write(varptr(value),addr and $1FF_FFFF,1)
 end sub
 
 function pspeek(adr as ulong) as ubyte
 dim res as ubyte
-psram.read1(varptr(res),adr,1)
+psram.read1(varptr(res),adr and $1FF_FFFF,1)
 return res
 end function
 
 function pslpeek(adr as ulong) as ulong
 dim res as ulong
-psram.read1(varptr(res),adr,4)
+psram.read1(varptr(res),adr and $1FF_FFFF,4)
 return res
 end function
 
 function psdpeek(adr as ulong) as ulong
 dim res as ushort
-psram.read1(varptr(res),adr,2)
+psram.read1(varptr(res),adr and $1FF_FFFF,2)
 return res
 end function
 

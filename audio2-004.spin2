@@ -120,6 +120,8 @@ cog:=coginit(16,@audio,@mailboxaddr)
 waitms(10)
 return cog,base
 
+
+
 pub play (channel, frequency=-1, delay=-1, volume=-1, waveform=-1, envelope=-1, length=-1, pan=-1, sustain=-1) | base2
 
 if frequency==(-1)
@@ -164,7 +166,7 @@ else
                 
 length:=24347887/length  
 'debug(udec(sustain))
-base2:=@channel0[0]+64*channel
+base2:=@channel0[0]+64*(channel and $F)
 long[base2+20]:=waveform+$C0000000 
 long[base2+28]:= 2048
 long[base2+24]:= 0
@@ -176,11 +178,34 @@ long[base2+48]:=length
 long[base2+52]:=sustain
 waitms(delay)
 
+pub changefreq(channel,freq) | base2
 
-    
+base2:=@channel0[0]+64*(channel and $F)
+freqs[channel]:=freq 
+long[base2+36]:=((freq *109)/1000)*3574    
 
-' a simple play procedure to not poke everything. 
+pub changevol(channel,vol) | base2
 
+base2:=@channel0[0]+64*(channel and $F)
+volumes[channel]:=vol
+word[base2+32]:=volume
+
+pub changewav(channel,wav) | base2
+
+base2:=@channel0[0]+64*(channel and $F)
+waveforms[channel]:=wav
+long[base2+20]:=wav+$80000000 
+
+pub changepan(channel,pan) | base2
+base2:=@channel0[0]+64*(channel and $F)
+pans[channel]:=pan
+word[base2+32]:=pan
+
+pub shutup | i
+
+base:=@channel[0]
+repeat i from 0 to 15
+  word[base+32+64*i]:=0 
 
 pub setenv(channel,env,envlen) | base2
 
@@ -252,7 +277,8 @@ loop       	mov 	    cn,#15 '7
 '----------------------------------------------------------------------------------
 
 
-p401        	mov     channeladd,cn             	' compute the pointer to channel parameters block
+p401        	getct ct1
+                mov     channeladd,cn             	' compute the pointer to channel parameters block
             	shl     channeladd,#6
             	add     ptra,channeladd
 
@@ -281,7 +307,7 @@ p404        	mov     qq,sstart0		     	' check if start>$80000
  ''debug(uhex(sstart0,mailbox))
 p405           	getword apan0,volpan0,#1          	' extract vol,pan from longs 
     	    	getword avol0,volpan0,#0
-    	   debug(uhex(pointer0,pointer0h,sstart0)) 	
+    	'   debug(uhex(pointer0,pointer0h,sstart0)) 	
 '----------------------------------------------------------------------------------
 '------------- Compute the envelope, if exists ------------------------------------
 '----------------------------------------------------------------------------------
@@ -355,7 +381,7 @@ p412 		cmp	pointer0h,oldptrh wcz
  
              	mov     qq,pointer0h              	' compute place in the memory from where the sample will be loaded
            	add     qq,sstart0            
-           	and  	qq,##$7FF_FFFF
+           	and  	qq,##$1FF_FFFF
            	cmps    mailbox,#$1FF wcz          	' the mailbox has to point somewhere not at the start of HUB RAM
     	if_le   rdword  spl,qq                      	' if not, use HUB RAM for samples
     	if_gt   call    #cache_read
@@ -415,9 +441,9 @@ p403        	setq #4                          	' write new pointer, sample value
 
             	bitnot rsample, #15
             	bitnot lsample, #15
-  							'           	getct ct2  	'debug
-  							'          	sub ct2,ct1
-  							'          	debug(udec(ct2))
+  							           	getct ct2  	'debug
+  							          	sub ct2,ct1
+  							          	debug(udec(ct2))
             	waitse1
           
            	wypin   lsample, #left              
@@ -584,8 +610,8 @@ envs1 		long 0
 envs2 		long 0
 noise0 		long 0
 
-'ct1 		long 0
-'ct2 		long 0
+ ct1 		long 0
+ ct2 		long 0
 
 		fit 256		'todo: maybe the better interpolation. Or all params in cog
 		
