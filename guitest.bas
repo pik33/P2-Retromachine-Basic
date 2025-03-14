@@ -83,9 +83,39 @@ end sub
 
 end class
 
-dim trackbar1 as trackbar
-trackbar1.create(v,100,100,16,300)
 
+class window
+
+'type vdrv as class using "hg010b-4.spin2"
+dim state,x,y,w,h,min,max,ticks,c1,c2,c3 as integer
+dim label as string
+dim bufptr as ulong
+
+
+dim v as vdrv
+
+sub create(avdrv as vdrv,ax=0,ay=0,aw=16,ah=128,alabel$="",ac1=10,ac2=15, ac3=120 )
+x=ax:y=ay:w=aw:h=ah:c1=ac1:c2=ac2:c3=ac3
+label=alabel$
+v=avdrv
+draw()
+end sub
+
+
+sub draw
+v.frame(x,y,x+w-1,y+h-1,c1)
+v.box(x+1,y+1,x+w-2,y+h-2,c2)
+v.box(x+2,y+2,x+w-3,y+20,c3)
+v.outtextxycf (x+2+(w/2)-4*len(label),y+3,label,c2)
+end sub
+
+end class
+
+
+dim trackbar1 as trackbar
+dim window1 as window
+trackbar1.create(v,100,100,16,300)
+window1.create(v,200,200,300,300,"Window test 1234567890")
 
 
 sub startpsram

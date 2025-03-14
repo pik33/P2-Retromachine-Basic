@@ -29,7 +29,7 @@
 'pub box(x1,y1,x2,y2,c) - draw a filled rectangle
 'pub putcharxycf(x,y,achar,f) - draw the character, don't change the background
 'pub putcharxycg(x,y,achar,f,b) - draw the character on the opaque background color
-'pub putcharxycg8(x,y,achar,f,b) - draw a 8x8 vharacter
+'pub putcharxycg8(x,y,achar,f,b) - draw a 8x8 character
 'pub putcharxycz(x,y,achar,f,b,xz,yz) - draw a zoomed character
 'pub outtextxycg(x,y,text,f,b) - output a string
 'pub outtextxycg8(x,y,text,f,b) - output 8x8 string
@@ -697,6 +697,16 @@ repeat yy from 0 to 15
   repeat
   while long[mailbox0] < 0 
  
+' ------  Transparent 8x8 character 
+ 
+pub putcharxycf8(x,y,achar,f,b) |xx, yy,bb
+
+repeat yy from 0 to 7
+  bb:=byte[@vga_font+font_family<<10+achar<<3+yy]
+  repeat xx from 0 to 7
+    if (bb&(1<<xx))<>0
+      putpixel(xx+x,yy+y,f)
+   
  
       
 ' ------  Opaque  8x8 character      
@@ -710,6 +720,8 @@ repeat yy from 0 to 7
       putpixel(xx+x,yy+y,f)
     else
       putpixel(xx+x,yy+y,b)      
+      
+      
 
 '' ------  Opaque zoomed 8x16 character       
 
@@ -743,6 +755,11 @@ pub outtextxycf(x,y,text,f) | iii,c
 
 repeat iii from 0 to strsize(text)-1
   putcharxycf(x+8*iii,y,byte[text+iii],f)
+  
+pub outtextxycf8(x,y,text,f,b) | iii,c
+
+repeat iii from 0 to strsize(text)-1
+  putcharxycf8(x+8*iii,y,byte[text+iii],f,b)  
 
 pub outtextxycz(x,y,text,f,b,xz,yz) | iii,c
 

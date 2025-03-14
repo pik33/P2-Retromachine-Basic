@@ -168,6 +168,7 @@ long streamer[6]       'streamer constants
 byte colors[16]        'vga colors
 long graphmode
 long font_family
+long font_family8
 long customtimings[16]
 long ppl	       'pixel per line
 
@@ -259,6 +260,7 @@ leading_spaces:=0
 '---------------------------- initialize a cursor (MSDOS type)
 
 initcursor(154)
+font_family8:=6
 
 '---------------------------- start the cog
 
@@ -699,14 +701,22 @@ repeat yy from 0 to 15
   repeat
   while long[mailbox0] < 0 
  
+ ' ------  Transparent 8x8 character 
  
+pub putcharxycf8(x,y,achar,f) |xx, yy,bb
+
+repeat yy from 0 to 7
+  bb:=byte[@vga_font+font_family8<<10+achar<<3+yy]
+  repeat xx from 0 to 7
+    if (bb&(1<<xx))<>0
+      putpixel(xx+x,yy+y,f)
       
 ' ------  Opaque  8x8 character      
  
 pub putcharxycg8(x,y,achar,f,b) |xx, yy,bb
 
 repeat yy from 0 to 7
-  bb:=byte[@vga_font+font_family<<10+achar<<3+yy]
+  bb:=byte[@vga_font+font_family8<<10+achar<<3+yy]
   repeat xx from 0 to 7
     if (bb&(1<<xx))<>0
       putpixel(xx+x,yy+y,f)
@@ -745,6 +755,11 @@ pub outtextxycf(x,y,text,f) | iii,c
 
 repeat iii from 0 to strsize(text)-1
   putcharxycf(x+8*iii,y,byte[text+iii],f)
+  
+pub outtextxycf8(x,y,text,f) | iii,c
+
+repeat iii from 0 to strsize(text)-1
+  putcharxycf8(x+8*iii,y,byte[text+iii],f ) 
 
 pub outtextxycz(x,y,text,f,b,xz,yz) | iii,c
 

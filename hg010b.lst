@@ -1,0 +1,181 @@
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/P2-Retromachine-Basic/hg010b.p2asm"
+00000                 | con
+00000                 | 	_clkfreq = 340500000
+00000                 | 	_clkmode = 27175163
+00000                 | ' 
+00000                 | ' 
+00000                 | ' hdmi_base       = 0           				 	'must be a multiple of 8
+00000                 | 	hdmi_base = 0
+00000                 | ' _clkfreq        = 340500000 					'this is the retromachine standard main clock, PAL color frequency * 96
+00000                 | ' debugger        = 1                                             'set this to non-zero value if you want to use BRK debugger
+00000                 | 	debugger = 1
+00000                 | ' 
+00000                 | ' 
+00000                 | ' ''--------- VGA DOS color definition constants. These are numbers of standard palette used (16 colors*16 luminances, 8-bit Atari based)
+00000                 | ' 
+00000                 | ' c_black         =    0
+00000                 | 	c_black = 0
+00000                 | ' c_blue          =  117
+00000                 | 	c_blue = 117
+00000                 | ' c_green         =  199
+00000                 | 	c_green = 199
+00000                 | ' c_cyan          =  149
+00000                 | 	c_cyan = 149
+00000                 | ' c_red           =   39
+00000                 | 	c_red = 39
+00000                 | ' c_magenta       =   71
+00000                 | 	c_magenta = 71
+00000                 | ' c_brown         =  246
+00000                 | 	c_brown = 246
+00000                 | ' c_lightgray     =   10
+00000                 | 	c_lightgray = 10
+00000                 | ' c_darkgray      =    5
+00000                 | 	c_darkgray = 5
+00000                 | ' c_lightblue     =  121
+00000                 | 	c_lightblue = 121
+00000                 | ' c_lightgreen    =  203
+00000                 | 	c_lightgreen = 203
+00000                 | ' c_lightcyan     =  155
+00000                 | 	c_lightcyan = 155
+00000                 | ' c_lightred      =   43
+00000                 | 	c_lightred = 43
+00000                 | ' c_lightmagenta  =   75
+00000                 | 	c_lightmagenta = 75
+00000                 | ' c_yellow        =  234
+00000                 | 	c_yellow = 234
+00000                 | ' c_white         =   15
+00000                 | 	c_white = 15
+00000                 | ' 
+00000                 | ' ''---------- A constant to add to timing values for the streamer
+00000                 | ' 
+00000                 | ' timingsxxt      =  $70810000   ' streamer imm->pins
+00000                 | 	timingsxxt = 1887502336
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 340500000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $19ea8fb
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 CE 05 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 0C 03 90 5D |  if_ne	jmp	#spininit
+0040c 002 E6 F0 03 F6 | 	mov	ptra, ptr_stackspace_
+00410 003 14 EC 0F FB | 	rdlong	pa, #20 wz
+00414 004 EC 02 90 5D |  if_ne	jmp	#skip_clock_set_
+00418 005 00 00 64 FD | 	hubset	#0
+0041c 006 54 CF 80 FF 
+00420 007 00 F0 65 FD | 	hubset	##27175160
+00424 008 86 01 80 FF 
+00428 009 1F 80 66 FD | 	waitx	##200000
+0042c 00a 54 CF 00 FF 
+00430 00b FB EC 07 F6 | 	mov	pa, ##27175163
+00434 00c 00 EC 63 FD | 	hubset	pa
+00438 00d 18 EC 67 FC | 	wrlong	pa, #24
+0043c 00e CF 25 8A FF 
+00440 00f 14 40 6C FC | 	wrlong	##340500000, #20
+00444 010 BC 02 90 FD | 	jmp	#skip_clock_set_
+00448 011 00 00 00 00 
+      ...             
+006fc 0be 00 00 00 00 
+00700 0bf 00 00 00 00 | 	orgf	192
+00704 0c0             | skip_clock_set_
+00704 0c0 A4 07 A0 FD | 	call	#_dummy
+00708 0c1             | cogexit
+00708 0c1 38 01 80 FF 
+0070c 0c2 1F 00 66 FD | 	waitx	##160000
+00710 0c3 01 D0 61 FD | 	cogid	arg01
+00714 0c4 03 D0 61 FD | 	cogstop	arg01
+00718 0c5             | spininit
+00718 0c5 61 CB 05 FB | 	rdlong	objptr, ptra++
+0071c 0c6 61 CF 05 FB | 	rdlong	result1, ptra++
+00720 0c7 28 06 64 FD | 	setq	#3
+00724 0c8 00 D1 05 FB | 	rdlong	arg01, ptra
+00728 0c9 04 F0 87 F1 | 	sub	ptra, #4
+0072c 0ca 2D CE 61 FD | 	call	result1
+00730 0cb D4 FF 9F FD | 	jmp	#cogexit
+00734 0cc             | FCACHE_LOAD_
+00734 0cc F9 AD 01 F6 |     mov	fcache_tmpb_,ptrb
+00738 0cd 2B F2 63 FD |     pop	ptrb
+0073c 0ce D5 EC 8B F9 |     altd	pa,ret_instr_
+00740 0cf D5 00 00 F6 |     mov	 0-0, ret_instr_
+00744 0d0 28 EC 63 FD |     setq	pa
+00748 0d1 E1 01 04 FB |     rdlong	$0, ptrb++
+0074c 0d2 2A F2 63 FD |     push	ptrb
+00750 0d3 D6 F2 03 F6 |     mov ptrb,fcache_tmpb_
+00754 0d4 00 00 80 FD |     jmp	#\$0 ' jmp to cache
+00758 0d5             | ret_instr_
+00758 0d5 00 FE 07 02 |     _ret_ cmp inb,#0
+0075c 0d6             | fcache_tmpb_
+0075c 0d6 00 00 00 00 |     long 0
+00760 0d7             | fcache_load_ptr_
+00760 0d7 CC 00 00 00 |     long FCACHE_LOAD_
+00764 0d8             | builtin_bytefill_
+00764 0d8 01 D4 55 F0 |         shr	arg03, #1 wc
+00768 0d9 E8 D2 41 CC |  if_c   wrbyte	arg02, arg01
+0076c 0da 01 D0 05 C1 |  if_c   add	arg01, #1
+00770 0db 00 D2 FD F9 |         movbyts	arg02, #0
+00774 0dc             | builtin_wordfill_
+00774 0dc 01 D4 55 F0 |         shr	arg03, #1 wc
+00778 0dd E8 D2 51 CC |  if_c   wrword	arg02, arg01
+0077c 0de 02 D0 05 C1 |  if_c   add	arg01, #2
+00780 0df E9 D2 29 F9 |         setword	arg02, arg02, #1
+00784 0e0             | builtin_longfill_
+00784 0e0 E8 00 88 FC |         wrfast	#0,arg01
+00788 0e1 00 D4 0D F2 |         cmp	arg03, #0 wz
+0078c 0e2 EA 02 D8 5C |  if_nz  rep	#1, arg03
+00790 0e3 17 D2 61 5D |  if_nz  wflong	arg02
+00794 0e4 2D 00 64 FD |         ret
+00798 0e5             | 
+00798 0e5             | objptr
+00798 0e5 AC 07 00 00 | 	long	@objmem
+0079c 0e6             | ptr_stackspace_
+0079c 0e6 78 1E 00 00 | 	long	@stackspace
+007a0 0e7             | result1
+007a0 0e7 00 00 00 00 | 	long	0
+007a4 0e8             | COG_BSS_START
+007a4 0e8             | 	fit	480
+007a4                 | 	orgh
+007a4                 | hubentry
+007a4                 | 
+007a4                 | ' 
+007a4                 | ' 
+007a4                 | ' '****************************************************************************************************************
+007a4                 | ' '                                                                                                             	*
+007a4                 | ' '  A dummy start function if someone runs this driver alone                                 	rev 20220320    *
+007a4                 | ' '                                                                                                		*
+007a4                 | ' '**************************************************************************************************************** 
+007a4                 | ' 
+007a4                 | ' pub dummy()
+007a4                 | _dummy
+007a4                 | _dummy_ret
+007a4     2D 00 64 FD | 	ret
+007a8                 | hubexit
+007a8     C1 00 80 FD | 	jmp	#cogexit
+007ac                 | objmem
+007ac     00 00 00 00 
+      ...             
+01e70     00 00 00 00 
+01e74     00 00 00 00 | 	long	0[1459]
+01e78                 | stackspace
+01e78     00 00 00 00 | 	long	0[1]
+01e7c 0e8             | 	org	COG_BSS_START
+01e7c 0e8             | arg01
+01e7c 0e8             | 	res	1
+01e7c 0e9             | arg02
+01e7c 0e9             | 	res	1
+01e7c 0ea             | arg03
+01e7c 0ea             | 	res	1
+01e7c 0eb             | arg04
+01e7c 0eb             | 	res	1
+01e7c 0ec             | 	fit	480
+01e7c 0ec             | 
